@@ -6,7 +6,7 @@ import json
 from json import JSONEncoder
 from typing import Any, ClassVar, Dict, IO, TextIO, Type, TypeVar
 
-from fancy_dataclass.dataclass import DataclassFromDict
+from fancy_dataclass._dataclass import DataclassFromDict
 from fancy_dataclass.utils import fully_qualified_class_name, get_subclass_with_name, obj_class_name
 
 T = TypeVar('T')
@@ -51,8 +51,8 @@ class JSONSerializable(ABC):
             super().to_json(fp)
         else:  # binary
             fp.write(self.to_json_string().encode())
-    @abstractclassmethod
     @classmethod
+    @abstractclassmethod
     def from_dict(cls: Type[J], d: JSONDict) -> J:
         """Constructs an object of this type from a JSON dict."""
     @classmethod
