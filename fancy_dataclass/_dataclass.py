@@ -1,9 +1,12 @@
 import dataclasses
-from typing import Any, Container, Dict, Type, TypeVar, Union
+from enum import Enum
+from typing import Any, ClassVar, Container, Dict, Type, TypeVar, Union
 
-from fancy_dataclass.utils import check_dataclass, obj_class_name
+from fancy_dataclass.utils import check_dataclass, fully_qualified_class_name, get_subclass_with_name, obj_class_name
 
 T = TypeVar('T')
+
+JSONDict = Dict[str, Any]
 
 
 class DataclassMixin:
@@ -28,8 +31,70 @@ class DataclassMixin:
                 raise TypeError(f'{key!r} is not a valid field for {obj_class_name(self)}')
         return self.__class__(**d)  # type: ignore
 
-class DataclassFromDict(DataclassMixin):
-    """Mixin class that can convert a dict into a bundle of arguments to pass to a dataclass constructor."""
+class DictDataclass(DataclassMixin):
+    """Base class for dataclasses that can be converted to and from a regular Python dict."""
+    # if True, suppresses default values in 'to_dict'
+    suppress_defaults: ClassVar[bool] = True
+    # if True, stores the object's type in its dict representation
+    store_type: ClassVar[bool] = False
+    # if True, fully qualifies the type name in the dict representation
+    qualified_type: ClassVar[bool] = False
+    # if this is True, DictDataclass subfields will be nested; otherwise, they are merged
+    nested: ClassVar[bool] = True
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        """When inheriting from this class, you may pass various flags as keyword arguments after the list of base classes; these will be stored as class variables."""
+        super().__init_subclass__()
+        for (key, val) in kwargs.items():
+            setattr(cls, key, val)
+    def _dict_init(self) -> JSONDict:
+        if self.__class__.qualified_type:
+            return {'type' : fully_qualified_class_name(self.__class__)}
+        elif self.__class__.store_type:
+            return {'type' : obj_class_name(self)}
+        return {}
+    def _to_dict(self, full: bool) -> JSONDict:
+        def _to_value(x: Any) -> Any:
+            if isinstance(x, Enum):
+                return x.value
+            elif isinstance(x, range):
+                return list(x)
+            elif isinstance(x, list):
+                return [_to_value(y) for y in x]
+            elif isinstance(x, tuple):
+                return tuple(_to_value(y) for y in x)
+            elif isinstance(x, dict):
+                return {k : _to_value(v) for (k, v) in x.items()}
+            elif hasattr(x, 'dtype'):  # assume it's a numpy array of numbers
+                return [float(y) for y in x]
+            elif hasattr(x, 'to_dict'):
+                return x.to_dict()
+            return x
+        d = self._dict_init()
+        fields = getattr(self.__class__, '__dataclass_fields__', None)
+        if (fields is not None):
+            for (name, field) in fields.items():
+                if (name == 'type'):
+                    raise ValueError("'type' is an invalid JSONDataclass field")
+                if (getattr(field.type, '__origin__', None) is ClassVar):  # do not include ClassVars in dict
+                    continue
+                if (not field.init):  # suppress fields where init = False
+                    continue
+                val = getattr(self, name)
+                if (not full):  # suppress values that match the default
+                    try:
+                        if (val == field.default):
+                            continue
+                        if (field.default_factory != dataclasses.MISSING) and (val == field.default_factory()):
+                            continue
+                    except ValueError:  # some types may fail to compare
+                        pass
+                d[name] = _to_value(val)
+        return d
+    def to_dict(self, **kwargs: Any) -> JSONDict:
+        """Renders a dict which, by default, suppresses values matching their dataclass defaults.
+        If full = True or the class's `suppress_defaults` is False, does not suppress defaults."""
+        full = kwargs.get('full', not self.__class__.suppress_defaults)
+        return self._to_dict(full)
     @staticmethod
     def _convert_dict_convertible(tp: type, x: Any) -> Any:
         if isinstance(x, tp):  # already converted from a dict
@@ -84,7 +149,7 @@ class DataclassFromDict(DataclassMixin):
                 return type(x)(cls._convert_value(subtype, y) for y in x)
         raise ValueError(f'could not convert {x!r} to type {tp!r}')
     @classmethod
-    def _dataclass_args_from_dict(cls, d: Dict[str, Any]) -> Dict[str, Any]:
+    def _dataclass_args_from_dict(cls, d: JSONDict) -> JSONDict:
         """Given a dict of arguments, performs type conversion and/or validity checking, then returns a new dict that can be passed to the class's constructor."""
         check_dataclass(cls)
         kwargs = {}
@@ -111,7 +176,24 @@ class DataclassFromDict(DataclassMixin):
                     kwargs[field.name] = field.default_factory()  # type: ignore
         return kwargs
     @classmethod
-    def from_dict(cls: Type[T], d: Dict[str, Any]) -> T:
+    def from_dict(cls: Type[T], d: JSONDict) -> T:
         """Constructor from a dictionary of fields.
-        This will perform some basic type/validity checking."""
-        return cls(**cls._dataclass_args_from_dict(d))  # type: ignore
+        This may perform some basic type/validity checking."""
+        # first establish the type, which may be present in the 'type' field of the dict
+        typename = d.get('type')
+        if (typename is None):  # type field unspecified, so use the calling class
+            tp = cls
+        else:
+            cls_name = fully_qualified_class_name(cls) if ('.' in typename) else cls.__name__
+            if (cls_name == typename):  # type name already matches this class
+                tp = cls
+            else:
+                # tp must be a subclass of cls
+                # the name must be in scope to be found, allowing two alternatives for retrieval:
+                # option 1: all subclasses of this JSONDataclass are defined in the same module as the base class
+                # option 2: the name is fully qualified, so the name can be loaded into scope
+                # call from_dict on the subclass in case it has its own custom implementation
+                d2 = dict(d)
+                d2.pop('type')  # remove the type name before passing to the constructor
+                return get_subclass_with_name(cls, typename).from_dict(d2)
+        return tp(**cls._dataclass_args_from_dict(d))  # type: ignore

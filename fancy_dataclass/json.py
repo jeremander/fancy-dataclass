@@ -1,18 +1,12 @@
 from abc import ABC, abstractclassmethod, abstractmethod
-import dataclasses
-from enum import Enum
 from io import StringIO, TextIOBase
 import json
 from json import JSONEncoder
-from typing import Any, ClassVar, Dict, IO, TextIO, Type, TypeVar
+from typing import Any, IO, TextIO, Type, TypeVar
 
-from fancy_dataclass._dataclass import DataclassFromDict
-from fancy_dataclass.utils import fully_qualified_class_name, get_subclass_with_name, obj_class_name
+from fancy_dataclass._dataclass import DictDataclass, JSONDict
 
 T = TypeVar('T')
-J = TypeVar('J', bound = 'JSONSerializable')
-
-JSONDict = Dict[str, Any]
 
 
 class JSONSerializable(ABC):
@@ -53,15 +47,15 @@ class JSONSerializable(ABC):
             fp.write(self.to_json_string().encode())
     @classmethod
     @abstractclassmethod
-    def from_dict(cls: Type[J], d: JSONDict) -> J:
+    def from_dict(cls: Type[T], d: JSONDict) -> T:
         """Constructs an object of this type from a JSON dict."""
     @classmethod
-    def from_json(cls: Type[J], fp: TextIO, **kwargs: Any) -> J:
+    def from_json(cls: Type[T], fp: TextIO, **kwargs: Any) -> T:
         """Reads JSON from a file-like object and converts the context to this type."""
         d = json.load(fp, **kwargs)
         return cls.from_dict(d)
     @classmethod
-    def from_json_string(cls: Type[J], s: str) -> J:
+    def from_json_string(cls: Type[T], s: str) -> T:
         d = json.loads(s)
         return cls.from_dict(d)
     @classmethod
@@ -71,68 +65,8 @@ class JSONSerializable(ABC):
         else:  # binary
             return cls.from_dict(json.load(fp))
 
-class JSONDataclass(JSONSerializable, DataclassFromDict):
+class JSONDataclass(DictDataclass, JSONSerializable):
     """Subclass of JSONSerializable enabling default serialization of dataclass objects."""
-    # if True, suppresses default values in 'to_dict'
-    suppress_defaults: ClassVar[bool] = True
-    # flag indicating whether to store the objects type in its dict representation
-    store_type: ClassVar[bool] = False
-    # flag indicating whether to fully qualify the type name in its dict representation (implies store_type)
-    qualified_type: ClassVar[bool] = False
-    # flag indicating whether to fully
-    def __init_subclass__(cls, **kwargs: Any) -> None:
-        super().__init_subclass__()
-        if ('suppress_defaults' in kwargs):  # override suppress_defaults value
-            cls.suppress_defaults = kwargs['suppress_defaults']
-    def _dict_init(self) -> JSONDict:
-        if self.__class__.qualified_type:
-            return {'type' : fully_qualified_class_name(self.__class__)}
-        elif self.__class__.store_type:
-            return {'type' : obj_class_name(self)}
-        return {}
-    def _to_dict(self, full: bool) -> JSONDict:
-        def _to_value(x: Any) -> Any:
-            if isinstance(x, Enum):
-                return x.value
-            elif isinstance(x, range):
-                return list(x)
-            elif isinstance(x, list):
-                return [_to_value(y) for y in x]
-            elif isinstance(x, tuple):
-                return tuple(_to_value(y) for y in x)
-            elif isinstance(x, dict):
-                return {k : _to_value(v) for (k, v) in x.items()}
-            elif hasattr(x, 'dtype'):  # assume it's a numpy array of numbers
-                return [float(y) for y in x]
-            elif isinstance(x, JSONSerializable):
-                return x.to_dict()
-            return x
-        d = self._dict_init()
-        fields = getattr(self.__class__, '__dataclass_fields__', None)
-        if (fields is not None):
-            for (name, field) in fields.items():
-                if (name == 'type'):
-                    raise ValueError("'type' is an invalid JSONDataclass field")
-                if (getattr(field.type, '__origin__', None) is ClassVar):  # do not include ClassVars in dict
-                    continue
-                if (not field.init):  # suppress fields where init = False
-                    continue
-                val = getattr(self, name)
-                if (not full):  # suppress values that match the default
-                    try:
-                        if (val == field.default):
-                            continue
-                        if (field.default_factory != dataclasses.MISSING) and (val == field.default_factory()):
-                            continue
-                    except ValueError:  # some types may fail to compare
-                        pass
-                d[name] = _to_value(val)
-        return d
-    def to_dict(self, **kwargs: Any) -> JSONDict:
-        """Renders a dict which, by default, suppresses values matching their dataclass defaults.
-        If full = True or the class's `suppress_defaults` is False, does not suppress defaults."""
-        full = kwargs.get('full', not self.__class__.suppress_defaults)
-        return self._to_dict(full)
     @classmethod
     def _convert_value(cls, tp: type, x: Any) -> Any:
         # customize for JSONSerializable
@@ -141,31 +75,8 @@ class JSONDataclass(JSONSerializable, DataclassFromDict):
             (keytype, valtype) = tp.__args__
             return {cls._json_key_decoder(cls._convert_value(keytype, k)) : cls._convert_value(valtype, v) for (k, v) in x.items()}
         # otherwise, fall back on superclass
-        return DataclassFromDict._convert_value(tp, x)
-    @classmethod
-    def from_dict(cls: Type[T], d: JSONDict) -> T:
-        # first establish the type, which may be present in the 'type' field of the JSON blob
-        typename = d.get('type')
-        if (typename is None):  # type field unspecified, so use the calling class
-            tp = cls
-        else:
-            cls_name = fully_qualified_class_name(cls) if ('.' in typename) else cls.__name__
-            if (cls_name == typename):  # type name already matches this class
-                tp = cls
-            else:
-                # tp must be a subclass of cls
-                # the name must be in scope to be found, allowing two alternatives for retrieval:
-                # option 1: all subclasses of this JSONDataclass are defined in the same module as the base class
-                # option 2: the name is fully qualified, so the name can be loaded into scope
-                # call from_dict on the subclass in case it has its own custom implementation
-                d2 = dict(d)
-                d2.pop('type')  # remove the type name before passing to the constructor
-                return get_subclass_with_name(cls, typename).from_dict(d2)
-        return tp(**cls._dataclass_args_from_dict(d))  # type: ignore
+        return DictDataclass._convert_value(tp, x)
 
-class JSONBaseDataclass(JSONDataclass):
-    """This class should be used as a base class for one or more JSONDataclasses.
-    It will store the subclass's type in the 'type' field of its `to_dict` representation, and it will resolve this type on `from_dict`."""
-    store_type = True
-    qualified_type = True
-
+class JSONBaseDataclass(JSONDataclass, store_type = True, qualified_type = True):
+    """This class should be used in place of `JSONDataclass` when you intend to inherit from the class.
+    When converting a subclass to a dict with `to_dict`, it will store the subclass's type in the 'type' field. It will also resolve this type on `from_dict`."""

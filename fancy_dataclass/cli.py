@@ -6,12 +6,12 @@ from enum import IntEnum
 from typing import Any, ClassVar, Dict, List, Optional, Type, TypeVar
 
 from fancy_dataclass.utils import check_dataclass, issubclass_safe, obj_class_name
-from fancy_dataclass._dataclass import DataclassFromDict
+from fancy_dataclass._dataclass import DictDataclass
 
 T = TypeVar('T')
 
 
-class ArgparseDataclass(DataclassFromDict):
+class ArgparseDataclass(DictDataclass):
     """Mixin class providing a means of setting up an argparse parser with the dataclass fields, and then converting the namespace of parsed arguments into an instance of the class.
     NOTE: this borrows heavily from the `argparse-dataclass` library.
     The parser's argument names and types will be derived from the dataclass field names and types.
