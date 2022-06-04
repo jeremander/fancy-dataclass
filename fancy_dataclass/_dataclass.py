@@ -1,6 +1,7 @@
+from collections import defaultdict
 import dataclasses
 from enum import Enum
-from typing import Any, ClassVar, Container, Dict, Type, TypeVar, Union
+from typing import Any, ClassVar, Container, Dict, List, Type, TypeVar, Union
 
 from fancy_dataclass.utils import check_dataclass, fully_qualified_class_name, get_subclass_with_name, obj_class_name
 
@@ -8,6 +9,12 @@ T = TypeVar('T')
 
 JSONDict = Dict[str, Any]
 
+def safe_dict_insert(d: JSONDict, key: str, val: Any) -> None:
+    """Inserts a (key, value) pair into a dict.
+    Raises a TypeError if the key is already in the dict."""
+    if (key in d):
+        raise TypeError(f'duplicate key {key!r}')
+    d[key] = val
 
 class DataclassMixin:
     """Mixin class that adds some functionality to a dataclass (for example, conversion to/from JSON or argparse arguments.
@@ -32,14 +39,17 @@ class DataclassMixin:
         return self.__class__(**d)  # type: ignore
 
 class DictDataclass(DataclassMixin):
-    """Base class for dataclasses that can be converted to and from a regular Python dict."""
-    # if True, suppresses default values in 'to_dict'
+    """Base class for dataclasses that can be converted to and from a regular Python dict.
+    Subclasses may set the following flags as class attributes:
+        suppress_defaults: suppress default values in its dict
+        store_type: store the object's type in its dict
+        qualified_type: fully qualify the object type's name in its dict
+        strict: raise a TypeError in `from_dict` if extraneous fields are present
+        nested: if True, `DictDataclass` subfields will be nested; otherwise, they are merged together with the main fields (provided there are no name collisions)"""
     suppress_defaults: ClassVar[bool] = True
-    # if True, stores the object's type in its dict representation
     store_type: ClassVar[bool] = False
-    # if True, fully qualifies the type name in the dict representation
     qualified_type: ClassVar[bool] = False
-    # if this is True, DictDataclass subfields will be nested; otherwise, they are merged
+    strict: ClassVar[bool] = False
     nested: ClassVar[bool] = True
     def __init_subclass__(cls, **kwargs: Any) -> None:
         """When inheriting from this class, you may pass various flags as keyword arguments after the list of base classes; these will be stored as class variables."""
@@ -52,6 +62,20 @@ class DictDataclass(DataclassMixin):
         elif self.__class__.store_type:
             return {'type' : obj_class_name(self)}
         return {}
+    @classmethod
+    def get_fields(cls) -> List[dataclasses.Field]:
+        """Gets the list of fields in the object's dict representation."""
+        flds = []
+        for field in dataclasses.fields(cls):
+            try:
+                is_nested = issubclass(field.type, DictDataclass) and field.type.nested
+            except TypeError:
+                is_nested = False
+            if is_nested:  # expand nested subfields
+                flds += field.type.get_fields()
+            else:
+                flds.append(field)
+        return flds
     def _to_dict(self, full: bool) -> JSONDict:
         def _to_value(x: Any) -> Any:
             if isinstance(x, Enum):
@@ -74,7 +98,7 @@ class DictDataclass(DataclassMixin):
         if (fields is not None):
             for (name, field) in fields.items():
                 if (name == 'type'):
-                    raise ValueError("'type' is an invalid JSONDataclass field")
+                    raise ValueError(f"'type' is an invalid {obj_class_name(self)} field")
                 if (getattr(field.type, '__origin__', None) is ClassVar):  # do not include ClassVars in dict
                     continue
                 if (not field.init):  # suppress fields where init = False
@@ -88,11 +112,17 @@ class DictDataclass(DataclassMixin):
                             continue
                     except ValueError:  # some types may fail to compare
                         pass
-                d[name] = _to_value(val)
+                field_val = _to_value(val)
+                if (not self.__class__.nested) and isinstance(field_val, dict):
+                    # merge subfield's dict instead of nesting
+                    for (k, v) in field_val.items():
+                        safe_dict_insert(d, k, v)
+                else:  # nested dict OK
+                    safe_dict_insert(d, name, field_val)
         return d
     def to_dict(self, **kwargs: Any) -> JSONDict:
         """Renders a dict which, by default, suppresses values matching their dataclass defaults.
-        If full = True or the class's `suppress_defaults` is False, does not suppress defaults."""
+        If full = True or the class's `suppress_defaults` is False, does not suppress default."""
         full = kwargs.get('full', not self.__class__.suppress_defaults)
         return self._to_dict(full)
     @staticmethod
@@ -149,6 +179,42 @@ class DictDataclass(DataclassMixin):
                 return type(x)(cls._convert_value(subtype, y) for y in x)
         raise ValueError(f'could not convert {x!r} to type {tp!r}')
     @classmethod
+    def _class_with_merged_fields(cls: Type[T]) -> Type[T]:
+        """Converts this type into an isomorphic type where any nested DictDataclass fields have all of their subfields merged into the outer type."""
+        fields: List[Any] = []
+        field_map: Dict[str, str] = {}
+        for field in dataclasses.fields(cls):
+            if issubclass(field.type, DictDataclass):
+                for fld in dataclasses.fields(field.type):
+                    safe_dict_insert(field_map, fld.name, field.name)
+                    fields.append(fld)
+            else:
+                fields.append(field)
+        cls2 = dataclasses.make_dataclass(cls.__name__, [(field.name, field.type, field) for field in fields], bases = cls.__bases__)
+        # set flags to be identical to the original class (except force nested=True)
+        flags = [key for (key, tp) in cls.__annotations__.items() if (getattr(tp, '__origin__', None) is ClassVar)]
+        for flag in flags:
+            setattr(cls2, flag, getattr(cls, flag))
+        cls2.nested = True
+        # create method to convert from merged object to nested object
+        def _to_nested(self):
+            kwargs = {}
+            nested_kwargs = defaultdict(dict)
+            nested_types = {}
+            for field in dataclasses.fields(self):
+                key = field.name
+                val = getattr(self, key)
+                if (key in field_map):  # a merged field
+                    nested_kwargs[field_map[key]] = val
+                    nested_types[key] = field.type
+                else:  # a regular field
+                    kwargs[key] = val
+            for (key, d) in nested_kwargs.items():
+                kwargs[key] = nested_types[key](**d)
+            return cls(**kwargs)
+        cls2._to_nested = _to_nested
+        return cls2
+    @classmethod
     def _dataclass_args_from_dict(cls, d: JSONDict) -> JSONDict:
         """Given a dict of arguments, performs type conversion and/or validity checking, then returns a new dict that can be passed to the class's constructor."""
         check_dataclass(cls)
@@ -190,10 +256,15 @@ class DictDataclass(DataclassMixin):
             else:
                 # tp must be a subclass of cls
                 # the name must be in scope to be found, allowing two alternatives for retrieval:
-                # option 1: all subclasses of this JSONDataclass are defined in the same module as the base class
+                # option 1: all subclasses of this DictDataclass are defined in the same module as the base class
                 # option 2: the name is fully qualified, so the name can be loaded into scope
                 # call from_dict on the subclass in case it has its own custom implementation
                 d2 = dict(d)
                 d2.pop('type')  # remove the type name before passing to the constructor
                 return get_subclass_with_name(cls, typename).from_dict(d2)
-        return tp(**cls._dataclass_args_from_dict(d))  # type: ignore
+        if (not cls.nested):
+            # produce equivalent subfield-merged types, then convert the dict
+            cls = cls._class_with_merged_fields()
+            tp = tp._class_with_merged_fields()
+        result = tp(**cls._dataclass_args_from_dict(d))  # type: ignore
+        return result if cls.nested else result._to_nested()
