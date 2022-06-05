@@ -90,7 +90,7 @@ class DictDataclass(DataclassMixin):
                 return {k : _to_value(v) for (k, v) in x.items()}
             elif hasattr(x, 'dtype'):  # assume it's a numpy array of numbers
                 return [float(y) for y in x]
-            elif hasattr(x, 'to_dict'):
+            elif isinstance(x, DictDataclass):
                 return x.to_dict()
             return x
         d = self._dict_init()
@@ -184,33 +184,37 @@ class DictDataclass(DataclassMixin):
         fields: List[Any] = []
         field_map: Dict[str, str] = {}
         for field in dataclasses.fields(cls):
-            if issubclass(field.type, DictDataclass):
-                for fld in dataclasses.fields(field.type):
+            origin = getattr(field.type, '__origin__', None)
+            if (origin is Union):  # use the first type of a Union (also handles Optional)
+                tp = field.type.__args__[0]
+            else:
+                tp = field.type
+            if issubclass(tp, DictDataclass):
+                for fld in dataclasses.fields(tp):
                     safe_dict_insert(field_map, fld.name, field.name)
                     fields.append(fld)
             else:
                 fields.append(field)
-        cls2 = dataclasses.make_dataclass(cls.__name__, [(field.name, field.type, field) for field in fields], bases = cls.__bases__)
+        cls2 = dataclasses.make_dataclass(cls.__name__, [(field.name, field.type, field) for field in fields], bases = (DictDataclass,))
         # set flags to be identical to the original class (except force nested=True)
         flags = [key for (key, tp) in cls.__annotations__.items() if (getattr(tp, '__origin__', None) is ClassVar)]
         for flag in flags:
             setattr(cls2, flag, getattr(cls, flag))
-        cls2.nested = True
+        cls2.nested = False
         # create method to convert from merged object to nested object
         def _to_nested(self):
             kwargs = {}
             nested_kwargs = defaultdict(dict)
-            nested_types = {}
+            types_by_name = {field.name : field.type for field in dataclasses.fields(cls)}
             for field in dataclasses.fields(self):
                 key = field.name
                 val = getattr(self, key)
                 if (key in field_map):  # a merged field
-                    nested_kwargs[field_map[key]] = val
-                    nested_types[key] = field.type
+                    nested_kwargs[field_map[key]][key] = val
                 else:  # a regular field
                     kwargs[key] = val
             for (key, d) in nested_kwargs.items():
-                kwargs[key] = nested_types[key](**d)
+                kwargs[key] = types_by_name[key](**d)
             return cls(**kwargs)
         cls2._to_nested = _to_nested
         return cls2

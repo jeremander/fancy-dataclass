@@ -1,7 +1,8 @@
 import dataclasses
 from sqlalchemy import Boolean, Column, Integer, Numeric, String, Table
 import sqlalchemy.orm
-from typing import Any, Callable, Container, Dict, Type, TypeAlias, TypeVar, Union
+from typing import Any, Callable, Container, Dict, Type, TypeVar, Union
+from typing_extensions import TypeAlias
 
 from fancy_dataclass._dataclass import DictDataclass
 
@@ -41,7 +42,7 @@ class SQLDataclass(DictDataclass):
     def get_columns(cls) -> ColumnMap:
         cols = {}
         for field in dataclasses.fields(cls):
-            if (not field.metadata.get('field', True)):
+            if (not field.metadata.get('sql', True)):
                 # skip fields whose metadata's 'sql' field is False
                 continue
             tp = field.type
@@ -65,7 +66,7 @@ def register(reg: Reg = DEFAULT_REGISTRY, extra_cols: ColumnMap = {}) -> Callabl
         extra_cols: additional columns (beyond the dataclass fields) to be stored in the table"""
     def _orm_table(cls: Type[SQLDataclass]) -> Type[SQLDataclass]:
         cols = dict(extra_cols)
-        cols.safe_update(cls.get_columns())
+        safe_update(cols, cls.get_columns())
         cls.__table__ = Table(cls.__name__.lower(), reg.metadata, *cols.values())
         return reg.mapped(dataclasses.dataclass(cls))
     return _orm_table
