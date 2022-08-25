@@ -80,8 +80,11 @@ class DictDataclass(DataclassMixin):
         def _to_value(x: Any) -> Any:
             if isinstance(x, Enum):
                 return x.value
-            elif isinstance(x, range):
-                return list(x)
+            elif isinstance(x, range):  # store the range bounds
+                bounds = [x.start, x.stop]
+                if (x.step != 1):
+                    bounds.append(x.step)
+                return bounds
             elif isinstance(x, list):
                 return [_to_value(y) for y in x]
             elif isinstance(x, tuple):
@@ -146,7 +149,7 @@ class DictDataclass(DataclassMixin):
                 return x
             elif hasattr(tp, 'from_dict'):  # handle nested fields which are themselves convertible from a dict
                 return cls._convert_dict_convertible(tp, x)
-            elif issubclass(tp, tuple):  # will catch namedtuples too
+            elif issubclass(tp, (tuple, range)):  # will catch namedtuples too
                 return tp(*x)
             elif issubclass(tp, dict):
                 return tp(x)
