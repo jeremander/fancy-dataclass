@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 from setuptools import setup
 
-packages = \
-['fancy_dataclass']
+packages = ['fancy_dataclass']
 
-package_data = \
-{'': ['*']}
+package_data = {'': ['*']}
 
 setup_kwargs = {
     'name': 'fancy-dataclass',

@@ -3,7 +3,7 @@ from datetime import datetime
 
 from sqlalchemy import Boolean, Column, DateTime, Integer, LargeBinary, Numeric, PickleType, String, Table
 import sqlalchemy.orm
-from typing import Any, Callable, Container, Dict, Type, TypeVar, Union
+from typing import Any, Callable, Dict, Type, TypeVar, Union
 from typing_extensions import TypeAlias
 
 from fancy_dataclass._dataclass import DictDataclass
