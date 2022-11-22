@@ -1,5 +1,6 @@
 from collections import defaultdict
 import dataclasses
+from datetime import datetime
 from enum import Enum
 from typing import Any, ClassVar, Container, Dict, List, Type, TypeVar, Union
 
@@ -91,6 +92,8 @@ class DictDataclass(DataclassMixin):
                 return tuple(_to_value(y) for y in x)
             elif isinstance(x, dict):
                 return {k : _to_value(v) for (k, v) in x.items()}
+            elif isinstance(x, datetime):
+                return x.isoformat()
             elif hasattr(x, 'dtype'):  # assume it's a numpy array of numbers
                 return [float(y) for y in x]
             elif isinstance(x, DictDataclass):
@@ -153,6 +156,8 @@ class DictDataclass(DataclassMixin):
                 return tp(*x)
             elif issubclass(tp, dict):
                 return tp(x)
+            elif issubclass(tp, datetime):
+                return tp.fromisoformat(x)
             else:  # basic data type
                 return tp(x)  # type: ignore
         else:  # compound data type
