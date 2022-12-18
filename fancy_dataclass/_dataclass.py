@@ -102,7 +102,7 @@ class DictDataclass(DataclassMixin):
             elif hasattr(x, 'dtype'):  # assume it's a numpy array of numbers
                 return [float(y) for y in x]
             elif isinstance(x, DictDataclass):
-                return x.to_dict()
+                return x.to_dict(full = full)
             return x
         d = self._dict_init()
         fields = getattr(self.__class__, '__dataclass_fields__', None)
