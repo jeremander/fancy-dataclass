@@ -66,7 +66,9 @@ class SQLDataclass(DictDataclass):
             if issubclass(tp, SQLDataclass):  # nested SQLDataclass
                 cols.update(tp.get_columns())
             else:
-                column_kwargs = {'nullable' : nullable}
+                # TODO: making columns non-nullable seems to break things for nested SQLDataclasses
+                # column_kwargs = {'nullable' : nullable}
+                column_kwargs = {}
                 if (field.default is not dataclasses.MISSING):
                     column_kwargs['default'] = field.default
                 elif (field.default_factory is not dataclasses.MISSING):  # type: ignore
