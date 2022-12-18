@@ -77,6 +77,6 @@ class JSONDataclass(DictDataclass, JSONSerializable):
         # otherwise, fall back on superclass
         return DictDataclass._convert_value(tp, x)
 
-class JSONBaseDataclass(JSONDataclass, store_type = True, qualified_type = True):
+class JSONBaseDataclass(JSONDataclass, qualified_type = True):
     """This class should be used in place of `JSONDataclass` when you intend to inherit from the class.
     When converting a subclass to a dict with `to_dict`, it will store the subclass's type in the 'type' field. It will also resolve this type on `from_dict`."""

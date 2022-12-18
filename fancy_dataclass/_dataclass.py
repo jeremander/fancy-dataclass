@@ -38,6 +38,12 @@ class DataclassMixin:
             else:
                 raise TypeError(f'{key!r} is not a valid field for {obj_class_name(self)}')
         return self.__class__(**d)  # type: ignore
+    @classmethod
+    def get_subclass_with_name(cls: Type[T], typename: str) -> Type[T]:
+        """Gets the subclass of this class with the given name.
+        Riases a TypeError if no such subclass exists."""
+        return get_subclass_with_name(cls, typename)
+
 
 class DictDataclass(DataclassMixin):
     """Base class for dataclasses that can be converted to and from a regular Python dict.
@@ -273,10 +279,10 @@ class DictDataclass(DataclassMixin):
                 # call from_dict on the subclass in case it has its own custom implementation
                 d2 = dict(d)
                 d2.pop('type')  # remove the type name before passing to the constructor
-                return get_subclass_with_name(cls, typename).from_dict(d2)
+                return cls.get_subclass_with_name(typename).from_dict(d2)
         if (not cls.nested):
             # produce equivalent subfield-merged types, then convert the dict
             cls = cls._class_with_merged_fields()
             tp = tp._class_with_merged_fields()
-        result = tp(**cls._dataclass_args_from_dict(d))  # type: ignore
+        result = tp(**tp._dataclass_args_from_dict(d))  # type: ignore
         return result if cls.nested else result._to_nested()
