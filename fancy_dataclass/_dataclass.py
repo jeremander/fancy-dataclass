@@ -4,7 +4,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, ClassVar, Container, Dict, List, Type, TypeVar, Union
 
-from fancy_dataclass.utils import check_dataclass, fully_qualified_class_name, get_subclass_with_name, obj_class_name
+from fancy_dataclass.utils import check_dataclass, issubclass_safe, fully_qualified_class_name, get_subclass_with_name, obj_class_name
 
 T = TypeVar('T')
 
@@ -43,7 +43,6 @@ class DataclassMixin:
         """Gets the subclass of this class with the given name.
         Riases a TypeError if no such subclass exists."""
         return get_subclass_with_name(cls, typename)
-
 
 class DictDataclass(DataclassMixin):
     """Base class for dataclasses that can be converted to and from a regular Python dict.
@@ -148,6 +147,13 @@ class DictDataclass(DataclassMixin):
         """Given a type and a value, attempts to convert the value to the given type."""
         if (x is None):
             return None
+        if issubclass_safe(tp, list):
+            # class may inherit from List[T], so get the parent class
+            for base in tp.__orig_bases__:
+                origin_type = getattr(base, '__origin__', None)
+                if origin_type and issubclass_safe(origin_type, list):
+                    tp = base
+                    break
         origin_type = getattr(tp, '__origin__', None)
         if (origin_type is None):  # basic class or type
             if (tp == Any):  # assume basic data type
@@ -168,7 +174,7 @@ class DictDataclass(DataclassMixin):
                 return tp(x)  # type: ignore
         else:  # compound data type
             if (origin_type == list):
-                subtype = tp.__args[0]
+                subtype = tp.__args__[0]
                 return [cls._convert_value(subtype, y) for y in x]
             elif (origin_type == dict):
                 (keytype, valtype) = tp.__args__
