@@ -99,6 +99,8 @@ class DictDataclass(DataclassMixin):
                 return {k : _to_value(v) for (k, v) in x.items()}
             elif isinstance(x, datetime):
                 return x.isoformat()
+            elif isinstance(x, (int, float)):  # handles numpy numeric types
+                return x
             elif hasattr(x, 'dtype'):  # assume it's a numpy array of numbers
                 return [float(y) for y in x]
             elif isinstance(x, DictDataclass):
