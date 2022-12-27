@@ -1,8 +1,7 @@
 import dataclasses
 from typing import ClassVar, List
 
-from fancy_dataclass.utils import issubclass_safe
-from fancy_dataclass._dataclass import DataclassMixin
+from fancy_dataclass.utils import DataclassMixin, issubclass_safe
 
 
 class SubprocessDataclass(DataclassMixin):

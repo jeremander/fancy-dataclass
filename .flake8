@@ -1,0 +1,7 @@
+[flake8]
+ignore =
+    E203,E251,E301,E302,E305,E306,E501,E722,E731,E741,
+    W292,W391
+
+application-import-names = fancy_dataclass
+import-order-style = google

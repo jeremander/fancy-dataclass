@@ -1,12 +1,12 @@
 import dataclasses
 from datetime import datetime
+from typing import Any, Callable, Dict, Optional, Type, TypeVar, Union
 
 from sqlalchemy import Boolean, Column, DateTime, Integer, LargeBinary, Numeric, PickleType, String, Table
 import sqlalchemy.orm
-from typing import Any, Callable, Dict, Type, TypeVar, Union
 from typing_extensions import TypeAlias
 
-from fancy_dataclass._dataclass import DictDataclass
+from fancy_dataclass.dict import DictDataclass
 
 T = TypeVar('T')
 ColumnMap = Dict[str, Column]
@@ -78,12 +78,12 @@ class SQLDataclass(DictDataclass):
                 cols[field.name] = Column(field.name, get_column_type(tp), **column_kwargs)
         return cols
 
-def register(reg: Reg = DEFAULT_REGISTRY, extra_cols: ColumnMap = {}) -> Callable[[Type[SQLDataclass]], Type[SQLDataclass]]:  # type: ignore
+def register(reg: Reg = DEFAULT_REGISTRY, extra_cols: Optional[ColumnMap] = None) -> Callable[[Type[SQLDataclass]], Type[SQLDataclass]]:  # type: ignore
     """Decorator that registers a sqlalchemy table for a SQLDataclass.
         reg: sqlalchemy registry for mapping the class to the SQL table
         extra_cols: additional columns (beyond the dataclass fields) to be stored in the table"""
     def _orm_table(cls: Type[SQLDataclass]) -> Type[SQLDataclass]:
-        cols = dict(extra_cols)
+        cols = {} if (extra_cols is None) else dict(extra_cols)
         safe_update(cols, cls.get_columns())
         has_primary_key = any(fld.primary_key for fld in cols.values())
         if (not has_primary_key):

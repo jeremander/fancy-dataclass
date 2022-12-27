@@ -4,7 +4,7 @@ import json
 from json import JSONEncoder
 from typing import Any, IO, TextIO, Type, TypeVar
 
-from fancy_dataclass._dataclass import DictDataclass, JSONDict
+from fancy_dataclass.dict import DictDataclass, JSONDict
 
 T = TypeVar('T')
 

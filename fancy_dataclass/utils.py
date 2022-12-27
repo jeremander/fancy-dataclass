@@ -71,3 +71,30 @@ def make_dataclass_with_constructors(cls_name: str, fields: Sequence[Union[str, 
     # store the field names in a tuple, to match the behavior of namedtuple
     tp._fields = tuple(field.name for field in dataclasses.fields(tp))
     return tp
+
+class DataclassMixin:
+    """Mixin class that adds some functionality to a dataclass (for example, conversion to/from JSON or argparse arguments.
+    This class provides a `wrap_dataclass` decorator which can be used to wrap an existing dataclass into one that provides the mixin's functionality."""
+    @classmethod
+    def wrap_dataclass(cls: Type[T], tp: Type[T]) -> Type[T]:
+        """Given a dataclass type, constructs a new type that is a subclass of this mixin class and is otherwise the same."""
+        check_dataclass(tp)
+        if issubclass(tp, cls):  # the type is already a subclass of this one, so just return it
+            return tp
+        # otherwise, create a new type that inherits from this class
+        return type(tp.__name__, (tp, cls), {})
+    def _replace(self: T, **kwargs: Any) -> T:
+        """Constructs a new object with the provided fields modified."""
+        assert hasattr(self, '__dataclass_fields__'), f'{obj_class_name(self)} is not a dataclass type'
+        d = {field.name : getattr(self, field.name) for field in dataclasses.fields(self)}
+        for (key, val) in kwargs.items():
+            if (key in d):
+                d[key] = val
+            else:
+                raise TypeError(f'{key!r} is not a valid field for {obj_class_name(self)}')
+        return self.__class__(**d)  # type: ignore
+    @classmethod
+    def get_subclass_with_name(cls: Type[T], typename: str) -> Type[T]:
+        """Gets the subclass of this class with the given name.
+        Riases a TypeError if no such subclass exists."""
+        return get_subclass_with_name(cls, typename)

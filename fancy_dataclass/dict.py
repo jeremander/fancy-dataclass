@@ -4,11 +4,11 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, ClassVar, Container, Dict, List, Type, TypeVar, Union
 
-from fancy_dataclass.utils import check_dataclass, issubclass_safe, fully_qualified_class_name, get_subclass_with_name, obj_class_name
+from fancy_dataclass.utils import check_dataclass, DataclassMixin, fully_qualified_class_name, issubclass_safe, obj_class_name
 
 T = TypeVar('T')
-
 JSONDict = Dict[str, Any]
+
 
 def safe_dict_insert(d: JSONDict, key: str, val: Any) -> None:
     """Inserts a (key, value) pair into a dict.
@@ -16,33 +16,6 @@ def safe_dict_insert(d: JSONDict, key: str, val: Any) -> None:
     if (key in d):
         raise TypeError(f'duplicate key {key!r}')
     d[key] = val
-
-class DataclassMixin:
-    """Mixin class that adds some functionality to a dataclass (for example, conversion to/from JSON or argparse arguments.
-    This class provides a `wrap_dataclass` decorator which can be used to wrap an existing dataclass into one that provides the mixin's functionality."""
-    @classmethod
-    def wrap_dataclass(cls: Type[T], tp: Type[T]) -> Type[T]:
-        """Given a dataclass type, constructs a new type that is a subclass of this mixin class and is otherwise the same."""
-        check_dataclass(tp)
-        if issubclass(tp, cls):  # the type is already a subclass of this one, so just return it
-            return tp
-        # otherwise, create a new type that inherits from this class
-        return type(tp.__name__, (tp, cls), {})
-    def replace(self: T, **kwargs: Any) -> T:
-        """Constructs a new object with the provided fields modified."""
-        assert hasattr(self, '__dataclass_fields__'), f'{obj_class_name(self)} is not a dataclass type'
-        d = {field.name : getattr(self, field.name) for field in dataclasses.fields(self)}
-        for (key, val) in kwargs.items():
-            if (key in d):
-                d[key] = val
-            else:
-                raise TypeError(f'{key!r} is not a valid field for {obj_class_name(self)}')
-        return self.__class__(**d)  # type: ignore
-    @classmethod
-    def get_subclass_with_name(cls: Type[T], typename: str) -> Type[T]:
-        """Gets the subclass of this class with the given name.
-        Riases a TypeError if no such subclass exists."""
-        return get_subclass_with_name(cls, typename)
 
 class DictDataclass(DataclassMixin):
     """Base class for dataclasses that can be converted to and from a regular Python dict.
@@ -57,6 +30,7 @@ class DictDataclass(DataclassMixin):
     qualified_type: ClassVar[bool] = False
     strict: ClassVar[bool] = False
     nested: ClassVar[bool] = True
+    @classmethod
     def __init_subclass__(cls, **kwargs: Any) -> None:
         """When inheriting from this class, you may pass various flags as keyword arguments after the list of base classes; these will be stored as class variables."""
         super().__init_subclass__()
@@ -192,7 +166,7 @@ class DictDataclass(DataclassMixin):
                     try:
                         # NB: will resolve to the first valid type in the Union
                         return cls._convert_value(subtype, x)
-                    except:
+                    except:  # noqa: B001
                         continue
             elif hasattr(origin_type, 'from_dict'):
                 return cls._convert_dict_convertible(origin_type, x)

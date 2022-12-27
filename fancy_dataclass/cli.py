@@ -5,8 +5,8 @@ import dataclasses
 from enum import IntEnum
 from typing import Any, ClassVar, Dict, List, Optional, Type, TypeVar
 
+from fancy_dataclass.dict import DictDataclass
 from fancy_dataclass.utils import check_dataclass, issubclass_safe, obj_class_name
-from fancy_dataclass._dataclass import DictDataclass
 
 T = TypeVar('T')
 
