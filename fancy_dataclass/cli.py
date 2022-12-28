@@ -137,14 +137,19 @@ class ArgparseDataclass(DictDataclass):
         check_dataclass(cls)
         d = {}
         for field in dataclasses.fields(cls):
+            nested_field = False
             if issubclass_safe(field.type, ArgparseDataclass):
                 # recursively gather arguments for nested ArgparseDataclass
                 val = field.type.args_to_dict(args)
+                nested_field = True
             elif hasattr(args, field.name):  # extract arg from the namespace
                 val = getattr(args, field.name)
             else:  # argument not present
                 continue
-            d[field.name] = val
+            if nested_field and (not cls.nested):  # merge in nested ArgparseDataclass
+                d.update(val)
+            else:
+                d[field.name] = val
         return d
     @classmethod
     def from_args(cls: Type[T], args: Namespace) -> T:
