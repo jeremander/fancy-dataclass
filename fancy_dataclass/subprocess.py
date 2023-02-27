@@ -22,7 +22,7 @@ class SubprocessDataclass(DataclassMixin):
         val = getattr(self, name, None)
         if (val is None):  # optional value is None
             return []
-        elif issubclass_safe(field.type, SubprocessDataclass):  # get args via nested SubprocessDataclass
+        if issubclass_safe(field.type, SubprocessDataclass):  # get args via nested SubprocessDataclass
             return val.args(suppress_defaults = suppress_defaults)
         if field.metadata.get('exec', False):  # treat this field as the executable
             return [str(val)]

@@ -3,6 +3,7 @@ from dataclasses import is_dataclass, make_dataclass
 import importlib
 from typing import Any, Callable, List, Sequence, Tuple, Type, TypeVar, Union
 
+
 T = TypeVar('T')
 
 Constructor = Callable[[Any], Any]
@@ -62,7 +63,7 @@ def make_dataclass_with_constructors(cls_name: str, fields: Sequence[Union[str, 
         cls_name: name of the type
         fields: list of the field names, or field names with types
         constructors: list of one-argument constructors for each field"""
-    def __init__(self, *args: Any) -> None:
+    def __init__(self: object, *args: Any) -> None:
         # take inputs and wrap them in the provided constructors
         for (field, cons, arg) in zip(dataclasses.fields(self), constructors, args):
             setattr(self, field.name, cons(arg))

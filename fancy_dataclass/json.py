@@ -6,6 +6,7 @@ from typing import Any, IO, TextIO, Type, TypeVar
 
 from fancy_dataclass.dict import DictDataclass, JSONDict
 
+
 T = TypeVar('T')
 
 
@@ -41,31 +42,33 @@ class JSONSerializable(ABC):
             self.to_json(stream, **kwargs)
             return stream.getvalue()
     def to_file(self, fp: IO) -> None:
+        """Writes this object as JSON to fp, where fp is a writable file-like object (text or binary)."""
         if isinstance(fp, TextIOBase):  # text stream
             super().to_json(fp)
         else:  # binary
             fp.write(self.to_json_string().encode())
-    @classmethod
     @abstractclassmethod
-    def from_dict(cls: Type[T], d: JSONDict) -> T:
+    def from_dict(cls: Type[T], d: JSONDict) -> T:  # type: ignore
         """Constructs an object of this type from a JSON dict."""
     @classmethod
     def from_json(cls: Type[T], fp: TextIO, **kwargs: Any) -> T:
-        """Reads JSON from a file-like object and converts the context to this type."""
+        """Reads JSON from a file-like object and converts it to an object of this type."""
         d = json.load(fp, **kwargs)
         return cls.from_dict(d)
     @classmethod
     def from_json_string(cls: Type[T], s: str) -> T:
+        """Converts a JSON string to an object of this type."""
         d = json.loads(s)
         return cls.from_dict(d)
     @classmethod
     def from_file(cls: Type[T], fp: IO, **kwargs: Any) -> T:
+        """Reads JSON from a file-like object (text or binary) and converts it to an object of this type."""
         if isinstance(fp, TextIOBase):  # text stream
             return cls.from_json(fp, **kwargs)
         else:  # binary
             return cls.from_dict(json.load(fp))
 
-class JSONDataclass(DictDataclass, JSONSerializable):
+class JSONDataclass(DictDataclass, JSONSerializable):  # type: ignore
     """Subclass of JSONSerializable enabling default serialization of dataclass objects."""
     @classmethod
     def _convert_value(cls, tp: type, x: Any) -> Any:

@@ -1,3 +1,5 @@
 *.sqlite
 *.pyc
 __pycache__/
+tmp*
+TODO.txt

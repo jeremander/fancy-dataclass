@@ -6,6 +6,7 @@ from typing import Any, ClassVar, Container, Dict, List, Type, TypeVar, Union
 
 from fancy_dataclass.utils import check_dataclass, DataclassMixin, fully_qualified_class_name, issubclass_safe, obj_class_name
 
+
 T = TypeVar('T')
 JSONDict = Dict[str, Any]
 
@@ -166,7 +167,7 @@ class DictDataclass(DataclassMixin):
                     try:
                         # NB: will resolve to the first valid type in the Union
                         return cls._convert_value(subtype, x)
-                    except:  # noqa: B001
+                    except Exception:
                         continue
             elif hasattr(origin_type, 'from_dict'):
                 return cls._convert_dict_convertible(origin_type, x)
@@ -198,9 +199,9 @@ class DictDataclass(DataclassMixin):
             setattr(cls2, flag, getattr(cls, flag))
         cls2.nested = False
         # create method to convert from merged object to nested object
-        def _to_nested(self):
+        def _to_nested(self: object) -> object:
             kwargs = {}
-            nested_kwargs = defaultdict(dict)
+            nested_kwargs: Dict[str, Any] = defaultdict(dict)
             types_by_name = {field.name : field.type for field in dataclasses.fields(cls)}
             for field in dataclasses.fields(self):
                 key = field.name
@@ -238,8 +239,7 @@ class DictDataclass(DataclassMixin):
             elif (field.default == dataclasses.MISSING):
                 if (field.default_factory == dataclasses.MISSING):  # type: ignore
                     raise ValueError(f'{field.name!r} field is required')
-                else:
-                    kwargs[field.name] = field.default_factory()  # type: ignore
+                kwargs[field.name] = field.default_factory()
         return kwargs
     @classmethod
     def from_dict(cls: Type[T], d: JSONDict) -> T:

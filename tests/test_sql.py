@@ -1,11 +1,12 @@
 from dataclasses import dataclass
 from datetime import datetime
-import numpy as np
 import pickle
+from typing import Dict
+
+import numpy as np
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from typing import Dict
 
 from fancy_dataclass.sql import DEFAULT_REGISTRY, register, SQLDataclass
 
@@ -60,4 +61,3 @@ def test_container(session):
     ex = Example(3, 4.7, 'abc', datetime.now(), np.ones(5), {'a' : 1, 'b' : 2}, Obj())
     container = Container(ex)
     _test_sql_convert(container, session)
-

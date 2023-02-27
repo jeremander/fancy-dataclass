@@ -8,6 +8,7 @@ from typing_extensions import TypeAlias
 
 from fancy_dataclass.dict import DictDataclass
 
+
 T = TypeVar('T')
 ColumnMap = Dict[str, Column]
 Reg: TypeAlias = sqlalchemy.orm.decl_api.registry  # type: ignore
@@ -48,6 +49,7 @@ class SQLDataclass(DictDataclass):
     Some types are invalid for SQL fields; if such a type occurs, a `TypeError` will be raised."""
     @classmethod
     def get_columns(cls) -> ColumnMap:
+        """Gets a mapping from column names to sqlalchemy Column objects."""
         cols = {}
         for field in dataclasses.fields(cls):
             nullable = False

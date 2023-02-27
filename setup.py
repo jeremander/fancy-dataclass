@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 from setuptools import setup
+
 
 packages = ['fancy_dataclass']
 
@@ -22,4 +22,3 @@ setup_kwargs = {
 
 
 setup(**setup_kwargs)
-

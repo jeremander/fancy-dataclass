@@ -8,6 +8,7 @@ from typing import Any, ClassVar, Dict, List, Optional, Type, TypeVar
 from fancy_dataclass.dict import DictDataclass
 from fancy_dataclass.utils import check_dataclass, issubclass_safe, obj_class_name
 
+
 T = TypeVar('T')
 
 
@@ -76,13 +77,13 @@ class ArgparseDataclass(DictDataclass):
         if (origin_type is not None):  # compound type
             if (origin_type is ClassVar):  # by default, exclude ClassVars from the parser
                 return
-            else:
-                try:  # extract the first wrapped type (should handle List/Optional/Union)
-                    tp = getattr(tp, '__args__', ())[0]
-                except IndexError:  # type cannot be inferred
-                    raise ValueError(f'cannot infer type of items in field {name!r}')
-                if issubclass_safe(origin_type, list):
-                    kwargs['nargs'] = '*'  # allow multiple arguments by default
+            args = getattr(tp, '__args__', ())
+            if args:  # extract the first wrapped type (should handle List/Optional/Union)
+                tp = args[0]
+            else:  # type cannot be inferred
+                raise ValueError(f'cannot infer type of items in field {name!r}')
+            if issubclass_safe(origin_type, list):
+                kwargs['nargs'] = '*'  # allow multiple arguments by default
         if issubclass(tp, IntEnum):  # use a bare int type
             tp = int
         kwargs['type'] = tp
@@ -132,7 +133,7 @@ class ArgparseDataclass(DictDataclass):
         return parser
     @classmethod
     def args_to_dict(cls, args: Namespace) -> Dict[str, Any]:
-        """Converts a Namespace object to a dict that can be converted to the dataclass type.
+        """Converts an argparse.Namespace object to a dict that can be converted to the dataclass type.
         Override this to enable custom behavior."""
         check_dataclass(cls)
         d = {}
@@ -153,6 +154,7 @@ class ArgparseDataclass(DictDataclass):
         return d
     @classmethod
     def from_args(cls: Type[T], args: Namespace) -> T:
+        """Constructs an ArgparseDataclass from an argparse.Namespace."""
         return cls.from_dict(cls.args_to_dict(args))
     @classmethod
     def process_args(cls, parser: ArgumentParser, args: Namespace) -> None:
