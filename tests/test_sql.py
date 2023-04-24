@@ -5,7 +5,7 @@ from typing import Dict
 
 import numpy as np
 import pytest
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
 from fancy_dataclass.sql import DEFAULT_REGISTRY, register, SQLDataclass
@@ -53,7 +53,7 @@ def test_example(sqlite_engine, session):
     ex = Example(3, 4.7, 'abc', datetime.now(), np.ones(5), {'a' : 1, 'b' : 2}, Obj())
     _test_sql_convert(ex, session)
     with sqlite_engine.connect() as conn:
-        tup = next(iter(conn.execute('SELECT * FROM Example')))
+        tup = next(iter(conn.execute(text('SELECT * FROM Example'))))
         obj = pickle.loads(tup[-1])
         assert (obj == ex.g)
 
