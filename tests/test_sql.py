@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime
 import pickle
 from typing import Dict
+import warnings
 
 import numpy as np
 import pytest
@@ -45,7 +46,10 @@ def session(sqlite_engine):
 def _test_sql_convert(obj, session):
     session.add(obj)
     session.commit()
-    obj2 = session.query(type(obj)).one()
+    with warnings.catch_warnings():
+        # sqlalchemy may warn about floating-point error; just ignore this
+        warnings.simplefilter('ignore')
+        obj2 = session.query(type(obj)).one()
     assert (obj == obj2)
     assert set(obj.get_columns()).issubset({col.name for col in obj.__table__.columns})
 
