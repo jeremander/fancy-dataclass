@@ -42,11 +42,13 @@ def get_column_type(tp: type) -> type:
     else:
         return PickleType
 
+
 class SQLDataclass(DictDataclass):
     """A dataclass backed by a SQL table using the sqlalchemy ORM.
     All dataclass fields will correspond to SQL fields unless their metadata is marked with `sql=False`.
     A dataclass field may contain a "column" entry in its metadata. This will provide optional keyword arguments to be passed to sqlalchemy's Column constructor.
     Some types are invalid for SQL fields; if such a type occurs, a `TypeError` will be raised."""
+
     @classmethod
     def get_columns(cls) -> ColumnMap:
         """Gets a mapping from column names to sqlalchemy Column objects."""
@@ -79,6 +81,7 @@ class SQLDataclass(DictDataclass):
                 column_kwargs.update(field.metadata.get('column', {}))
                 cols[field.name] = Column(field.name, get_column_type(tp), **column_kwargs)
         return cols
+
 
 def register(reg: Reg = DEFAULT_REGISTRY, extra_cols: Optional[ColumnMap] = None) -> Callable[[Type[SQLDataclass]], Type[SQLDataclass]]:  # type: ignore
     """Decorator that registers a sqlalchemy table for a SQLDataclass.

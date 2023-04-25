@@ -18,6 +18,7 @@ def safe_dict_insert(d: JSONDict, key: str, val: Any) -> None:
         raise TypeError(f'duplicate key {key!r}')
     d[key] = val
 
+
 class DictDataclass(DataclassMixin):
     """Base class for dataclasses that can be converted to and from a regular Python dict.
     Subclasses may set the following flags as class attributes:
@@ -26,23 +27,27 @@ class DictDataclass(DataclassMixin):
         qualified_type: fully qualify the object type's name in its dict
         strict: raise a TypeError in `from_dict` if extraneous fields are present
         nested: if True, `DictDataclass` subfields will be nested; otherwise, they are merged together with the main fields (provided there are no name collisions)"""
+
     suppress_defaults: ClassVar[bool] = True
     store_type: ClassVar[bool] = False
     qualified_type: ClassVar[bool] = False
     strict: ClassVar[bool] = False
     nested: ClassVar[bool] = True
+
     @classmethod
     def __init_subclass__(cls, **kwargs: Any) -> None:
         """When inheriting from this class, you may pass various flags as keyword arguments after the list of base classes; these will be stored as class variables."""
         super().__init_subclass__()
         for (key, val) in kwargs.items():
             setattr(cls, key, val)
+
     def _dict_init(self) -> JSONDict:
         if self.__class__.qualified_type:
             return {'type' : fully_qualified_class_name(self.__class__)}
         elif self.__class__.store_type:
             return {'type' : obj_class_name(self)}
         return {}
+
     @classmethod
     def get_fields(cls) -> List[dataclasses.Field]:
         """Gets the list of fields in the object's dict representation."""
@@ -57,6 +62,7 @@ class DictDataclass(DataclassMixin):
             else:
                 flds.append(field)
         return flds
+
     def _to_dict(self, full: bool) -> JSONDict:
         def _to_value(x: Any) -> Any:
             if isinstance(x, Enum):
@@ -108,17 +114,20 @@ class DictDataclass(DataclassMixin):
                 else:  # nested dict OK
                     safe_dict_insert(d, name, field_val)
         return d
+
     def to_dict(self, **kwargs: Any) -> JSONDict:
         """Renders a dict which, by default, suppresses values matching their dataclass defaults.
         If full = True or the class's `suppress_defaults` is False, does not suppress default."""
         full = kwargs.get('full', not self.__class__.suppress_defaults)
         return self._to_dict(full)
+
     @staticmethod
     def _convert_dict_convertible(tp: type, x: Any) -> Any:
         if isinstance(x, tp):  # already converted from a dict
             return x
         # otherwise, convert from a dict
         return tp.from_dict(x)
+
     @classmethod
     def _convert_value(cls, tp: type, x: Any) -> Any:
         """Given a type and a value, attempts to convert the value to the given type."""
@@ -175,6 +184,7 @@ class DictDataclass(DataclassMixin):
                 subtype = tp.__args__[0]
                 return type(x)(cls._convert_value(subtype, y) for y in x)
         raise ValueError(f'could not convert {x!r} to type {tp!r}')
+
     @classmethod
     def _class_with_merged_fields(cls: Type[T]) -> Type[T]:
         """Converts this type into an isomorphic type where any nested DictDataclass fields have all of their subfields merged into the outer type."""
@@ -215,6 +225,7 @@ class DictDataclass(DataclassMixin):
             return cls(**kwargs)
         cls2._to_nested = _to_nested
         return cls2
+
     @classmethod
     def _dataclass_args_from_dict(cls, d: JSONDict) -> JSONDict:
         """Given a dict of arguments, performs type conversion and/or validity checking, then returns a new dict that can be passed to the class's constructor."""
@@ -241,6 +252,7 @@ class DictDataclass(DataclassMixin):
                     raise ValueError(f'{field.name!r} field is required')
                 kwargs[field.name] = field.default_factory()
         return kwargs
+
     @classmethod
     def from_dict(cls: Type[T], d: JSONDict) -> T:
         """Constructor from a dictionary of fields.

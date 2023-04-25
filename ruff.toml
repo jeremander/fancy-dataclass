@@ -30,7 +30,7 @@ ignore = [
     "B905",  # zip without explicit 'strict' parameter
     "D100",  # module-level docstring
     "D203",  # blank line before class docstring
-    "D204",  # blank line after class docstring
+    # "D204",  # blank line after class docstring
     "D205",  # blank line between summary and description
     "D208",  # extra indentation in docstring
     "D209",  # newline before closing quotes

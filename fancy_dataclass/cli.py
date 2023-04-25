@@ -26,27 +26,33 @@ class ArgparseDataclass(DictDataclass):
         metavar (name for the argument in usage messages)
         group (name of the argument group in which to put the argument; the group will be created if it does not already exist in the parser)
         exclude (boolean flag indicating that the field should not be included in the parser)"""
+
     @classmethod
     def parser_class(cls) -> Type[ArgumentParser]:
         """Gets the type of the top-level argument parser."""
         return ArgumentParser
+
     @classmethod
     def parser_description(cls) -> Optional[str]:
         """Gets a description string for the top-level argument parser.
         By default, uses the class's docstring."""
         return cls.__doc__
+
     @classmethod
     def parser_kwargs(cls) -> Dict[str, Any]:
         """Gets keyword arguments that will be passed to the top-level argument parser."""
         return {'description' : cls.parser_description()}
+
     @classmethod
     def parser_argument_kwarg_names(cls) -> List[str]:
         """Gets keyword argument names that will be passed when adding arguments to a parser."""
         return ['nargs', 'const', 'choices', 'help', 'metavar']
+
     @classmethod
     def new_parser(cls) -> ArgumentParser:
         """Constructs a new top-level argument parser and returns it."""
         return cls.parser_class()(**cls.parser_kwargs())
+
     @classmethod
     def configure_argument(cls, parser: ArgumentParser, name: str) -> None:
         """Given an argument parser and field name, configures the parser with an argument of that name.
@@ -118,6 +124,7 @@ class ArgparseDataclass(DictDataclass):
             if (key in field.metadata):
                 kwargs[key] = field.metadata[key]
         parser.add_argument(*args, **kwargs)
+
     @classmethod
     def configure_parser(cls, parser: ArgumentParser) -> None:
         """Given an argument parser, configures it by adding the appropriate arguments.
@@ -125,12 +132,14 @@ class ArgparseDataclass(DictDataclass):
         check_dataclass(cls)
         for name in cls.__dataclass_fields__:
             cls.configure_argument(parser, name)
+
     @classmethod
     def make_parser(cls) -> ArgumentParser:
         """Constructs an argument parser, configures it, and returns it."""
         parser = cls.new_parser()
         cls.configure_parser(parser)
         return parser
+
     @classmethod
     def args_to_dict(cls, args: Namespace) -> Dict[str, Any]:
         """Converts an argparse.Namespace object to a dict that can be converted to the dataclass type.
@@ -152,14 +161,17 @@ class ArgparseDataclass(DictDataclass):
             else:
                 d[field.name] = val
         return d
+
     @classmethod
     def from_args(cls: Type[T], args: Namespace) -> T:
         """Constructs an ArgparseDataclass from an argparse.Namespace."""
         return cls.from_dict(cls.args_to_dict(args))
+
     @classmethod
     def process_args(cls, parser: ArgumentParser, args: Namespace) -> None:
         """Processes arguments from an ArgumentParser, after they are parsed."""
         pass
+
     @classmethod
     def from_cli_args(cls: Type[T], arg_list: Optional[List[str]] = None) -> T:
         """Constructs and configures an argument parser, then parses the given command-line arguments and uses them to construct an instance of the class.
@@ -169,14 +181,17 @@ class ArgparseDataclass(DictDataclass):
         cls.process_args(parser, args)  # process arguments
         return cls.from_args(args)
 
+
 class CLIDataclass(ArgparseDataclass):
     """This subclass of ArgparseDataclass allows the user to run a `main` program based on the parsed arguments.
     Subclasses should override the `run` method to implement custom behavior."""
+
     @abstractmethod
     def run(self) -> None:
         """Runs the main body of the program.
         Subclasses must implement this to provide custom behavior."""
         raise NotImplementedError(f"no implementation of 'run' for class {obj_class_name(self)!r}")
+
     @classmethod
     def main(cls, arg_list: Optional[List[str]] = None) -> None:
         """Executes the following procedures in sequence:

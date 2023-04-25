@@ -10,6 +10,7 @@ class SubprocessDataclass(DataclassMixin):
         exec (boolean flag indicating that this field should be treated as the name of the executable, rather than an argument)
         args (list of command-line arguments corresponding to the field -- only the first will be used)
         exclude (boolean flag indicating that the field should not be included in the args)"""
+
     def get_arg(self, name: str, suppress_defaults: bool = False) -> List[str]:
         """Given the name of a dataclass field, gets the command-line args for that field.
         If suppress_defaults = True, suppresses arguments that are equal ot the default values."""
@@ -51,6 +52,7 @@ class SubprocessDataclass(DataclassMixin):
         elif (val is not None):  # convert the field value to a string
             return [arg, str(val)]
         return []
+
     def args(self, suppress_defaults: bool = False) -> List[str]:
         """Converts dataclass fields to a list of command-line arguments for a subprocess call.
         If suppress_defaults = True, suppresses arguments that are equal to the default values."""
