@@ -5,6 +5,7 @@
 - documentation
   - basic README
   - mkdocs/readthedocs
+- ConfigDataclass?
 - auto-wrap dataclass decorator when inheriting from DataclassMixin?
   - __init_subclass__
 - PyPI packaging

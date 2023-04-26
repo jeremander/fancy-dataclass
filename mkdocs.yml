@@ -19,5 +19,9 @@ plugins:
 
 nav:
   - index.md
+  - JSON conversion: json.md
+  - SQL persistence: sql.md
+  - CLI parsing: cli.md
+  - Subprocess calls: subprocess.md
   # defer to gen-files + literate-nav
   - Code Reference: reference/
