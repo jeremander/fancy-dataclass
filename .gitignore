@@ -2,7 +2,6 @@
 *.pyc
 __pycache__/
 tmp*
-TODO.txt
 *~
 .coverage
 .hypothesis

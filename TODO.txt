@@ -1,0 +1,11 @@
+- more test coverage
+  - cover more data types (dynamically generate dataclass types)
+  - more complex examples
+  - pytest.ini with coverage
+- documentation
+  - basic README
+  - mkdocs/readthedocs
+- auto-wrap dataclass decorator when inheriting from DataclassMixin?
+  - __init_subclass__
+- PyPI packaging
+- Github Actions for automated testing (with different Python versions)
