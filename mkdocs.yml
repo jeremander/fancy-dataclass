@@ -9,7 +9,13 @@ extra_css:
   - stylesheets/extra.css
 
 plugins:
-  - mkdocstrings
+  - mkdocstrings:
+      handlers:
+        python:
+          import:
+          - https://installer.readthedocs.io/en/stable/objects.inv
+          options:
+            filters: ["!^_[^_]", "_replace"]
   - search
   - gen-files:
       scripts:
@@ -25,3 +31,6 @@ nav:
   - Subprocess calls: subprocess.md
   # defer to gen-files + literate-nav
   - Code Reference: reference/
+
+watch:
+  - fancy_dataclass

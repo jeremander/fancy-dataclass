@@ -1,3 +1,5 @@
+"""Various utility functions and classes."""
+
 import dataclasses
 from dataclasses import is_dataclass, make_dataclass
 import importlib
@@ -10,7 +12,13 @@ Constructor = Callable[[Any], Any]
 
 
 def all_subclasses(cls: Type[T]) -> List[Type[T]]:
-    """Gets all subclasses of a given class, including the class itself."""
+    """Gets all subclasses of a given class, including the class itself.
+
+    Args:
+        cls: Input class
+
+    Returns:
+        List of subclasses of the input class"""
     subclasses = [cls]
     for subcls in cls.__subclasses__():
         subclasses += all_subclasses(subcls)
@@ -19,25 +27,54 @@ def all_subclasses(cls: Type[T]) -> List[Type[T]]:
     return subclasses
 
 def issubclass_safe(type1: type, type2: type) -> bool:
-    """Attempts to call issubclass(type1, type2).
-    This can raise a TypeError if type1 is something like a GenericAlias.
-    This function will catch such errors and return False."""
+    """Calls `issubclass(type1, type2)`, returning `False` if an error occurs.
+
+    Args:
+        type1: First type
+        type2: Second type
+
+    Returns:
+        `True` if `type1` is a subclass of `type2`
+
+    Raises:
+        TypeError: If `type1` is something like a `GenericAlias`"""
     try:
         return issubclass(type1, type2)
     except TypeError:
         return False
 
-def obj_class_name(obj: Any) -> str:
-    """Gets the name of the class of an object."""
+def obj_class_name(obj: object) -> str:
+    """Gets the name of the class of an object.
+
+    Args:
+        obj: A Python object
+
+    Returns:
+        Name of the object's class"""
     return obj.__class__.__name__
 
 def fully_qualified_class_name(cls: type) -> str:
-    """Given a class, gets its fully qualified class name (includes module and class name)."""
+    """Gets the fully qualified name of a class (including full module path and class name).
+
+    Args:
+        cls: A Python class
+
+    Returns:
+        Fully qualified name of the class"""
     return str(cls).split("'")[-2]
 
 def get_subclass_with_name(cls: Type[T], name: str) -> Type[T]:
-    """If a given name is a subclass of cls, returns the corresponding subclass.
-    Otherwise, raises a ValueError."""
+    """Gets the subclass of a class with the given name.
+
+    Args:
+        cls: A Python class
+        name: Name of the subclass
+
+    Returns:
+        Subclass of `cls` with the given name
+
+    Raises:
+        ValueError: If no subclass with the given name exists"""
     fully_qualified = '.' in name
     cls_name = fully_qualified_class_name(cls) if fully_qualified else cls.__name__
     if (cls_name == name):
@@ -54,15 +91,26 @@ def get_subclass_with_name(cls: Type[T], name: str) -> Type[T]:
         raise ValueError(f'{name} is not a known subclass of {cls.__name__}')
 
 def check_dataclass(cls: type) -> None:
-    """Checks if a type is a dataclass, raising a TypeError otherwise."""
+    """Checks whether a given type is a dataclass, raising a `TypeError` otherwise.
+
+    Args:
+        cls: A Python type
+
+    Raises:
+        TypeError: If the given type is not a dataclass"""
     if (not is_dataclass(cls)):
         raise TypeError(f'{cls.__name__} is not a dataclass')
 
 def make_dataclass_with_constructors(cls_name: str, fields: Sequence[Union[str, Tuple[str, type]]], constructors: Sequence[Constructor]) -> type:
     """Type factory for dataclasses with custom constructors.
-        cls_name: name of the type
-        fields: list of the field names, or field names with types
-        constructors: list of one-argument constructors for each field"""
+
+    Args:
+        cls_name: Name of the dataclass type
+        fields: List of field names, or pairs of field names and types
+        constructors: List of one-argument constructors for each field
+
+    Returns:
+        A dataclass type with the given fields and constructors"""
     def __init__(self: object, *args: Any) -> None:
         # take inputs and wrap them in the provided constructors
         for (field, cons, arg) in zip(dataclasses.fields(self), constructors, args):
@@ -75,12 +123,24 @@ def make_dataclass_with_constructors(cls_name: str, fields: Sequence[Union[str, 
 
 
 class DataclassMixin:
-    """Mixin class that adds some functionality to a dataclass (for example, conversion to/from JSON or argparse arguments.
-    This class provides a `wrap_dataclass` decorator which can be used to wrap an existing dataclass into one that provides the mixin's functionality."""
+    """Mixin class that adds some functionality to a dataclass.
+
+    For example, this could provide features for conversion to/from JSON (see [`JSONDataclass`][fancy_dataclass.json.JSONDataclass]), or the ability to construct CLI argument parsers (see [`ArgparseDataclass`][fancy_dataclass.cli.ArgparseDataclass]).
+
+    This mixin provides a [`wrap_dataclass`][fancy_dataclass.utils.DataclassMixin.wrap_dataclass] decorator which can be used to wrap an existing dataclass into one that provides the mixin's functionality."""
 
     @classmethod
     def wrap_dataclass(cls: Type[T], tp: Type[T]) -> Type[T]:
-        """Given a dataclass type, constructs a new type that is a subclass of this mixin class and is otherwise the same."""
+        """Wraps a dataclass type into a new one which inherits from this mixin class and is otherwise the same.
+
+        Args:
+            tp: A dataclass type
+
+        Returns:
+            New dataclass type inheriting from the mixin
+
+        Raises:
+            TypeError: If the given type is not a dataclass"""
         check_dataclass(tp)
         if issubclass(tp, cls):  # the type is already a subclass of this one, so just return it
             return tp
@@ -88,7 +148,16 @@ class DataclassMixin:
         return type(tp.__name__, (tp, cls), {})
 
     def _replace(self: T, **kwargs: Any) -> T:
-        """Constructs a new object with the provided fields modified."""
+        """Constructs a new object with the provided fields modified.
+
+        Args:
+            **kwargs: Dataclass fields to modify
+
+        Returns:
+            New object with selected fields modified
+
+        Raises:
+            TypeError: If an invalid dataclass field is provided"""
         assert hasattr(self, '__dataclass_fields__'), f'{obj_class_name(self)} is not a dataclass type'
         d = {field.name : getattr(self, field.name) for field in dataclasses.fields(self)}
         for (key, val) in kwargs.items():
@@ -101,5 +170,13 @@ class DataclassMixin:
     @classmethod
     def get_subclass_with_name(cls: Type[T], typename: str) -> Type[T]:
         """Gets the subclass of this class with the given name.
-        Riases a TypeError if no such subclass exists."""
+
+        Args:
+            typename: Name of subclass
+
+        Returns:
+            Subclass with the given name
+
+        Raises:
+            TypeError: If no subclass with the given name exists"""
         return get_subclass_with_name(cls, typename)

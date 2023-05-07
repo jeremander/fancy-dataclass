@@ -30,3 +30,7 @@
   color: #303030;
   font-weight: bold;
 }
+
+a.autorefs:not(:hover) {
+  color: #2000bb;
+}

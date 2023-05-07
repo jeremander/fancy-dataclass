@@ -38,6 +38,9 @@ ignore = [
     "D400",  # first line ending with period
     "D401",  # docstrings in imperative mood
     "D404",  # first word of docstring is "this"
+    "D406",
+    "D407",
+    "D413",  # blank line after last section
     "D415",  # first line ending with punctuation
     "E501",  # line length
     "PT001",  # use of pytest.fixture (with no parens)
