@@ -12,8 +12,15 @@ JSONDict = Dict[str, Any]
 
 
 def safe_dict_insert(d: JSONDict, key: str, val: Any) -> None:
-    """Inserts a (key, value) pair into a dict.
-    Raises a TypeError if the key is already in the dict."""
+    """Inserts a (key, value) pair into a dict, if the key is not already present.
+
+    Args:
+        d: Dict to modify
+        key: Key to insert
+        val: Value to insert
+
+    Raises:
+        TypeError: If the key is already in the dict"""
     if (key in d):
         raise TypeError(f'duplicate key {key!r}')
     d[key] = val
@@ -21,12 +28,13 @@ def safe_dict_insert(d: JSONDict, key: str, val: Any) -> None:
 
 class DictDataclass(DataclassMixin):
     """Base class for dataclasses that can be converted to and from a regular Python dict.
-    Subclasses may set the following flags as class attributes:
-        suppress_defaults: suppress default values in its dict
-        store_type: store the object's type in its dict
-        qualified_type: fully qualify the object type's name in its dict
-        strict: raise a TypeError in `from_dict` if extraneous fields are present
-        nested: if True, `DictDataclass` subfields will be nested; otherwise, they are merged together with the main fields (provided there are no name collisions)"""
+
+    Subclasses may set the following boolean flags as class attributes:
+        - `suppress_defaults`: suppress default values in its dict
+        - `store_type`: store the object's type in its dict
+        - `qualified_type`: fully qualify the object type's name in its dict
+        - `strict`: raise a `TypeError` in [`from_dict`][fancy_dataclass.dict.DictDataclass.from_dict] if extraneous fields are present
+        - `nested`: if True, [`DictDataclass`][fancy_dataclass.dict.DictDataclass] subfields will be nested; otherwise, they are merged together with the main fields (provided there are no name collisions)"""
 
     suppress_defaults: ClassVar[bool] = True
     store_type: ClassVar[bool] = False
@@ -50,7 +58,10 @@ class DictDataclass(DataclassMixin):
 
     @classmethod
     def get_fields(cls) -> List[dataclasses.Field]:
-        """Gets the list of fields in the object's dict representation."""
+        """Gets the list of fields in the object's dict representation.
+
+        Returns:
+            A list of `dataclasses.Field` objects containing field metadata"""
         flds = []
         for field in dataclasses.fields(cls):
             try:
@@ -117,7 +128,11 @@ class DictDataclass(DataclassMixin):
 
     def to_dict(self, **kwargs: Any) -> JSONDict:
         """Renders a dict which, by default, suppresses values matching their dataclass defaults.
-        If full = True or the class's `suppress_defaults` is False, does not suppress default."""
+
+        If `full = True` or the class has set the `suppress_defaults` flag to False, does not suppress the defaults.
+
+        Returns:
+            A dict whose keys match the dataclass's fields"""
         full = kwargs.get('full', not self.__class__.suppress_defaults)
         return self._to_dict(full)
 
@@ -259,8 +274,15 @@ class DictDataclass(DataclassMixin):
 
     @classmethod
     def from_dict(cls: Type[T], d: JSONDict) -> T:
-        """Constructor from a dictionary of fields.
-        This may perform some basic type/validity checking."""
+        """Constructs an object from a dictionary of fields.
+
+        This may also perform some basic type/validity checking.
+
+        Args:
+            d: Dict to convert into an object
+
+        Returns:
+            Converted object of this class"""
         # first establish the type, which may be present in the 'type' field of the dict
         typename = d.get('type')
         if (typename is None):  # type field unspecified, so use the calling class
