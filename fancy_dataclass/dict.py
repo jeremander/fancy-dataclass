@@ -2,7 +2,7 @@ from collections import defaultdict
 import dataclasses
 from datetime import datetime
 from enum import Enum
-from typing import Any, ClassVar, Container, Dict, List, Type, TypeVar, Union
+from typing import Any, ClassVar, Container, Dict, List, Literal, Type, TypeVar, Union
 
 from fancy_dataclass.utils import check_dataclass, DataclassMixin, fully_qualified_class_name, issubclass_safe, obj_class_name
 
@@ -178,9 +178,13 @@ class DictDataclass(DataclassMixin):
                         return cls._convert_value(subtype, x)
                     except Exception:
                         continue
+            elif (origin_type == Literal):
+                if any((x == arg) for arg in tp.__args__):
+                    # one of the Literal options is matched
+                    return x
             elif hasattr(origin_type, 'from_dict'):
                 return cls._convert_dict_convertible(origin_type, x)
-            elif issubclass(origin_type, Container):  # arbitrary container
+            elif issubclass_safe(origin_type, Container):  # arbitrary container
                 subtype = tp.__args__[0]
                 return type(x)(cls._convert_value(subtype, y) for y in x)
         raise ValueError(f'could not convert {x!r} to type {tp!r}')
