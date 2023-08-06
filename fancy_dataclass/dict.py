@@ -133,6 +133,8 @@ class DictDataclass(DataclassMixin):
         """Given a type and a value, attempts to convert the value to the given type."""
         if (x is None):
             return None
+        if (tp in [Any, 'typing.Any']):  # assume basic data type
+            return x
         if issubclass_safe(tp, list):
             # class may inherit from List[T], so get the parent class
             for base in tp.__orig_bases__:
@@ -142,9 +144,7 @@ class DictDataclass(DataclassMixin):
                     break
         origin_type = getattr(tp, '__origin__', None)
         if (origin_type is None):  # basic class or type
-            if (tp == Any):  # assume basic data type
-                return x
-            elif (type(tp) == TypeVar):
+            if (type(tp) == TypeVar):
                 # can't refer to instantiated type, so we assume a basic data type
                 # NB: this limitation means we can only use TypeVar for basic types
                 return x
