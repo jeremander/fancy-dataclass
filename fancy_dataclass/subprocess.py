@@ -6,14 +6,22 @@ from fancy_dataclass.utils import DataclassMixin, issubclass_safe
 
 class SubprocessDataclass(DataclassMixin):
     """Mixin class providing a method for converting dataclass fields to command-line args that can be used to make a subprocess call.
-    Other arguments can be passed into the 'metadata' field of a dataclass field, namely:
-        exec (boolean flag indicating that this field should be treated as the name of the executable, rather than an argument)
-        args (list of command-line arguments corresponding to the field -- only the first will be used)
-        exclude (boolean flag indicating that the field should not be included in the args)"""
+
+    Other arguments can be passed into the `metadata` argument of a `dataclasses.field`, namely:
+
+    - `exec` (boolean flag indicating that this field should be treated as the name of the executable, rather than an argument)
+    - `args` (list of command-line arguments corresponding to the field—only the first will be used)
+    - `exclude` (boolean flag indicating that the field should not be included in the args)"""
 
     def get_arg(self, name: str, suppress_defaults: bool = False) -> List[str]:
         """Given the name of a dataclass field, gets the command-line args for that field.
-        If suppress_defaults = True, suppresses arguments that are equal ot the default values."""
+
+        Args:
+            name: Name of dataclass field
+            suppress_defaults: If `True`, suppresses arguments that are equal to the default values
+
+        Returns:
+            List of command-line args corresponding to the field"""
         field = self.__dataclass_fields__[name]
         if field.metadata.get('exclude', False):  # exclude the argument
             return []
@@ -55,7 +63,12 @@ class SubprocessDataclass(DataclassMixin):
 
     def args(self, suppress_defaults: bool = False) -> List[str]:
         """Converts dataclass fields to a list of command-line arguments for a subprocess call.
-        If suppress_defaults = True, suppresses arguments that are equal to the default values."""
+
+        Args:
+            suppress_defaults: If `True`, suppresses arguments that are equal to the default values
+
+        Returns:
+            List of command-line args corresponding to the dataclass fields"""
         args = []
         for name in self.__dataclass_fields__:
             args += self.get_arg(name, suppress_defaults = suppress_defaults)

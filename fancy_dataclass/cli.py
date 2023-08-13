@@ -254,6 +254,7 @@ class CLIDataclass(ArgparseDataclass):
     @classmethod
     def main(cls, arg_list: Optional[List[str]] = None) -> None:
         """Executes the following procedures in sequence:
+
             1. Constructs a new argument parser.
             2. Configures the parser with appropriate arguments.
             3. Parses command-line arguments.
