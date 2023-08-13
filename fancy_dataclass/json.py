@@ -15,15 +15,20 @@ class JSONSerializable(ABC):
 
     @abstractmethod
     def to_dict(self, **kwargs: Any) -> JSONDict:
-        """Converts an object to a dict that can be readily converted into JSON."""
+        """Converts an object to a dict that can be readily converted into JSON.
+
+        Returns:
+            A JSON-convertible dict"""
 
     def _json_encoder(self) -> Type[JSONEncoder]:
-        """Override this method to create a custom JSON encoder to handle specific data types.
+        """Override this method to create a custom `JSONEncoder` to handle specific data types.
         A skeleton for this looks like:
 
+        ```
         class Encoder(JSONEncoder):
             def default(self, obj):
                 return json.JSONEncoder.default(self, obj)
+        ```
         """
         return JSONEncoder
 
@@ -32,8 +37,7 @@ class JSONSerializable(ABC):
         """Override this method to decode a JSON key, for use with `from_dict`."""
         return key
 
-    def to_json(self, fp: TextIO, **kwargs: Any) -> None:
-        """Writes the object as JSON to fp, where fp is a writable file-like object."""
+    def _to_json(self, fp: TextIO, **kwargs: Any) -> None:
         indent = kwargs.get('indent')
         if (indent is not None) and (indent < 0):
             kwargs['indent'] = None
@@ -41,46 +45,58 @@ class JSONSerializable(ABC):
         d = self.to_dict()
         json.dump(d, fp, **kwargs)
 
-    def to_json_string(self, **kwargs: Any) -> str:
-        """Converts the object into a JSON string."""
-        with StringIO() as stream:
-            self.to_json(stream, **kwargs)
-            return stream.getvalue()
+    def to_json(self, fp: IO, **kwargs: Any) -> None:
+        """Writes the object as JSON to a file-like object (text or binary).
+        If binary, applies UTF-8 encoding.
 
-    def to_file(self, fp: IO) -> None:
-        """Writes this object as JSON to fp, where fp is a writable file-like object (text or binary)."""
+        Args:
+            fp: a writable file-like object
+            kwargs: keyword arguments passed to `json.dump`"""
         if isinstance(fp, TextIOBase):  # text stream
-            super().to_json(fp)
+            self._to_json(fp, **kwargs)
         else:  # binary
-            fp.write(self.to_json_string().encode())
+            fp.write(self.to_json_string(**kwargs).encode())
+
+    def to_json_string(self, **kwargs: Any) -> str:
+        """Converts the object into a JSON string.
+
+        Args:
+            kwargs: keyword arguments passed to `json.dump`"""
+        with StringIO() as stream:
+            self._to_json(stream, **kwargs)
+            return stream.getvalue()
 
     @abstractclassmethod
     def from_dict(cls: Type[T], d: JSONDict) -> T:  # type: ignore
-        """Constructs an object of this type from a JSON dict."""
+        """Constructs an object from a dictionary of fields.
+
+        Args:
+            d: Dict to convert into an object
+
+        Returns:
+            Converted object of this class"""
 
     @classmethod
-    def from_json(cls: Type[T], fp: TextIO, **kwargs: Any) -> T:
-        """Reads JSON from a file-like object and converts it to an object of this type."""
-        d = json.load(fp, **kwargs)
-        return cls.from_dict(d)
+    def from_json(cls: Type[T], fp: IO, **kwargs: Any) -> T:
+        """Constructs an object from a JSON file-like object (text or binary).
+
+        Args:
+            fp: a readable file-like object
+            kwargs: keyword arguments passed to `json.load`"""
+        return cls.from_dict(json.load(fp, **kwargs))
 
     @classmethod
-    def from_json_string(cls: Type[T], s: str) -> T:
-        """Converts a JSON string to an object of this type."""
-        d = json.loads(s)
-        return cls.from_dict(d)
+    def from_json_string(cls: Type[T], s: str, **kwargs: Any) -> T:
+        """Constructs an object from a JSON string.
 
-    @classmethod
-    def from_file(cls: Type[T], fp: IO, **kwargs: Any) -> T:
-        """Reads JSON from a file-like object (text or binary) and converts it to an object of this type."""
-        if isinstance(fp, TextIOBase):  # text stream
-            return cls.from_json(fp, **kwargs)
-        else:  # binary
-            return cls.from_dict(json.load(fp))
+        Args:
+            s: JSON string
+            kwargs: keyword arguments passed to `json.loads`"""
+        return cls.from_dict(json.loads(s, **kwargs))
 
 
 class JSONDataclass(DictDataclass, JSONSerializable):  # type: ignore
-    """Subclass of JSONSerializable enabling default serialization of dataclass objects."""
+    """Subclass of `JSONSerializable` enabling default serialization of dataclass objects to and from JSON."""
 
     @classmethod
     def _convert_value(cls, tp: type, x: Any) -> Any:
@@ -95,4 +111,4 @@ class JSONDataclass(DictDataclass, JSONSerializable):  # type: ignore
 
 class JSONBaseDataclass(JSONDataclass, qualified_type = True):
     """This class should be used in place of `JSONDataclass` when you intend to inherit from the class.
-    When converting a subclass to a dict with `to_dict`, it will store the subclass's type in the 'type' field. It will also resolve this type on `from_dict`."""
+    When converting a subclass to a dict with `to_dict`, it will store the subclass's type in the `type` field. It will also resolve this type on `from_dict`."""

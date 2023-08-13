@@ -19,6 +19,7 @@ plugins:
   - search
   - gen-files:
       scripts:
+        # see https://mkdocstrings.github.io/recipes/
         - docs/gen_ref_pages.py
   - literate-nav:
       nav_file: SUMMARY.md

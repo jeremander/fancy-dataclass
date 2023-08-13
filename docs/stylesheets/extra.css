@@ -1,7 +1,6 @@
 :root {
   --md-primary-fg-color: black;
   --md-accent-fg-color: red;
-  --md-default-bg-color: green;
 }
 
 .md-header__topic {
