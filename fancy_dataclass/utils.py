@@ -3,13 +3,27 @@
 import dataclasses
 from dataclasses import is_dataclass, make_dataclass
 import importlib
-from typing import Any, Callable, List, Sequence, Tuple, Type, TypeVar, Union
+from typing import Any, Callable, Dict, List, Sequence, Tuple, Type, TypeVar, Union
 
 
 T = TypeVar('T')
 
 Constructor = Callable[[Any], Any]
 
+
+def safe_dict_update(d1: Dict[str, Any], d2: Dict[str, Any]) -> None:
+    """Updates the first dict with the second, in-place.
+
+    Args:
+        d1: First dict, to be updated
+        d2: Second dict
+
+    Raises:
+        ValueError: If any dict keys overlap"""
+    for (key, val) in d2.items():
+        if (key in d1):
+            raise ValueError(f'duplicate key {key!r}')
+        d1[key] = val
 
 def all_subclasses(cls: Type[T]) -> List[Type[T]]:
     """Gets all subclasses of a given class, including the class itself.

@@ -50,8 +50,8 @@ class JSONSerializable(ABC):
         If binary, applies UTF-8 encoding.
 
         Args:
-            fp: a writable file-like object
-            kwargs: keyword arguments passed to `json.dump`"""
+            fp: A writable file-like object
+            kwargs: Keyword arguments passed to `json.dump`"""
         if isinstance(fp, TextIOBase):  # text stream
             self._to_json(fp, **kwargs)
         else:  # binary
@@ -61,7 +61,7 @@ class JSONSerializable(ABC):
         """Converts the object into a JSON string.
 
         Args:
-            kwargs: keyword arguments passed to `json.dump`
+            kwargs: Keyword arguments passed to `json.dump`
 
         Returns:
             Object rendered as a JSON string"""
@@ -84,8 +84,8 @@ class JSONSerializable(ABC):
         """Constructs an object from a JSON file-like object (text or binary).
 
         Args:
-            fp: a readable file-like object
-            kwargs: keyword arguments passed to `json.load`
+            fp: A readable file-like object
+            kwargs: Keyword arguments passed to `json.load`
 
         Returns:
             Converted object of this class"""
@@ -97,7 +97,7 @@ class JSONSerializable(ABC):
 
         Args:
             s: JSON string
-            kwargs: keyword arguments passed to `json.loads`
+            kwargs: Keyword arguments passed to `json.loads`
 
         Returns:
             Converted object of this class"""

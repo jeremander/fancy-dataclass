@@ -1,32 +1,30 @@
 import dataclasses
 from datetime import datetime
-from typing import Any, Callable, Dict, Optional, Type, TypeVar, Union
+from typing import Callable, Dict, Optional, Type, TypeVar, Union
 
 from sqlalchemy import Boolean, Column, DateTime, Integer, LargeBinary, Numeric, PickleType, String, Table
 import sqlalchemy.orm
 from typing_extensions import TypeAlias
 
 from fancy_dataclass.dict import DictDataclass
+from fancy_dataclass.utils import safe_dict_update
 
 
 T = TypeVar('T')
-ColumnMap = Dict[str, Column]
 Reg: TypeAlias = sqlalchemy.orm.decl_api.registry  # type: ignore
 
 # default sqlalchemy registry
 DEFAULT_REGISTRY = sqlalchemy.orm.registry()
 
 
-def safe_update(d1: Dict[str, Any], d2: Dict[str, Any]) -> None:
-    """Updates the first dict with the second.
-    Raises a ValueError if any keys overlap."""
-    for (key, val) in d2.items():
-        if (key in d1):
-            raise ValueError(f'duplicate key {key!r}')
-        d1[key] = val
-
 def get_column_type(tp: type) -> type:
-    """Given a Python type, returns a corresponding sqlalchemy column type."""
+    """Converts from a Python type to a corresponding sqlalchemy column type.
+
+    Args:
+        tp: A Python type
+
+    Returns:
+        Corresponding sqlalchemy column type"""
     if issubclass(tp, str):
         return String
     elif issubclass(tp, bool):
@@ -44,14 +42,20 @@ def get_column_type(tp: type) -> type:
 
 
 class SQLDataclass(DictDataclass):
-    """A dataclass backed by a SQL table using the sqlalchemy ORM.
+    """A dataclass backed by a SQL table using the [sqlalchemy](https://www.sqlalchemy.org) ORM.
+
     All dataclass fields will correspond to SQL fields unless their metadata is marked with `sql=False`.
-    A dataclass field may contain a "column" entry in its metadata. This will provide optional keyword arguments to be passed to sqlalchemy's Column constructor.
+
+    A dataclass field may contain a `"column"` entry in its `metadata` dict. This will provide optional keyword arguments to be passed to sqlalchemy's `Column` constructor.
+
     Some types are invalid for SQL fields; if such a type occurs, a `TypeError` will be raised."""
 
     @classmethod
-    def get_columns(cls) -> ColumnMap:
-        """Gets a mapping from column names to sqlalchemy Column objects."""
+    def get_columns(cls) -> Dict[str, Column]:
+        """Gets a mapping from the class's column names to sqlalchemy `Column` objects.
+
+        Returns:
+            Dict from column names to `Column` objects"""
         cols = {}
         for field in dataclasses.fields(cls):
             nullable = False
@@ -83,13 +87,18 @@ class SQLDataclass(DictDataclass):
         return cols
 
 
-def register(reg: Reg = DEFAULT_REGISTRY, extra_cols: Optional[ColumnMap] = None) -> Callable[[Type[SQLDataclass]], Type[SQLDataclass]]:  # type: ignore
-    """Decorator that registers a sqlalchemy table for a SQLDataclass.
-        reg: sqlalchemy registry for mapping the class to the SQL table
-        extra_cols: additional columns (beyond the dataclass fields) to be stored in the table"""
+def register(reg: Reg = DEFAULT_REGISTRY, extra_cols: Optional[Dict[str, Column]] = None) -> Callable[[Type[SQLDataclass]], Type[SQLDataclass]]:
+    """Decorator that registers a sqlalchemy table for a [`SQLDataclass`][fancy_dataclass.sql.SQLDataclass].
+
+    Args:
+        reg: sqlalchemy registry for mapping the class to a SQL table
+        extra_cols: Additional columns (beyond the dataclass fields) to be stored in the table
+
+    Returns:
+        A new `dataclass` type mapped to a registered sqlalchemy table"""
     def _orm_table(cls: Type[SQLDataclass]) -> Type[SQLDataclass]:
         cols = {} if (extra_cols is None) else dict(extra_cols)
-        safe_update(cols, cls.get_columns())
+        safe_dict_update(cols, cls.get_columns())
         has_primary_key = any(fld.primary_key for fld in cols.values())
         if (not has_primary_key):
             if ('_id' in cols):

@@ -31,6 +31,14 @@ class DC2Sub(DC2):
 class DC3(JSONDataclass):
     list: List[int]  # noqa: A003
 
+class MyObject:
+    """This object is not JSON-serializable."""
+
+@dataclass
+class NonJSONSerializable(JSONDataclass):
+    x: int
+    obj: MyObject
+
 
 TEST_JSON = [
     DC1(3, 4.7, 'abc'),
@@ -80,3 +88,9 @@ def test_base_json_dataclass():
     assert (obj2 == obj)
     obj2 = DC2.from_dict(obj.to_dict())
     assert (obj2 == obj)
+
+def test_invalid_json_obj():
+    """Attempts to convert an object to JSON that is not JSONSerializable."""
+    obj = NonJSONSerializable(3, MyObject())
+    with pytest.raises(TypeError):
+        obj.to_json_string()

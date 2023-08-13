@@ -30,6 +30,6 @@
   font-weight: bold;
 }
 
-a.autorefs:not(:hover) {
+.md-content a:not(:hover), a.autorefs:not(:hover) {
   color: #2000bb;
 }
