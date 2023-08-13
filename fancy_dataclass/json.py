@@ -61,7 +61,10 @@ class JSONSerializable(ABC):
         """Converts the object into a JSON string.
 
         Args:
-            kwargs: keyword arguments passed to `json.dump`"""
+            kwargs: keyword arguments passed to `json.dump`
+
+        Returns:
+            Object rendered as a JSON string"""
         with StringIO() as stream:
             self._to_json(stream, **kwargs)
             return stream.getvalue()
@@ -82,7 +85,10 @@ class JSONSerializable(ABC):
 
         Args:
             fp: a readable file-like object
-            kwargs: keyword arguments passed to `json.load`"""
+            kwargs: keyword arguments passed to `json.load`
+
+        Returns:
+            Converted object of this class"""
         return cls.from_dict(json.load(fp, **kwargs))
 
     @classmethod
@@ -91,12 +97,15 @@ class JSONSerializable(ABC):
 
         Args:
             s: JSON string
-            kwargs: keyword arguments passed to `json.loads`"""
+            kwargs: keyword arguments passed to `json.loads`
+
+        Returns:
+            Converted object of this class"""
         return cls.from_dict(json.loads(s, **kwargs))
 
 
 class JSONDataclass(DictDataclass, JSONSerializable):  # type: ignore
-    """Subclass of `JSONSerializable` enabling default serialization of dataclass objects to and from JSON."""
+    """Subclass of [`JSONSerializable`][fancy_dataclass.json.JSONSerializable] enabling default serialization of dataclass objects to and from JSON."""
 
     @classmethod
     def _convert_value(cls, tp: type, x: Any) -> Any:
@@ -110,5 +119,5 @@ class JSONDataclass(DictDataclass, JSONSerializable):  # type: ignore
 
 
 class JSONBaseDataclass(JSONDataclass, qualified_type = True):
-    """This class should be used in place of `JSONDataclass` when you intend to inherit from the class.
-    When converting a subclass to a dict with `to_dict`, it will store the subclass's type in the `type` field. It will also resolve this type on `from_dict`."""
+    """This class should be used in place of [`JSONDataclass`][fancy_dataclass.json.JSONDataclass] when you intend to inherit from the class.
+    When converting a subclass to a dict with [`to_dict`][fancy_dataclass.json.JSONSerializable.to_dict], it will store the subclass's type in the `type` field. It will also resolve this type on [`from_dict`][fancy_dataclass.json.JSONSerializable.from_dict]."""
