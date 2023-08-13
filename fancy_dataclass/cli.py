@@ -1,4 +1,4 @@
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from argparse import ArgumentParser, Namespace
 from contextlib import suppress
 import dataclasses
@@ -6,7 +6,7 @@ from enum import IntEnum
 from typing import Any, ClassVar, Dict, List, Optional, Type, TypeVar
 
 from fancy_dataclass.dict import DictDataclass
-from fancy_dataclass.utils import check_dataclass, issubclass_safe, obj_class_name
+from fancy_dataclass.utils import check_dataclass, issubclass_safe
 
 
 T = TypeVar('T')
@@ -140,7 +140,7 @@ class ArgparseDataclass(DictDataclass):
                 kwargs['default'] = field.default_factory()
         else:
             kwargs['default'] = field.default
-        if (field.type is bool):  # use boolean falg instead of an argument
+        if (field.type is bool):  # use boolean flag instead of an argument
             kwargs['action'] = 'store_true'
             for key in ('type', 'required'):
                 with suppress(KeyError):
@@ -239,7 +239,7 @@ class ArgparseDataclass(DictDataclass):
         return cls.from_args(args)
 
 
-class CLIDataclass(ArgparseDataclass):
+class CLIDataclass(ABC, ArgparseDataclass):
     """This subclass of [`ArgparseDataclass`][fancy_dataclass.cli.ArgparseDataclass] allows the user to run a `main` program based on the parsed arguments.
 
     Subclasses must override the `run` method to implement custom behavior."""
@@ -249,7 +249,6 @@ class CLIDataclass(ArgparseDataclass):
         """Runs the main body of the program.
 
         Subclasses must implement this to provide custom behavior."""
-        raise NotImplementedError(f"no implementation of 'run' for class {obj_class_name(self)!r}")
 
     @classmethod
     def main(cls, arg_list: Optional[List[str]] = None) -> None:

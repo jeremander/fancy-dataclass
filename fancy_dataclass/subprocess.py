@@ -14,6 +14,16 @@ class SubprocessDataclass(DataclassMixin):
     - `args` (list of command-line arguments corresponding to the field—only the first will be used)
     - `exclude` (boolean flag indicating that the field should not be included in the args)"""
 
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__(**kwargs)
+        exec_field = None
+        for (name, field) in cls.__dataclass_fields__.items():
+            if field.metadata.get('exec', False):
+                if (exec_field is None):
+                    exec_field = name
+                else:
+                    raise TypeError("cannot have more than one field with 'exec' flag set to True")
+
     def get_arg(self, name: str, suppress_defaults: bool = False) -> List[str]:
         """Given the name of a dataclass field, gets the command-line args for that field.
 
@@ -34,8 +44,8 @@ class SubprocessDataclass(DataclassMixin):
             return []
         if issubclass_safe(field.type, SubprocessDataclass):  # get args via nested SubprocessDataclass
             return val.args(suppress_defaults = suppress_defaults)
-        if field.metadata.get('exec', False):  # treat this field as the executable
-            return [str(val)]
+        if field.metadata.get('exec', False):  # this field is the executable, so return no arguments
+            return []
         if suppress_defaults:  # if value matches the default, suppress the argument
             default = None
             has_default = True
@@ -62,6 +72,19 @@ class SubprocessDataclass(DataclassMixin):
             return [arg, str(val)]
         return []
 
+    def get_executable(self) -> Optional[str]:
+        """Gets the name of an executable to run with the appropriate arguments.
+
+        By default, this returns the name of the first dataclass field whose `exec` metadata flag is set to `True`, if one exists, and `None` otherwise.
+
+        Returns:
+            Name of the executable to run"""
+        name = None
+        for (name, field) in self.__dataclass_fields__.items():
+            if field.metadata.get('exec', False):
+                return name
+        return None
+
     def args(self, suppress_defaults: bool = False) -> List[str]:
         """Converts dataclass fields to a list of command-line arguments for a subprocess call.
 
@@ -74,15 +97,6 @@ class SubprocessDataclass(DataclassMixin):
         for name in self.__dataclass_fields__:
             args += self.get_arg(name, suppress_defaults = suppress_defaults)
         return args
-
-    def get_executable(self) -> Optional[str]:
-        """Gets the name of an executable to run with the appropriate arguments.
-
-        By default, this returns `None`. Subclasses must override it to return a value.
-
-        Returns:
-            Name of the executable to run"""
-        return None
 
     def run_subprocess(self, **kwargs: Any) -> subprocess.CompletedProcess:
         """Executes the full subprocess command corresponding to the dataclass parameters.
