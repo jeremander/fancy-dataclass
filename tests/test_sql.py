@@ -27,8 +27,7 @@ class Example(SQLDataclass):
     f: Dict[str, int]
     g: Obj
 
-@register()
-@dataclass
+@register()  # NOTE: register wraps the class into a dataclass
 class Container(SQLDataclass):
     example: Example
     tag: str = 'tag'

@@ -97,6 +97,7 @@ def register(reg: Reg = DEFAULT_REGISTRY, extra_cols: Optional[Dict[str, Column]
     Returns:
         A new `dataclass` type mapped to a registered sqlalchemy table"""
     def _orm_table(cls: Type[SQLDataclass]) -> Type[SQLDataclass]:
+        cls = dataclasses.dataclass(cls)
         cols = {} if (extra_cols is None) else dict(extra_cols)
         safe_dict_update(cols, cls.get_columns())
         has_primary_key = any(fld.primary_key for fld in cols.values())
@@ -106,5 +107,5 @@ def register(reg: Reg = DEFAULT_REGISTRY, extra_cols: Optional[Dict[str, Column]
             # add an auto-incrementing primary key with '_id' column
             cols = {'_id' : Column('_id', Integer, primary_key = True, autoincrement = True), **cols}
         cls.__table__ = Table(cls.__name__, reg.metadata, *cols.values())
-        return reg.mapped(dataclasses.dataclass(cls))
+        return reg.mapped(cls)
     return _orm_table
