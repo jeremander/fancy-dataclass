@@ -1,7 +1,8 @@
 import dataclasses
-from typing import ClassVar, List
+import subprocess
+from typing import Any, ClassVar, List, Optional
 
-from fancy_dataclass.utils import DataclassMixin, issubclass_safe
+from fancy_dataclass.utils import DataclassMixin, issubclass_safe, obj_class_name
 
 
 class SubprocessDataclass(DataclassMixin):
@@ -73,3 +74,29 @@ class SubprocessDataclass(DataclassMixin):
         for name in self.__dataclass_fields__:
             args += self.get_arg(name, suppress_defaults = suppress_defaults)
         return args
+
+    def get_executable(self) -> Optional[str]:
+        """Gets the name of an executable to run with the appropriate arguments.
+
+        By default, this returns `None`. Subclasses must override it to return a value.
+
+        Returns:
+            Name of the executable to run"""
+        return None
+
+    def run_subprocess(self, **kwargs: Any) -> subprocess.CompletedProcess:
+        """Executes the full subprocess command corresponding to the dataclass parameters.
+
+        Args:
+            kwargs: Keyword arguments passed to `subprocess.run`
+
+        Returns:
+            `CompletedProcess` object produced by `subprocess.run`
+
+        Raises:
+            ValueError: If no executable was found from the `get_executable` method"""
+        executable = self.get_executable()
+        if (not executable):
+            raise ValueError(f'No executable identified for use with {obj_class_name(self)!r} instance')
+        args = [executable] + self.args()
+        return subprocess.run(args, **kwargs)

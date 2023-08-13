@@ -45,6 +45,7 @@ ignore = [
     "E501",  # line length
     "PT001",  # use of pytest.fixture (with no parens)
     "PTH123",  # Path.open instead of regular open
+    "RET501",  # return None
     "RET505",  # unnecessary 'else' after 'return'
     "UP006",  # deprecated collection types in annotations
     "UP007",  # | instead of Union
