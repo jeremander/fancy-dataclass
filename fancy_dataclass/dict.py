@@ -56,24 +56,6 @@ class DictDataclass(DataclassMixin):
             return {'type' : obj_class_name(self)}
         return {}
 
-    @classmethod
-    def get_fields(cls) -> List[dataclasses.Field]:
-        """Gets the list of fields in the object's dict representation.
-
-        Returns:
-            A list of `dataclasses.Field` objects containing field metadata"""
-        flds = []
-        for field in dataclasses.fields(cls):
-            try:
-                is_nested = issubclass(field.type, DictDataclass) and field.type.nested
-            except TypeError:
-                is_nested = False
-            if is_nested:  # expand nested subfields
-                flds += field.type.get_fields()
-            else:
-                flds.append(field)
-        return flds
-
     def _to_dict(self, full: bool) -> JSONDict:
         def _to_value(x: Any) -> Any:
             if isinstance(x, Enum):

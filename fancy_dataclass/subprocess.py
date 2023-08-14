@@ -11,13 +11,12 @@ class SubprocessDataclass(DataclassMixin):
     Other arguments can be passed into the `metadata` argument of a `dataclasses.field`, namely:
 
     - `exec` (boolean flag indicating that this field should be treated as the name of the executable, rather than an argument)
-    - `args` (list of command-line arguments corresponding to the field—only the first will be used)
+    - `args` (list of command-line arguments corresponding to the field—only the first will be used, and only if it starts with a hyphen)
     - `exclude` (boolean flag indicating that the field should not be included in the args)"""
 
-    def __init_subclass__(cls, **kwargs: Any) -> None:
-        super().__init_subclass__(**kwargs)
+    def __post_init__(self) -> None:
         exec_field = None
-        for (name, field) in cls.__dataclass_fields__.items():
+        for (name, field) in self.__dataclass_fields__.items():
             if field.metadata.get('exec', False):
                 if (exec_field is None):
                     exec_field = name
@@ -59,18 +58,27 @@ class SubprocessDataclass(DataclassMixin):
             if has_default and (val == default):
                 return []
         if field.metadata.get('args'):  # use arg name provided by the metadata
-            arg = field.metadtaa['args'][0]
+            arg = field.metadata['args'][0]
+            if (not arg.startswith('-')):
+                arg = None
         else:  # use the field name (assume a single dash if it is a single letter)
             prefix = '-' if (len(name) == 1) else '--'
             arg = prefix + name.replace('_', '-')
         if isinstance(val, bool):
-            if val:  # make it a boolean flag if True
-                return [arg]
-        elif isinstance(val, list):
-            return [arg] + [str(x) for x in val]
+            # make it a boolean flag if True, otherwise omit it
+            if (not val):
+                arg = None
+            val = []
+        elif isinstance(val, (list, tuple)):
+            if val:
+                val = [str(x) for x in val]
+            else:
+                arg = None
         elif (val is not None):  # convert the field value to a string
-            return [arg, str(val)]
-        return []
+            val = str(val)
+        args = [arg] if arg else []
+        args += val if isinstance(val, list) else [val]
+        return args
 
     def get_executable(self) -> Optional[str]:
         """Gets the name of an executable to run with the appropriate arguments.
@@ -82,7 +90,7 @@ class SubprocessDataclass(DataclassMixin):
         name = None
         for (name, field) in self.__dataclass_fields__.items():
             if field.metadata.get('exec', False):
-                return name
+                return getattr(self, name, None)
         return None
 
     def args(self, suppress_defaults: bool = False) -> List[str]:
@@ -95,7 +103,7 @@ class SubprocessDataclass(DataclassMixin):
             List of command-line args corresponding to the dataclass fields"""
         args = []
         for name in self.__dataclass_fields__:
-            args += self.get_arg(name, suppress_defaults = suppress_defaults)
+            args += [arg for arg in self.get_arg(name, suppress_defaults = suppress_defaults) if arg]
         return args
 
     def run_subprocess(self, **kwargs: Any) -> subprocess.CompletedProcess:

@@ -4,6 +4,7 @@ from typing import List
 import pytest
 
 from fancy_dataclass.dict import DictDataclass, safe_dict_insert
+from fancy_dataclass.utils import DataclassMixin
 
 
 @dataclass
@@ -76,3 +77,12 @@ def test_make_dataclass():
     assert isinstance(obj, dc)
     obj = dc.from_dict({'a': '3.7', 'b': 'b'})
     assert isinstance(obj, dc)
+
+def test_wrap_dataclass():
+    class WrappedDataclass(DataclassMixin):
+        pass
+    WrappedCompA = WrappedDataclass.wrap_dataclass(NestedComponentA)
+    assert issubclass(WrappedCompA, NestedComponentA)
+    assert issubclass(WrappedCompA, WrappedDataclass)
+    obj = WrappedCompA(3, 4.7)
+    assert (obj.to_dict() == {'a1': 3, 'a2': 4.7})

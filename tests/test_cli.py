@@ -16,6 +16,7 @@ class DC1(CLIDataclass):
     output_file: str = field(metadata = {'args': ['-o', '--output-file'], 'help': 'output file', 'metavar': 'OUTFILE', 'group': 'IO arguments'})
     choice: str = field(default = 'a', metadata = {'choices': ['a', 'b', 'c'], 'help': 'one of three choices'})
     optional: str = field(default = 'default', metadata = {'nargs': '?', 'const': 'unspecified', 'help': 'optional argument'})
+    flag: bool = field(default = False, metadata = {'help': 'activate flag'})
     extra_items: List[str] = field(default_factory = list, metadata = {'nargs': '*', 'help': 'list of extra items'})
     x: int = field(default = 7, metadata = {'help': 'x value', 'group': 'numeric arguments'})
     y: float = field(default = 3.14, metadata = {'help': 'y value', 'group': 'numeric arguments'})
@@ -38,6 +39,7 @@ def test_argparse_dataclass_help():
     io_group.add_argument('-o', '--output-file', required = True, metavar = 'OUTFILE', help = 'output file')
     parser.add_argument('--choice', default = 'a', choices = ['a', 'b', 'c'], help = 'one of three choices')
     parser.add_argument('--optional', nargs = '?', default = 'default', const = 'unspecified', help = 'optional argument')
+    parser.add_argument('--flag', action = 'store_true', help = 'activate flag')
     parser.add_argument('--extra-items', nargs = '*', default = [], help = 'list of extra items')
     num_group = parser.add_argument_group('numeric arguments')
     num_group.add_argument('-x', type = int, default = 7, help = 'x value')
@@ -65,8 +67,8 @@ def test_cli_dataclass_parse_valid(capsys):
     args = ['positional_arg', '-i', 'my_input', '-o', 'my_output']
     obj = DC1(required_string='positional_arg', input_file='my_input', output_file='my_output', choice='a', optional='default', extra_items=[], x=7, y=3.14, pair=(0,0), ignored_value='ignored')
     _check_equivalent(args, obj)
-    args = ['positional_arg', '-x', '100', '-i', 'my_input', '-o', 'my_output', '--choice', 'b', '--optional', '--extra-items', '1', '2', '3']
-    obj = DC1(required_string='positional_arg', input_file='my_input', output_file='my_output', choice='b', optional='unspecified', extra_items=['1', '2', '3'], x=100, y=3.14, pair=(0,0), ignored_value='ignored')
+    args = ['positional_arg', '-x', '100', '-i', 'my_input', '-o', 'my_output', '--choice', 'b', '--flag', '--optional', '--extra-items', '1', '2', '3']
+    obj = DC1(required_string='positional_arg', input_file='my_input', output_file='my_output', choice='b', flag=True, optional='unspecified', extra_items=['1', '2', '3'], x=100, y=3.14, pair=(0,0), ignored_value='ignored')
     _check_equivalent(args, obj)
     args = ['positional_arg', '-x', '100', '-i', 'my_input', '-o', 'my_output', '--choice', 'b', '--optional', 'thing', '--extra-items', '1', '2', '3']
     obj = DC1(required_string='positional_arg', input_file='my_input', output_file='my_output', choice='b', optional='thing', extra_items=['1', '2', '3'], x=100, y=3.14, pair=(0,0), ignored_value='ignored')

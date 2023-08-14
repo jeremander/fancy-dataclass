@@ -115,13 +115,14 @@ def check_dataclass(cls: type) -> None:
     if (not is_dataclass(cls)):
         raise TypeError(f'{cls.__name__} is not a dataclass')
 
-def make_dataclass_with_constructors(cls_name: str, fields: Sequence[Union[str, Tuple[str, type]]], constructors: Sequence[Constructor]) -> type:
+def make_dataclass_with_constructors(cls_name: str, fields: Sequence[Union[str, Tuple[str, type]]], constructors: Sequence[Constructor], **kwargs: Any) -> type:
     """Type factory for dataclasses with custom constructors.
 
     Args:
         cls_name: Name of the dataclass type
         fields: List of field names, or pairs of field names and types
         constructors: List of one-argument constructors for each field
+        kwargs: Additional keyword arguments to pass to `dataclasses.make_dataclass`
 
     Returns:
         A dataclass type with the given fields and constructors"""
@@ -129,7 +130,7 @@ def make_dataclass_with_constructors(cls_name: str, fields: Sequence[Union[str, 
         # take inputs and wrap them in the provided constructors
         for (field, cons, arg) in zip(dataclasses.fields(self), constructors, args):
             setattr(self, field.name, cons(arg))
-    tp = make_dataclass(cls_name, fields, init = False)
+    tp = make_dataclass(cls_name, fields, init = False, **kwargs)
     tp.__init__ = __init__  # type: ignore
     # store the field names in a tuple, to match the behavior of namedtuple
     tp._fields = tuple(field.name for field in dataclasses.fields(tp))
