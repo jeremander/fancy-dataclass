@@ -1,32 +1,90 @@
-[tool.poetry]
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
 name = "fancy-dataclass"
-version = "0.1.0"
-description = "Classes for augmenting dataclasses with additional functionality."
-authors = ["Jeremy Silver <jeremys@nessiness.com>"]
-
-[tool.poetry.dependencies]
-python = "^3.8"
-sqlalchemy = "^2.0.10"
-
-[tool.poetry.dev-dependencies]
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^7.3.1"
-pytest-cov = "^4.0.0"
-mkdocs = "^1.4.2"
-mkdocs-material = "^9.1.8"
-mkdocstrings = "^0.21.2"
-mkdocs-gen-files = "^0.4.0"
-mkdocstrings-python = "^0.9.0"
-mkdocs-literate-nav = "^0.6.0"
-
-[tool.pytest.ini_options]
-addopts = [
-    "--capture=no",
-    "--verbose",
-    "--cov=fancy_dataclass"
+dynamic = ["version"]
+description = "Enhance dataclasses with additional features."
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+keywords = ["dataclass", "cli", "orm", "serialize", "json"]
+authors = [
+  { name = "Jeremy Silver", email = "jeremys@nessiness.com" }
+]
+classifiers = [
+  "Programming Language :: Python"
+]
+dependencies = [
+  "sqlalchemy >= 2.0"
 ]
 
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+[project.urls]
+Documentation = "https://github.com/jeremander/fancy-dataclass#readme"
+Issues = "https://github.com/jeremander/fancy-dataclass/issues"
+Source = "https://github.com/jeremander/fancy-dataclass"
+
+[tool.hatch.build.targets.sdist]
+exclude = ["TODO.txt"]
+
+[tool.hatch.version]
+path = "fancy-dataclass/__init__.py"
+
+[tool.hatch.envs.default]
+dependencies = [
+  "pytest",
+  "pytest-cov",
+  "mkdocs",
+  "mkdocs-material",
+  "mkdocstrings",
+  "mkdocs-gen-files",
+  "mkdocstrings-python",
+  "mkdocs-literate-nav",
+  "mypy>=1.0"
+]
+
+[tool.hatch.envs.default.scripts]
+cov = [
+  "test-cov",
+  "cov-report",
+]
+cov-report = [
+  "- coverage combine",
+  "coverage report",
+]
+doc-build = "mkdocs build --clean --strict"
+doc-serve = "mkdocs serve"
+doc-deploy = "mkdocs gh-deploy"
+lint = "ruff check"
+test = "pytest {args:tests}"
+test-cov = "coverage run -m pytest {args:tests}"
+type-check = "mypy --install-types --non-interactive {args:fancy_dataclass tests}"
+
+
+[[tool.hatch.envs.all.matrix]]
+python = ["3.8", "3.9", "3.10", "3.11", "3.12"]
+
+[tool.hatch.publish.index]
+disable = true
+
+[tool.coverage.run]
+source_pkgs = ["fancy-dataclass", "tests"]
+branch = true
+parallel = true
+omit = ["venv/*"]
+
+[tool.coverage.report]
+skip_covered = true
+show_missing = true
+exclude_lines = [
+  "no cov",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+]
+
+[tool.commitizen]
+tag_format = "v$major.$minor.$patch"
+
+[tool.pytest.ini_options]
+addopts = "--verbose --cov=fancy_dataclass"

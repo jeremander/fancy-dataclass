@@ -2,9 +2,9 @@ target-version = "py310"
 
 # rules to include
 
-select = ["E", "F"]
+lint.select = ["E", "F"]
 
-extend-select = [
+lint.extend-select = [
     "A",  # builtins
     "ANN",  # annotations
     "B",  # bugbear
@@ -22,7 +22,7 @@ extend-select = [
 ]
 
 # rules to ignore
-ignore = [
+lint.ignore = [
     "ANN101",  # type annotation for 'self' in method
     "ANN102",  # type annotation for 'cls' in classmethod
     "ANN401",  # use of the 'Any' type
@@ -55,27 +55,25 @@ ignore = [
 # ignore = ["B019", "E203", "E251", "E301", "E302", "E305", "E306", "E501", "E722", "E731", "E741", "W292", "W391"]
 
 # paths to exclude
-exclude = [
+lint.exclude = [
     ".venv",
     "tmp*"
 ]
 
 # ignore unused imports in __init__.py files
-ignore-init-module-imports = true
+lint.ignore-init-module-imports = true
 
 line-length = 10000
 
-# where to search for first-party imports
-# src = ["src", "test"]
-
-[per-file-ignores]
+[lint.per-file-ignores]
+"__init__.py" = ["D104", "F401"]
 "setup.py" = ["ANN", "D"]
 "tests/*" = ["ANN", "D"]
 
-[flake8-pytest-style]
+[lint.flake8-pytest-style]
 parametrize-names-type = "list"
 
-[isort]
+[lint.isort]
 # don't separate straight-style and 'from' imports for the same module
 force-sort-within-sections = true
 # force imports to the top of their section
@@ -89,5 +87,5 @@ lines-after-imports = 2
 # whether to order imports by type, rather than strictly alphabetically
 order-by-type = false
 
-[pydocstyle]
+[lint.pydocstyle]
 convention = "google"
