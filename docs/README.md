@@ -17,7 +17,7 @@ By inspecting dataclasses' type annotations, it is possible to endow them with s
 
 ## Example
 
-Regular dataclass:
+**Regular dataclass**
 
 ```python
 @dataclass
@@ -28,7 +28,7 @@ class Person:
     hobbies: list[str]
 ```
 
-Fancy dataclass:
+**Fancy dataclass**
 
 ```python
 @dataclass
@@ -37,15 +37,19 @@ class Person(JSONDataclass):
     age: int
     height: float
     hobbies: list[str]
+```
 
-person = Person(
+Usage:
+
+```python
+>>> person = Person(
     name='John Doe',
     age=47,
     height=71.5,
     hobbies=["reading", "juggling", "cycling"]
 )
 
-print(person.to_json_string(indent=2))
+>>> print(person.to_json_string(indent=2))
 
 {
   "name": "John Doe",
@@ -64,7 +68,3 @@ print(person.to_json_string(indent=2))
 ```pip install fancy_dataclass```
 
 Requires Python 3.8 or higher.
-
-Additional dependencies:
-
-- `sqlalchemy`

@@ -38,7 +38,7 @@ markdown_extensions:
   - pymdownx.superfences
 
 nav:
-  - index.md
+  - README.md
   - JSON conversion: json.md
   - SQL persistence: sql.md
   - CLI parsing: cli.md
