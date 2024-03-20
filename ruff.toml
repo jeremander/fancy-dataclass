@@ -1,4 +1,4 @@
-target-version = "py310"
+target-version = "py38"
 
 # rules to include
 
@@ -28,6 +28,7 @@ lint.ignore = [
     "ANN401",  # use of the 'Any' type
     "B027",  # empty method not marked with abstractmethod
     "B905",  # zip without explicit 'strict' parameter
+    "C901",  # function is too complex
     "D100",  # module-level docstring
     "D105",  # magic method docstring
     "D203",  # blank line before class docstring

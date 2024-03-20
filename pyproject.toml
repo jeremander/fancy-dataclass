@@ -17,7 +17,8 @@ classifiers = [
   "Programming Language :: Python"
 ]
 dependencies = [
-  "sqlalchemy >= 2.0"
+  "sqlalchemy >= 2.0",
+  "typing_extensions"
 ]
 
 [project.urls]
@@ -31,36 +32,45 @@ exclude = ["TODO.txt"]
 [tool.hatch.version]
 path = "fancy-dataclass/__init__.py"
 
-[tool.hatch.envs.default]
+[tool.hatch.envs.doc]
 dependencies = [
-  "pytest",
-  "pytest-cov",
   "mkdocs",
   "mkdocs-material",
   "mkdocstrings",
   "mkdocs-gen-files",
   "mkdocstrings-python",
   "mkdocs-literate-nav",
-  "mypy>=1.0"
 ]
 
-[tool.hatch.envs.default.scripts]
-cov = [
-  "test-cov",
-  "cov-report",
+[tool.hatch.envs.doc.scripts]
+build = "mkdocs build --clean --strict"
+serve = "mkdocs serve"
+deploy = "mkdocs gh-deploy"
+
+[tool.hatch.envs.lint]
+dependencies = [
+  "mypy>=1.0",
+  "ruff>=0.3",
+  "vermin"
 ]
-cov-report = [
-  "- coverage combine",
-  "coverage report",
+
+[tool.hatch.envs.lint.scripts]
+run-mypy = "mypy --install-types --non-interactive {args:fancy_dataclass tests}"
+run-ruff = "ruff check"
+run-vermin = "vermin {args:--eval-annotations --no-tips fancy_dataclass}"
+all = ["run-ruff", "run-vermin", "run-mypy"]
+
+[tool.hatch.envs.test]
+dependencies = [
+    "pytest",
+    "pytest-cov"
 ]
-doc-build = "mkdocs build --clean --strict"
-doc-serve = "mkdocs serve"
-doc-deploy = "mkdocs gh-deploy"
-lint = "ruff check"
+
+[tool.hatch.envs.test.scripts]
 test = "pytest {args:tests}"
 test-cov = "coverage run -m pytest {args:tests}"
-type-check = "mypy --install-types --non-interactive {args:fancy_dataclass tests}"
-
+cov-report = ["- coverage combine", "coverage report"]
+cov = ["test-cov", "cov-report"]
 
 [[tool.hatch.envs.all.matrix]]
 python = ["3.8", "3.9", "3.10", "3.11", "3.12"]

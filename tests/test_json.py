@@ -29,7 +29,7 @@ class DC2Sub(DC2):
 
 @dataclass
 class DC3(JSONDataclass):
-    list: List[int]  # noqa: A003
+    list: List[int]
 
 class MyObject:
     """This object is not JSON-serializable."""

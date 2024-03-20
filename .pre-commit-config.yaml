@@ -13,11 +13,17 @@ repos:
     - id: detect-private-key
     - id: check-docstring-first
 - repo: https://github.com/charliermarsh/ruff-pre-commit
-  rev: 'v0.3.0'
+  rev: 'v0.3.3'
   hooks:
     - id: ruff
+- repo: https://github.com/netromdk/vermin
+  rev: v1.6.0
+  hooks:
+    - id: vermin-all
+      # specify your target version here, OR in a Vermin config file as usual:
+      args: ['-t=3.8-', '--no-tips', '--violations', '.']
 - repo: https://github.com/commitizen-tools/commitizen
-  rev: v3.16.0
+  rev: v3.20.0
   hooks:
     - id: commitizen
       stages: [commit-msg]
