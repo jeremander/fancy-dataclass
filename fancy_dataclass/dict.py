@@ -2,12 +2,19 @@ from collections import defaultdict
 import dataclasses
 from datetime import datetime
 from enum import Enum
-from typing import Any, ClassVar, Container, Dict, List, Literal, Type, TypeVar, Union
+from typing import TYPE_CHECKING, Any, ClassVar, Container, Dict, List, Literal, Type, TypeVar, Union
 
-from fancy_dataclass.utils import check_dataclass, DataclassMixin, fully_qualified_class_name, issubclass_safe, obj_class_name
+from typing_extensions import Self
+
+from fancy_dataclass.utils import DataclassMixin, check_dataclass, fully_qualified_class_name, issubclass_safe, obj_class_name
 
 
-T = TypeVar('T')
+if TYPE_CHECKING:
+    from _typeshed import DataclassInstance
+
+T = TypeVar('T', bound=DataclassMixin)
+D = TypeVar('D', bound='DataclassInstance')
+
 JSONDict = Dict[str, Any]
 
 
@@ -119,7 +126,7 @@ class DictDataclass(DataclassMixin):
         return self._to_dict(full)
 
     @staticmethod
-    def _convert_dict_convertible(tp: type, x: Any) -> Any:
+    def _convert_dict_convertible(tp: Type['DictDataclass'], x: Any) -> Any:
         if isinstance(x, tp):  # already converted from a dict
             return x
         # otherwise, convert from a dict
@@ -134,6 +141,7 @@ class DictDataclass(DataclassMixin):
             return x
         if issubclass_safe(tp, list):
             # class may inherit from List[T], so get the parent class
+            assert hasattr(tp, '__orig_bases__')
             for base in tp.__orig_bases__:
                 origin_type = getattr(base, '__origin__', None)
                 if origin_type and issubclass_safe(origin_type, list):
@@ -141,7 +149,7 @@ class DictDataclass(DataclassMixin):
                     break
         origin_type = getattr(tp, '__origin__', None)
         if (origin_type is None):  # basic class or type
-            if (type(tp) == TypeVar):
+            if type(tp) == TypeVar:  # type: ignore[comparison-overlap]
                 # can't refer to instantiated type, so we assume a basic data type
                 # NB: this limitation means we can only use TypeVar for basic types
                 return x
@@ -154,44 +162,46 @@ class DictDataclass(DataclassMixin):
             elif issubclass(tp, datetime):
                 return tp.fromisoformat(x)
             else:  # basic data type
-                return tp(x)  # type: ignore
+                return tp(x)  # type: ignore[call-arg]
         else:  # compound data type
-            if (origin_type == list):
-                subtype = tp.__args__[0]
+            args = tp.__args__  # type: ignore[attr-defined]
+            if origin_type == list:
+                subtype = args[0]
                 return [cls._convert_value(subtype, y) for y in x]
-            elif (origin_type == dict):
-                (keytype, valtype) = tp.__args__
+            elif origin_type == dict:
+                (keytype, valtype) = args
                 return {cls._convert_value(keytype, k) : cls._convert_value(valtype, v) for (k, v) in x.items()}
-            elif (origin_type == tuple):
-                subtypes = tp.__args__
+            elif origin_type == tuple:
+                subtypes = args
                 if (subtypes[-1] == Ellipsis):  # treat it like a list
                     subtype = subtypes[0]
                     return tuple(cls._convert_value(subtype, y) for y in x)
-                return tuple(cls._convert_value(subtype, y) for (subtype, y) in zip(tp.__args__, x))
-            elif (origin_type == Union):
-                for subtype in tp.__args__:
+                return tuple(cls._convert_value(subtype, y) for (subtype, y) in zip(args, x))
+            elif origin_type == Union:
+                for subtype in args:
                     try:
                         # NB: will resolve to the first valid type in the Union
                         return cls._convert_value(subtype, x)
                     except Exception:
                         continue
-            elif (origin_type == Literal):
-                if any((x == arg) for arg in tp.__args__):
+            elif origin_type == Literal:
+                if any((x == arg) for arg in args):
                     # one of the Literal options is matched
                     return x
             elif hasattr(origin_type, 'from_dict'):
                 return cls._convert_dict_convertible(origin_type, x)
             elif issubclass_safe(origin_type, Container):  # arbitrary container
-                subtype = tp.__args__[0]
+                subtype = args[0]
                 return type(x)(cls._convert_value(subtype, y) for y in x)
         raise ValueError(f'could not convert {x!r} to type {tp!r}')
 
     @classmethod
-    def _class_with_merged_fields(cls: Type[T]) -> Type[T]:
+    def _class_with_merged_fields(cls: Type[Self]) -> Type[Self]:
         """Converts this type into an isomorphic type where any nested DictDataclass fields have all of their subfields merged into the outer type."""
         fields: List[Any] = []
         field_map: Dict[str, str] = {}
-        for field in dataclasses.fields(cls):
+        cls_fields = dataclasses.fields(cls)  # type: ignore[arg-type]
+        for field in cls_fields:
             origin = getattr(field.type, '__origin__', None)
             if (origin is Union):  # use the first type of a Union (also handles Optional)
                 tp = field.type.__args__[0]
@@ -208,12 +218,14 @@ class DictDataclass(DataclassMixin):
         flags = [key for (key, tp) in cls.__annotations__.items() if (getattr(tp, '__origin__', None) is ClassVar)]
         for flag in flags:
             setattr(cls2, flag, getattr(cls, flag))
-        cls2.nested = False
+        # store 'nested' attribute on the class
+        # TODO: make this a private attribute
+        cls2.nested = False  # type: ignore[attr-defined]
         # create method to convert from merged object to nested object
-        def _to_nested(self: object) -> object:
+        def _to_nested(self: D) -> D:
             kwargs = {}
             nested_kwargs: Dict[str, Any] = defaultdict(dict)
-            types_by_name = {field.name : field.type for field in dataclasses.fields(cls)}
+            types_by_name = {field.name : field.type for field in cls_fields}
             for field in dataclasses.fields(self):
                 key = field.name
                 val = getattr(self, key)
@@ -223,8 +235,8 @@ class DictDataclass(DataclassMixin):
                     kwargs[key] = val
             for (key, d) in nested_kwargs.items():
                 kwargs[key] = types_by_name[key](**d)
-            return cls(**kwargs)
-        cls2._to_nested = _to_nested
+            return cls(**kwargs)  # type: ignore[return-value]
+        cls2._to_nested = _to_nested  # type: ignore[attr-defined]
         return cls2
 
     @classmethod
@@ -233,7 +245,7 @@ class DictDataclass(DataclassMixin):
         check_dataclass(cls)
         kwargs = {}
         bases = cls.mro()
-        fields = dataclasses.fields(cls)
+        fields = dataclasses.fields(cls)  # type: ignore[arg-type]
         for field in fields:
             if (not field.init):  # suppress fields where init = False
                 continue
@@ -249,13 +261,13 @@ class DictDataclass(DataclassMixin):
                 else:
                     raise ValueError(f'could not locate field {field.name!r}')
             elif (field.default == dataclasses.MISSING):
-                if (field.default_factory == dataclasses.MISSING):  # type: ignore
+                if (field.default_factory == dataclasses.MISSING):
                     raise ValueError(f'{field.name!r} field is required')
                 kwargs[field.name] = field.default_factory()
         return kwargs
 
     @classmethod
-    def from_dict(cls: Type[T], d: JSONDict) -> T:
+    def from_dict(cls, d: JSONDict) -> Self:
         """Constructs an object from a dictionary of fields.
 
         This may also perform some basic type/validity checking.
@@ -286,5 +298,5 @@ class DictDataclass(DataclassMixin):
             # produce equivalent subfield-merged types, then convert the dict
             cls = cls._class_with_merged_fields()
             tp = tp._class_with_merged_fields()
-        result = tp(**tp._dataclass_args_from_dict(d))  # type: ignore
-        return result if cls.nested else result._to_nested()
+        result: Self = tp(**tp._dataclass_args_from_dict(d))
+        return result if cls.nested else result._to_nested()  # type: ignore

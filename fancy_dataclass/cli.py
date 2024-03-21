@@ -1,9 +1,11 @@
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser, Namespace
 from contextlib import suppress
-import dataclasses
+from dataclasses import MISSING, fields
 from enum import IntEnum
 from typing import Any, ClassVar, Dict, List, Optional, Type, TypeVar
+
+from typing_extensions import Self
 
 from fancy_dataclass.dict import DictDataclass
 from fancy_dataclass.utils import check_dataclass, issubclass_safe
@@ -85,7 +87,7 @@ class ArgparseDataclass(DictDataclass):
             parser: `ArgumentParser` object to update with a new argument
             name: Name of the argument to configure"""
         kwargs: Dict[str, Any] = {}
-        field = cls.__dataclass_fields__[name]
+        field = cls.__dataclass_fields__[name]  # type: ignore[attr-defined]
         if field.metadata.get('exclude', False):  # exclude the argument from the parser
             return
         group_name = field.metadata.get('group')
@@ -132,8 +134,8 @@ class ArgparseDataclass(DictDataclass):
         if field.metadata.get('args') and (not positional):
             # store the argument based on the name of the field, and not whatever flag name was provided
             kwargs['dest'] = field.name
-        if (field.default == dataclasses.MISSING):
-            if (field.default_factory == dataclasses.MISSING):
+        if (field.default == MISSING):
+            if (field.default_factory == MISSING):
                 if (not positional):  # no default available, so make the argument required
                     kwargs['required'] = True
             else:
@@ -160,8 +162,8 @@ class ArgparseDataclass(DictDataclass):
         Args:
             parser: `ArgumentParser` to configure"""
         check_dataclass(cls)
-        for name in cls.__dataclass_fields__:
-            cls.configure_argument(parser, name)
+        for fld in fields(cls):  # type: ignore[arg-type]
+            cls.configure_argument(parser, fld.name)
 
     @classmethod
     def make_parser(cls) -> ArgumentParser:
@@ -186,7 +188,7 @@ class ArgparseDataclass(DictDataclass):
             A dict mapping from field names to values"""
         check_dataclass(cls)
         d = {}
-        for field in dataclasses.fields(cls):
+        for field in fields(cls):  # type: ignore[arg-type]
             nested_field = False
             if issubclass_safe(field.type, ArgparseDataclass):
                 # recursively gather arguments for nested ArgparseDataclass
@@ -203,7 +205,7 @@ class ArgparseDataclass(DictDataclass):
         return d
 
     @classmethod
-    def from_args(cls: Type[T], args: Namespace) -> T:
+    def from_args(cls, args: Namespace) -> Self:
         """Constructs an [`ArgparseDataclass`][fancy_dataclass.cli.ArgparseDataclass] from a `Namespace` object.
 
         Args:
@@ -225,7 +227,7 @@ class ArgparseDataclass(DictDataclass):
         pass
 
     @classmethod
-    def from_cli_args(cls: Type[T], arg_list: Optional[List[str]] = None) -> T:
+    def from_cli_args(cls, arg_list: Optional[List[str]] = None) -> Self:
         """Constructs and configures an argument parser, then parses the given command-line arguments and uses them to construct an instance of the class.
 
         Args:

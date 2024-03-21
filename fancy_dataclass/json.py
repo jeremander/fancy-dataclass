@@ -1,13 +1,15 @@
-from abc import ABC, abstractclassmethod, abstractmethod
+from abc import ABC, abstractmethod
 from io import StringIO, TextIOBase
 import json
 from json import JSONEncoder
-from typing import Any, IO, TextIO, Type, TypeVar
+from typing import Any, BinaryIO, TextIO, Type, Union
+
+from typing_extensions import Self
 
 from fancy_dataclass.dict import DictDataclass, JSONDict
 
 
-T = TypeVar('T')
+AnyIO = Union[BinaryIO, TextIO]
 
 
 class JSONSerializable(ABC):
@@ -45,7 +47,7 @@ class JSONSerializable(ABC):
         d = self.to_dict()
         json.dump(d, fp, **kwargs)
 
-    def to_json(self, fp: IO, **kwargs: Any) -> None:
+    def to_json(self, fp: AnyIO, **kwargs: Any) -> None:
         """Writes the object as JSON to a file-like object (text or binary).
         If binary, applies UTF-8 encoding.
 
@@ -55,7 +57,7 @@ class JSONSerializable(ABC):
         if isinstance(fp, TextIOBase):  # text stream
             self._to_json(fp, **kwargs)
         else:  # binary
-            fp.write(self.to_json_string(**kwargs).encode())
+            fp.write(self.to_json_string(**kwargs).encode())  # type: ignore[call-overload]
 
     def to_json_string(self, **kwargs: Any) -> str:
         """Converts the object into a JSON string.
@@ -69,8 +71,9 @@ class JSONSerializable(ABC):
             self._to_json(stream, **kwargs)
             return stream.getvalue()
 
-    @abstractclassmethod
-    def from_dict(cls: Type[T], d: JSONDict) -> T:  # type: ignore
+    @classmethod
+    @abstractmethod
+    def from_dict(cls, d: JSONDict) -> Self:
         """Constructs an object from a dictionary of fields.
 
         Args:
@@ -80,7 +83,7 @@ class JSONSerializable(ABC):
             Converted object of this class"""
 
     @classmethod
-    def from_json(cls: Type[T], fp: IO, **kwargs: Any) -> T:
+    def from_json(cls, fp: AnyIO, **kwargs: Any) -> Self:
         """Constructs an object from a JSON file-like object (text or binary).
 
         Args:
@@ -92,7 +95,7 @@ class JSONSerializable(ABC):
         return cls.from_dict(json.load(fp, **kwargs))
 
     @classmethod
-    def from_json_string(cls: Type[T], s: str, **kwargs: Any) -> T:
+    def from_json_string(cls, s: str, **kwargs: Any) -> Self:
         """Constructs an object from a JSON string.
 
         Args:
@@ -104,15 +107,15 @@ class JSONSerializable(ABC):
         return cls.from_dict(json.loads(s, **kwargs))
 
 
-class JSONDataclass(DictDataclass, JSONSerializable):  # type: ignore
+class JSONDataclass(DictDataclass, JSONSerializable):  # type: ignore[misc]
     """Subclass of [`JSONSerializable`][fancy_dataclass.json.JSONSerializable] enabling default serialization of dataclass objects to and from JSON."""
 
     @classmethod
     def _convert_value(cls, tp: type, x: Any) -> Any:
         # customize for JSONSerializable
         origin_type = getattr(tp, '__origin__', None)
-        if (origin_type == dict):  # decode keys to be valid JSON
-            (keytype, valtype) = tp.__args__
+        if origin_type == dict:  # decode keys to be valid JSON
+            (keytype, valtype) = tp.__args__  # type: ignore[attr-defined]
             return {cls._json_key_decoder(cls._convert_value(keytype, k)) : cls._convert_value(valtype, v) for (k, v) in x.items()}
         # otherwise, fall back on superclass
         return DictDataclass._convert_value(tp, x)

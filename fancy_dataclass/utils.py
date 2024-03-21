@@ -3,7 +3,11 @@
 import dataclasses
 from dataclasses import is_dataclass, make_dataclass
 import importlib
-from typing import Any, Callable, Dict, List, Sequence, Tuple, Type, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Sequence, Tuple, Type, TypeVar, Union
+
+
+if TYPE_CHECKING:
+    from _typeshed import DataclassInstance
 
 
 T = TypeVar('T')
@@ -115,7 +119,7 @@ def check_dataclass(cls: type) -> None:
     if (not is_dataclass(cls)):
         raise TypeError(f'{cls.__name__} is not a dataclass')
 
-def make_dataclass_with_constructors(cls_name: str, fields: Sequence[Union[str, Tuple[str, type]]], constructors: Sequence[Constructor], **kwargs: Any) -> type:
+def make_dataclass_with_constructors(cls_name: str, fields: Sequence[Union[str, Tuple[str, type]]], constructors: Sequence[Constructor], **kwargs: Any) -> Type['DataclassInstance']:
     """Type factory for dataclasses with custom constructors.
 
     Args:
@@ -126,14 +130,14 @@ def make_dataclass_with_constructors(cls_name: str, fields: Sequence[Union[str, 
 
     Returns:
         A dataclass type with the given fields and constructors"""
-    def __init__(self: object, *args: Any) -> None:
+    def __init__(self: 'DataclassInstance', *args: Any) -> None:
         # take inputs and wrap them in the provided constructors
         for (field, cons, arg) in zip(dataclasses.fields(self), constructors, args):
             setattr(self, field.name, cons(arg))
     tp = make_dataclass(cls_name, fields, init = False, **kwargs)
     tp.__init__ = __init__  # type: ignore
     # store the field names in a tuple, to match the behavior of namedtuple
-    tp._fields = tuple(field.name for field in dataclasses.fields(tp))
+    tp._fields = tuple(field.name for field in dataclasses.fields(tp))  # type: ignore[attr-defined]
     return tp
 
 
@@ -174,13 +178,13 @@ class DataclassMixin:
         Raises:
             TypeError: If an invalid dataclass field is provided"""
         assert hasattr(self, '__dataclass_fields__'), f'{obj_class_name(self)} is not a dataclass type'
-        d = {field.name : getattr(self, field.name) for field in dataclasses.fields(self)}
+        d = {field.name : getattr(self, field.name) for field in dataclasses.fields(self)}  # type: ignore[arg-type]
         for (key, val) in kwargs.items():
             if (key in d):
                 d[key] = val
             else:
                 raise TypeError(f'{key!r} is not a valid field for {obj_class_name(self)}')
-        return self.__class__(**d)  # type: ignore
+        return self.__class__(**d)
 
     @classmethod
     def get_subclass_with_name(cls: Type[T], typename: str) -> Type[T]:

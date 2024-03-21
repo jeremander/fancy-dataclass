@@ -9,7 +9,7 @@ import pytest
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
-from fancy_dataclass.sql import DEFAULT_REGISTRY, register, SQLDataclass
+from fancy_dataclass.sql import DEFAULT_REGISTRY, SQLDataclass, register
 
 
 @dataclass

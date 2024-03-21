@@ -1,6 +1,6 @@
-import dataclasses
+from dataclasses import MISSING, dataclass, fields
 from datetime import datetime
-from typing import Callable, Dict, Optional, Type, TypeVar, Union
+from typing import Any, Callable, ClassVar, Dict, Optional, Type, TypeVar, Union
 
 from sqlalchemy import Boolean, Column, DateTime, Integer, LargeBinary, Numeric, PickleType, String, Table
 import sqlalchemy.orm
@@ -50,14 +50,16 @@ class SQLDataclass(DictDataclass):
 
     Some types are invalid for SQL fields; if such a type occurs, a `TypeError` will be raised."""
 
+    __table__: ClassVar[Table]
+
     @classmethod
-    def get_columns(cls) -> Dict[str, Column]:
+    def get_columns(cls) -> Dict[str, Column[Any]]:
         """Gets a mapping from the class's column names to sqlalchemy `Column` objects.
 
         Returns:
             Dict from column names to `Column` objects"""
         cols = {}
-        for field in dataclasses.fields(cls):
+        for field in fields(cls):  # type: ignore[arg-type]
             nullable = False
             if (not field.metadata.get('sql', True)):
                 # skip fields whose metadata's 'sql' field is False
@@ -77,9 +79,9 @@ class SQLDataclass(DictDataclass):
                 # TODO: making columns non-nullable seems to break things for nested SQLDataclasses
                 # column_kwargs = {'nullable' : nullable}
                 column_kwargs = {}
-                if (field.default is not dataclasses.MISSING):
+                if (field.default is not MISSING):
                     column_kwargs['default'] = field.default
-                elif (field.default_factory is not dataclasses.MISSING):  # type: ignore
+                elif (field.default_factory is not MISSING):  # type: ignore
                     column_kwargs['default'] = field.default_factory  # type: ignore
                 # get additional keyword arguments from 'column' section of metadata, if present
                 column_kwargs.update(field.metadata.get('column', {}))
@@ -87,7 +89,7 @@ class SQLDataclass(DictDataclass):
         return cols
 
 
-def register(reg: Reg = DEFAULT_REGISTRY, extra_cols: Optional[Dict[str, Column]] = None) -> Callable[[Type[SQLDataclass]], Type[SQLDataclass]]:
+def register(reg: Reg = DEFAULT_REGISTRY, extra_cols: Optional[Dict[str, Column[Any]]] = None) -> Callable[[Type[SQLDataclass]], Type[SQLDataclass]]:
     """Decorator that registers a sqlalchemy table for a [`SQLDataclass`][fancy_dataclass.sql.SQLDataclass].
 
     Args:
@@ -97,7 +99,7 @@ def register(reg: Reg = DEFAULT_REGISTRY, extra_cols: Optional[Dict[str, Column]
     Returns:
         A new `dataclass` type mapped to a registered sqlalchemy table"""
     def _orm_table(cls: Type[SQLDataclass]) -> Type[SQLDataclass]:
-        cls = dataclasses.dataclass(cls)
+        cls = dataclass(cls)
         cols = {} if (extra_cols is None) else dict(extra_cols)
         safe_dict_update(cols, cls.get_columns())
         has_primary_key = any(fld.primary_key for fld in cols.values())

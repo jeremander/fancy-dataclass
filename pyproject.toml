@@ -79,7 +79,7 @@ python = ["3.8", "3.9", "3.10", "3.11", "3.12"]
 disable = true
 
 [tool.coverage.run]
-source_pkgs = ["fancy-dataclass", "tests"]
+source_pkgs = ["fancy_dataclass", "tests"]
 branch = true
 parallel = true
 omit = ["venv/*"]
@@ -97,7 +97,7 @@ exclude_lines = [
 tag_format = "v$major.$minor.$patch"
 
 [tool.mypy]
-exclude = ["docs/", "site/"]
+exclude = ["docs/", "site/", "tmp.*"]
 warn_unused_configs = true
 strict = true
 

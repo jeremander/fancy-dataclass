@@ -1,8 +1,8 @@
-import dataclasses
+from dataclasses import MISSING, fields
 import subprocess
-from typing import Any, ClassVar, List, Optional
+from typing import Any, ClassVar, List, Optional, Union
 
-from fancy_dataclass.utils import DataclassMixin, issubclass_safe, obj_class_name
+from fancy_dataclass.utils import DataclassMixin, obj_class_name
 
 
 class SubprocessDataclass(DataclassMixin):
@@ -16,10 +16,10 @@ class SubprocessDataclass(DataclassMixin):
 
     def __post_init__(self) -> None:
         exec_field = None
-        for (name, field) in self.__dataclass_fields__.items():
-            if field.metadata.get('exec', False):
+        for fld in fields(self):  # type: ignore[arg-type]
+            if fld.metadata.get('exec', False):
                 if (exec_field is None):
-                    exec_field = name
+                    exec_field = fld.name
                 else:
                     raise TypeError("cannot have more than one field with 'exec' flag set to True")
 
@@ -32,7 +32,7 @@ class SubprocessDataclass(DataclassMixin):
 
         Returns:
             List of command-line args corresponding to the field"""
-        field = self.__dataclass_fields__[name]
+        field = self.__dataclass_fields__[name]  # type: ignore[attr-defined]
         if field.metadata.get('exclude', False):  # exclude the argument
             return []
         if getattr(field.type, '__origin__', None) is ClassVar:
@@ -41,15 +41,15 @@ class SubprocessDataclass(DataclassMixin):
         val = getattr(self, name, None)
         if (val is None):  # optional value is None
             return []
-        if issubclass_safe(field.type, SubprocessDataclass):  # get args via nested SubprocessDataclass
-            return val.args(suppress_defaults = suppress_defaults)
+        if isinstance(val, SubprocessDataclass):  # get args via nested SubprocessDataclass
+            return val.args(suppress_defaults=suppress_defaults)
         if field.metadata.get('exec', False):  # this field is the executable, so return no arguments
             return []
         if suppress_defaults:  # if value matches the default, suppress the argument
             default = None
             has_default = True
-            if (field.default == dataclasses.MISSING):
-                if (field.default_factory == dataclasses.MISSING):
+            if (field.default == MISSING):
+                if (field.default_factory == MISSING):
                     has_default = False
                 else:
                     default = field.default_factory()
@@ -87,10 +87,9 @@ class SubprocessDataclass(DataclassMixin):
 
         Returns:
             Name of the executable to run"""
-        name = None
-        for (name, field) in self.__dataclass_fields__.items():
-            if field.metadata.get('exec', False):
-                return getattr(self, name, None)
+        for fld in fields(self):  # type: ignore[arg-type]
+            if fld.metadata.get('exec', False):
+                return getattr(self, fld.name, None)
         return None
 
     def args(self, suppress_defaults: bool = False) -> List[str]:
@@ -102,11 +101,11 @@ class SubprocessDataclass(DataclassMixin):
         Returns:
             List of command-line args corresponding to the dataclass fields"""
         args = []
-        for name in self.__dataclass_fields__:
-            args += [arg for arg in self.get_arg(name, suppress_defaults = suppress_defaults) if arg]
+        for fld in fields(self):  # type: ignore[arg-type]
+            args += [arg for arg in self.get_arg(fld.name, suppress_defaults = suppress_defaults) if arg]
         return args
 
-    def run_subprocess(self, **kwargs: Any) -> subprocess.CompletedProcess:
+    def run_subprocess(self, **kwargs: Any) -> 'subprocess.CompletedProcess[Union[str, bytes]]':
         """Executes the full subprocess command corresponding to the dataclass parameters.
 
         Args:
