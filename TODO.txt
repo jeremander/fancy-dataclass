@@ -8,8 +8,11 @@
   - more complex examples
   - pytest.ini with coverage
 - documentation
-  - basic README
-  - mkdocs/readthedocs
+  - Configuration
+  - JSON
+  - SQL
+  - CLI
+  - Subprocess
 - ConfigDataclass?
 - auto-wrap dataclass decorator when inheriting from DataclassMixin?
   - __init_subclass__

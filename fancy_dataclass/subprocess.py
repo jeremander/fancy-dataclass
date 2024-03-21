@@ -18,7 +18,7 @@ class SubprocessDataclass(DataclassMixin):
         exec_field = None
         for fld in fields(self):  # type: ignore[arg-type]
             if fld.metadata.get('exec', False):
-                if (exec_field is None):
+                if exec_field is None:
                     exec_field = fld.name
                 else:
                     raise TypeError("cannot have more than one field with 'exec' flag set to True")
@@ -39,7 +39,7 @@ class SubprocessDataclass(DataclassMixin):
             # ignore fields associated with the class, rather than the instance
             return []
         val = getattr(self, name, None)
-        if (val is None):  # optional value is None
+        if val is None:  # optional value is None
             return []
         if isinstance(val, SubprocessDataclass):  # get args via nested SubprocessDataclass
             return val.args(suppress_defaults=suppress_defaults)
@@ -48,8 +48,8 @@ class SubprocessDataclass(DataclassMixin):
         if suppress_defaults:  # if value matches the default, suppress the argument
             default = None
             has_default = True
-            if (field.default == MISSING):
-                if (field.default_factory == MISSING):
+            if field.default == MISSING:
+                if field.default_factory == MISSING:
                     has_default = False
                 else:
                     default = field.default_factory()
@@ -59,14 +59,14 @@ class SubprocessDataclass(DataclassMixin):
                 return []
         if field.metadata.get('args'):  # use arg name provided by the metadata
             arg = field.metadata['args'][0]
-            if (not arg.startswith('-')):
+            if not arg.startswith('-'):
                 arg = None
         else:  # use the field name (assume a single dash if it is a single letter)
             prefix = '-' if (len(name) == 1) else '--'
             arg = prefix + name.replace('_', '-')
         if isinstance(val, bool):
             # make it a boolean flag if True, otherwise omit it
-            if (not val):
+            if not val:
                 arg = None
             val = []
         elif isinstance(val, (list, tuple)):
@@ -74,7 +74,7 @@ class SubprocessDataclass(DataclassMixin):
                 val = [str(x) for x in val]
             else:
                 arg = None
-        elif (val is not None):  # convert the field value to a string
+        elif val is not None:  # convert the field value to a string
             val = str(val)
         args = [arg] if arg else []
         args += val if isinstance(val, list) else [val]
@@ -117,7 +117,7 @@ class SubprocessDataclass(DataclassMixin):
         Raises:
             ValueError: If no executable was found from the `get_executable` method"""
         executable = self.get_executable()
-        if (not executable):
+        if not executable:
             raise ValueError(f'No executable identified for use with {obj_class_name(self)!r} instance')
         args = [executable] + self.args()
         return subprocess.run(args, **kwargs)

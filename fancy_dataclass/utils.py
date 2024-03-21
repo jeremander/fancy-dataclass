@@ -27,7 +27,7 @@ def safe_dict_update(d1: Dict[str, Any], d2: Dict[str, Any]) -> None:
     Raises:
         ValueError: If any dict keys overlap"""
     for (key, val) in d2.items():
-        if (key in d1):
+        if key in d1:
             raise ValueError(f'duplicate key {key!r}')
         d1[key] = val
 
@@ -97,7 +97,7 @@ def get_subclass_with_name(cls: Type[T], name: str) -> Type[T]:
         ValueError: If no subclass with the given name exists"""
     fully_qualified = '.' in name
     cls_name = fully_qualified_class_name(cls) if fully_qualified else cls.__name__
-    if (cls_name == name):
+    if cls_name == name:
         return cls
     if fully_qualified:  # import the module
         toks = name.split('.')
@@ -105,7 +105,7 @@ def get_subclass_with_name(cls: Type[T], name: str) -> Type[T]:
         importlib.import_module(mod_name)
     for subcls in all_subclasses(cls):
         subcls_name = fully_qualified_class_name(subcls) if fully_qualified else subcls.__name__
-        if (subcls_name == name):
+        if subcls_name == name:
             return subcls
     else:
         raise ValueError(f'{name} is not a known subclass of {cls.__name__}')
@@ -118,7 +118,7 @@ def check_dataclass(cls: type) -> None:
 
     Raises:
         TypeError: If the given type is not a dataclass"""
-    if (not is_dataclass(cls)):
+    if not is_dataclass(cls):
         raise TypeError(f'{cls.__name__} is not a dataclass')
 
 def make_dataclass_with_constructors(cls_name: str, fields: Sequence[Union[str, Tuple[str, type]]], constructors: Sequence[Constructor], **kwargs: Any) -> Type['DataclassInstance']:
@@ -182,7 +182,7 @@ class DataclassMixin:
         assert hasattr(self, '__dataclass_fields__'), f'{obj_class_name(self)} is not a dataclass type'
         d = {field.name : getattr(self, field.name) for field in dataclasses.fields(self)}  # type: ignore[arg-type]
         for (key, val) in kwargs.items():
-            if (key in d):
+            if key in d:
                 d[key] = val
             else:
                 raise TypeError(f'{key!r} is not a valid field for {obj_class_name(self)}')

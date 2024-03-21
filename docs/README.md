@@ -15,6 +15,12 @@ By inspecting dataclasses' type annotations, it is possible to endow them with s
 
 `fancy_dataclass` borrows ideas from other excellent libraries such as [`marshmallow`](https://marshmallow.readthedocs.io/en/stable/), [`pydantic`](https://docs.pydantic.dev/latest), and [`argparse_dataclass`](https://github.com/mivade/argparse_dataclass), but it aims to be as lightweight as possible in terms of its dependencies and learning curve.
 
+## How to install
+
+```pip install fancy_dataclass```
+
+Requires Python 3.8 or higher.
+
 ## Example
 
 **Regular dataclass**
@@ -62,9 +68,3 @@ Usage:
   ]
 }
 ```
-
-## How to install
-
-```pip install fancy_dataclass```
-
-Requires Python 3.8 or higher.

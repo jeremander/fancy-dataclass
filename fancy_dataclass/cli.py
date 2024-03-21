@@ -91,9 +91,9 @@ class ArgparseDataclass(DictDataclass):
         if field.metadata.get('exclude', False):  # exclude the argument from the parser
             return
         group_name = field.metadata.get('group')
-        if (group_name is not None):  # add argument to a group instead of the main parser
+        if group_name is not None:  # add argument to a group instead of the main parser
             for group in getattr(parser, '_action_groups', []):  # get argument group with the given name
-                if (getattr(group, 'title', None) == group_name):
+                if getattr(group, 'title', None) == group_name:
                     break
             else:  # group not found, so create it
                 group_kwargs = {}
@@ -108,8 +108,8 @@ class ArgparseDataclass(DictDataclass):
         # determine the type of the parser argument for the field
         tp = field.metadata.get('type', field.type)
         origin_type = getattr(tp, '__origin__', None)
-        if (origin_type is not None):  # compound type
-            if (origin_type is ClassVar):  # by default, exclude ClassVars from the parser
+        if origin_type is not None:  # compound type
+            if origin_type is ClassVar:  # by default, exclude ClassVars from the parser
                 return
             args = getattr(tp, '__args__', ())
             if args:  # extract the first wrapped type (should handle List/Optional/Union)
@@ -122,7 +122,7 @@ class ArgparseDataclass(DictDataclass):
             tp = int
         kwargs['type'] = tp
         # get the names of the arguments associated with the field
-        if ('args' in field.metadata):
+        if 'args' in field.metadata:
             args = field.metadata['args']
         else:
             argname = field.name.replace('_', '-')
@@ -134,22 +134,22 @@ class ArgparseDataclass(DictDataclass):
         if field.metadata.get('args') and (not positional):
             # store the argument based on the name of the field, and not whatever flag name was provided
             kwargs['dest'] = field.name
-        if (field.default == MISSING):
-            if (field.default_factory == MISSING):
-                if (not positional):  # no default available, so make the argument required
+        if field.default == MISSING:
+            if field.default_factory == MISSING:
+                if not positional:  # no default available, so make the argument required
                     kwargs['required'] = True
             else:
                 kwargs['default'] = field.default_factory()
         else:
             kwargs['default'] = field.default
-        if (field.type is bool):  # use boolean flag instead of an argument
+        if field.type is bool:  # use boolean flag instead of an argument
             kwargs['action'] = 'store_true'
             for key in ('type', 'required'):
                 with suppress(KeyError):
                     kwargs.pop(key)
         # extract additional items from metadata
         for key in cls.parser_argument_kwarg_names():
-            if (key in field.metadata):
+            if key in field.metadata:
                 kwargs[key] = field.metadata[key]
         parser.add_argument(*args, **kwargs)
 

@@ -28,7 +28,7 @@ def safe_dict_insert(d: JSONDict, key: str, val: Any) -> None:
 
     Raises:
         TypeError: If the key is already in the dict"""
-    if (key in d):
+    if key in d:
         raise TypeError(f'duplicate key {key!r}')
     d[key] = val
 
@@ -69,7 +69,7 @@ class DictDataclass(DataclassMixin):
                 return x.value
             elif isinstance(x, range):  # store the range bounds
                 bounds = [x.start, x.stop]
-                if (x.step != 1):
+                if x.step != 1:
                     bounds.append(x.step)
                 return bounds
             elif isinstance(x, list):
@@ -89,18 +89,18 @@ class DictDataclass(DataclassMixin):
             return x
         d = self._dict_init()
         fields = getattr(self.__class__, '__dataclass_fields__', None)
-        if (fields is not None):
+        if fields is not None:
             for (name, field) in fields.items():
-                if (name == 'type'):
+                if name == 'type':
                     raise ValueError(f"'type' is an invalid {obj_class_name(self)} field")
-                if (getattr(field.type, '__origin__', None) is ClassVar):  # do not include ClassVars in dict
+                if getattr(field.type, '__origin__', None) is ClassVar:  # do not include ClassVars in dict
                     continue
-                if (not field.init):  # suppress fields where init = False
+                if not field.init:  # suppress fields where init = False
                     continue
                 val = getattr(self, name)
-                if (not full):  # suppress values that match the default
+                if not full:  # suppress values that match the default
                     try:
-                        if (val == field.default):
+                        if val == field.default:
                             continue
                         if (field.default_factory != dataclasses.MISSING) and (val == field.default_factory()):
                             continue
@@ -135,9 +135,9 @@ class DictDataclass(DataclassMixin):
     @classmethod
     def _convert_value(cls, tp: type, x: Any) -> Any:
         """Given a type and a value, attempts to convert the value to the given type."""
-        if (x is None):
+        if x is None:
             return None
-        if (tp in [Any, 'typing.Any']):  # assume basic data type
+        if tp in [Any, 'typing.Any']:  # assume basic data type
             return x
         if issubclass_safe(tp, list):
             # class may inherit from List[T], so get the parent class
@@ -148,7 +148,7 @@ class DictDataclass(DataclassMixin):
                     tp = base
                     break
         origin_type = getattr(tp, '__origin__', None)
-        if (origin_type is None):  # basic class or type
+        if origin_type is None:  # basic class or type
             if type(tp) == TypeVar:  # type: ignore[comparison-overlap]
                 # can't refer to instantiated type, so we assume a basic data type
                 # NB: this limitation means we can only use TypeVar for basic types
@@ -173,7 +173,7 @@ class DictDataclass(DataclassMixin):
                 return {cls._convert_value(keytype, k) : cls._convert_value(valtype, v) for (k, v) in x.items()}
             elif origin_type == tuple:
                 subtypes = args
-                if (subtypes[-1] == Ellipsis):  # treat it like a list
+                if subtypes[-1] == Ellipsis:  # treat it like a list
                     subtype = subtypes[0]
                     return tuple(cls._convert_value(subtype, y) for y in x)
                 return tuple(cls._convert_value(subtype, y) for (subtype, y) in zip(args, x))
@@ -203,7 +203,7 @@ class DictDataclass(DataclassMixin):
         cls_fields = dataclasses.fields(cls)  # type: ignore[arg-type]
         for field in cls_fields:
             origin = getattr(field.type, '__origin__', None)
-            if (origin is Union):  # use the first type of a Union (also handles Optional)
+            if origin is Union:  # use the first type of a Union (also handles Optional)
                 tp = field.type.__args__[0]
             else:
                 tp = field.type
@@ -229,7 +229,7 @@ class DictDataclass(DataclassMixin):
             for field in dataclasses.fields(self):
                 key = field.name
                 val = getattr(self, key)
-                if (key in field_map):  # a merged field
+                if key in field_map:  # a merged field
                     nested_kwargs[field_map[key]][key] = val
                 else:  # a regular field
                     kwargs[key] = val
@@ -247,9 +247,9 @@ class DictDataclass(DataclassMixin):
         bases = cls.mro()
         fields = dataclasses.fields(cls)  # type: ignore[arg-type]
         for field in fields:
-            if (not field.init):  # suppress fields where init = False
+            if not field.init:  # suppress fields where init = False
                 continue
-            if (field.name in d):
+            if field.name in d:
                 # field may be defined in the dataclass itself or one of its ancestor dataclasses
                 for base in bases:
                     try:
@@ -260,8 +260,8 @@ class DictDataclass(DataclassMixin):
                         pass
                 else:
                     raise ValueError(f'could not locate field {field.name!r}')
-            elif (field.default == dataclasses.MISSING):
-                if (field.default_factory == dataclasses.MISSING):
+            elif field.default == dataclasses.MISSING:
+                if field.default_factory == dataclasses.MISSING:
                     raise ValueError(f'{field.name!r} field is required')
                 kwargs[field.name] = field.default_factory()
         return kwargs
@@ -279,11 +279,11 @@ class DictDataclass(DataclassMixin):
             Converted object of this class"""
         # first establish the type, which may be present in the 'type' field of the dict
         typename = d.get('type')
-        if (typename is None):  # type field unspecified, so use the calling class
+        if typename is None:  # type field unspecified, so use the calling class
             tp = cls
         else:
             cls_name = fully_qualified_class_name(cls) if ('.' in typename) else cls.__name__
-            if (cls_name == typename):  # type name already matches this class
+            if cls_name == typename:  # type name already matches this class
                 tp = cls
             else:
                 # tp must be a subclass of cls
@@ -294,7 +294,7 @@ class DictDataclass(DataclassMixin):
                 d2 = dict(d)
                 d2.pop('type')  # remove the type name before passing to the constructor
                 return cls.get_subclass_with_name(typename).from_dict(d2)
-        if (not cls.nested):
+        if not cls.nested:
             # produce equivalent subfield-merged types, then convert the dict
             cls = cls._class_with_merged_fields()
             tp = tp._class_with_merged_fields()

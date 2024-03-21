@@ -61,7 +61,7 @@ class SQLDataclass(DictDataclass):
         cols = {}
         for field in fields(cls):  # type: ignore[arg-type]
             nullable = False
-            if (not field.metadata.get('sql', True)):
+            if not field.metadata.get('sql', True):
                 # skip fields whose metadata's 'sql' field is False
                 continue
             tp = field.type
@@ -103,8 +103,8 @@ def register(reg: Reg = DEFAULT_REGISTRY, extra_cols: Optional[Dict[str, Column[
         cols = {} if (extra_cols is None) else dict(extra_cols)
         safe_dict_update(cols, cls.get_columns())
         has_primary_key = any(fld.primary_key for fld in cols.values())
-        if (not has_primary_key):
-            if ('_id' in cols):
+        if not has_primary_key:
+            if '_id' in cols:
                 raise ValueError(f'no primary key found for {cls.__name__!r}')
             # add an auto-incrementing primary key with '_id' column
             cols = {'_id' : Column('_id', Integer, primary_key=True, autoincrement=True), **cols}
