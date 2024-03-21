@@ -86,7 +86,7 @@ force-to-top = ["package.utils"]
 # number of lines after each import block?
 lines-after-imports = 2
 # whether to order imports by type, rather than strictly alphabetically
-order-by-type = false
+order-by-type = true
 
 [lint.pydocstyle]
 convention = "google"

@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "fancy-dataclass"
 dynamic = ["version"]
 description = "Enhance dataclasses with additional features."
-readme = "README.md"
+readme = "docs/README.md"
 requires-python = ">=3.8"
 license = "MIT"
 keywords = ["dataclass", "cli", "orm", "serialize", "json"]
@@ -30,7 +30,7 @@ Source = "https://github.com/jeremander/fancy-dataclass"
 exclude = ["TODO.txt"]
 
 [tool.hatch.version]
-path = "fancy-dataclass/__init__.py"
+path = "fancy_dataclass/__init__.py"
 
 [tool.hatch.envs.doc]
 dependencies = [
@@ -95,6 +95,11 @@ exclude_lines = [
 
 [tool.commitizen]
 tag_format = "v$major.$minor.$patch"
+
+[tool.mypy]
+exclude = ["docs/", "site/"]
+warn_unused_configs = true
+strict = true
 
 [tool.pytest.ini_options]
 addopts = "--verbose --cov=fancy_dataclass"

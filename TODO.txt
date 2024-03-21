@@ -1,6 +1,8 @@
-- poetry->hatch
-- versioning
 - ruff/mypy checks
+- typing
+  - Literal
+  - Annotated
+  - Doc
 - more test coverage
   - cover more data types (dynamically generate dataclass types)
   - more complex examples
@@ -13,3 +15,5 @@
   - __init_subclass__
 - PyPI packaging
 - Github Actions for automated testing (with different Python versions)
+- Deprecate public class vars
+  - Give them special prefix? Or, special Config object (like pydantic)
