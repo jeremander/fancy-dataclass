@@ -49,7 +49,7 @@ def _test_sql_convert(obj, session):
         # sqlalchemy may warn about floating-point error; just ignore this
         warnings.simplefilter('ignore')
         obj2 = session.query(type(obj)).one()
-    assert (obj == obj2)
+    assert obj == obj2
     assert set(obj.get_columns()).issubset({col.name for col in obj.__table__.columns})
 
 def test_example(sqlite_engine, session):
@@ -58,7 +58,7 @@ def test_example(sqlite_engine, session):
     with sqlite_engine.connect() as conn:
         tup = next(iter(conn.execute(text('SELECT * FROM Example'))))
         obj = pickle.loads(tup[-1])
-        assert (obj == ex.g)
+        assert obj == ex.g
 
 def test_container(session):
     ex = Example(3, 4.7, 'abc', datetime.now(), np.ones(5), {'a' : 1, 'b' : 2}, Obj())

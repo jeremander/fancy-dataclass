@@ -62,8 +62,10 @@ all = ["run-ruff", "run-vermin", "run-mypy"]
 
 [tool.hatch.envs.test]
 dependencies = [
+    "numpy",
     "pytest",
-    "pytest-cov"
+    "pytest-cov",
+    "pytest-stub"
 ]
 
 [tool.hatch.envs.test.scripts]
@@ -100,6 +102,11 @@ tag_format = "v$major.$minor.$patch"
 exclude = ["docs/", "site/", "tmp.*"]
 warn_unused_configs = true
 strict = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+strict = false
+disable_error_code = ["attr-defined", "call-arg", "comparison-overlap", "no-untyped-call", "no-untyped-def", "type-arg"]
 
 [tool.pytest.ini_options]
 addopts = "--verbose --cov=fancy_dataclass"

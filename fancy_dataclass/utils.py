@@ -5,6 +5,8 @@ from dataclasses import is_dataclass, make_dataclass
 import importlib
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Sequence, Tuple, Type, TypeVar, Union
 
+from typing_extensions import Self
+
 
 if TYPE_CHECKING:
     from _typeshed import DataclassInstance
@@ -149,7 +151,7 @@ class DataclassMixin:
     This mixin provides a [`wrap_dataclass`][fancy_dataclass.utils.DataclassMixin.wrap_dataclass] decorator which can be used to wrap an existing dataclass into one that provides the mixin's functionality."""
 
     @classmethod
-    def wrap_dataclass(cls: Type[T], tp: Type[T]) -> Type[T]:
+    def wrap_dataclass(cls: Type[Self], tp: Type[T]) -> Type[Self]:
         """Wraps a dataclass type into a new one which inherits from this mixin class and is otherwise the same.
 
         Args:

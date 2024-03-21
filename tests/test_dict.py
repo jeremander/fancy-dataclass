@@ -85,4 +85,4 @@ def test_wrap_dataclass():
     assert issubclass(WrappedCompA, NestedComponentA)
     assert issubclass(WrappedCompA, WrappedDataclass)
     obj = WrappedCompA(3, 4.7)
-    assert (obj.to_dict() == {'a1': 3, 'a2': 4.7})
+    assert obj.to_dict() == {'a1': 3, 'a2': 4.7}

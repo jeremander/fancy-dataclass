@@ -46,18 +46,18 @@ def test_argparse_dataclass_help():
     num_group.add_argument('-y', type = float, default = 3.14, help = 'y value')
     num_group.add_argument('--pair', type = int, nargs = 2, default = (0, 0), metavar = ('FIRST', 'SECOND'), help = 'pair of integers')
     dc1_parser = DC1.make_parser()
-    assert (parser.format_help() == dc1_parser.format_help())
+    assert parser.format_help() == dc1_parser.format_help()
 
 def test_cli_dataclass_parse_valid(capsys):
     """Tests that an CLIDataclass properly parses command-line arguments."""
     def _check_equivalent(args, obj):
         # take args directly
         obj1 = DC1.from_cli_args(args)
-        assert (obj1 == obj)
+        assert obj1 == obj
         # implicitly take args from sys.argv
         argv = sys.argv[1:]
         sys.argv[1:] = args
-        assert (obj1 == obj)
+        assert obj1 == obj
         # build parser and parse command-line args from sys.argv
         DC1.main()
         # since 'run' function prints the object, it should match

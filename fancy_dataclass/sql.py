@@ -11,7 +11,7 @@ from fancy_dataclass.utils import safe_dict_update
 
 
 T = TypeVar('T')
-Reg: TypeAlias = sqlalchemy.orm.decl_api.registry  # type: ignore
+Reg: TypeAlias = sqlalchemy.orm.decl_api.registry
 
 # default sqlalchemy registry
 DEFAULT_REGISTRY = sqlalchemy.orm.registry()
@@ -67,7 +67,7 @@ class SQLDataclass(DictDataclass):
             tp = field.type
             origin = getattr(tp, '__origin__', None)
             if origin:  # compound type
-                if (origin is Union):  # use the first type of a Union (also handles Optional)
+                if origin is Union:  # use the first type of a Union (also handles Optional)
                     # column should be nullable by default if the type is optional
                     nullable |= (type(None) in tp.__args__)
                     tp = tp.__args__[0]
@@ -79,10 +79,10 @@ class SQLDataclass(DictDataclass):
                 # TODO: making columns non-nullable seems to break things for nested SQLDataclasses
                 # column_kwargs = {'nullable' : nullable}
                 column_kwargs = {}
-                if (field.default is not MISSING):
+                if field.default is not MISSING:
                     column_kwargs['default'] = field.default
-                elif (field.default_factory is not MISSING):  # type: ignore
-                    column_kwargs['default'] = field.default_factory  # type: ignore
+                elif field.default_factory is not MISSING:
+                    column_kwargs['default'] = field.default_factory
                 # get additional keyword arguments from 'column' section of metadata, if present
                 column_kwargs.update(field.metadata.get('column', {}))
                 cols[field.name] = Column(field.name, get_column_type(tp), **column_kwargs)
@@ -107,7 +107,7 @@ def register(reg: Reg = DEFAULT_REGISTRY, extra_cols: Optional[Dict[str, Column[
             if ('_id' in cols):
                 raise ValueError(f'no primary key found for {cls.__name__!r}')
             # add an auto-incrementing primary key with '_id' column
-            cols = {'_id' : Column('_id', Integer, primary_key = True, autoincrement = True), **cols}
+            cols = {'_id' : Column('_id', Integer, primary_key=True, autoincrement=True), **cols}
         cls.__table__ = Table(cls.__name__, reg.metadata, *cols.values())
         return reg.mapped(cls)
     return _orm_table
