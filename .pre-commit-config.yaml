@@ -21,7 +21,7 @@ repos:
   hooks:
     - id: vermin-all
       # specify your target version here, OR in a Vermin config file as usual:
-      args: ['-t=3.8-', '--no-tips', '--violations', '.']
+      args: ['-t=3.8-', '--no-tips', '--violations', '--exclude', 'enum.StrEnum', '.']
 - repo: https://github.com/commitizen-tools/commitizen
   rev: v3.20.0
   hooks:

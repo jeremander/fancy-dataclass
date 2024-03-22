@@ -2,12 +2,15 @@ from collections import defaultdict
 import dataclasses
 from datetime import datetime
 from enum import Enum
-from typing import TYPE_CHECKING, Any, ClassVar, Container, Dict, List, Literal, Type, TypeVar, Union
+import re
+from typing import TYPE_CHECKING, Any, ClassVar, Container, Dict, List, Literal, Type, TypeVar, Union, _TypedDictMeta  # type: ignore[attr-defined]
 
-from typing_extensions import Self
+from typing_extensions import Self, _AnnotatedAlias
 
 from fancy_dataclass.utils import DataclassMixin, check_dataclass, fully_qualified_class_name, issubclass_safe, obj_class_name
 
+
+NoneType = type(None)
 
 if TYPE_CHECKING:
     from _typeshed import DataclassInstance
@@ -116,7 +119,7 @@ class DictDataclass(DataclassMixin):
         return d
 
     def to_dict(self, **kwargs: Any) -> JSONDict:
-        """Renders a dict which, by default, suppresses values matching their dataclass defaults.
+        """Converts the object to a JSON-compatible dict which, by default, suppresses values matching their dataclass defaults.
 
         If `full = True` or the class has set the `suppress_defaults` flag to False, does not suppress the defaults.
 
@@ -135,10 +138,18 @@ class DictDataclass(DataclassMixin):
     @classmethod
     def _convert_value(cls, tp: type, x: Any) -> Any:
         """Given a type and a value, attempts to convert the value to the given type."""
-        if x is None:
-            return None
+        def err() -> ValueError:
+            tp_name = re.sub("'>$", '', re.sub(r"^<\w+ '", '', str(tp)))
+            return ValueError(f'could not convert {x!r} to type {tp_name!r}')
+        if tp is NoneType:  # type: ignore[comparison-overlap]
+            if x is None:
+                return None
+            raise err()
         if tp in [Any, 'typing.Any']:  # assume basic data type
             return x
+        ttp = type(tp)
+        if ttp is _AnnotatedAlias:  # Annotated: just ignore the annotation
+            return cls._convert_value(tp.__args__[0], x)  # type: ignore[attr-defined]
         if issubclass_safe(tp, list):
             # class may inherit from List[T], so get the parent class
             assert hasattr(tp, '__orig_bases__')
@@ -149,20 +160,39 @@ class DictDataclass(DataclassMixin):
                     break
         origin_type = getattr(tp, '__origin__', None)
         if origin_type is None:  # basic class or type
-            if type(tp) == TypeVar:  # type: ignore[comparison-overlap]
+            if ttp == TypeVar:  # type: ignore[comparison-overlap]
                 # can't refer to instantiated type, so we assume a basic data type
-                # NB: this limitation means we can only use TypeVar for basic types
+                # this limitation means we can only use TypeVar for basic types
                 return x
             elif hasattr(tp, 'from_dict'):  # handle nested fields which are themselves convertible from a dict
                 return cls._convert_dict_convertible(tp, x)
             elif issubclass(tp, (tuple, range)):  # will catch namedtuples too
                 return tp(*x)
             elif issubclass(tp, dict):
+                if ttp is _TypedDictMeta:  # validate TypedDict fields
+                    anns = tp.__annotations__
+                    if (not isinstance(x, dict)) or (set(anns) != set(x)):
+                        raise err()
+                    return {key: cls._convert_value(valtype, x[key]) for (key, valtype) in anns.items()}
                 return tp(x)
             elif issubclass(tp, datetime):
                 return tp.fromisoformat(x)
+            elif issubclass(tp, Enum):
+                try:
+                    return tp(x)
+                except ValueError as e:
+                    raise err() from e
             else:  # basic data type
-                return tp(x)  # type: ignore[call-arg]
+                if not isinstance(x, tp):  # validate type
+                    raise err()
+                return x
+                # NOTE: alternatively, we could coerce to the type
+                # if x is None:  # do not coerce None
+                #     raise err()
+                # try:
+                #     return tp(x)  # type: ignore[call-arg]
+                # except TypeError as e:
+                #     raise err() from e
         else:  # compound data type
             args = tp.__args__  # type: ignore[attr-defined]
             if origin_type == list:
@@ -178,6 +208,10 @@ class DictDataclass(DataclassMixin):
                     return tuple(cls._convert_value(subtype, y) for y in x)
                 return tuple(cls._convert_value(subtype, y) for (subtype, y) in zip(args, x))
             elif origin_type == Union:
+                if getattr(tp, '_name', None) == 'Optional':
+                    assert len(args) == 2
+                    assert args[1] is NoneType
+                    args = args[::-1]  # check NoneType go first
                 for subtype in args:
                     try:
                         # NB: will resolve to the first valid type in the Union
@@ -193,7 +227,7 @@ class DictDataclass(DataclassMixin):
             elif issubclass_safe(origin_type, Container):  # arbitrary container
                 subtype = args[0]
                 return type(x)(cls._convert_value(subtype, y) for y in x)
-        raise ValueError(f'could not convert {x!r} to type {tp!r}')
+        raise err()
 
     @classmethod
     def _class_with_merged_fields(cls: Type[Self]) -> Type[Self]:
@@ -247,7 +281,7 @@ class DictDataclass(DataclassMixin):
         bases = cls.mro()
         fields = dataclasses.fields(cls)  # type: ignore[arg-type]
         for field in fields:
-            if not field.init:  # suppress fields where init = False
+            if not field.init:  # suppress fields where init=False
                 continue
             if field.name in d:
                 # field may be defined in the dataclass itself or one of its ancestor dataclasses

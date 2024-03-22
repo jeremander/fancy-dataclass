@@ -57,7 +57,7 @@ dependencies = [
 [tool.hatch.envs.lint.scripts]
 run-mypy = "mypy --install-types --non-interactive {args:fancy_dataclass tests}"
 run-ruff = "ruff check"
-run-vermin = "vermin {args:--eval-annotations --no-tips fancy_dataclass}"
+run-vermin = "vermin {args:--eval-annotations --no-tips --exclude 'tests.test_json.StrEnum' fancy_dataclass}"
 all = ["run-ruff", "run-vermin", "run-mypy"]
 
 [tool.hatch.envs.test]

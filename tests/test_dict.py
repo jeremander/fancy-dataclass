@@ -33,7 +33,7 @@ class MergedComponentB(DictDataclass):
     b2: List[int]
 
 @dataclass
-class MergedComposedAB(DictDataclass, nested = False):
+class MergedComposedAB(DictDataclass, nested=False):
     comp_a: MergedComponentA
     comp_b: MergedComponentB
 
@@ -48,6 +48,7 @@ TEST_MERGED = MergedComposedAB(
 )
 
 def test_safe_dict_insert():
+    """Tests behavior of safe_dict_insert."""
     d = {'a': 1, 'b': 2}
     safe_dict_insert(d, 'c', 3)
     with pytest.raises(TypeError):
@@ -64,21 +65,23 @@ def test_composition_merged():
 def test_make_dataclass():
     """Tests behavior of make_dataclass."""
     # with type annotations
-    dc = make_dataclass('TestDataclass', [('a', int), ('b', str)], bases = (DictDataclass,))
+    dc = make_dataclass('TestDataclass', [('a', int), ('b', str)], bases=(DictDataclass,))
     obj = dc.from_dict({'a': 3, 'b': 'b'})
     assert isinstance(obj, dc)
-    obj = dc.from_dict({'a': 3, 'b': 4})  # coercion succeeds
-    assert isinstance(obj, dc)
-    with pytest.raises(ValueError, match = 'invalid literal for int'):
-        obj = dc.from_dict({'a': '3.7', 'b': 'b'})  # coercion fails
+    assert obj.to_dict() == {'a': 3, 'b': 'b'}
+    with pytest.raises(ValueError, match="could not convert 4 to type 'str'"):
+        _ = dc.from_dict({'a': 3, 'b': 4})
+    with pytest.raises(ValueError, match="could not convert '3.7' to type 'int'"):
+        _ = dc.from_dict({'a': '3.7', 'b': 'b'})
     # no type annotations
-    dc = make_dataclass('TestDataclass', ['a', 'b'], bases = (DictDataclass,))
+    dc = make_dataclass('TestDataclass', ['a', 'b'], bases=(DictDataclass,))
     obj = dc.from_dict({'a': 3, 'b': 'b'})
     assert isinstance(obj, dc)
     obj = dc.from_dict({'a': '3.7', 'b': 'b'})
     assert isinstance(obj, dc)
 
 def test_wrap_dataclass():
+    """Tests behavior of wrap_dataclass."""
     class WrappedDataclass(DataclassMixin):
         pass
     WrappedCompA = WrappedDataclass.wrap_dataclass(NestedComponentA)
