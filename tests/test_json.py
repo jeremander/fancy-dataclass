@@ -17,6 +17,10 @@ NOW = datetime.now()
 
 
 @dataclass
+class DCEmpty(JSONDataclass):
+    ...
+
+@dataclass
 class DC1(JSONDataclass):
     x: int
     y: float
@@ -124,8 +128,13 @@ class DCUntypedNamedTuple(JSONDataclass):
 class DCTypedNamedTuple(JSONDataclass):
     t: MyTypedNamedTuple
 
+@dataclass
+class DCAny(JSONDataclass):
+    val: Any
+
 
 TEST_JSON = [
+    DCEmpty(),
     DC1(3, 4.7, 'abc'),
     DC2(3, 4.7, 'abc'),
     DC1Sub(3, 4.7, 'abc'),
@@ -145,6 +154,10 @@ TEST_JSON = [
     DCTypedDict({'x': 3, 'y': 'a'}),
     DCUntypedNamedTuple(MyUntypedNamedTuple(3, 'a')),
     DCTypedNamedTuple(MyTypedNamedTuple(3, 'a')),
+    DCAny(3),
+    DCAny('a'),
+    DCAny({}),
+    DCAny(None),
 ]
 
 @pytest.mark.parametrize('obj', TEST_JSON)

@@ -2,23 +2,19 @@
 
 ## v0.1.0
 
-- Typing
-  - NamedTuple
 - Settings
   - `__init_subclass__` on `DataclassMixin` to grab kwargs and store them in one big dict
   - Subclasses can define their own settings dataclass and extract them from the settings dict
-- Change `to_dict_full` to a kwarg of `to_dict_`
+- Change `to_dict_full` to a kwarg of `to_dict`
 - Unit tests
-  - Any
-  - NamedTuple (convert to `dict`?)
   - Test all flags (e.g. suppress_defaults, store_type, qualified_type)
   - Test multiple inheritance (all the classes?)
     - What happens to the class settings?
-  - Sequential calls to `wrap_dataclass`
 - toml
   - `tomlkit` maintains parsed structure (incl. whitespace & comments)
 - documentation
   - Dataclass settings
+    - For now, `dataclass` decorator is required
   - JSON
   - TOML
   - CLI
