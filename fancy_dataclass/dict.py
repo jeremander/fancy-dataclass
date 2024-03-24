@@ -44,7 +44,11 @@ class DictDataclass(DataclassMixin):
         - `store_type`: store the object's type in its dict
         - `qualified_type`: fully qualify the object type's name in its dict
         - `strict`: raise a `TypeError` in [`from_dict`][fancy_dataclass.dict.DictDataclass.from_dict] if extraneous fields are present
-        - `nested`: if True, [`DictDataclass`][fancy_dataclass.dict.DictDataclass] subfields will be nested; otherwise, they are merged together with the main fields (provided there are no name collisions)"""
+        - `nested`: if True, [`DictDataclass`][fancy_dataclass.dict.DictDataclass] subfields will be nested; otherwise, they are merged together with the main fields (provided there are no name collisions)
+
+    Per-field arguments can be passed into the `metadata` argument of a `dataclasses.field`:
+        - `suppress`: suppress this field in the dict (note: a `ClassVar` assumes this is `True` by default; you can set it to `False` to force the field's inclusion)
+        - `suppress_default`: suppress this field in the dict if it matches its default value"""
 
     suppress_defaults: ClassVar[bool] = True
     store_type: ClassVar[bool] = False
@@ -93,20 +97,23 @@ class DictDataclass(DataclassMixin):
             elif hasattr(x, 'dtype'):  # assume it's a numpy array of numbers
                 return [float(y) for y in x]
             elif isinstance(x, DictDataclass):
-                return x.to_dict(full = full)
+                return x.to_dict(full=full)
             return x
         d = self._dict_init()
         fields = getattr(self.__class__, '__dataclass_fields__', None)
         if fields is not None:
             for (name, field) in fields.items():
+                is_class_var = getattr(field.type, '__origin__', None) is ClassVar
+                # suppress field by default if it is a ClassVar or init=False
+                suppress_field = field.metadata.get('suppress', is_class_var or (not field.init))
+                # suppress default (by default) as long as full=False
+                suppress_default = (not full) and field.metadata.get('suppress_default', True)
                 if name == 'type':
-                    raise ValueError(f"'type' is an invalid {obj_class_name(self)} field")
-                if getattr(field.type, '__origin__', None) is ClassVar:  # do not include ClassVars in dict
-                    continue
-                if not field.init:  # suppress fields where init = False
+                    raise ValueError("'type' is a reserved dict field")
+                if suppress_field:
                     continue
                 val = getattr(self, name)
-                if not full:  # suppress values that match the default
+                if suppress_default:  # suppress values that match the default
                     try:
                         if val == field.default:
                             continue
@@ -126,7 +133,7 @@ class DictDataclass(DataclassMixin):
     def to_dict(self, **kwargs: Any) -> JSONDict:
         """Converts the object to a JSON-compatible dict which, by default, suppresses values matching their dataclass defaults.
 
-        If `full = True` or the class has set the `suppress_defaults` flag to False, does not suppress the defaults.
+        If `full=True` or the class has set the `suppress_defaults` flag to False, does not suppress the defaults.
 
         Returns:
             A dict whose keys match the dataclass's fields"""

@@ -5,7 +5,6 @@
 - Settings
   - `__init_subclass__` on `DataclassMixin` to grab kwargs and store them in one big dict
   - Subclasses can define their own settings dataclass and extract them from the settings dict
-- Change `to_dict_full` to a kwarg of `to_dict`
 - Forbid inheritance from `JSONDataclass`?
   - Tell user they should subclass `JSONBaseDataclass` or pass `store_type=True`
 - Allow `ClassVar` to optionally be included in dict

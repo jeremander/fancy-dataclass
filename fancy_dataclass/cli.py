@@ -21,7 +21,7 @@ class ArgparseDataclass(DictDataclass):
 
     The parser's argument names and types will be derived from the dataclass field names and types.
 
-    Other arguments can be passed into the `metadata` argument of a `dataclasses.field`, namely:
+    Per-field arguments can be passed into the `metadata` argument of a `dataclasses.field`:
 
     - `type` (override the dataclass field type with a different type)
     - `args` (lists the command-line arguments explicitly)
@@ -31,7 +31,7 @@ class ArgparseDataclass(DictDataclass):
     - `help` (help string)
     - `metavar` (name for the argument in usage messages)
     - `group` (name of the argument group in which to put the argument; the group will be created if it does not already exist in the parser)
-    - `exclude` (boolean flag indicating that the field should not be included in the parser)"""
+    - `parse_exclude` (boolean flag indicating that the field should not be included in the parser)"""
 
     @classmethod
     def parser_class(cls) -> Type[ArgumentParser]:
@@ -88,7 +88,7 @@ class ArgparseDataclass(DictDataclass):
             name: Name of the argument to configure"""
         kwargs: Dict[str, Any] = {}
         field = cls.__dataclass_fields__[name]  # type: ignore[attr-defined]
-        if field.metadata.get('exclude', False):  # exclude the argument from the parser
+        if field.metadata.get('parse_exclude', False):  # exclude the argument from the parser
             return
         group_name = field.metadata.get('group')
         if group_name is not None:  # add argument to a group instead of the main parser

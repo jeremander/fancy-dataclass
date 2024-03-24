@@ -12,7 +12,7 @@ class SubprocessDataclass(DataclassMixin):
 
     - `exec` (boolean flag indicating that this field should be treated as the name of the executable, rather than an argument)
     - `args` (list of command-line arguments corresponding to the field—only the first will be used, and only if it starts with a hyphen)
-    - `exclude` (boolean flag indicating that the field should not be included in the args)"""
+    - `subprocess_exclude` (boolean flag indicating that the field should not be included in the args)"""
 
     def __post_init__(self) -> None:
         exec_field = None
@@ -33,7 +33,7 @@ class SubprocessDataclass(DataclassMixin):
         Returns:
             List of command-line args corresponding to the field"""
         field = self.__dataclass_fields__[name]  # type: ignore[attr-defined]
-        if field.metadata.get('exclude', False):  # exclude the argument
+        if field.metadata.get('subprocess_exclude', False):  # exclude the argument
             return []
         if getattr(field.type, '__origin__', None) is ClassVar:
             # ignore fields associated with the class, rather than the instance
