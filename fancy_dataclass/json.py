@@ -121,6 +121,6 @@ class JSONDataclass(DictDataclass, JSONSerializable):  # type: ignore[misc]
         return DictDataclass._convert_value(tp, x)
 
 
-class JSONBaseDataclass(JSONDataclass, qualified_type = True):
+class JSONBaseDataclass(JSONDataclass, qualified_type=True):
     """This class should be used in place of [`JSONDataclass`][fancy_dataclass.json.JSONDataclass] when you intend to inherit from the class.
     When converting a subclass to a dict with [`to_dict`][fancy_dataclass.json.JSONSerializable.to_dict], it will store the subclass's type in the `type` field. It will also resolve this type on [`from_dict`][fancy_dataclass.json.JSONSerializable.from_dict]."""

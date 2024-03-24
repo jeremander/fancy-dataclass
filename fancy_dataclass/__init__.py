@@ -1,5 +1,6 @@
 # top-level class exports
 from .cli import ArgparseDataclass, CLIDataclass
+from .config import ConfigDataclass
 from .dict import DictDataclass
 from .json import JSONBaseDataclass, JSONDataclass, JSONSerializable
 from .sql import SQLDataclass

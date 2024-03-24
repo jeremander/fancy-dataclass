@@ -2,21 +2,34 @@
 
 ## v0.1.0
 
-- typing & unit tests
+- Typing
+  - NamedTuple
+- Settings
+  - `__init_subclass__` on `DataclassMixin` to grab kwargs and store them in one big dict
+  - Subclasses can define their own settings dataclass and extract them from the settings dict
+- Change `to_dict_full` to a kwarg of `to_dict_`
+- Unit tests
   - Any
   - NamedTuple (convert to `dict`?)
-  - All flags (e.g. suppress_defaults)
+  - Test all flags (e.g. suppress_defaults, store_type, qualified_type)
+  - Test multiple inheritance (all the classes?)
+    - What happens to the class settings?
+  - Sequential calls to `wrap_dataclass`
 - toml
   - `tomlkit` maintains parsed structure (incl. whitespace & comments)
 - documentation
-  - Configuration
+  - Dataclass settings
   - JSON
   - TOML
   - CLI
   - SQL
   - Subprocess
+  - Config
 - Github Actions for automated testing (with different Python versions)
+  - Coverage badge
 - PyPI
+- Forbid inheritance from `JSONDataclass`?
+  - Tell user they should subclass `JSONBaseDataclass` or pass `store_type=True`
 
 ## Future
 
@@ -30,6 +43,9 @@
   - More complex examples
   - Cover more data types (dynamically generate dataclass types)
 - Automatic JSON schema generation (see `pydantic`)
+- Performance benchmarks
+  - `pydantic` might have some? Obviously won't beat those.
+  - Identify bottlenecks and focus on those.
 - Auto-wrap dataclass decorator when inheriting from DataclassMixin?
   - `__init_subclass__`
   - Downside: makes the decoration implicit

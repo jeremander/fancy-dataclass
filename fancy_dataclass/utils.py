@@ -3,6 +3,7 @@
 import dataclasses
 from dataclasses import is_dataclass, make_dataclass
 import importlib
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Sequence, Tuple, Type, TypeVar, Union
 
 from typing_extensions import Self
@@ -15,6 +16,7 @@ if TYPE_CHECKING:
 T = TypeVar('T')
 
 Constructor = Callable[[Any], Any]
+AnyPath = str | Path
 
 
 def safe_dict_update(d1: Dict[str, Any], d2: Dict[str, Any]) -> None:
