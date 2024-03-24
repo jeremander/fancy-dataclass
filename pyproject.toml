@@ -108,5 +108,9 @@ module = "tests.*"
 strict = false
 disable_error_code = ["attr-defined", "call-arg", "comparison-overlap", "no-untyped-call", "no-untyped-def", "type-arg"]
 
+[[tool.mypy.overrides]]
+module = "tests.test_inheritance"
+disable_error_code = ["assignment", "misc", "no-redef"]
+
 [tool.pytest.ini_options]
 addopts = "--verbose --cov=fancy_dataclass"
