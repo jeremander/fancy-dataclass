@@ -1,10 +1,11 @@
+from collections import namedtuple
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum, Flag, auto
 import json
 import re
 import sys
-from typing import Any, List, Literal, Optional, TypedDict
+from typing import Any, List, Literal, NamedTuple, Optional, TypedDict
 
 import pytest
 from typing_extensions import Annotated, Doc
@@ -43,7 +44,7 @@ class MyObject:
     """This object is not JSON-serializable."""
 
 @dataclass
-class NonJSONSerializable(JSONDataclass):
+class DCNonJSONSerializable(JSONDataclass):
     x: int
     obj: MyObject
 
@@ -109,6 +110,20 @@ class MyTypedDict(TypedDict):
 class DCTypedDict(JSONDataclass):
     d: MyTypedDict
 
+MyUntypedNamedTuple = namedtuple('MyUntypedNamedTuple', ['x', 'y'])
+
+class MyTypedNamedTuple(NamedTuple):
+    x: int
+    y: str
+
+@dataclass
+class DCUntypedNamedTuple(JSONDataclass):
+    t: MyUntypedNamedTuple
+
+@dataclass
+class DCTypedNamedTuple(JSONDataclass):
+    t: MyTypedNamedTuple
+
 
 TEST_JSON = [
     DC1(3, 4.7, 'abc'),
@@ -128,6 +143,8 @@ TEST_JSON = [
     DCColors(list(Color)),
     DCAnnotated(3, 4.7),
     DCTypedDict({'x': 3, 'y': 'a'}),
+    DCUntypedNamedTuple(MyUntypedNamedTuple(3, 'a')),
+    DCTypedNamedTuple(MyTypedNamedTuple(3, 'a')),
 ]
 
 @pytest.mark.parametrize('obj', TEST_JSON)
@@ -229,6 +246,21 @@ def test_typed_dict():
         with pytest.raises(ValueError, match="could not convert .* to type .*"):
             _ = DCTypedDict.from_dict({'d': d})
 
+def test_namedtuple():
+    nt1 = MyUntypedNamedTuple(3, 'a')
+    obj1 = DCUntypedNamedTuple(nt1)
+    assert obj1.to_dict() == {'t': {'x': 3, 'y': 'a'}}
+    nt2 = MyTypedNamedTuple(3, 'a')
+    obj2 = DCTypedNamedTuple(nt2)
+    assert obj2.to_dict() == {'t': {'x': 3, 'y': 'a'}}
+    # invalid NamedTuple field (validation occurs on from_dict)
+    nt2 = MyTypedNamedTuple(3, 4)  # type: ignore[arg-type]
+    obj2 = DCTypedNamedTuple(nt2)
+    d = {'t': {'x': 3, 'y': 4}}
+    assert obj2.to_dict() == d
+    with pytest.raises(ValueError, match="could not convert 4 to type 'str'"):
+        _ = DCTypedNamedTuple.from_dict(d)
+
 def test_subclass_json_dataclass():
     obj = DC1Sub(3, 4.7, 'abc')
     obj1 = DC1Sub.from_dict(obj.to_dict())
@@ -249,6 +281,11 @@ def test_subclass_json_base_dataclass():
 
 def test_invalid_json_obj():
     """Attempts to convert an object to JSON that is not JSONSerializable."""
-    obj = NonJSONSerializable(3, MyObject())
-    with pytest.raises(TypeError):
-        obj.to_json_string()
+    obj = MyObject()
+    njs = DCNonJSONSerializable(3, obj)
+    d = {'x': 3, 'obj': obj}
+    assert njs.to_dict() == d
+    # conversion from dict works OK
+    assert DCNonJSONSerializable.from_dict(d) == njs
+    with pytest.raises(TypeError, match='Object of type MyObject is not JSON serializable'):
+        _ = njs.to_json_string()
