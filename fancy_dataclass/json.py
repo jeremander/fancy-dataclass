@@ -119,6 +119,16 @@ class JSONDataclass(DictDataclass, JSONSerializable):  # type: ignore[misc]
     """Subclass of [`JSONSerializable`][fancy_dataclass.json.JSONSerializable] enabling default serialization of dataclass objects to and from JSON."""
 
     @classmethod
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__(**kwargs)
+        # if the class already inherits from JSONDataclass, raise an error if qualified_type=False
+        # this is because resolving the type from a dict may be ambiguous
+        if not getattr(cls.__settings__, 'qualified_type', False):
+            for base in cls.mro():
+                if (base not in [cls, JSONDataclass]) and issubclass(base, JSONDataclass):
+                    raise TypeError('when subclassing a JSONDataclass, you must set qualified_type=True or subclass JSONBaseDataclass instead')
+
+    @classmethod
     def _convert_value(cls, tp: type, x: Any, strict: bool = False) -> Any:
         # customize for JSONSerializable
         origin_type = getattr(tp, '__origin__', None)

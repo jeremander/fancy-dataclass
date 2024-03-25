@@ -2,15 +2,13 @@
 
 ## v0.2.0
 
-- Settings
-  - `__init_subclass__` on `DataclassMixin` to grab kwargs and store them in one big dict
-  - Subclasses can define their own settings dataclass and extract them from the settings dict
-- Forbid inheritance from `JSONDataclass`?
-  - Tell user they should subclass `JSONBaseDataclass` or pass `store_type=True`
+- ConfigDataclass
+  - Handle nesting properly (updating nested ConfigDataclass should update the parent)
 - Unit tests
   - Test all flags (e.g. suppress_defaults, store_type, qualified_type)
   - Test multiple inheritance (all the classes?)
     - What happens to the class settings?
+      - Operation to dynamically merge dataclasses? Error if any fields collide.
 - toml
   - `tomlkit` maintains parsed structure (incl. whitespace & comments)
 - Docs (under construction)

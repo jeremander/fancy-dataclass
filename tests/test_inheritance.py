@@ -2,10 +2,11 @@ from dataclasses import dataclass
 
 import pytest
 
-from fancy_dataclass import ArgparseDataclass, ConfigDataclass, DictDataclass, JSONDataclass, SQLDataclass, SubprocessDataclass
+from fancy_dataclass import ArgparseDataclass, ConfigDataclass, DictDataclass, JSONBaseDataclass, JSONDataclass, SQLDataclass, SubprocessDataclass
 
 
-DEFAULT_MIXINS = [ArgparseDataclass, ConfigDataclass, JSONDataclass, SQLDataclass, SubprocessDataclass]
+# DEFAULT_MIXINS = [ArgparseDataclass, ConfigDataclass, JSONBaseDataclass, SQLDataclass, SubprocessDataclass]
+DEFAULT_MIXINS = [JSONBaseDataclass, ArgparseDataclass, ConfigDataclass, SQLDataclass, SubprocessDataclass]
 
 
 def test_multiple_inheritance():

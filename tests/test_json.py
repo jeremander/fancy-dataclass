@@ -21,7 +21,7 @@ class DCEmpty(JSONDataclass):
     ...
 
 @dataclass
-class DC1(JSONDataclass):
+class DC1(JSONBaseDataclass):
     x: int
     y: float
     z: str
@@ -283,15 +283,50 @@ def test_namedtuple():
         _ = DCTypedNamedTuple.from_dict(d)
 
 def test_subclass_json_dataclass():
+    def _remove_type(d):
+        return {key: val for (key, val) in d.items() if (key != 'type')}
     obj = DC1Sub(3, 4.7, 'abc')
     obj1 = DC1Sub.from_dict(obj.to_dict())
     assert obj1 == obj
-    obj2 = DC1.from_dict(obj.to_dict())
-    # objects have the same dict but are of different type
-    assert obj2.to_dict() == obj.to_dict()
-    assert isinstance(obj2, DC1)
-    assert not isinstance(obj2, DC1Sub)
-    assert obj2 != obj
+    assert isinstance(obj1, DC1Sub)
+    d = obj.to_dict()
+    assert d['type'] == 'tests.test_json.DC1Sub'
+    obj2 = DC1.from_dict(d)
+    # fully qualified type is resolved to the subclass
+    assert obj2 == obj
+    assert isinstance(obj2, DC1Sub)
+    obj3 = DC1.from_dict(_remove_type(d))
+    assert isinstance(obj3, DC1)
+    assert not isinstance(obj3, DC1Sub)
+    d3 = obj3.to_dict()
+    # objects have the same dict other than the type
+    assert _remove_type(d3) == _remove_type(d)
+    assert d3['type'] == 'tests.test_json.DC1'
+    # test behavior of inheriting from JSONDataclass
+    @dataclass
+    class MyDC(JSONDataclass):
+        pass
+    assert MyDC().to_dict() == {}
+    with pytest.raises(TypeError, match='you must set qualified_type=True'):
+        @dataclass
+        class MyDC1(MyDC):
+            pass
+    @dataclass
+    class MyDC2(MyDC, qualified_type=True):
+        pass
+    # TODO: forbid local types?
+    assert MyDC2().to_dict() == {'type': 'tests.test_json.test_subclass_json_dataclass.<locals>.MyDC2'}
+    @dataclass
+    class MyBaseDC(JSONBaseDataclass):
+        pass
+    @dataclass
+    class MyDC3(MyBaseDC):
+        pass
+    assert MyDC3().to_dict() == {'type': 'tests.test_json.test_subclass_json_dataclass.<locals>.MyDC3'}
+    with pytest.raises(TypeError, match='you must set qualified_type=True'):
+        @dataclass
+        class MyDC4(MyBaseDC, qualified_type=False):
+            pass
 
 def test_subclass_json_base_dataclass():
     """Tests JSONBaseDataclass."""
