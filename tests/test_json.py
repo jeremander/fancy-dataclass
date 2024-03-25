@@ -1,11 +1,11 @@
 from collections import namedtuple
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum, Flag, auto
 import json
 import re
 import sys
-from typing import Any, List, Literal, NamedTuple, Optional, TypedDict
+from typing import Any, ClassVar, List, Literal, NamedTuple, Optional, TypedDict
 
 import pytest
 from typing_extensions import Annotated, Doc
@@ -132,6 +132,13 @@ class DCTypedNamedTuple(JSONDataclass):
 class DCAny(JSONDataclass):
     val: Any
 
+@dataclass
+class DCSuppress(JSONDataclass, suppress_defaults=False):
+    cv1: ClassVar[int] = field(default=0)
+    x: int = field(default=1)
+    y: int = field(default=2, metadata={'suppress': True})
+    z: int = field(default=3, metadata={'suppress': False})
+
 
 TEST_JSON = [
     DCEmpty(),
@@ -158,6 +165,7 @@ TEST_JSON = [
     DCAny('a'),
     DCAny({}),
     DCAny(None),
+    DCSuppress(),
 ]
 
 @pytest.mark.parametrize('obj', TEST_JSON)
@@ -286,6 +294,7 @@ def test_subclass_json_dataclass():
     assert obj2 != obj
 
 def test_subclass_json_base_dataclass():
+    """Tests JSONBaseDataclass."""
     obj = DC2Sub(3, 4.7, 'abc')
     obj1 = DC2Sub.from_dict(obj.to_dict())
     assert obj1 == obj
@@ -302,3 +311,114 @@ def test_invalid_json_obj():
     assert DCNonJSONSerializable.from_dict(d) == njs
     with pytest.raises(TypeError, match='Object of type MyObject is not JSON serializable'):
         _ = njs.to_json_string()
+
+def test_suppress():
+    """Tests behavior of setting the 'suppress' option on a field."""
+    obj = DCSuppress()
+    d = {'x': 1, 'z': 3}
+    assert obj.to_dict() == d
+    assert obj.to_dict(full=True) == d
+    assert DCSuppress.from_dict(d) == obj
+    obj = DCSuppress(y=100)
+    assert obj.to_dict() == d
+    assert obj.to_dict(full=True) == d
+    assert DCSuppress.from_dict(d).y == 2
+
+def test_suppress_required_field():
+    """Tests that a required field with suppress=True cannot create a valid dict."""
+    @dataclass
+    class DCSuppressRequired(JSONDataclass):
+        x: int = field(metadata={'suppress': True})
+    with pytest.raises(TypeError, match='missing 1 required positional argument'):
+        _ = DCSuppressRequired()
+    obj = DCSuppressRequired(1)
+    assert obj.to_dict() == {}
+    with pytest.raises(ValueError, match="'x' field is required"):
+        _ = DCSuppressRequired.from_dict({})
+    _ = DCSuppressRequired.from_dict({'x': 1})
+
+def test_suppress_defaults():
+    """Tests behavior of the suppress_defaults option, both at the class level and the field level."""
+    @dataclass
+    class MyDC(JSONDataclass):
+        x: int = 1
+    assert MyDC.suppress_defaults is True
+    obj = MyDC()
+    assert obj.to_dict() == {}
+    assert obj.to_dict(full=True) == {'x': 1}
+    obj = MyDC(2)
+    assert obj.to_dict() == {'x': 2}
+    assert obj.to_dict(full=True) == {'x': 2}
+    @dataclass
+    class MyDC(JSONDataclass, suppress_defaults=False):
+        x: int = 1
+    obj = MyDC()
+    assert obj.to_dict() == {'x': 1}
+    assert obj.to_dict(full=True) == {'x': 1}
+    @dataclass
+    class MyDC(JSONDataclass):
+        x: int = field(default=1, metadata={'suppress_default': False})
+    obj = MyDC()
+    assert obj.to_dict() == {'x': 1}
+    assert obj.to_dict(full=True) == {'x': 1}
+    @dataclass
+    class MyDC(JSONDataclass, suppress_defaults=False):
+        x: int = field(default=1, metadata={'suppress_default': True})
+    obj = MyDC()
+    assert obj.to_dict() == {}
+    assert obj.to_dict(full=True) == {'x': 1}
+
+def test_class_var():
+    """Tests the behavior of ClassVars."""
+    @dataclass
+    class MyDC(JSONDataclass):
+        x: ClassVar[int]
+    obj = MyDC()
+    assert obj.to_dict() == {}
+    assert obj.to_dict(full=True) == {}
+    assert MyDC.from_dict({}) == obj
+    with pytest.raises(AttributeError, match='object has no attribute'):
+        _ = obj.x
+    @dataclass
+    class MyDC(JSONDataclass):
+        x: ClassVar[int] = field(metadata={'suppress': False})
+    obj = MyDC()
+    with pytest.raises(AttributeError, match='object has no attribute'):
+        _ = obj.to_dict()
+    assert MyDC.from_dict({}) == obj
+    @dataclass
+    class MyDC(JSONDataclass):
+        x: ClassVar[int] = 1
+    obj = MyDC()
+    assert obj.to_dict() == {}
+    assert obj.to_dict(full=True) == {}
+    obj0 = MyDC.from_dict({})
+    assert obj0 == obj
+    assert obj0.x == 1
+    # ClassVar gets ignored when loading from dict
+    obj1 = MyDC.from_dict({'x': 1})
+    assert obj1 == obj
+    assert obj1.x == 1
+    obj2 = MyDC.from_dict({'x': 2})
+    assert obj2 == obj
+    assert obj2.x == 1
+    MyDC.x = 2
+    obj = MyDC()
+    assert obj.to_dict() == {}
+    # ClassVar field has to override with suppress=False to include it
+    assert obj.to_dict(full=True) == {}
+    @dataclass
+    class MyDC(JSONDataclass):
+        x: ClassVar[int] = field(default=1, metadata={'suppress': False})
+    obj = MyDC()
+    assert obj.to_dict() == {}  # equals default, so suppress it
+    assert obj.to_dict(full=True) == {'x': 1}
+    obj0 = MyDC.from_dict({})
+    assert obj0 == obj
+    obj2 = MyDC.from_dict({'x': 2})
+    assert obj2 == obj
+    assert obj2.x == 1
+    MyDC.x = 2
+    obj = MyDC()
+    assert obj.to_dict() == {'x': 2}  # no longer equals default
+    assert obj.to_dict(full=True) == {'x': 2}

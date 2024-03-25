@@ -48,7 +48,7 @@ class DictDataclass(DataclassMixin):
 
     Per-field arguments can be passed into the `metadata` argument of a `dataclasses.field`:
         - `suppress`: suppress this field in the dict (note: a `ClassVar` assumes this is `True` by default; you can set it to `False` to force the field's inclusion)
-        - `suppress_default`: suppress this field in the dict if it matches its default value"""
+        - `suppress_default`: suppress this field in the dict if it matches its default value (overrides class-level `suppress_defaults`)"""
 
     suppress_defaults: ClassVar[bool] = True
     store_type: ClassVar[bool] = False
@@ -101,13 +101,14 @@ class DictDataclass(DataclassMixin):
             return x
         d = self._dict_init()
         fields = getattr(self.__class__, '__dataclass_fields__', None)
+        class_suppress_defaults = getattr(self.__class__, 'suppress_defaults', True)
         if fields is not None:
             for (name, field) in fields.items():
                 is_class_var = getattr(field.type, '__origin__', None) is ClassVar
                 # suppress field by default if it is a ClassVar or init=False
                 suppress_field = field.metadata.get('suppress', is_class_var or (not field.init))
-                # suppress default (by default) as long as full=False
-                suppress_default = (not full) and field.metadata.get('suppress_default', True)
+                # suppress default (by default) if full=False and class-level suppress_defaults=True
+                suppress_default = (not full) and field.metadata.get('suppress_default', class_suppress_defaults)
                 if name == 'type':
                     raise ValueError("'type' is a reserved dict field")
                 if suppress_field:
@@ -137,7 +138,7 @@ class DictDataclass(DataclassMixin):
 
         Returns:
             A dict whose keys match the dataclass's fields"""
-        full = kwargs.get('full', not self.__class__.suppress_defaults)
+        full = kwargs.get('full', False)
         return self._to_dict(full)
 
     @staticmethod

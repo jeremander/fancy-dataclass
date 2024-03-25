@@ -7,7 +7,7 @@
   - Subclasses can define their own settings dataclass and extract them from the settings dict
 - Forbid inheritance from `JSONDataclass`?
   - Tell user they should subclass `JSONBaseDataclass` or pass `store_type=True`
-- Allow `ClassVar` to optionally be included in dict
+- `strict` mode for `from_dict` which ensures no extraneous fields
 - Unit tests
   - Test all flags (e.g. suppress_defaults, store_type, qualified_type)
   - Test multiple inheritance (all the classes?)
