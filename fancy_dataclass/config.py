@@ -49,7 +49,8 @@ class Config:
 class ConfigDataclass(Config, DictDataclass):
     """A dataclass representing a collection of configurations.
 
-    The configurations can be loaded from a file, the type of which will be inferred from its extension. Supported file types are:
+    The configurations can be loaded from a file, the type of which will be inferred from its extension.
+    Supported file types are:
         - JSON
     """
 

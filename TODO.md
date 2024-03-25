@@ -1,19 +1,23 @@
 # TODO
 
-## v0.1.0
+## v0.2.0
 
 - Settings
   - `__init_subclass__` on `DataclassMixin` to grab kwargs and store them in one big dict
   - Subclasses can define their own settings dataclass and extract them from the settings dict
 - Forbid inheritance from `JSONDataclass`?
   - Tell user they should subclass `JSONBaseDataclass` or pass `store_type=True`
-- `strict` mode for `from_dict` which ensures no extraneous fields
 - Unit tests
   - Test all flags (e.g. suppress_defaults, store_type, qualified_type)
   - Test multiple inheritance (all the classes?)
     - What happens to the class settings?
 - toml
   - `tomlkit` maintains parsed structure (incl. whitespace & comments)
+- Docs (under construction)
+- PyPI
+
+## v0.2.1
+
 - documentation
   - Dataclass settings
     - For now, `dataclass` decorator is required
@@ -25,7 +29,6 @@
   - Config
 - Github Actions for automated testing (with different Python versions)
   - Coverage badge
-- PyPI
 
 ## Future
 

@@ -198,7 +198,7 @@ class ArgparseDataclass(DictDataclass):
                 val = getattr(args, field.name)
             else:  # argument not present
                 continue
-            if nested_field and (not cls.nested):  # merge in nested ArgparseDataclass
+            if nested_field and (not cls.__settings__.nested):  # merge in nested ArgparseDataclass
                 d.update(val)
             else:
                 d[field.name] = val

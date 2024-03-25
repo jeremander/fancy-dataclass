@@ -4,9 +4,9 @@ import dataclasses
 from dataclasses import is_dataclass, make_dataclass
 import importlib
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Sequence, Tuple, Type, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Dict, List, Optional, Sequence, Tuple, Type, TypeVar, Union
 
-from typing_extensions import Self
+from typing_extensions import Self, TypeGuard
 
 
 if TYPE_CHECKING:
@@ -112,7 +112,7 @@ def get_subclass_with_name(cls: Type[T], name: str) -> Type[T]:
     else:
         raise ValueError(f'{name} is not a known subclass of {cls.__name__}')
 
-def check_dataclass(cls: type) -> None:
+def check_dataclass(cls: type) -> TypeGuard[Type['DataclassInstance']]:
     """Checks whether a given type is a dataclass, raising a `TypeError` otherwise.
 
     Args:
@@ -122,6 +122,7 @@ def check_dataclass(cls: type) -> None:
         TypeError: If the given type is not a dataclass"""
     if not is_dataclass(cls):
         raise TypeError(f'{cls.__name__} is not a dataclass')
+    return True
 
 def make_dataclass_with_constructors(cls_name: str, fields: Sequence[Union[str, Tuple[str, type]]], constructors: Sequence[Constructor], **kwargs: Any) -> Type['DataclassInstance']:
     """Type factory for dataclasses with custom constructors.
@@ -145,12 +146,51 @@ def make_dataclass_with_constructors(cls_name: str, fields: Sequence[Union[str, 
     return tp
 
 
+class DataclassMixinSettings:
+    """Base class for settings to be associated with `fancy_dataclass` mixins.
+
+    Each [`DataclassMixin`][fancy_dataclass.utils.DataclassMixin] class may store a `__settings_type__` attribute consisting of a subclass of this class. The settings object will be stored as the `__settings__ attribute when the mixin class is subclassed."""
+
+
 class DataclassMixin:
     """Mixin class that adds some functionality to a dataclass.
 
     For example, this could provide features for conversion to/from JSON (see [`JSONDataclass`][fancy_dataclass.json.JSONDataclass]), or the ability to construct CLI argument parsers (see [`ArgparseDataclass`][fancy_dataclass.cli.ArgparseDataclass]).
 
     This mixin provides a [`wrap_dataclass`][fancy_dataclass.utils.DataclassMixin.wrap_dataclass] decorator which can be used to wrap an existing dataclass into one that provides the mixin's functionality."""
+
+    __settings_type__: ClassVar[Optional[Type[DataclassMixinSettings]]] = None
+    __settings__: ClassVar[Optional[DataclassMixinSettings]] = None
+
+    @classmethod
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        """When inheriting from this class, you may pass various flags as keyword arguments after the list of base classes.
+        If the base class has a `__settings_type__` class attribute, that class will be instantiated with the provided arguments and stored as a `_settings` attribute on the subclass.
+        These settings can be used to customize the behavior of the subclass."""
+        super().__init_subclass__()
+        if cls.__settings_type__ is not None:
+            stype = cls.__settings_type__
+            assert issubclass(stype, DataclassMixinSettings)
+            assert check_dataclass(stype)
+            field_names = {field.name for field in dataclasses.fields(stype)}
+        else:
+            stype = None
+            field_names = set()
+        d = {}
+        if getattr(cls, '__settings__', None) is not None:
+            settings = cls.__settings__
+            if (stype is not None) and (not isinstance(settings, stype)):
+                raise TypeError(f'settings type of {cls.__name__} must be {stype.__name__}')
+            for field in dataclasses.fields(cls.__settings__):  # type: ignore[arg-type]
+                d[field.name] = getattr(settings, field.name)
+        # inheritance kwargs will override existing settings
+        for (key, val) in kwargs.items():
+            if key in field_names:
+                d[key] = val
+            else:
+                raise TypeError(f'unknown settings field {key!r} for {cls.__name__}')
+        if cls.__settings_type__ is not None:
+            cls.__settings__ = stype(**d)  # type: ignore[assignment]
 
     @classmethod
     def wrap_dataclass(cls: Type[Self], tp: Type[T]) -> Type[Self]:

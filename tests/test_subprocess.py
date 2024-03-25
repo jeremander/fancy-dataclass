@@ -17,7 +17,7 @@ def test_subprocess_dataclass(tmpdir):
     prog = str(tmpdir / 'prog.py')
     dc2 = DC2(required_string='positional_arg', input_file='my_input', output_file='my_output', choice='a', optional='default', flag=True, extra_items=[], x=7, y=3.14, pair=(0,0), ignored_value='ignored', prog = prog)
     assert dc2.args() == ['positional_arg', '-i', 'my_input', '-o', 'my_output', '--choice', 'a', '--optional', 'default', '--flag', '-x', '7', '-y', '3.14', '--pair', '0', '0']
-    assert dc2.args(suppress_defaults = True) == ['positional_arg', '-i', 'my_input', '-o', 'my_output', '--flag']
+    assert dc2.args(suppress_defaults=True) == ['positional_arg', '-i', 'my_input', '-o', 'my_output', '--flag']
     # create a script to run the CLIDataclass
     dc1 = DC1.from_dict(dc2.to_dict())
     cwd = str(Path(__file__).parent)

@@ -45,6 +45,7 @@ lint.ignore = [
     "D413",  # blank line after last section
     "D415",  # first line ending with punctuation
     "E501",  # line length
+    "E731",  # assign lambda expression
     "PT001",  # use of pytest.fixture (with no parens)
     "PTH123",  # Path.open instead of regular open
     "RET501",  # return None

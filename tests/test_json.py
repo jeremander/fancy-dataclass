@@ -342,7 +342,7 @@ def test_suppress_defaults():
     @dataclass
     class MyDC(JSONDataclass):
         x: int = 1
-    assert MyDC.suppress_defaults is True
+    assert MyDC.__settings__.suppress_defaults is True
     obj = MyDC()
     assert obj.to_dict() == {}
     assert obj.to_dict(full=True) == {'x': 1}
@@ -422,3 +422,19 @@ def test_class_var():
     obj = MyDC()
     assert obj.to_dict() == {'x': 2}  # no longer equals default
     assert obj.to_dict(full=True) == {'x': 2}
+
+def test_from_dict_kwargs():
+    """Tests behavior of from_json_string with respect to partitioning kwargs into from_dict and json.loads."""
+    @dataclass
+    class MyDC(JSONDataclass):
+        x: int = 1
+    s = '{"x": 1}'
+    assert MyDC.from_json_string(s) == MyDC()
+    assert MyDC.from_json_string(s, strict=True) == MyDC()
+    with pytest.raises(ValueError, match="'y' is not a valid field for MyDC"):
+        _ = MyDC.from_json_string('{"x": 1, "y": 2}', strict=True)
+    parse_int = lambda val: int(val) + 1
+    assert MyDC.from_json_string(s, parse_int=parse_int) == MyDC(2)
+    assert MyDC.from_json_string(s, strict=True, parse_int=parse_int) == MyDC(2)
+    with pytest.raises(TypeError, match="unexpected keyword argument 'fake_kwarg'"):
+        _ = MyDC.from_json_string(s, fake_kwarg=True)
