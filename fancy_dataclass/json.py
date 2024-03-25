@@ -73,11 +73,12 @@ class JSONSerializable(ABC):
 
     @classmethod
     @abstractmethod
-    def from_dict(cls, d: JSONDict) -> Self:
+    def from_dict(cls, d: JSONDict, **kwargs: Any) -> Self:
         """Constructs an object from a dictionary of fields.
 
         Args:
             d: Dict to convert into an object
+            kwargs: Keyword arguments
 
         Returns:
             Converted object of this class"""
@@ -88,11 +89,15 @@ class JSONSerializable(ABC):
 
         Args:
             fp: A readable file-like object
-            kwargs: Keyword arguments passed to `json.load`
+            kwargs: Keyword arguments
 
         Returns:
             Converted object of this class"""
-        return cls.from_dict(json.load(fp, **kwargs))
+        # pop off known DictDataclass.from_dict kwargs
+        default_dict_kwargs = {'strict': False}
+        dict_kwargs = {key: kwargs.get(key, default_dict_kwargs[key]) for key in default_dict_kwargs}
+        json_kwargs = {key: val for (key, val) in kwargs.items() if (key not in default_dict_kwargs)}
+        return cls.from_dict(json.load(fp, **json_kwargs), **dict_kwargs)
 
     @classmethod
     def from_json_string(cls, s: str, **kwargs: Any) -> Self:
@@ -100,23 +105,26 @@ class JSONSerializable(ABC):
 
         Args:
             s: JSON string
-            kwargs: Keyword arguments passed to `json.loads`
+            kwargs: Keyword arguments
 
         Returns:
             Converted object of this class"""
-        return cls.from_dict(json.loads(s, **kwargs))
+        default_dict_kwargs = {'strict': False}
+        dict_kwargs = {key: kwargs.get(key, default_dict_kwargs[key]) for key in default_dict_kwargs}
+        json_kwargs = {key: val for (key, val) in kwargs.items() if (key not in default_dict_kwargs)}
+        return cls.from_dict(json.loads(s, **json_kwargs), **dict_kwargs)
 
 
 class JSONDataclass(DictDataclass, JSONSerializable):  # type: ignore[misc]
     """Subclass of [`JSONSerializable`][fancy_dataclass.json.JSONSerializable] enabling default serialization of dataclass objects to and from JSON."""
 
     @classmethod
-    def _convert_value(cls, tp: type, x: Any) -> Any:
+    def _convert_value(cls, tp: type, x: Any, strict: bool = False) -> Any:
         # customize for JSONSerializable
         origin_type = getattr(tp, '__origin__', None)
         if origin_type == dict:  # decode keys to be valid JSON
             (keytype, valtype) = tp.__args__  # type: ignore[attr-defined]
-            return {cls._json_key_decoder(cls._convert_value(keytype, k)) : cls._convert_value(valtype, v) for (k, v) in x.items()}
+            return {cls._json_key_decoder(cls._convert_value(keytype, k)) : cls._convert_value(valtype, v, strict=strict) for (k, v) in x.items()}
         # otherwise, fall back on superclass
         return DictDataclass._convert_value(tp, x)
 

@@ -89,3 +89,32 @@ def test_wrap_dataclass():
     assert issubclass(WrappedCompA, WrappedDataclass)
     obj = WrappedCompA(3, 4.7)
     assert obj.to_dict() == {'a1': 3, 'a2': 4.7}
+
+def test_type_field():
+    """Tests that a DictDataclass is not permitted to have a 'type' field."""
+    @dataclass
+    class DCWithTypeField(DictDataclass):
+        type: str
+    obj = DCWithTypeField('mytype')
+    with pytest.raises(ValueError, match="'type' is a reserved dict field"):
+        _ = obj.to_dict()
+
+def test_from_dict_strict():
+    """Tests behavior of strict=True for DictDataclass."""
+    @dataclass
+    class MyDC(DictDataclass):
+        x: int = 1
+    assert MyDC.from_dict({}) == MyDC()
+    assert MyDC.from_dict({'x': 2}) == MyDC(x=2)
+    assert MyDC.from_dict({'x': 1, 'y': 2}) == MyDC()
+    with pytest.raises(ValueError, match="'y' is not a valid field for MyDC"):
+        _ = MyDC.from_dict({'x': 1, 'y': 2}, strict=True)
+    @dataclass
+    class OuterDC(DictDataclass):
+        inner: MyDC
+    assert OuterDC.from_dict({'inner': {'x': 1}}) == OuterDC(MyDC())
+    assert OuterDC.from_dict({'inner': {'y': 1}}) == OuterDC(MyDC())
+    with pytest.raises(ValueError, match="'y' is not a valid field for MyDC"):
+        _ = OuterDC.from_dict({'inner': {'y': 1}}, strict=True)
+    with pytest.raises(ValueError, match="'extra' is not a valid field for OuterDC"):
+        OuterDC.from_dict({'inner': {'x': 1}, 'extra': None}, strict=True)

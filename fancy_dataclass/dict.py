@@ -2,6 +2,7 @@ from collections import defaultdict
 import dataclasses
 from datetime import datetime
 from enum import Enum
+from functools import partial
 import re
 from typing import TYPE_CHECKING, Any, ClassVar, Container, Dict, List, Literal, Type, TypeVar, Union, _TypedDictMeta  # type: ignore[attr-defined]
 
@@ -142,18 +143,19 @@ class DictDataclass(DataclassMixin):
         return self._to_dict(full)
 
     @staticmethod
-    def _convert_dict_convertible(tp: Type['DictDataclass'], x: Any) -> Any:
+    def _convert_dict_convertible(tp: Type['DictDataclass'], x: Any, strict: bool) -> Any:
         if isinstance(x, tp):  # already converted from a dict
             return x
         # otherwise, convert from a dict
-        return tp.from_dict(x)
+        return tp.from_dict(x, strict=strict)
 
     @classmethod
-    def _convert_value(cls, tp: type, x: Any) -> Any:
+    def _convert_value(cls, tp: type, x: Any, strict: bool = False) -> Any:
         """Given a type and a value, attempts to convert the value to the given type."""
         def err() -> ValueError:
             tp_name = re.sub("'>$", '', re.sub(r"^<\w+ '", '', str(tp)))
             return ValueError(f'could not convert {x!r} to type {tp_name!r}')
+        convert_val = partial(cls._convert_value, strict=strict)
         if tp is NoneType:  # type: ignore[comparison-overlap]
             if x is None:
                 return None
@@ -162,7 +164,7 @@ class DictDataclass(DataclassMixin):
             return x
         ttp = type(tp)
         if ttp is _AnnotatedAlias:  # Annotated: just ignore the annotation
-            return cls._convert_value(tp.__args__[0], x)  # type: ignore[attr-defined]
+            return convert_val(tp.__args__[0], x)  # type: ignore[attr-defined]
         if issubclass_safe(tp, list):
             # class may inherit from List[T], so get the parent class
             assert hasattr(tp, '__orig_bases__')
@@ -178,7 +180,7 @@ class DictDataclass(DataclassMixin):
                 # this limitation means we can only use TypeVar for basic types
                 return x
             elif hasattr(tp, 'from_dict'):  # handle nested fields which are themselves convertible from a dict
-                return cls._convert_dict_convertible(tp, x)
+                return cls._convert_dict_convertible(tp, x, strict)
             elif issubclass(tp, tuple):
                 if isinstance(x, dict) and hasattr(tp, '_fields'):  # namedtuple
                     try:
@@ -186,7 +188,7 @@ class DictDataclass(DataclassMixin):
                         for key in tp._fields:
                             # if NamedTuple's types are annotated, check them
                             valtype = tp.__annotations__.get(key)
-                            vals.append(x[key] if (valtype is None) else cls._convert_value(valtype, x[key]))
+                            vals.append(x[key] if (valtype is None) else convert_val(valtype, x[key]))
                         return tp(*vals)
                     except KeyError as e:
                         raise err() from e
@@ -198,7 +200,7 @@ class DictDataclass(DataclassMixin):
                     anns = tp.__annotations__
                     if (not isinstance(x, dict)) or (set(anns) != set(x)):
                         raise err()
-                    return {key: cls._convert_value(valtype, x[key]) for (key, valtype) in anns.items()}
+                    return {key: convert_val(valtype, x[key]) for (key, valtype) in anns.items()}
                 return tp(x)
             elif issubclass(tp, datetime):
                 return tp.fromisoformat(x)
@@ -222,16 +224,16 @@ class DictDataclass(DataclassMixin):
             args = tp.__args__  # type: ignore[attr-defined]
             if origin_type == list:
                 subtype = args[0]
-                return [cls._convert_value(subtype, y) for y in x]
+                return [convert_val(subtype, y) for y in x]
             elif origin_type == dict:
                 (keytype, valtype) = args
-                return {cls._convert_value(keytype, k) : cls._convert_value(valtype, v) for (k, v) in x.items()}
+                return {convert_val(keytype, k) : convert_val(valtype, v) for (k, v) in x.items()}
             elif origin_type == tuple:
                 subtypes = args
                 if subtypes[-1] == Ellipsis:  # treat it like a list
                     subtype = subtypes[0]
-                    return tuple(cls._convert_value(subtype, y) for y in x)
-                return tuple(cls._convert_value(subtype, y) for (subtype, y) in zip(args, x))
+                    return tuple(convert_val(subtype, y) for y in x)
+                return tuple(convert_val(subtype, y) for (subtype, y) in zip(args, x))
             elif origin_type == Union:
                 if getattr(tp, '_name', None) == 'Optional':
                     assert len(args) == 2
@@ -240,7 +242,7 @@ class DictDataclass(DataclassMixin):
                 for subtype in args:
                     try:
                         # NB: will resolve to the first valid type in the Union
-                        return cls._convert_value(subtype, x)
+                        return convert_val(subtype, x)
                     except Exception:
                         continue
             elif origin_type == Literal:
@@ -248,10 +250,10 @@ class DictDataclass(DataclassMixin):
                     # one of the Literal options is matched
                     return x
             elif hasattr(origin_type, 'from_dict'):
-                return cls._convert_dict_convertible(origin_type, x)
+                return cls._convert_dict_convertible(origin_type, x, strict)
             elif issubclass_safe(origin_type, Container):  # arbitrary container
                 subtype = args[0]
-                return type(x)(cls._convert_value(subtype, y) for y in x)
+                return type(x)(convert_val(subtype, y) for y in x)
         raise err()
 
     @classmethod
@@ -299,12 +301,17 @@ class DictDataclass(DataclassMixin):
         return cls2
 
     @classmethod
-    def _dataclass_args_from_dict(cls, d: JSONDict) -> JSONDict:
+    def _dataclass_args_from_dict(cls, d: JSONDict, strict: bool = False) -> JSONDict:
         """Given a dict of arguments, performs type conversion and/or validity checking, then returns a new dict that can be passed to the class's constructor."""
         check_dataclass(cls)
         kwargs = {}
         bases = cls.mro()
         fields = dataclasses.fields(cls)  # type: ignore[arg-type]
+        if strict:  # check there are no extraneous fields
+            field_names = {field.name for field in fields}
+            for key in d:
+                if (key not in field_names):
+                    raise ValueError(f'{key!r} is not a valid field for {cls.__name__}')
         for field in fields:
             if not field.init:  # suppress fields where init=False
                 continue
@@ -313,7 +320,7 @@ class DictDataclass(DataclassMixin):
                 for base in bases:
                     try:
                         field_type = base.__annotations__[field.name]
-                        kwargs[field.name] = cls._convert_value(field_type, d[field.name])
+                        kwargs[field.name] = cls._convert_value(field_type, d[field.name], strict=strict)
                         break
                     except (AttributeError, KeyError):
                         pass
@@ -326,13 +333,15 @@ class DictDataclass(DataclassMixin):
         return kwargs
 
     @classmethod
-    def from_dict(cls, d: JSONDict) -> Self:
+    def from_dict(cls, d: JSONDict, **kwargs: Any) -> Self:
         """Constructs an object from a dictionary of fields.
 
         This may also perform some basic type/validity checking.
 
         Args:
             d: Dict to convert into an object
+            kwargs: Keyword arguments
+                - `strict`: if True, raise an error if extraneous dict fields are present
 
         Returns:
             Converted object of this class"""
@@ -350,12 +359,13 @@ class DictDataclass(DataclassMixin):
                 # option 1: all subclasses of this DictDataclass are defined in the same module as the base class
                 # option 2: the name is fully qualified, so the name can be loaded into scope
                 # call from_dict on the subclass in case it has its own custom implementation
-                d2 = dict(d)
-                d2.pop('type')  # remove the type name before passing to the constructor
-                return cls.get_subclass_with_name(typename).from_dict(d2)
+                # (remove the type name before passing to the constructor)
+                d2 = {key: val for (key, val) in d.items() if (key != 'type')}
+                return cls.get_subclass_with_name(typename).from_dict(d2, **kwargs)
         if not cls.nested:
             # produce equivalent subfield-merged types, then convert the dict
             cls = cls._class_with_merged_fields()
             tp = tp._class_with_merged_fields()
-        result: Self = tp(**tp._dataclass_args_from_dict(d))
+        strict = kwargs.get('strict', False)
+        result: Self = tp(**tp._dataclass_args_from_dict(d, strict=strict))
         return result if cls.nested else result._to_nested()  # type: ignore
