@@ -23,28 +23,28 @@ class NestedComposedAB(DictDataclass):
     comp_b: NestedComponentB
 
 @dataclass
-class MergedComponentA(DictDataclass):
+class FlattenedComponentA(DictDataclass):
     a1: int
     a2: float
 
 @dataclass
-class MergedComponentB(DictDataclass):
+class FlattenedComponentB(DictDataclass):
     b1: str
     b2: List[int]
 
 @dataclass
-class MergedComposedAB(DictDataclass, nested=False):
-    comp_a: MergedComponentA
-    comp_b: MergedComponentB
+class FlattenedComposedAB(DictDataclass, flattened=True):
+    comp_a: FlattenedComponentA
+    comp_b: FlattenedComponentB
 
 TEST_NESTED = NestedComposedAB(
     NestedComponentA(3, 4.5),
     NestedComponentB('b', [1, 2, 3])
 )
 
-TEST_MERGED = MergedComposedAB(
-    MergedComponentA(3, 4.5),
-    MergedComponentB('b', [1, 2, 3])
+TEST_FLATTENED = FlattenedComposedAB(
+    FlattenedComponentA(3, 4.5),
+    FlattenedComponentB('b', [1, 2, 3])
 )
 
 def test_safe_dict_insert():
@@ -55,12 +55,12 @@ def test_safe_dict_insert():
         safe_dict_insert(d, 'c', 3)
 
 def test_composition_nested():
-    """Tests behavior of merged components."""
+    """Tests behavior of nested components."""
     assert TEST_NESTED.to_dict() == {'comp_a' : {'a1' : 3, 'a2' : 4.5}, 'comp_b' : {'b1' : 'b', 'b2' : [1, 2, 3]}}
 
-def test_composition_merged():
-    """Tests behavior of merged components."""
-    assert TEST_MERGED.to_dict() == {'a1' : 3, 'a2' : 4.5, 'b1' : 'b', 'b2' : [1, 2, 3]}
+def test_composition_flattened():
+    """Tests behavior of flattened components."""
+    assert TEST_FLATTENED.to_dict() == {'a1' : 3, 'a2' : 4.5, 'b1' : 'b', 'b2' : [1, 2, 3]}
 
 def test_make_dataclass():
     """Tests behavior of make_dataclass."""

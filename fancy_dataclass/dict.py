@@ -1,4 +1,5 @@
 from collections import defaultdict
+from copy import copy
 import dataclasses
 from dataclasses import dataclass
 from datetime import datetime
@@ -9,7 +10,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, Container, Dict, List, Literal,
 
 from typing_extensions import Self, _AnnotatedAlias
 
-from fancy_dataclass.utils import DataclassMixin, DataclassMixinSettings, check_dataclass, fully_qualified_class_name, issubclass_safe, obj_class_name
+from fancy_dataclass.utils import DataclassMixin, DataclassMixinSettings, check_dataclass, fully_qualified_class_name, issubclass_safe, obj_class_name, safe_dict_insert
 
 
 NoneType = type(None)
@@ -23,21 +24,6 @@ D = TypeVar('D', bound='DataclassInstance')
 JSONDict = Dict[str, Any]
 
 
-def safe_dict_insert(d: JSONDict, key: str, val: Any) -> None:
-    """Inserts a (key, value) pair into a dict, if the key is not already present.
-
-    Args:
-        d: Dict to modify
-        key: Key to insert
-        val: Value to insert
-
-    Raises:
-        TypeError: If the key is already in the dict"""
-    if key in d:
-        raise TypeError(f'duplicate key {key!r}')
-    d[key] = val
-
-
 @dataclass
 class DictDataclassSettings(DataclassMixinSettings):
     """Settings for the DictDataclass mixin.
@@ -46,11 +32,11 @@ class DictDataclassSettings(DataclassMixinSettings):
         - `suppress_defaults`: suppress default values in its dict
         - `store_type`: store the object's type in its dict
         - `qualified_type`: fully qualify the object type's name in its dict
-        - `nested`: if True, [`DictDataclass`][fancy_dataclass.dict.DictDataclass] subfields will be nested; otherwise, they are merged together with the main fields (provided there are no name collisions)"""
+        - `flattened`: if True, [`DictDataclass`][fancy_dataclass.dict.DictDataclass] subfields will be merged together with the main fields (provided there are no name collisions); otherwise, they are nested"""
     suppress_defaults: bool = True
     store_type: bool = False
     qualified_type: bool = False
-    nested: bool = True
+    flattened: bool = False
 
 
 class DictDataclass(DataclassMixin):
@@ -125,7 +111,7 @@ class DictDataclass(DataclassMixin):
                     except ValueError:  # some types may fail to compare
                         pass
                 field_val = _to_value(val)
-                if (not self.__settings__.nested) and isinstance(field_val, dict):
+                if self.__settings__.flattened and isinstance(field_val, dict):
                     # merge subfield's dict instead of nesting
                     for (k, v) in field_val.items():
                         safe_dict_insert(d, k, v)
@@ -258,7 +244,7 @@ class DictDataclass(DataclassMixin):
         raise err()
 
     @classmethod
-    def _class_with_merged_fields(cls: Type[Self]) -> Type[Self]:
+    def _class_with_flattened_fields(cls: Type[Self]) -> Type[Self]:
         """Converts this type into an isomorphic type where any nested DictDataclass fields have all of their subfields merged into the outer type."""
         fields: List[Any] = []
         field_map: Dict[str, str] = {}
@@ -276,14 +262,10 @@ class DictDataclass(DataclassMixin):
             else:
                 fields.append(field)
         cls2 = dataclasses.make_dataclass(cls.__name__, [(field.name, field.type, field) for field in fields], bases = (DictDataclass,))
-        # set flags to be identical to the original class (except force nested=True)
-        flags = [key for (key, tp) in cls.__annotations__.items() if (getattr(tp, '__origin__', None) is ClassVar)]
-        for flag in flags:
-            setattr(cls2, flag, getattr(cls, flag))
-        # store 'nested' attribute on the class
-        # TODO: make this a private attribute
-        cls2.nested = False  # type: ignore[attr-defined]
-        # create method to convert from merged object to nested object
+        # make settings identical to the original class (except force flattened=True)
+        cls2.__settings__ = DictDataclassSettings, copy(cls.__settings__)  # type: ignore[attr-defined]
+        cls2.__settings__.flattened = True  # type: ignore[attr-defined]
+        # create method to convert from flattened object to nested object
         def _to_nested(self: D) -> D:
             kwargs = {}
             nested_kwargs: Dict[str, Any] = defaultdict(dict)
@@ -291,7 +273,7 @@ class DictDataclass(DataclassMixin):
             for field in dataclasses.fields(self):
                 key = field.name
                 val = getattr(self, key)
-                if key in field_map:  # a merged field
+                if key in field_map:  # a flattened field
                     nested_kwargs[field_map[key]][key] = val
                 else:  # a regular field
                     kwargs[key] = val
@@ -363,10 +345,10 @@ class DictDataclass(DataclassMixin):
                 # (remove the type name before passing to the constructor)
                 d2 = {key: val for (key, val) in d.items() if (key != 'type')}
                 return cls.get_subclass_with_name(typename).from_dict(d2, **kwargs)
-        if not cls.__settings__.nested:
-            # produce equivalent subfield-merged types, then convert the dict
-            cls = cls._class_with_merged_fields()
-            tp = tp._class_with_merged_fields()
+        if cls.__settings__.flattened:
+            # produce equivalent subfield-flattened types, then convert the dict
+            cls = cls._class_with_flattened_fields()
+            tp = tp._class_with_flattened_fields()
         strict = kwargs.get('strict', False)
         result: Self = tp(**tp._dataclass_args_from_dict(d, strict=strict))
-        return result if cls.__settings__.nested else result._to_nested()  # type: ignore
+        return result._to_nested() if cls.__settings__.flattened else result  # type: ignore

@@ -1,8 +1,10 @@
 from dataclasses import dataclass
+from operator import itemgetter
+from typing import Optional, Union
 
 import pytest
 
-from fancy_dataclass.utils import DataclassMixin, DataclassMixinSettings
+from fancy_dataclass.utils import DataclassMixin, DataclassMixinSettings, traverse_dataclass
 
 
 def test_dataclass_mixin_settings():
@@ -80,3 +82,72 @@ def test_dataclass_mixin_settings():
     class MyDC(MyMixin, enhanced=False):
         __settings__ = MySettings(enhanced=True)
     assert MyDC.__settings__ == MySettings(enhanced=False)
+
+def test_traverse_dataclass():
+    """Tests depth-first traversal of dataclass fields."""
+    def get_names(cls):
+        return list(map(itemgetter(0), traverse_dataclass(cls)))
+    # test a nested dataclass
+    @dataclass
+    class C:
+        c1: int
+    @dataclass
+    class D:
+        ...
+    @dataclass
+    class B:
+        b1: int
+        b2: C
+        b3: D
+    @dataclass
+    class A:
+        a1: int
+        a2: B
+    assert get_names(D) == []
+    assert get_names(A) == ['a1', 'a2.b1', 'a2.b2.c1']
+    class E:
+        e1: int
+    @dataclass
+    class F:
+        f1: int
+        f2: E
+    assert get_names(F)== ['f1', 'f2']
+    msg = 'must be called with a dataclass type or instance'
+    with pytest.raises(TypeError, match=msg):
+        _ = get_names(int)
+    with pytest.raises(TypeError, match=msg):
+        _ = get_names(E)
+    # duplicate leaf-level field names are OK
+    @dataclass
+    class H:
+        g1: int
+        g2: int
+    @dataclass
+    class G:
+        g1: int
+        g2: H
+    assert get_names(G) == ['g1', 'g2.g1', 'g2.g2']
+    @dataclass
+    class J:
+        j: Optional[int]
+    assert get_names(J) == ['j']
+    assert next(traverse_dataclass(J))[1].type is Optional[int]
+    @dataclass
+    class K:
+        k: Union[int, str]
+    assert get_names(K) == ['k']
+    @dataclass
+    class M:
+        m: Union[K, str]
+    with pytest.raises(TypeError, match='Union field cannot include a dataclass type'):
+        _ = get_names(M)
+    @dataclass
+    class N:
+        n: Union[J, K]
+    with pytest.raises(TypeError, match='Union field cannot include a dataclass type'):
+        _ = get_names(N)
+    @dataclass
+    class P:
+        p: Optional[G]
+    assert get_names(P) == ['p.g1', 'p.g2.g1', 'p.g2.g2']
+    assert all(str(fld.type) == 'typing.Optional[int]' for (_, fld) in traverse_dataclass(P))

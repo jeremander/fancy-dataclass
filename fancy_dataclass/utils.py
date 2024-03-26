@@ -1,10 +1,10 @@
 """Various utility functions and classes."""
 
 import dataclasses
-from dataclasses import is_dataclass, make_dataclass
+from dataclasses import Field, is_dataclass, make_dataclass
 import importlib
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, Dict, List, Optional, Sequence, Tuple, Type, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Dict, Iterator, List, Optional, Sequence, Tuple, Type, TypeVar, Union
 
 from typing_extensions import Self, TypeGuard
 
@@ -14,10 +14,25 @@ if TYPE_CHECKING:
 
 
 T = TypeVar('T')
+U = TypeVar('U')
 
 Constructor = Callable[[Any], Any]
 AnyPath = str | Path
 
+
+def safe_dict_insert(d: Dict[Any, Any], key: str, val: Any) -> None:
+    """Inserts a (key, value) pair into a dict, if the key is not already present.
+
+    Args:
+        d: Dict to modify
+        key: Key to insert
+        val: Value to insert
+
+    Raises:
+        TypeError: If the key is already in the dict"""
+    if key in d:
+        raise TypeError(f'duplicate key {key!r}')
+    d[key] = val
 
 def safe_dict_update(d1: Dict[str, Any], d2: Dict[str, Any]) -> None:
     """Updates the first dict with the second, in-place.
@@ -145,6 +160,74 @@ def make_dataclass_with_constructors(cls_name: str, fields: Sequence[Union[str, 
     tp._fields = tuple(field.name for field in dataclasses.fields(tp))  # type: ignore[attr-defined]
     return tp
 
+def traverse_dataclass(cls: type) -> Iterator[Tuple[str, Field]]:  # type: ignore[type-arg]
+    """Iterates through the fields of a dataclass, yielding (name, field) pairs.
+    If the dataclass contains nested dataclasses, recursively iterates through their fields, in depth-first order.
+    Nesting is indicated in the field names via `.` syntax, e.g. `outer.middle.inner`."""
+    def _traverse(prefix: Tuple[str, ...], tp: type) -> Iterator[Tuple[Tuple[str, ...], Field]]:  # type: ignore[type-arg]
+        for field in dataclasses.fields(tp):
+            path = prefix + (field.name,)
+            origin = getattr(field.type, '__origin__', None)
+            if origin is Union:
+                # if optional, use the wrapped type, otherwise error
+                base_type = field.type.__args__[0]
+                has_dataclass = any(is_dataclass(tp) for tp in field.type.__args__)
+                is_optional = (len(field.type.__args__) == 2) and (field.type.__args__[1] is type(None))
+                if has_dataclass and (not is_optional):
+                    raise TypeError('Union field cannot include a dataclass type')
+            else:
+                base_type = field.type
+                is_optional = False
+            if is_dataclass(base_type):
+                subfields = _traverse(path, base_type)
+                if is_optional:
+                    # wrap each field type in an Optional
+                    for (name, fld) in subfields:
+                        fld.type = Optional[fld.type]  # type: ignore[assignment]
+                        yield (name, fld)
+                else:
+                    yield from subfields
+            else:
+                yield (path, field)
+    yield from (('.'.join(pair[0]), pair[1]) for pair in _traverse((), cls))
+
+# def _flatten_dataclass(cls: Type[T], bases: Tuple[type, ...] = ()) -> Tuple[Dict[str, str], Type[U], Callable[[T], U], Callable[[U], T]]:
+#     """Given a nested dataclass type, returns data for converting between it and a flattened version of that type.
+
+#     Args:
+#         cls: Nested dataclass type
+
+#     Returns:
+#         A tuple, `(field_map, flattened_type, to_flattened, to_nested)`:
+#             - `field_map` maps from leaf field names to fully qualified names
+#             - `flattened_type` is the flattened type equivalent to the nested type
+#             - `to_flattened` is a function converting an object from the nested type to the flattened type
+#             - `to_nested` is a function converting an object from the flattened type to the nested type
+
+#     Raises:
+#         TypeError: if duplicate field names occur"""
+#     fields: List[Any] = []
+#     field_map: Dict[str, str] = {}
+#     cls_fields = dataclasses.fields(cls)  # type: ignore[arg-type]
+#     for field in cls_fields:
+#         origin = getattr(field.type, '__origin__', None)
+#         if origin is Union:  # use the first type of a Union (also handles Optional)
+#             tp = field.type.__args__[0]
+#         else:
+#             tp = field.type
+#         if issubclass(tp, DictDataclass):
+#             for fld in dataclasses.fields(tp):
+#                 safe_dict_insert(field_map, fld.name, field.name)
+#                 fields.append(fld)
+#         else:
+#             fields.append(field)
+#     cls2 = dataclasses.make_dataclass(cls.__name__, [(field.name, field.type, field) for field in fields], bases=bases)
+#     return ()
+
+
+###################
+# DATACLASS MIXIN #
+###################
 
 class DataclassMixinSettings:
     """Base class for settings to be associated with `fancy_dataclass` mixins.
