@@ -3,7 +3,7 @@ from argparse import ArgumentParser, Namespace
 from contextlib import suppress
 from dataclasses import MISSING, fields
 from enum import IntEnum
-from typing import Any, ClassVar, Dict, List, Optional, Type, TypeVar
+from typing import Any, ClassVar, Dict, List, Optional, Type, TypeVar, get_args, get_origin
 
 from typing_extensions import Self
 
@@ -107,13 +107,13 @@ class ArgparseDataclass(DictDataclass):
             return
         # determine the type of the parser argument for the field
         tp = field.metadata.get('type', field.type)
-        origin_type = getattr(tp, '__origin__', None)
+        origin_type = get_origin(tp)
         if origin_type is not None:  # compound type
             if origin_type is ClassVar:  # by default, exclude ClassVars from the parser
                 return
-            args = getattr(tp, '__args__', ())
-            if args:  # extract the first wrapped type (should handle List/Optional/Union)
-                tp = args[0]
+            tp_args = get_args(tp)
+            if tp_args:  # extract the first wrapped type (should handle List/Optional/Union)
+                tp = tp_args[0]
             else:  # type cannot be inferred
                 raise ValueError(f'cannot infer type of items in field {name!r}')
             if issubclass_safe(origin_type, list):

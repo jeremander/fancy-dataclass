@@ -6,7 +6,7 @@ from datetime import datetime
 from enum import Enum
 from functools import partial
 import re
-from typing import TYPE_CHECKING, Any, ClassVar, Container, Dict, List, Literal, Type, TypeVar, Union, _TypedDictMeta  # type: ignore[attr-defined]
+from typing import TYPE_CHECKING, Any, ClassVar, Container, Dict, List, Literal, Type, TypeVar, Union, _TypedDictMeta, get_args, get_origin  # type: ignore[attr-defined]
 
 from typing_extensions import Self, _AnnotatedAlias
 
@@ -92,7 +92,7 @@ class DictDataclass(DataclassMixin):
         class_suppress_defaults = self.__settings__.suppress_defaults
         if fields is not None:
             for (name, field) in fields.items():
-                is_class_var = getattr(field.type, '__origin__', None) is ClassVar
+                is_class_var = get_origin(field.type) is ClassVar
                 # suppress field by default if it is a ClassVar or init=False
                 suppress_field = field.metadata.get('suppress', is_class_var or (not field.init))
                 # suppress default (by default) if full=False and class-configured suppress_defaults=True
@@ -151,16 +151,16 @@ class DictDataclass(DataclassMixin):
             return x
         ttp = type(tp)
         if ttp is _AnnotatedAlias:  # Annotated: just ignore the annotation
-            return convert_val(tp.__args__[0], x)  # type: ignore[attr-defined]
+            return convert_val(get_args(tp)[0], x)  # type: ignore[attr-defined]
         if issubclass_safe(tp, list):
             # class may inherit from List[T], so get the parent class
             assert hasattr(tp, '__orig_bases__')
             for base in tp.__orig_bases__:
-                origin_type = getattr(base, '__origin__', None)
+                origin_type = get_origin(base)
                 if origin_type and issubclass_safe(origin_type, list):
                     tp = base
                     break
-        origin_type = getattr(tp, '__origin__', None)
+        origin_type = get_origin(tp)
         if origin_type is None:  # basic class or type
             if ttp == TypeVar:  # type: ignore[comparison-overlap]
                 # can't refer to instantiated type, so we assume a basic data type
@@ -208,7 +208,7 @@ class DictDataclass(DataclassMixin):
                 # except TypeError as e:
                 #     raise err() from e
         else:  # compound data type
-            args = tp.__args__  # type: ignore[attr-defined]
+            args = get_args(tp)  # type: ignore[attr-defined]
             if origin_type == list:
                 subtype = args[0]
                 return [convert_val(subtype, y) for y in x]
@@ -250,9 +250,9 @@ class DictDataclass(DataclassMixin):
         field_map: Dict[str, str] = {}
         cls_fields = dataclasses.fields(cls)  # type: ignore[arg-type]
         for field in cls_fields:
-            origin = getattr(field.type, '__origin__', None)
+            origin = get_origin(field.type)
             if origin is Union:  # use the first type of a Union (also handles Optional)
-                tp = field.type.__args__[0]
+                tp = get_args(field.type)[0]
             else:
                 tp = field.type
             if issubclass(tp, DictDataclass):

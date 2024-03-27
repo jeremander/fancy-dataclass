@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from io import StringIO, TextIOBase
 import json
 from json import JSONEncoder
-from typing import Any, BinaryIO, TextIO, Type, Union
+from typing import Any, BinaryIO, TextIO, Type, Union, get_args, get_origin
 
 from typing_extensions import Self
 
@@ -131,9 +131,9 @@ class JSONDataclass(DictDataclass, JSONSerializable):  # type: ignore[misc]
     @classmethod
     def _convert_value(cls, tp: type, x: Any, strict: bool = False) -> Any:
         # customize for JSONSerializable
-        origin_type = getattr(tp, '__origin__', None)
+        origin_type = get_origin(tp)
         if origin_type == dict:  # decode keys to be valid JSON
-            (keytype, valtype) = tp.__args__  # type: ignore[attr-defined]
+            (keytype, valtype) = get_args(tp)  # type: ignore[attr-defined]
             return {cls._json_key_decoder(cls._convert_value(keytype, k)) : cls._convert_value(valtype, v, strict=strict) for (k, v) in x.items()}
         # otherwise, fall back on superclass
         return DictDataclass._convert_value(tp, x)

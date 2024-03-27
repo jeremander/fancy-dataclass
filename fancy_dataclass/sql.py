@@ -1,6 +1,6 @@
 from dataclasses import MISSING, dataclass, fields
 from datetime import datetime
-from typing import Any, Callable, ClassVar, Dict, Optional, Type, TypeVar, Union
+from typing import Any, Callable, ClassVar, Dict, Optional, Type, TypeVar, Union, get_args, get_origin
 
 from sqlalchemy import Boolean, Column, DateTime, Integer, LargeBinary, Numeric, PickleType, String, Table
 import sqlalchemy.orm
@@ -65,12 +65,13 @@ class SQLDataclass(DictDataclass):
                 # skip fields whose metadata's 'sql' field is False
                 continue
             tp = field.type
-            origin = getattr(tp, '__origin__', None)
+            origin = get_origin(tp)
             if origin:  # compound type
                 if origin is Union:  # use the first type of a Union (also handles Optional)
                     # column should be nullable by default if the type is optional
-                    nullable |= (type(None) in tp.__args__)
-                    tp = tp.__args__[0]
+                    tp_args = get_args(tp)
+                    nullable |= (type(None) in tp_args)
+                    tp = tp_args[0]
                 else:  # some other compound type
                     tp = origin
             if issubclass(tp, SQLDataclass):  # nested SQLDataclass

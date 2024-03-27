@@ -1,6 +1,6 @@
 from dataclasses import MISSING, fields
 import subprocess
-from typing import Any, ClassVar, List, Optional, Union
+from typing import Any, ClassVar, List, Optional, Union, get_origin
 
 from fancy_dataclass.utils import DataclassMixin, obj_class_name
 
@@ -35,7 +35,7 @@ class SubprocessDataclass(DataclassMixin):
         field = self.__dataclass_fields__[name]  # type: ignore[attr-defined]
         if field.metadata.get('subprocess_exclude', False):  # exclude the argument
             return []
-        if getattr(field.type, '__origin__', None) is ClassVar:
+        if get_origin(field.type) is ClassVar:
             # ignore fields associated with the class, rather than the instance
             return []
         val = getattr(self, name, None)
