@@ -1,10 +1,10 @@
 """Various utility functions and classes."""
 
 import dataclasses
-from dataclasses import Field, is_dataclass, make_dataclass
+from dataclasses import Field, dataclass, is_dataclass, make_dataclass
 import importlib
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, Dict, Iterator, List, Optional, Sequence, Tuple, Type, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Dict, Generic, Iterator, List, Optional, Sequence, Tuple, Type, TypeVar, Union, get_args, get_origin
 
 from typing_extensions import Self, TypeGuard
 
@@ -18,6 +18,7 @@ U = TypeVar('U')
 
 Constructor = Callable[[Any], Any]
 AnyPath = str | Path
+RecordPath = Tuple[str, ...]
 
 
 def safe_dict_insert(d: Dict[Any, Any], key: str, val: Any) -> None:
@@ -152,77 +153,104 @@ def make_dataclass_with_constructors(cls_name: str, fields: Sequence[Union[str, 
         A dataclass type with the given fields and constructors"""
     def __init__(self: 'DataclassInstance', *args: Any) -> None:
         # take inputs and wrap them in the provided constructors
-        for (field, cons, arg) in zip(dataclasses.fields(self), constructors, args):
-            setattr(self, field.name, cons(arg))
+        for (fld, cons, arg) in zip(dataclasses.fields(self), constructors, args):
+            setattr(self, fld.name, cons(arg))
     tp = make_dataclass(cls_name, fields, init = False, **kwargs)
     tp.__init__ = __init__  # type: ignore
     # store the field names in a tuple, to match the behavior of namedtuple
-    tp._fields = tuple(field.name for field in dataclasses.fields(tp))  # type: ignore[attr-defined]
+    tp._fields = tuple(fld.name for fld in dataclasses.fields(tp))  # type: ignore[attr-defined]
     return tp
 
-def traverse_dataclass(cls: type) -> Iterator[Tuple[str, Field]]:  # type: ignore[type-arg]
+def traverse_dataclass(cls: type) -> Iterator[Tuple[RecordPath, Field]]:  # type: ignore[type-arg]
     """Iterates through the fields of a dataclass, yielding (name, field) pairs.
     If the dataclass contains nested dataclasses, recursively iterates through their fields, in depth-first order.
-    Nesting is indicated in the field names via `.` syntax, e.g. `outer.middle.inner`."""
-    def _traverse(prefix: Tuple[str, ...], tp: type) -> Iterator[Tuple[Tuple[str, ...], Field]]:  # type: ignore[type-arg]
-        for field in dataclasses.fields(tp):
-            path = prefix + (field.name,)
-            origin = getattr(field.type, '__origin__', None)
+    Nesting is indicated in the field names via "record path" syntax, e.g. `outer.middle.inner`."""
+    def _traverse(prefix: RecordPath, tp: type) -> Iterator[Tuple[RecordPath, Field]]:  # type: ignore[type-arg]
+        for fld in dataclasses.fields(tp):
+            path = prefix + (fld.name,)
+            origin = get_origin(fld.type)
             if origin is Union:
+                args = get_args(fld.type)
                 # if optional, use the wrapped type, otherwise error
-                base_type = field.type.__args__[0]
-                has_dataclass = any(is_dataclass(tp) for tp in field.type.__args__)
-                is_optional = (len(field.type.__args__) == 2) and (field.type.__args__[1] is type(None))
+                base_type = args[0]
+                has_dataclass = any(is_dataclass(tp) for tp in args)
+                is_optional = (len(args) == 2) and (args[1] is type(None))
                 if has_dataclass and (not is_optional):
                     raise TypeError('Union field cannot include a dataclass type')
             else:
-                base_type = field.type
+                base_type = fld.type
                 is_optional = False
             if is_dataclass(base_type):
                 subfields = _traverse(path, base_type)
                 if is_optional:
                     # wrap each field type in an Optional
-                    for (name, fld) in subfields:
-                        fld.type = Optional[fld.type]  # type: ignore[assignment]
-                        yield (name, fld)
+                    for (name, subfld) in subfields:
+                        subfld.type = Optional[subfld.type]  # type: ignore[assignment]
+                        yield (name, subfld)
                 else:
                     yield from subfields
             else:
-                yield (path, field)
-    yield from (('.'.join(pair[0]), pair[1]) for pair in _traverse((), cls))
+                yield (path, fld)
+    yield from _traverse((), cls)
 
-# def _flatten_dataclass(cls: Type[T], bases: Tuple[type, ...] = ()) -> Tuple[Dict[str, str], Type[U], Callable[[T], U], Callable[[U], T]]:
-#     """Given a nested dataclass type, returns data for converting between it and a flattened version of that type.
 
-#     Args:
-#         cls: Nested dataclass type
+@dataclass
+class DataclassConverter(Generic[T, U]):
+    """Class for converting values from one dataclass type to another."""
+    from_type: Type[T]
+    to_type: Type[U]
+    forward: Callable[[T], U]
+    backward: Optional[Callable[[U], T]] = None
 
-#     Returns:
-#         A tuple, `(field_map, flattened_type, to_flattened, to_nested)`:
-#             - `field_map` maps from leaf field names to fully qualified names
-#             - `flattened_type` is the flattened type equivalent to the nested type
-#             - `to_flattened` is a function converting an object from the nested type to the flattened type
-#             - `to_nested` is a function converting an object from the flattened type to the nested type
 
-#     Raises:
-#         TypeError: if duplicate field names occur"""
-#     fields: List[Any] = []
-#     field_map: Dict[str, str] = {}
-#     cls_fields = dataclasses.fields(cls)  # type: ignore[arg-type]
-#     for field in cls_fields:
-#         origin = getattr(field.type, '__origin__', None)
-#         if origin is Union:  # use the first type of a Union (also handles Optional)
-#             tp = field.type.__args__[0]
-#         else:
-#             tp = field.type
-#         if issubclass(tp, DictDataclass):
-#             for fld in dataclasses.fields(tp):
-#                 safe_dict_insert(field_map, fld.name, field.name)
-#                 fields.append(fld)
-#         else:
-#             fields.append(field)
-#     cls2 = dataclasses.make_dataclass(cls.__name__, [(field.name, field.type, field) for field in fields], bases=bases)
-#     return ()
+def _flatten_dataclass(cls: Type[T], bases: Tuple[type, ...] = ()) -> Tuple[Dict[str, RecordPath], DataclassConverter[T, type]]:
+    """Given a nested dataclass type, returns data for converting between it and a flattened version of that type.
+
+    Args:
+        cls: Nested dataclass type
+        bases: Base classes for the flattened type to inherit from
+
+    Returns:
+        A tuple, `(field_map, flattened_type, to_flattened, to_nested)`:
+            - `field_map` maps from leaf field names to fully qualified names
+            - `flattened_type` is the flattened type equivalent to the nested type
+            - `to_flattened` is a function converting an object from the nested type to the flattened type
+            - `to_nested` is a function converting an object from the flattened type to the nested type
+
+    Raises:
+        TypeError: if duplicate field names occur"""
+    fields: List[Any] = []
+    field_map: Dict[str, RecordPath] = {}
+    for (path, fld) in traverse_dataclass(cls):
+        safe_dict_insert(field_map, fld.name, path)  # will error on name collision
+        fields.append(fld)
+    field_data = [(fld.name, fld.type, fld) for fld in fields]
+    flattened_type = dataclasses.make_dataclass(cls.__name__, field_data, bases=bases)
+    def to_flattened(obj: T) -> object:
+        def _to_dict(prefix: RecordPath, subobj: 'DataclassInstance') -> Dict[str, Any]:
+            kwargs = {}
+            for fld in dataclasses.fields(subobj):
+                val = getattr(subobj, fld.name)
+                if is_dataclass(val):  # recurse into subfield
+                    kwargs.update(_to_dict(prefix + (fld.name,), val))
+                else:
+                    kwargs[fld.name] = val
+            return kwargs
+        return flattened_type(**_to_dict((), obj))  # type: ignore[arg-type]
+    def to_nested(obj: 'DataclassInstance') -> T:
+        def _to_nested(prefix: RecordPath, subcls: Type['DataclassInstance']) -> 'DataclassInstance':
+            kwargs = {}
+            for fld in dataclasses.fields(subcls):
+                name = fld.name
+                path = prefix + (name,)
+                if is_dataclass(fld.type):  # nested dataclass
+                    kwargs[name] = _to_nested(path, fld.type)
+                else:  # leaf-level field
+                    kwargs[name] = getattr(obj, name)
+            return subcls(**kwargs)
+        return _to_nested((), cls)  # type: ignore
+    converter: DataclassConverter[T, Any] = DataclassConverter(cls, flattened_type, to_flattened, to_nested)
+    return (field_map, converter)
 
 
 ###################
@@ -255,7 +283,7 @@ class DataclassMixin:
             stype = cls.__settings_type__
             assert issubclass(stype, DataclassMixinSettings)
             assert check_dataclass(stype)
-            field_names = {field.name for field in dataclasses.fields(stype)}
+            field_names = {fld.name for fld in dataclasses.fields(stype)}
         else:
             stype = None
             field_names = set()
@@ -264,8 +292,8 @@ class DataclassMixin:
             settings = cls.__settings__
             if (stype is not None) and (not isinstance(settings, stype)):
                 raise TypeError(f'settings type of {cls.__name__} must be {stype.__name__}')
-            for field in dataclasses.fields(cls.__settings__):  # type: ignore[arg-type]
-                d[field.name] = getattr(settings, field.name)
+            for fld in dataclasses.fields(cls.__settings__):  # type: ignore[arg-type]
+                d[fld.name] = getattr(settings, fld.name)
         # inheritance kwargs will override existing settings
         for (key, val) in kwargs.items():
             if key in field_names:
@@ -305,7 +333,7 @@ class DataclassMixin:
         Raises:
             TypeError: If an invalid dataclass field is provided"""
         assert hasattr(self, '__dataclass_fields__'), f'{obj_class_name(self)} is not a dataclass type'
-        d = {field.name : getattr(self, field.name) for field in dataclasses.fields(self)}  # type: ignore[arg-type]
+        d = {fld.name : getattr(self, fld.name) for fld in dataclasses.fields(self)}  # type: ignore[arg-type]
         for (key, val) in kwargs.items():
             if key in d:
                 d[key] = val

@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from operator import itemgetter
 from typing import Optional, Union
 
 import pytest
@@ -86,7 +85,7 @@ def test_dataclass_mixin_settings():
 def test_traverse_dataclass():
     """Tests depth-first traversal of dataclass fields."""
     def get_names(cls):
-        return list(map(itemgetter(0), traverse_dataclass(cls)))
+        return ['.'.join(path) for (path, _) in traverse_dataclass(cls)]
     # test a nested dataclass
     @dataclass
     class C:
