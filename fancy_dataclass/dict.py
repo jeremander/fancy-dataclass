@@ -1,4 +1,3 @@
-from collections import defaultdict
 from copy import copy
 import dataclasses
 from dataclasses import dataclass
@@ -6,11 +5,11 @@ from datetime import datetime
 from enum import Enum
 from functools import partial
 import re
-from typing import TYPE_CHECKING, Any, ClassVar, Container, Dict, List, Literal, Type, TypeVar, Union, _TypedDictMeta, get_args, get_origin  # type: ignore[attr-defined]
+from typing import TYPE_CHECKING, Any, ClassVar, Container, Dict, Literal, Type, TypeVar, Union, _TypedDictMeta, get_args, get_origin  # type: ignore[attr-defined]
 
 from typing_extensions import Self, _AnnotatedAlias
 
-from fancy_dataclass.utils import DataclassMixin, DataclassMixinSettings, check_dataclass, fully_qualified_class_name, issubclass_safe, obj_class_name, safe_dict_insert
+from fancy_dataclass.utils import DataclassMixin, DataclassMixinSettings, _flatten_dataclass, check_dataclass, fully_qualified_class_name, issubclass_safe, obj_class_name, safe_dict_insert
 
 
 NoneType = type(None)
@@ -246,46 +245,6 @@ class DictDataclass(DataclassMixin):
         raise err()
 
     @classmethod
-    def _class_with_flattened_fields(cls: Type[Self]) -> Type[Self]:
-        """Converts this type into an isomorphic type where any nested DictDataclass fields have all of their subfields merged into the outer type."""
-        fields: List[Any] = []
-        field_map: Dict[str, str] = {}
-        cls_fields = dataclasses.fields(cls)  # type: ignore[arg-type]
-        for field in cls_fields:
-            origin = get_origin(field.type)
-            if origin is Union:  # use the first type of a Union (also handles Optional)
-                tp = get_args(field.type)[0]
-            else:
-                tp = field.type
-            if issubclass(tp, DictDataclass):
-                for fld in dataclasses.fields(tp):
-                    safe_dict_insert(field_map, fld.name, field.name)
-                    fields.append(fld)
-            else:
-                fields.append(field)
-        cls2 = dataclasses.make_dataclass(cls.__name__, [(field.name, field.type, field) for field in fields], bases = (DictDataclass,))
-        # make settings identical to the original class (except force flattened=True)
-        cls2.__settings__ = DictDataclassSettings, copy(cls.__settings__)  # type: ignore[attr-defined]
-        cls2.__settings__.flattened = True  # type: ignore[attr-defined]
-        # create method to convert from flattened object to nested object
-        def _to_nested(self: D) -> D:
-            kwargs = {}
-            nested_kwargs: Dict[str, Any] = defaultdict(dict)
-            types_by_name = {field.name : field.type for field in cls_fields}
-            for field in dataclasses.fields(self):
-                key = field.name
-                val = getattr(self, key)
-                if key in field_map:  # a flattened field
-                    nested_kwargs[field_map[key]][key] = val
-                else:  # a regular field
-                    kwargs[key] = val
-            for (key, d) in nested_kwargs.items():
-                kwargs[key] = types_by_name[key](**d)
-            return cls(**kwargs)  # type: ignore[return-value]
-        cls2._to_nested = _to_nested  # type: ignore[attr-defined]
-        return cls2
-
-    @classmethod
     def _dataclass_args_from_dict(cls, d: JSONDict, strict: bool = False) -> JSONDict:
         """Given a dict of arguments, performs type conversion and/or validity checking, then returns a new dict that can be passed to the class's constructor."""
         check_dataclass(cls)
@@ -347,10 +306,14 @@ class DictDataclass(DataclassMixin):
                 # (remove the type name before passing to the constructor)
                 d2 = {key: val for (key, val) in d.items() if (key != 'type')}
                 return cls.get_subclass_with_name(typename).from_dict(d2, **kwargs)
+        conv = None
         if cls.__settings__.flattened:
-            # produce equivalent subfield-flattened types, then convert the dict
-            cls = cls._class_with_flattened_fields()
-            tp = tp._class_with_flattened_fields()
+            # produce equivalent subfield-flattened type
+            settings = copy(tp.__settings__)
+            settings.flattened = True
+            conv = _flatten_dataclass(tp, cls.__bases__)[1]
+            tp = conv.to_type  # type: ignore[assignment]
+            tp.__settings__ = settings
         strict = kwargs.get('strict', False)
         result: Self = tp(**tp._dataclass_args_from_dict(d, strict=strict))
-        return result._to_nested() if cls.__settings__.flattened else result  # type: ignore
+        return conv.backward(result) if cls.__settings__.flattened else result  # type: ignore

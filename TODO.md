@@ -2,8 +2,6 @@
 
 ## v0.2.0
 
-- Flattening
-  - Remove `_class_with_flattened_fields`
 - Merging dataclass types
   - `merge_dataclasses` helper function (similar to flattening, but just concatenate the fields together, ensuring no duplicates)
   - Have merging handle Settings specially?
@@ -17,7 +15,7 @@
     - `DictDataclass` allows per-field `suppress` and `suppress_default`: canonize these
   - `SubprocessDataclass`: instead of `subprocess_exclude`, make `args` `None` or something?
 - Unit tests
-  - Test all flags (e.g. suppress_defaults, store_type, qualified_type)
+  - Test all flags (e.g. suppress_defaults, store_type, qualified_type, flattened)
   - Test multiple inheritance (all the classes?)
     - What happens to the class settings?
       - Operation to dynamically merge dataclasses? Error if any fields collide.
