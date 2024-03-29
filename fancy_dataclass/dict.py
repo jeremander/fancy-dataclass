@@ -151,7 +151,7 @@ class DictDataclass(DataclassMixin):
             return x
         ttp = type(tp)
         if ttp is _AnnotatedAlias:  # Annotated: just ignore the annotation
-            return convert_val(get_args(tp)[0], x)  # type: ignore[attr-defined]
+            return convert_val(get_args(tp)[0], x)
         if issubclass_safe(tp, list):
             # class may inherit from List[T], so get the parent class
             assert hasattr(tp, '__orig_bases__')
@@ -208,7 +208,7 @@ class DictDataclass(DataclassMixin):
                 # except TypeError as e:
                 #     raise err() from e
         else:  # compound data type
-            args = get_args(tp)  # type: ignore[attr-defined]
+            args = get_args(tp)
             if origin_type == list:
                 subtype = args[0]
                 return [convert_val(subtype, y) for y in x]

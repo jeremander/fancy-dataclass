@@ -1,10 +1,11 @@
 """Various utility functions and classes."""
 
+from copy import copy
 import dataclasses
 from dataclasses import Field, dataclass, is_dataclass, make_dataclass
 import importlib
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, Dict, Generic, Iterator, List, Optional, Sequence, Tuple, Type, TypeVar, Union, get_args, get_origin
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Dict, ForwardRef, Generic, Iterator, List, Optional, Sequence, Tuple, Type, TypeVar, Union, get_args, get_origin, get_type_hints
 
 from typing_extensions import Self, TypeGuard
 
@@ -19,6 +20,9 @@ U = TypeVar('U')
 Constructor = Callable[[Any], Any]
 AnyPath = str | Path
 RecordPath = Tuple[str, ...]
+
+# maximum depth when traversing the fields of a dataclass
+MAX_DATACLASS_DEPTH = 100
 
 
 def safe_dict_insert(d: Dict[Any, Any], key: str, val: Any) -> None:
@@ -165,32 +169,46 @@ def traverse_dataclass(cls: type) -> Iterator[Tuple[RecordPath, Field]]:  # type
     """Iterates through the fields of a dataclass, yielding (name, field) pairs.
     If the dataclass contains nested dataclasses, recursively iterates through their fields, in depth-first order.
     Nesting is indicated in the field names via "record path" syntax, e.g. `outer.middle.inner`."""
+    def _make_optional(fld: Field) -> Field:  # type: ignore[type-arg]
+        new_fld = Field
+        new_fld = copy(fld)  # type: ignore[assignment]
+        new_fld.type = Optional[fld.type]  # type: ignore
+        new_fld.default = None  # type: ignore
+        return new_fld  # type: ignore[return-value]
     def _traverse(prefix: RecordPath, tp: type) -> Iterator[Tuple[RecordPath, Field]]:  # type: ignore[type-arg]
+        if len(prefix) > MAX_DATACLASS_DEPTH:
+            raise TypeError(f'Type recursion exceeds depth {MAX_DATACLASS_DEPTH}')
         for fld in dataclasses.fields(tp):
+            fld_type = get_type_hints(tp)[fld.name] if isinstance(fld.type, str) else fld.type
+            if fld_type is tp:  # prevent infinite recursion
+                raise TypeError('Type cannot contain a member field of its own type')
             path = prefix + (fld.name,)
-            origin = get_origin(fld.type)
-            if origin is Union:
-                args = get_args(fld.type)
+            origin = get_origin(fld_type)
+            is_union = origin is Union
+            if is_union:
+                args = get_args(fld_type)
                 # if optional, use the wrapped type, otherwise error
-                base_type = args[0]
-                has_dataclass = any(is_dataclass(tp) for tp in args)
-                is_optional = (len(args) == 2) and (args[1] is type(None))
-                if has_dataclass and (not is_optional):
-                    raise TypeError('Union field cannot include a dataclass type')
+                base_types = []
+                for arg in args:
+                    if isinstance(arg, ForwardRef):
+                        raise TypeError('Type cannot contain a ForwardRef')
+                    base_types.append(arg)
             else:
-                base_type = fld.type
-                is_optional = False
-            if is_dataclass(base_type):
-                subfields = _traverse(path, base_type)
-                if is_optional:
-                    # wrap each field type in an Optional
-                    for (name, subfld) in subfields:
-                        subfld.type = Optional[subfld.type]  # type: ignore[assignment]
-                        yield (name, subfld)
-                else:
-                    yield from subfields
-            else:
+                base_types = [fld_type]
+            if any(not is_dataclass(base_type) for base_type in base_types):
+                if is_union:
+                    fld = _make_optional(fld)
                 yield (path, fld)
+            for base_type in base_types:
+                if is_dataclass(base_type):
+                    subfields = _traverse(path, base_type)
+                    if is_union:
+                        # wrap each field type in an Optional
+                        for (name, subfld) in subfields:
+                            subfld = _make_optional(subfld)
+                            yield (name, subfld)
+                    else:
+                        yield from subfields
     yield from _traverse((), cls)
 
 
@@ -243,10 +261,29 @@ def _flatten_dataclass(cls: Type[T], bases: Tuple[type, ...] = ()) -> Tuple[Dict
             for fld in dataclasses.fields(subcls):
                 name = fld.name
                 path = prefix + (name,)
-                if is_dataclass(fld.type):  # nested dataclass
-                    kwargs[name] = _to_nested(path, fld.type)
-                else:  # leaf-level field
-                    kwargs[name] = getattr(obj, name)
+                origin = get_origin(fld.type)
+                def _get_val(tp: type) -> Any:
+                    val = _to_nested(path, tp) if is_dataclass(tp) else getattr(obj, name)  # noqa: B023
+                    if val is None:
+                        raise TypeError(f'invalid {tp.__name__} value: {val}')
+                    return val
+                if origin is Union:
+                    args = get_args(fld.type)
+                    for tp in args:
+                        try:
+                            val = _get_val(tp)
+                        except TypeError:
+                            continue
+                        if val is not None:
+                            kwargs[name] = val
+                            break
+                    else:
+                        if type(None) in args:
+                            kwargs[name] = None
+                        else:
+                            raise TypeError(f'could not extract field of type {fld.type}')
+                else:
+                    kwargs[name] = _get_val(fld.type)
             return subcls(**kwargs)
         return _to_nested((), cls)  # type: ignore
     converter: DataclassConverter[T, Any] = DataclassConverter(cls, flattened_type, to_flattened, to_nested)
@@ -301,7 +338,7 @@ class DataclassMixin:
             else:
                 raise TypeError(f'unknown settings field {key!r} for {cls.__name__}')
         if cls.__settings_type__ is not None:
-            cls.__settings__ = stype(**d)  # type: ignore[assignment]
+            cls.__settings__ = stype(**d)
 
     @classmethod
     def wrap_dataclass(cls: Type[Self], tp: Type[T]) -> Type[Self]:

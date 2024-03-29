@@ -2,32 +2,25 @@
 
 ## v0.2.0
 
-- Merging dataclass types
-  - Helper function to implement the isomorphism directly
-  - Handle
-    - Union
-      - Create flattened fields for all variants
-    - Optional
-        - Breaks round-trip fidelity:
-          @dataclass
-          class C:
-            c: Optional['C'] = None
+- Flattening
+  - Handle:
     - Nesting in lists/dicts
       - These are just kept nested (no flattening)
     - ClassVars
+- Merging dataclass types
+  - `merge_dataclasses` helper function (similar to flattening, but just concatenate the fields together, ensuring no duplicates)
   - Have merging handle Settings specially?
     - Take union of Settings classes
   - Simplify _class_with_merged_fields
     - Avoid monkey-patching _to_nested
   - Test this extensively
     - Round-trip conversion nested->flattened->nested->flattened
-- Use `typing` helper functions like `get_type_hints`, `get_args`, etc. instead of dunder methods
 - Standardize field settings
   - Too complicated to nest within field metadata
   - Class should declare what fields it recognizes
     - If base classes share a field of the same name, raise a `TypeError` upon type construction
     - `DictDataclass` allows per-field `suppress` and `suppress_default`: canonize these
-- `SubprocessDataclass`: instead of `subprocess_exclude`, make `args` `None` or something?
+  - `SubprocessDataclass`: instead of `subprocess_exclude`, make `args` `None` or something?
 - Unit tests
   - Test all flags (e.g. suppress_defaults, store_type, qualified_type)
   - Test multiple inheritance (all the classes?)
@@ -35,15 +28,19 @@
       - Operation to dynamically merge dataclasses? Error if any fields collide.
   - Comparison with dataclasses.asdict
   - Test no pre-made mixins have any field metadata overlap
+- Docs
+  - "Under construction" placeholders
+  - CHANGELOG
+
+## v0.3.0
+
 - ConfigDataclass
   - Handle nesting properly (updating nested ConfigDataclass should update the parent)
-- toml
+- TOMLDataclass
   - `tomlkit` maintains parsed structure (incl. whitespace & comments)
   - Let ConfigDataclass parse TOML
-- Docs (under construction)
-- PyPI
 
-## v0.2.1
+## v0.3.1
 
 - documentation
   - Dataclass settings
