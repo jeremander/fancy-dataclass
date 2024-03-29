@@ -1,10 +1,10 @@
-from dataclasses import dataclass, fields, is_dataclass
-from typing import Optional, Union
+from dataclasses import dataclass, is_dataclass
+from typing import ClassVar, Dict, List, Optional, Union
 
 import pytest
 from pytest import param
 
-from fancy_dataclass.utils import DataclassMixin, DataclassMixinSettings, _flatten_dataclass, traverse_dataclass
+from fancy_dataclass.utils import DataclassMixin, DataclassMixinSettings, _flatten_dataclass, get_dataclass_fields, traverse_dataclass
 
 
 def test_dataclass_mixin_settings():
@@ -160,6 +160,19 @@ class T:
 class U:
     u: T
 
+@dataclass
+class V:
+    v: List[C]
+
+@dataclass
+class W:
+    w: Dict[str, C]
+
+@dataclass
+class X:
+    x: int
+    y: ClassVar[str] = 'x'
+
 def test_traverse_dataclass():
     """Tests depth-first traversal of dataclass fields."""
     def get_names(cls):
@@ -191,6 +204,9 @@ def test_traverse_dataclass():
         _ = get_names(T)
     with pytest.raises(TypeError, match='Type recursion exceeds depth'):
         _ = get_names(U)
+    assert get_names(V) == ['v']
+    assert get_names(W) == ['w']
+    assert get_names(X) == ['x', 'y']
 
 def _lookup_field_by_path(obj, path):
     if not path:
@@ -212,6 +228,9 @@ DC_FLATTEN_VALID_PARAMS = [
     param(M('a'), ['m', 'k'], id='nested union 1'),
     param(M(K(1)), ['m', 'k'], id='nested union 2'),
     param(N(J(None)), ['j', 'k'], id='nested union 3'),
+    param(V([C(1), C(2)]), ['v'], id='list of dataclasses'),
+    param(W({'c1': C(1), 'c2': C(2)}), ['w'], id='dict of dataclasses'),
+    param(X(1), ['x', 'y'], id='class var'),
 ]
 
 @pytest.mark.parametrize(['obj', 'flat_fields'], DC_FLATTEN_VALID_PARAMS)
@@ -228,7 +247,7 @@ def test_flatten_dataclass_valid(obj, flat_fields):
         val = getattr(flat_obj, name)
         # value could be an object in a Union, which would be None in the flattened version
         assert (val is None) or (_lookup_field_by_path(obj, path) == val)
-    assert [fld.name for fld in fields(flat_obj)] == flat_fields
+    assert [fld.name for fld in get_dataclass_fields(flat_obj, include_classvars=True)] == flat_fields
     assert set(flat_fields) == set(field_map)
     assert conv.backward is not None
     nested_obj = conv.backward(flat_obj)
@@ -254,5 +273,24 @@ DC_FLATTEN_INVALID_PARAMS = [
 
 @pytest.mark.parametrize(['cls', 'err'], DC_FLATTEN_INVALID_PARAMS)
 def test_flatten_dataclass_invalid(cls, err):
+    """Tests various conditions where flattening a dataclass type raises an error."""
     with pytest.raises(TypeError, match=err):
         _ = _flatten_dataclass(cls)
+
+def test_classvar_collision():
+    """Tests ClassVar name collisions."""
+    @dataclass
+    class X2:
+        y: ClassVar[str]
+    @dataclass
+    class X3:
+        x1: X
+        x2: X2
+    with pytest.raises(TypeError, match="duplicate key 'y'"):
+        _ = _flatten_dataclass(X3)
+    @dataclass
+    class X4:
+        x: X
+        y: ClassVar[str]
+    with pytest.raises(TypeError, match="duplicate key 'y'"):
+        _ = _flatten_dataclass(X4)

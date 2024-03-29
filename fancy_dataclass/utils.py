@@ -165,6 +165,21 @@ def make_dataclass_with_constructors(cls_name: str, fields: Sequence[Union[str, 
     tp._fields = tuple(fld.name for fld in dataclasses.fields(tp))  # type: ignore[attr-defined]
     return tp
 
+def get_dataclass_fields(obj: Union[type, object], include_classvars: bool = False) -> Tuple[Field, ...]:  # type: ignore[type-arg]
+    """Variant of dataclasses.fields which can optionally include ClassVars."""
+    cls = obj if isinstance(obj, type) else type(obj)
+    flds = dataclasses.fields(cls)
+    if include_classvars:
+        classvar_fields = []
+        for (name, tp) in get_type_hints(cls).items():
+            if get_origin(tp) is ClassVar:
+                fld = dataclasses.field(default=getattr(cls, name)) if hasattr(cls, name) else dataclasses.field()
+                fld.name = name
+                fld.type = tp
+                classvar_fields.append(fld)
+        return flds + tuple(classvar_fields)
+    return flds
+
 def traverse_dataclass(cls: type) -> Iterator[Tuple[RecordPath, Field]]:  # type: ignore[type-arg]
     """Iterates through the fields of a dataclass, yielding (name, field) pairs.
     If the dataclass contains nested dataclasses, recursively iterates through their fields, in depth-first order.
@@ -178,7 +193,7 @@ def traverse_dataclass(cls: type) -> Iterator[Tuple[RecordPath, Field]]:  # type
     def _traverse(prefix: RecordPath, tp: type) -> Iterator[Tuple[RecordPath, Field]]:  # type: ignore[type-arg]
         if len(prefix) > MAX_DATACLASS_DEPTH:
             raise TypeError(f'Type recursion exceeds depth {MAX_DATACLASS_DEPTH}')
-        for fld in dataclasses.fields(tp):
+        for fld in get_dataclass_fields(tp, include_classvars=True):
             fld_type = get_type_hints(tp)[fld.name] if isinstance(fld.type, str) else fld.type
             if fld_type is tp:  # prevent infinite recursion
                 raise TypeError('Type cannot contain a member field of its own type')
@@ -247,7 +262,7 @@ def _flatten_dataclass(cls: Type[T], bases: Tuple[type, ...] = ()) -> Tuple[Dict
     def to_flattened(obj: T) -> object:
         def _to_dict(prefix: RecordPath, subobj: 'DataclassInstance') -> Dict[str, Any]:
             kwargs = {}
-            for fld in dataclasses.fields(subobj):
+            for fld in get_dataclass_fields(subobj):
                 val = getattr(subobj, fld.name)
                 if is_dataclass(val):  # recurse into subfield
                     kwargs.update(_to_dict(prefix + (fld.name,), val))
@@ -258,7 +273,7 @@ def _flatten_dataclass(cls: Type[T], bases: Tuple[type, ...] = ()) -> Tuple[Dict
     def to_nested(obj: 'DataclassInstance') -> T:
         def _to_nested(prefix: RecordPath, subcls: Type['DataclassInstance']) -> 'DataclassInstance':
             kwargs = {}
-            for fld in dataclasses.fields(subcls):
+            for fld in get_dataclass_fields(subcls):
                 name = fld.name
                 path = prefix + (name,)
                 origin = get_origin(fld.type)

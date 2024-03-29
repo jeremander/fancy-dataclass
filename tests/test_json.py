@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum, Flag, auto
 import json
+import math
 import re
 import sys
 from typing import Any, ClassVar, List, Literal, NamedTuple, Optional, TypedDict
@@ -46,6 +47,8 @@ class DC3(JSONDataclass):
 
 class MyObject:
     """This object is not JSON-serializable."""
+    def __eq__(self, other):
+        return isinstance(other, MyObject)
 
 @dataclass
 class DCNonJSONSerializable(JSONDataclass):
@@ -133,11 +136,19 @@ class DCAny(JSONDataclass):
     val: Any
 
 @dataclass
+class DCFloat(JSONDataclass):
+    x: float
+
+@dataclass
 class DCSuppress(JSONDataclass, suppress_defaults=False):
     cv1: ClassVar[int] = field(default=0)
     x: int = field(default=1)
     y: int = field(default=2, metadata={'suppress': True})
     z: int = field(default=3, metadata={'suppress': False})
+
+@dataclass
+class DCList(JSONDataclass):
+    vals: List[DCAny]
 
 
 TEST_JSON = [
@@ -166,6 +177,7 @@ TEST_JSON = [
     DCAny({}),
     DCAny(None),
     DCSuppress(),
+    DCList([DCAny(None), DCAny(1), DCAny([1]), DCAny(None), DCAny({})]),
 ]
 
 @pytest.mark.parametrize('obj', TEST_JSON)
@@ -473,3 +485,27 @@ def test_from_dict_kwargs():
     assert MyDC.from_json_string(s, strict=True, parse_int=parse_int) == MyDC(2)
     with pytest.raises(TypeError, match="unexpected keyword argument 'fake_kwarg'"):
         _ = MyDC.from_json_string(s, fake_kwarg=True)
+
+@pytest.mark.parametrize(['obj', 'd', 'obj2'], [
+    (DCEmpty(), {}, None),
+    (DCFloat(1), {'x': 1}, None),
+    (DCFloat(math.inf), {'x': math.inf}, None),
+    (DCFloat(math.nan), {'x': math.nan}, None),
+    (DCColors([Color.RED, Color.BLUE]), {'colors': [1, 4]}, None),
+    (DCStrEnum(MyStrEnum.a), {'enum': 'a'}, None),
+    (DCNonJSONSerializable(1, MyObject()), {'x': 1, 'obj': MyObject()}, None),
+    (DCList([]), {'vals': []}, None),
+    (DCList([DCAny(None)]), {'vals': [{'val': None}]}, None),
+    (DCList([DCAny(1)]), {'vals': [{'val': 1}]}, None),
+    (DCList([DCAny([])]), {'vals': [{'val': []}]}, None),
+    (DCList([DCAny({})]), {'vals': [{'val': {}}]}, None),
+    (DCList([DCAny(DCAny(1))]), {'vals': [{'val': {'val': 1}}]}, DCList([DCAny({'val': 1})])),
+])
+def test_round_trips(obj, d, obj2):
+    """Tests round-trip fidelity to/from dict."""
+    assert obj.to_dict() == d
+    obj2 = type(obj).from_dict(d)
+    if obj2 is None:  # round-trip is valid
+        assert obj == obj2
+    d2 = obj2.to_dict()
+    assert d == d2

@@ -3,18 +3,13 @@
 ## v0.2.0
 
 - Flattening
-  - Handle:
-    - Nesting in lists/dicts
-      - These are just kept nested (no flattening)
-    - ClassVars
+  - Remove `_class_with_flattened_fields`
 - Merging dataclass types
   - `merge_dataclasses` helper function (similar to flattening, but just concatenate the fields together, ensuring no duplicates)
   - Have merging handle Settings specially?
     - Take union of Settings classes
-  - Simplify _class_with_merged_fields
-    - Avoid monkey-patching _to_nested
-  - Test this extensively
-    - Round-trip conversion nested->flattened->nested->flattened
+  - Tests
+    - ClassVar collision
 - Standardize field settings
   - Too complicated to nest within field metadata
   - Class should declare what fields it recognizes
@@ -43,7 +38,7 @@
 ## v0.3.1
 
 - documentation
-  - Dataclass settings
+  - Dataclass mixins/settings
     - For now, `dataclass` decorator is required
     - Note purpose of `nested=False` (good for tabular data like CSV/SQL)
   - JSON

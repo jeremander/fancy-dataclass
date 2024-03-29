@@ -168,6 +168,8 @@ class DictDataclass(DataclassMixin):
                 return x
             elif hasattr(tp, 'from_dict'):  # handle nested fields which are themselves convertible from a dict
                 return cls._convert_dict_convertible(tp, x, strict)
+            elif issubclass(tp, float):
+                return tp(x)
             elif issubclass(tp, tuple):
                 if isinstance(x, dict) and hasattr(tp, '_fields'):  # namedtuple
                     try:
