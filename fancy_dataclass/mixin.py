@@ -3,7 +3,7 @@ from typing import Any, ClassVar, Optional, Type, TypeVar
 
 from typing_extensions import Self
 
-from fancy_dataclass.utils import check_dataclass, get_dataclass_fields, get_subclass_with_name, merge_dataclasses, obj_class_name
+from fancy_dataclass.utils import _is_instance, check_dataclass, get_dataclass_fields, get_subclass_with_name, merge_dataclasses, obj_class_name
 
 
 T = TypeVar('T')
@@ -41,10 +41,10 @@ class FieldSettings:
 
         Raises:
             TypeError: If a field is the wrong type"""
-        # NOTE: this type-checking is not very robust, but it mostly works with basic types
         for fld in dataclasses.fields(self):  # type: ignore[arg-type]
             val = getattr(self, fld.name)
-            if not isinstance(val, fld.type):
+            # semi-robust type checking (could still be improved)
+            if not _is_instance(val, fld.type):
                 raise TypeError(f'expected type {fld.type.__name__} for field {fld.name!r}, got {type(val).__name__}')
 
     @classmethod
@@ -70,7 +70,10 @@ def _configure_mixin_settings(cls: Type['DataclassMixin'], **kwargs: Any) -> Non
         # remove duplicate settings classes
         stypes = list(dict.fromkeys(stypes))
         if stypes:
-            stype = stypes[0] if (len(stypes) == 1) else merge_dataclasses(*stypes, cls_name='MiscDataclassSettings')
+            try:
+                stype = stypes[0] if (len(stypes) == 1) else merge_dataclasses(*stypes, cls_name='MiscDataclassSettings', bases=(DataclassMixinSettings,))
+            except TypeError as e:
+                raise TypeError(f'error merging base class settings for {cls.__name__}: {e}') from e
             cls.__settings_type__ = stype
     else:
         if not issubclass(stype, DataclassMixinSettings):
@@ -96,7 +99,23 @@ def _configure_mixin_settings(cls: Type['DataclassMixin'], **kwargs: Any) -> Non
     if stype is not None:
         cls.__settings__ = stype(**d)
 
-def _configure_field_settings(cls: Type['DataclassMixin']) -> None:
+def _configure_field_settings_type(cls: Type['DataclassMixin']) -> None:
+    """Sets up the __field_settings_type__ attribute on a `DataclassMixin` subclass at definition type.
+    This reconciles any such attributes inherited from multiple parent classes."""
+    stype = cls.__dict__.get('__field_settings_type__')
+    if stype is None:
+        stypes = [stype for base in cls.__bases__ if (stype := getattr(base, '__field_settings_type__', None))]
+        # remove duplicate settings classes
+        stypes = list(dict.fromkeys(stypes))
+        if stypes:
+            stype = stypes[0] if (len(stypes) == 1) else merge_dataclasses(*stypes, cls_name='MiscFieldSettings', bases=(FieldSettings,))
+            cls.__field_settings_type__ = stype
+    else:
+        if not issubclass(stype, FieldSettings):
+            raise TypeError(f'invalid field settings type {stype.__name__} for {cls.__name__}')
+        assert check_dataclass(stype)
+
+def _check_field_settings(cls: Type['DataclassMixin']) -> None:
     """Performs type checking of a `DataclassMixin`'s fields to catch any errors at dataclass-wrap time."""
     if (stype := cls.__field_settings_type__) is not None:
         for fld in dataclasses.fields(cls):  # type: ignore[arg-type]
@@ -125,10 +144,11 @@ class DataclassMixin:
         These settings can be used to customize the behavior of the subclass."""
         super().__init_subclass__()
         _configure_mixin_settings(cls, **kwargs)
+        _configure_field_settings_type(cls)
 
     @classmethod
     def __post_dataclass_wrap__(cls) -> None:
-        _configure_field_settings(cls)
+        _check_field_settings(cls)
 
     @classmethod
     def _field_settings(cls, field: dataclasses.Field) -> FieldSettings:  # type: ignore[type-arg]

@@ -109,27 +109,25 @@ class DictDataclass(DataclassMixin):
                 return x.to_dict(full=full)
             return x
         d = self._dict_init()
-        fields = getattr(self.__class__, '__dataclass_fields__', None)
         class_suppress_defaults = self.__settings__.suppress_defaults
-        if fields is not None:
-            for (name, field) in fields.items():
-                is_class_var = get_origin(field.type) is ClassVar
-                fld_settings = cast(DictDataclassFieldSettings, self._field_settings(field))
-                # suppress field by default if it is a ClassVar or init=False
-                if (is_class_var or (not field.init)) if (fld_settings.suppress is None) else fld_settings.suppress:
-                    continue
-                val = getattr(self, name)
-                # suppress default (by default) if full=False and class-configured suppress_defaults=True
-                if (not full) and (class_suppress_defaults if (fld_settings.suppress_default is None) else fld_settings.suppress_default):
-                    # suppress values that match the default
-                    try:
-                        if val == field.default:
-                            continue
-                        if (field.default_factory != dataclasses.MISSING) and (val == field.default_factory()):
-                            continue
-                    except ValueError:  # some types may fail to compare
-                        pass
-                safe_dict_insert(d, name, _to_value(val))
+        for (name, field) in self.__dataclass_fields__.items():  # type: ignore[attr-defined]
+            is_class_var = get_origin(field.type) is ClassVar
+            fld_settings = cast(DictDataclassFieldSettings, self._field_settings(field))
+            # suppress field by default if it is a ClassVar or init=False
+            if (is_class_var or (not field.init)) if (fld_settings.suppress is None) else fld_settings.suppress:
+                continue
+            val = getattr(self, name)
+            # suppress default (by default) if full=False and class-configured suppress_defaults=True
+            if (not full) and (class_suppress_defaults if (fld_settings.suppress_default is None) else fld_settings.suppress_default):
+                # suppress values that match the default
+                try:
+                    if val == field.default:
+                        continue
+                    if (field.default_factory != dataclasses.MISSING) and (val == field.default_factory()):
+                        continue
+                except ValueError:  # some types may fail to compare
+                    pass
+            safe_dict_insert(d, name, _to_value(val))
         return d
 
     def to_dict(self, **kwargs: Any) -> JSONDict:

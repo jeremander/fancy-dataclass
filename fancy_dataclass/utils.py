@@ -85,6 +85,24 @@ def issubclass_safe(type1: type, type2: type) -> bool:
     except TypeError:
         return False
 
+def _is_instance(obj: Any, tp: type) -> bool:
+    """Checks if the given object is an instance of the given type.
+
+    This attempts to be somewhat more robust than `isinstance` in that it will handle compound types like `List[...]`."""
+    # TODO: make this more complete
+    if tp is Any:
+        return True
+    origin = get_origin(tp)
+    if origin is Union:
+        return any(_is_instance(obj, arg) for arg in get_args(tp))
+    elif origin is list:
+        base_type = get_args(tp)[0]
+        return isinstance(obj, list) and all(_is_instance(val, base_type) for val in obj)
+    elif origin is dict:
+        (key_type, val_type) = get_args(tp)
+        return isinstance(obj, dict) and all(_is_instance(key, key_type) and _is_instance(val, val_type) for (key, val) in obj.items())
+    return isinstance(obj, tp)
+
 def obj_class_name(obj: object) -> str:
     """Gets the name of the class of an object.
 
@@ -258,7 +276,7 @@ def _flatten_dataclass(cls: Type[T], bases: Optional[Tuple[type, ...]] = None) -
         fields.append(fld)
     field_data = [(fld.name, fld.type, fld) for fld in fields]
     bases = cls.__bases__ if (bases is None) else bases
-    flattened_type = dataclasses.make_dataclass(cls.__name__, field_data, bases=bases)
+    flattened_type = make_dataclass(cls.__name__, field_data, bases=bases)
     def to_flattened(obj: T) -> object:
         def _to_dict(prefix: RecordPath, subobj: 'DataclassInstance') -> Dict[str, Any]:
             kwargs = {}
@@ -309,13 +327,14 @@ def _flatten_dataclass(cls: Type[T], bases: Optional[Tuple[type, ...]] = None) -
 # MERGING #
 ###########
 
-def merge_dataclasses(*classes: type, cls_name: str = '_') -> type:
+def merge_dataclasses(*classes: type, cls_name: str = '_', bases: Tuple[type, ...] = ()) -> type:
     """Merges multiple dataclasses together into a single dataclass whose fields have been combined.
     This preserves `ClassVar`s but does not recursively merge subfields.
 
     Args:
         classes: Multiple dataclass types
         cls_name: Name of the output dataclass
+        bases: Base classes for the new type
 
     Returns:
         The merged dataclass type
@@ -330,4 +349,4 @@ def merge_dataclasses(*classes: type, cls_name: str = '_') -> type:
                 raise TypeError(f'duplicate field name {fld.name!r}')
             field_names.add(fld.name)
             flds.append((fld.name, fld.type, fld))
-    return make_dataclass(cls_name, flds)
+    return make_dataclass(cls_name, flds, bases=bases)

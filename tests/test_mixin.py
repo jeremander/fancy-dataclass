@@ -190,7 +190,10 @@ class TestDataclassMixin:
             __settings_type__ = Settings3
         @dataclass
         class Settings4(DataclassMixinSettings):
-            b: int = 4
+            c: int = 4
+            d: int = 5
+        class Mixin4(DataclassMixin):
+            __settings_type__ = Settings4
         def _check_stype(cls, field_names):
             assert [fld.name for fld in get_dataclass_fields(cls.__settings_type__)] == field_names
             assert isinstance(cls.__settings__, cls.__settings_type__)
@@ -248,3 +251,7 @@ class TestDataclassMixin:
         class DC10(Mixin1, Mixin2, Mixin3, b=50, d=100):
             __settings_type__ = Settings5
         assert DC10.__settings__ == Settings5(1, 50, 3, 100)
+        with pytest.raises(TypeError, match="error merging base class settings for DC11: duplicate field name 'c'"):
+            @dataclass
+            class DC11(Mixin2, Mixin4):
+                ...

@@ -1,9 +1,20 @@
-from dataclasses import MISSING, fields
+from dataclasses import MISSING, dataclass, fields
 import subprocess
 from typing import Any, ClassVar, List, Optional, Union, get_origin
 
-from fancy_dataclass.mixin import DataclassMixin
+from fancy_dataclass.mixin import DataclassMixin, FieldSettings
 from fancy_dataclass.utils import obj_class_name
+
+
+@dataclass
+class SubprocessDataclassFieldSettings(FieldSettings):
+    """Settings for [`SubprocessDataclass`][fancy_dataclass.subprocess.SubprocessDataclass] fields."""
+    # this field should be treated as the name of the executable
+    exec: bool = False
+    # list of command-line arguments corresponding to the field (only the first will be used)
+    #   - if None, use the field name by default
+    #   - if empty list, exclude this field from the args
+    args: Optional[List[str]] = None
 
 
 class SubprocessDataclass(DataclassMixin):
@@ -12,13 +23,18 @@ class SubprocessDataclass(DataclassMixin):
     Other arguments can be passed into the `metadata` argument of a `dataclasses.field`, namely:
 
     - `exec` (boolean flag indicating that this field should be treated as the name of the executable, rather than an argument)
-    - `args` (list of command-line arguments corresponding to the field—only the first will be used, and only if it starts with a hyphen)
-    - `subprocess_exclude` (boolean flag indicating that the field should not be included in the args)"""
+    - `args` (list of command-line arguments corresponding to the field; only the first will be used, and only if it starts with a hyphen)"""
 
-    def __post_init__(self) -> None:
+    __field_settings_type__ = SubprocessDataclassFieldSettings
+
+    @classmethod
+    def __post_dataclass_wrap__(cls) -> None:
+        super().__post_dataclass_wrap__()
+        # make sure there is at most one exec field
         exec_field = None
-        for fld in fields(self):  # type: ignore[arg-type]
-            if fld.metadata.get('exec', False):
+        stype = cls.__field_settings_type__
+        for fld in fields(cls):  # type: ignore[arg-type]
+            if stype.from_field(fld).exec:
                 if exec_field is None:
                     exec_field = fld.name
                 else:

@@ -33,9 +33,9 @@ DC1.main()""", file = f)
     assert res.stdout.rstrip() == str(dc1)
 
 def test_multiple_exec():
-    @dataclass
-    class TwoExec(SubprocessDataclass):
-        prog1: str = field(metadata = {'exec': True})
-        prog2: str = field(metadata = {'exec': True})
+    """Tests that an error occurs if the 'exec' flag is set to True for multiple fields."""
     with pytest.raises(TypeError, match = "cannot have more than one field with 'exec' flag set to True"):
-        _ = TwoExec('prog1', 'prog2')
+        @dataclass
+        class TwoExec(SubprocessDataclass):
+            prog1: str = field(metadata = {'exec': True})
+            prog2: str = field(metadata = {'exec': True})

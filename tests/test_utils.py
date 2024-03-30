@@ -1,10 +1,43 @@
 from dataclasses import dataclass, is_dataclass
-from typing import ClassVar, Dict, List, Optional, Union
+from typing import Any, ClassVar, Dict, List, Optional, Union
 
 import pytest
 from pytest import param
 
-from fancy_dataclass.utils import _flatten_dataclass, get_dataclass_fields, merge_dataclasses, traverse_dataclass
+from fancy_dataclass.utils import _flatten_dataclass, _is_instance, get_dataclass_fields, merge_dataclasses, traverse_dataclass
+
+
+@pytest.mark.parametrize(['obj', 'tp', 'output'], [
+    (1, int, True),
+    ('a', int, False),
+    (None, int, False),
+    (None, type(None), True),
+    (1, type(None), False),
+    (1, Any, True),
+    (None, Any, True),
+    (1, Optional[int], True),
+    (None, Optional[int], True),
+    ('a', Optional[int], False),
+    (1.0, int, False),
+    (1, float, False),
+    (1, Union[int, str], True),
+    ('a', Union[int, str], True),
+    (1.0, Union[int, str], False),
+    ([], List[int], True),
+    (1, List[int], False),
+    ([1, 2], List[int], True),
+    ([1, '2'], List[int], False),
+    ({}, Dict[str, int], True),
+    (1, Dict[str, int], False),
+    ({'a': 1}, Dict[str, int], True),
+    ({'a': '1'}, Dict[str, int], False),
+    ({'a': 1, 2: 2}, Dict[str, int], False),
+    (None, Optional[List[int]], True),
+    ([1, 2], Optional[List[int]], True),
+    ({}, Optional[List[int]], False),
+])
+def test_check_isinstance(obj, tp, output):
+    return _is_instance(obj, tp) is output
 
 
 @dataclass
