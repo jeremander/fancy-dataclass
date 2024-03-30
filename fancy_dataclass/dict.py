@@ -13,8 +13,6 @@ from fancy_dataclass.mixin import DataclassMixin, DataclassMixinSettings
 from fancy_dataclass.utils import _flatten_dataclass, check_dataclass, fully_qualified_class_name, issubclass_safe, obj_class_name, safe_dict_insert
 
 
-NoneType = type(None)
-
 if TYPE_CHECKING:
     from _typeshed import DataclassInstance
 
@@ -142,7 +140,7 @@ class DictDataclass(DataclassMixin):
             tp_name = re.sub("'>$", '', re.sub(r"^<\w+ '", '', str(tp)))
             return ValueError(f'could not convert {x!r} to type {tp_name!r}')
         convert_val = partial(cls._convert_value, strict=strict)
-        if tp is NoneType:
+        if tp is type(None):
             if x is None:
                 return None
             raise err()
@@ -225,8 +223,8 @@ class DictDataclass(DataclassMixin):
             elif origin_type == Union:
                 if getattr(tp, '_name', None) == 'Optional':
                     assert len(args) == 2
-                    assert args[1] is NoneType
-                    args = args[::-1]  # check NoneType go first
+                    assert args[1] is type(None)
+                    args = args[::-1]  # check None first
                 for subtype in args:
                     try:
                         # NB: will resolve to the first valid type in the Union
