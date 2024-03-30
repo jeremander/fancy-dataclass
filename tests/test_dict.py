@@ -1,5 +1,5 @@
 from dataclasses import dataclass, make_dataclass
-from typing import List
+from typing import List, Optional
 
 import pytest
 
@@ -93,11 +93,48 @@ def test_wrap_dataclass():
 def test_type_field():
     """Tests that a DictDataclass is not permitted to have a 'type' field."""
     @dataclass
-    class DCWithTypeField(DictDataclass):
-        type: str
-    obj = DCWithTypeField('mytype')
-    with pytest.raises(ValueError, match="'type' is a reserved dict field"):
-        _ = obj.to_dict()
+    class DC1(DictDataclass):
+        type: int
+    assert DC1(1).to_dict() == {'type': 1}
+    @dataclass
+    class DC2(DictDataclass, store_type=True):
+        x: int
+    assert DC2(1).to_dict() == {'type': 'DC2', 'x': 1}
+    @dataclass
+    class DC3(DictDataclass, qualified_type=True):
+        x: int
+    assert DC3(1).to_dict() == {'type': 'tests.test_dict.test_type_field.<locals>.DC3', 'x': 1}
+    @dataclass
+    class DC4(DictDataclass, store_type=True):
+        type: int
+    with pytest.raises(TypeError, match="'type' is a reserved dict field"):
+        _ = DC4(1).to_dict()
+    @dataclass
+    class DC5(DictDataclass, store_type=True):
+        type: Optional[int] = None
+    with pytest.raises(TypeError, match="'type' is a reserved dict field"):
+        _ = DC5().to_dict()
+
+def test_flattened():
+    @dataclass
+    class DC3(DictDataclass):
+        y3: int
+    @dataclass
+    class DC2(DictDataclass):
+        x2: DC3
+        y2: int
+    @dataclass
+    class DC1Nested(DictDataclass):
+        x1: DC2
+        y1: int
+    obj_nested = DC1Nested(DC2(DC3(3),2),1)
+    assert obj_nested.to_dict() == {'x1': {'x2': {'y3': 3}, 'y2': 2}, 'y1': 1}
+    @dataclass
+    class DC1Flat(DictDataclass, flattened=True):
+        x1: DC2
+        y1: int
+    obj_flat = DC1Flat(DC2(DC3(3),2),1)
+    assert obj_flat.to_dict() == {'y1': 1, 'y2': 2, 'y3': 3}
 
 def test_from_dict_strict():
     """Tests behavior of strict=True for DictDataclass."""

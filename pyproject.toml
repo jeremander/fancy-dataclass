@@ -109,6 +109,10 @@ strict = false
 disable_error_code = ["arg-type", "attr-defined", "call-arg", "comparison-overlap", "no-redef", "no-untyped-call", "no-untyped-def", "type-arg"]
 
 [[tool.mypy.overrides]]
+module = "tests.test_json"
+disable_error_code = ["assignment"]
+
+[[tool.mypy.overrides]]
 module = "tests.test_inheritance"
 disable_error_code = ["assignment", "misc"]
 

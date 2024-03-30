@@ -1,5 +1,5 @@
 from collections import namedtuple
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum, Flag, auto
 import json
@@ -248,6 +248,8 @@ def test_datetime():
     d = obj.to_dict()
     s = NOW.isoformat()
     assert d == {'dt': s}
+    # compare with dataclasses.asdict
+    assert asdict(obj) == {'dt': NOW}
     assert DCDatetime.from_dict(d) == obj
     # some prefixes of full isoformat are valid
     assert DCDatetime.from_dict({'dt': NOW.strftime('%Y-%m-%dT%H:%M:%S')}).dt.isoformat() == s[:19]
@@ -261,10 +263,13 @@ def test_datetime():
 def test_enum():
     obj1 = DCEnum(MyEnum.a)
     assert obj1.to_dict() == {'enum': 1}
+    assert asdict(obj1) == {'enum': MyEnum.a}
     obj2 = DCStrEnum(MyStrEnum.a)
     assert obj2.to_dict() == {'enum': 'a'}
+    assert asdict(obj2) == {'enum': MyStrEnum.a}
     obj3 = DCColors(list(Color))
     assert obj3.to_dict() == {'colors': [1, 2, 4]}
+    assert asdict(obj3) == {'colors': list(Color)}
 
 def test_annotated():
     obj = DCAnnotated(3, 4.7)
@@ -343,9 +348,12 @@ def test_subclass_json_dataclass():
 def test_subclass_json_base_dataclass():
     """Tests JSONBaseDataclass."""
     obj = DC2Sub(3, 4.7, 'abc')
-    obj1 = DC2Sub.from_dict(obj.to_dict())
+    d = obj.to_dict()
+    assert d['type'] == 'tests.test_json.DC2Sub'
+    obj1 = DC2Sub.from_dict(d)
     assert obj1 == obj
-    obj2 = DC2.from_dict(obj.to_dict())
+    obj2 = DC2.from_dict(d)
+    assert isinstance(obj2, DC2Sub)
     assert obj2 == obj
 
 def test_invalid_json_obj():
@@ -418,55 +426,55 @@ def test_suppress_defaults():
 def test_class_var():
     """Tests the behavior of ClassVars."""
     @dataclass
-    class MyDC(JSONDataclass):
+    class MyDC1(JSONDataclass):
         x: ClassVar[int]
-    obj = MyDC()
+    obj = MyDC1()
     assert obj.to_dict() == {}
     assert obj.to_dict(full=True) == {}
-    assert MyDC.from_dict({}) == obj
+    assert MyDC1.from_dict({}) == obj
     with pytest.raises(AttributeError, match='object has no attribute'):
         _ = obj.x
     @dataclass
-    class MyDC(JSONDataclass):
+    class MyDC2(JSONDataclass):
         x: ClassVar[int] = field(metadata={'suppress': False})
-    obj = MyDC()
+    obj = MyDC2()
     with pytest.raises(AttributeError, match='object has no attribute'):
         _ = obj.to_dict()
-    assert MyDC.from_dict({}) == obj
+    assert MyDC2.from_dict({}) == obj
     @dataclass
-    class MyDC(JSONDataclass):
+    class MyDC3(JSONDataclass):
         x: ClassVar[int] = 1
-    obj = MyDC()
+    obj = MyDC3()
     assert obj.to_dict() == {}
     assert obj.to_dict(full=True) == {}
-    obj0 = MyDC.from_dict({})
+    obj0 = MyDC3.from_dict({})
     assert obj0 == obj
     assert obj0.x == 1
     # ClassVar gets ignored when loading from dict
-    obj1 = MyDC.from_dict({'x': 1})
+    obj1 = MyDC3.from_dict({'x': 1})
     assert obj1 == obj
     assert obj1.x == 1
-    obj2 = MyDC.from_dict({'x': 2})
+    obj2 = MyDC3.from_dict({'x': 2})
     assert obj2 == obj
     assert obj2.x == 1
-    MyDC.x = 2
-    obj = MyDC()
+    MyDC3.x = 2
+    obj = MyDC3()
     assert obj.to_dict() == {}
     # ClassVar field has to override with suppress=False to include it
     assert obj.to_dict(full=True) == {}
     @dataclass
-    class MyDC(JSONDataclass):
+    class MyDC4(JSONDataclass):
         x: ClassVar[int] = field(default=1, metadata={'suppress': False})
-    obj = MyDC()
+    obj = MyDC4()
     assert obj.to_dict() == {}  # equals default, so suppress it
     assert obj.to_dict(full=True) == {'x': 1}
-    obj0 = MyDC.from_dict({})
+    obj0 = MyDC4.from_dict({})
     assert obj0 == obj
-    obj2 = MyDC.from_dict({'x': 2})
+    obj2 = MyDC4.from_dict({'x': 2})
     assert obj2 == obj
     assert obj2.x == 1
-    MyDC.x = 2
-    obj = MyDC()
+    MyDC4.x = 2
+    obj = MyDC4()
     assert obj.to_dict() == {'x': 2}  # no longer equals default
     assert obj.to_dict(full=True) == {'x': 2}
 

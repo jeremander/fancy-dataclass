@@ -235,7 +235,7 @@ class DataclassConverter(Generic[T, U]):
     backward: Optional[Callable[[U], T]] = None
 
 
-def _flatten_dataclass(cls: Type[T], bases: Tuple[type, ...] = ()) -> Tuple[Dict[str, RecordPath], DataclassConverter[T, type]]:
+def _flatten_dataclass(cls: Type[T], bases: Optional[Tuple[type, ...]] = None) -> Tuple[Dict[str, RecordPath], DataclassConverter[T, type]]:
     """Given a nested dataclass type, returns data for converting between it and a flattened version of that type.
 
     Args:
@@ -257,6 +257,7 @@ def _flatten_dataclass(cls: Type[T], bases: Tuple[type, ...] = ()) -> Tuple[Dict
         safe_dict_insert(field_map, fld.name, path)  # will error on name collision
         fields.append(fld)
     field_data = [(fld.name, fld.type, fld) for fld in fields]
+    bases = cls.__bases__ if (bases is None) else bases
     flattened_type = dataclasses.make_dataclass(cls.__name__, field_data, bases=bases)
     def to_flattened(obj: T) -> object:
         def _to_dict(prefix: RecordPath, subobj: 'DataclassInstance') -> Dict[str, Any]:
@@ -354,7 +355,7 @@ class DataclassMixin:
 
     @classmethod
     def __init_subclass__(cls, **kwargs: Any) -> None:
-        """When inheriting from this class, you may pass various flags as keyword arguments after the list of base classes.
+        """When inheriting from this class, you may pass various keyword arguments after the list of base classes.
         If the base class has a `__settings_type__` class attribute, that class will be instantiated with the provided arguments and stored as a `__settings__` attribute on the subclass.
         These settings can be used to customize the behavior of the subclass."""
         super().__init_subclass__()

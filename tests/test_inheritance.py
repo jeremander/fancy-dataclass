@@ -3,6 +3,7 @@ from dataclasses import dataclass
 import pytest
 
 from fancy_dataclass import ArgparseDataclass, ConfigDataclass, DictDataclass, JSONBaseDataclass, JSONDataclass, SQLDataclass, SubprocessDataclass
+from fancy_dataclass.dict import DictDataclassSettings
 
 
 # DEFAULT_MIXINS = [ArgparseDataclass, ConfigDataclass, JSONBaseDataclass, SQLDataclass, SubprocessDataclass]
@@ -14,6 +15,7 @@ def test_multiple_inheritance():
     @dataclass
     class MyDC1(ArgparseDataclass, JSONDataclass):
         x: int
+    assert all(cls.__settings_type__ is DictDataclassSettings for cls in [ArgparseDataclass, JSONDataclass, MyDC1])
     # alternatively, add in mixins dynamically with wrap_dataclass
     @dataclass
     class MyDC2:

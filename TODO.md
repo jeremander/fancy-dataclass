@@ -2,22 +2,14 @@
 
 ## v0.2.0
 
-- Merging dataclass types
-  - Have merging handle Settings specially?
-    - Take union of Settings classes
 - Standardize field settings
   - Too complicated to nest within field metadata
   - Class should declare what fields it recognizes
     - If base classes share a field of the same name, raise a `TypeError` upon type construction
     - `DictDataclass` allows per-field `suppress` and `suppress_default`: canonize these
   - `SubprocessDataclass`: instead of `subprocess_exclude`, make `args` `None` or something?
-- Unit tests
-  - Test all flags (e.g. suppress_defaults, store_type, qualified_type, flattened)
-  - Test multiple inheritance (all the classes?)
-    - What happens to the class settings?
-      - Operation to dynamically merge dataclasses? Error if any fields collide.
-  - Comparison with dataclasses.asdict
-  - Test no pre-made mixins have any field metadata overlap
+  - Unit tests
+    - Test no pre-made mixins have any field metadata overlap
 - Docs
   - "Under construction" placeholders
   - CHANGELOG

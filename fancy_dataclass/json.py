@@ -133,7 +133,7 @@ class JSONDataclass(DictDataclass, JSONSerializable):  # type: ignore[misc]
         # customize for JSONSerializable
         origin_type = get_origin(tp)
         if origin_type == dict:  # decode keys to be valid JSON
-            (keytype, valtype) = get_args(tp)  # type: ignore[attr-defined]
+            (keytype, valtype) = get_args(tp)
             return {cls._json_key_decoder(cls._convert_value(keytype, k)) : cls._convert_value(valtype, v, strict=strict) for (k, v) in x.items()}
         # otherwise, fall back on superclass
         return DictDataclass._convert_value(tp, x)
