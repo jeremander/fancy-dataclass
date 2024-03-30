@@ -17,7 +17,20 @@ class MySettingsReq(DataclassMixinSettings):
 
 class TestDataclassMixin:
 
-    def test_dataclass_mixin_settings_valid(self):
+    def test_post_dataclass_wrap_hook(self):
+        """Tests the __post_dataclass_wrap__ hook."""
+        class MyMixin(DataclassMixin):
+            @classmethod
+            def __post_dataclass_wrap__(cls) -> None:
+                cls._my_value = 123
+        assert not hasattr(MyMixin, '_my_value')
+        # method triggers when wrapped into a dataclass
+        MyMixin2 = dataclass(MyMixin)
+        assert MyMixin2 is MyMixin
+        assert MyMixin2.__name__ == 'MyMixin'
+        assert MyMixin2._my_value == 123
+
+    def test_settings_valid(self):
         """Tests the settings instantiation mechanism of DataclassMixin."""
         class MyMixin(DataclassMixin):
             pass
@@ -79,7 +92,7 @@ class TestDataclassMixin:
             __settings__ = None
         assert MyDC.__settings__ == MySettingsReq(enhanced=False)
 
-    def test_dataclass_mixin_settings_invalid(self):
+    def test_settings_invalid(self):
         """Tests error conditions for DataclassMixin settings."""
         class MyMixin(DataclassMixin):
             pass
@@ -132,7 +145,7 @@ class TestDataclassMixin:
             class MyDC7(MyMixinReq, enhanced=False):
                 __settings__ = MySettingsReq(enhanced=True)
 
-    def test_dataclass_mixin_settings_merged(self):
+    def test_settings_merged(self):
         """Tests merging of settings when subclassing multiple DataclassMixins."""
         @dataclass
         class Settings1(DataclassMixinSettings):

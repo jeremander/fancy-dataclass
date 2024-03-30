@@ -104,16 +104,15 @@ def test_type_field():
     class DC3(DictDataclass, qualified_type=True):
         x: int
     assert DC3(1).to_dict() == {'type': 'tests.test_dict.test_type_field.<locals>.DC3', 'x': 1}
-    @dataclass
-    class DC4(DictDataclass, store_type=True):
-        type: int
+    # 'type' dataclass field prohibited (this is caught at dataclass wrap time)
     with pytest.raises(TypeError, match="'type' is a reserved dict field"):
-        _ = DC4(1).to_dict()
-    @dataclass
-    class DC5(DictDataclass, store_type=True):
-        type: Optional[int] = None
+        @dataclass
+        class DC4(DictDataclass, store_type=True):
+            type: int
     with pytest.raises(TypeError, match="'type' is a reserved dict field"):
-        _ = DC5().to_dict()
+        @dataclass
+        class DC5(DictDataclass, store_type=True):
+            type: Optional[int] = None
 
 def test_flattened():
     @dataclass

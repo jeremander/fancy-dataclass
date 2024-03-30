@@ -8,10 +8,22 @@ from fancy_dataclass.utils import check_dataclass, get_dataclass_fields, get_sub
 
 T = TypeVar('T')
 
+_orig_process_class = dataclasses._process_class  # type: ignore[attr-defined]
 
-###################
-# DATACLASS MIXIN #
-###################
+def _process_class(cls: type, *args: Any) -> type:
+    """Overrides `dataclasses._process_class` to activate a special `__post_dataclass_wrap__` classmethod after the `dataclasses.dataclass` decorator wraps a class."""
+    cls = _orig_process_class(cls, *args)
+    if hasattr(cls, '__post_dataclass_wrap__'):
+        cls.__post_dataclass_wrap__()
+    return cls
+
+# monkey-patch dataclasses._process_class with this method so that any DataclassMixin will be able to activate its post-wrap hook
+dataclasses._process_class = _process_class  # type: ignore[attr-defined]
+
+
+############
+# SETTINGS #
+############
 
 class DataclassMixinSettings:
     """Base class for settings to be associated with `fancy_dataclass` mixins.
@@ -32,7 +44,7 @@ class FieldSettings:
 
 
 def _configure_mixin_settings(cls: Type['DataclassMixin'], **kwargs: Any) -> None:
-    """Sets up a `DataclassMixin`'s settings (at subclassing time), given inheritance kwargs."""
+    """Sets up a `DataclassMixin`'s settings (at definition time), given inheritance kwargs."""
     # get user-specified settings (need to use __dict__ here rather than direct access, which inherits parent class's value)
     stype = cls.__dict__.get('__settings_type__')
     settings = cls.__dict__.get('__settings__')
@@ -68,6 +80,15 @@ def _configure_mixin_settings(cls: Type['DataclassMixin'], **kwargs: Any) -> Non
     if stype is not None:
         cls.__settings__ = stype(**d)
 
+# def _configure_field_settings(cls: Type['DataclassMixin']) -> None:
+#     """Performs type checking of a `DataclassMixin`'s fields to catch any errors at definition time."""
+#     breakpoint()
+    # for fld in dataclasses.fields(cls)
+
+
+###################
+# DATACLASS MIXIN #
+###################
 
 class DataclassMixin:
     """Mixin class that adds some functionality to a dataclass.
@@ -87,6 +108,7 @@ class DataclassMixin:
         These settings can be used to customize the behavior of the subclass."""
         super().__init_subclass__()
         _configure_mixin_settings(cls, **kwargs)
+        # _configure_field_settings(cls)
 
     @classmethod
     def wrap_dataclass(cls: Type[Self], tp: Type[T]) -> Type[Self]:
