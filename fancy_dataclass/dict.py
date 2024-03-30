@@ -5,11 +5,11 @@ from datetime import datetime
 from enum import Enum
 from functools import partial
 import re
-from typing import TYPE_CHECKING, Any, ClassVar, Container, Dict, Literal, Type, TypeVar, Union, _TypedDictMeta, get_args, get_origin  # type: ignore[attr-defined]
+from typing import TYPE_CHECKING, Any, ClassVar, Container, Dict, Literal, Optional, Type, TypeVar, Union, _TypedDictMeta, cast, get_args, get_origin  # type: ignore[attr-defined]
 
 from typing_extensions import Self, _AnnotatedAlias
 
-from fancy_dataclass.mixin import DataclassMixin, DataclassMixinSettings
+from fancy_dataclass.mixin import DataclassMixin, DataclassMixinSettings, FieldSettings
 from fancy_dataclass.utils import _flatten_dataclass, check_dataclass, fully_qualified_class_name, issubclass_safe, obj_class_name, safe_dict_insert
 
 
@@ -37,6 +37,15 @@ class DictDataclassSettings(DataclassMixinSettings):
     flattened: bool = False
 
 
+@dataclass
+class DictDataclassFieldSettings(FieldSettings):
+    """Settings for [`DictDataclass`][fancy_dataclass.dict.DictDataclass] fields."""
+    # suppress the field in the dict
+    suppress: Optional[bool] = None
+    # suppress the field in the dict if its value matches the default
+    suppress_default: Optional[bool] = None
+
+
 class DictDataclass(DataclassMixin):
     """Base class for dataclasses that can be converted to and from a JSON-serializable Python dict.
 
@@ -48,9 +57,11 @@ class DictDataclass(DataclassMixin):
 
     __settings_type__ = DictDataclassSettings
     __settings__ = DictDataclassSettings()
+    __field_settings_type__ = DictDataclassFieldSettings
 
     @classmethod
     def __post_dataclass_wrap__(cls) -> None:
+        super().__post_dataclass_wrap__()
         store_type = cls.__settings__.store_type or cls.__settings__.qualified_type
         if store_type:
             for fld in dataclasses.fields(cls):  # type: ignore[arg-type]
@@ -103,14 +114,14 @@ class DictDataclass(DataclassMixin):
         if fields is not None:
             for (name, field) in fields.items():
                 is_class_var = get_origin(field.type) is ClassVar
+                fld_settings = cast(DictDataclassFieldSettings, self._field_settings(field))
                 # suppress field by default if it is a ClassVar or init=False
-                suppress_field = field.metadata.get('suppress', is_class_var or (not field.init))
-                # suppress default (by default) if full=False and class-configured suppress_defaults=True
-                suppress_default = (not full) and field.metadata.get('suppress_default', class_suppress_defaults)
-                if suppress_field:
+                if (is_class_var or (not field.init)) if (fld_settings.suppress is None) else fld_settings.suppress:
                     continue
                 val = getattr(self, name)
-                if suppress_default:  # suppress values that match the default
+                # suppress default (by default) if full=False and class-configured suppress_defaults=True
+                if (not full) and (class_suppress_defaults if (fld_settings.suppress_default is None) else fld_settings.suppress_default):
+                    # suppress values that match the default
                     try:
                         if val == field.default:
                             continue

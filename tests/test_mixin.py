@@ -1,9 +1,34 @@
-from dataclasses import astuple, dataclass
+from dataclasses import astuple, dataclass, field
 
 import pytest
 
-from fancy_dataclass.mixin import DataclassMixin, DataclassMixinSettings
+from fancy_dataclass.mixin import DataclassMixin, DataclassMixinSettings, FieldSettings
 from fancy_dataclass.utils import get_dataclass_fields
+
+
+def test_field_settings():
+    fld_empty = field()
+    fld_pos = field(metadata = {'positive': True})
+    fld_wrong_type = field(metadata = {'positive': 1})
+    class MyFieldSettings1(FieldSettings):
+        pass
+    with pytest.raises(TypeError, match='MyFieldSettings1 is not a dataclass'):
+        _ = MyFieldSettings1.from_field(fld_pos)
+    MyFieldSettings1 = dataclass(MyFieldSettings1)
+    assert MyFieldSettings1.from_field(fld_pos) == MyFieldSettings1()
+    @dataclass
+    class MyFieldSettings2(FieldSettings):
+        positive: bool
+    assert MyFieldSettings2.from_field(fld_pos) == MyFieldSettings2(True)
+    with pytest.raises(TypeError, match="missing 1 required positional argument: 'positive'"):
+        _ = MyFieldSettings2.from_field(fld_empty)
+    with pytest.raises(TypeError, match="expected type bool for field 'positive', got int"):
+        _ = MyFieldSettings2.from_field(fld_wrong_type)
+    @dataclass
+    class MyFieldSettings3(FieldSettings):
+        positive: bool = False
+    assert MyFieldSettings3.from_field(fld_pos) == MyFieldSettings3(True)
+    assert MyFieldSettings3.from_field(fld_empty) == MyFieldSettings3(False)
 
 
 @dataclass

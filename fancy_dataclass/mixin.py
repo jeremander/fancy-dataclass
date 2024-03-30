@@ -17,7 +17,7 @@ def _process_class(cls: type, *args: Any) -> type:
         cls.__post_dataclass_wrap__()
     return cls
 
-# monkey-patch dataclasses._process_class with this method so that any DataclassMixin will be able to activate its post-wrap hook
+# monkey-patch dataclasses._process_class with this function so that any DataclassMixin will be able to activate its post-wrap hook
 dataclasses._process_class = _process_class  # type: ignore[attr-defined]
 
 
@@ -28,19 +28,35 @@ dataclasses._process_class = _process_class  # type: ignore[attr-defined]
 class DataclassMixinSettings:
     """Base class for settings to be associated with `fancy_dataclass` mixins.
 
-    Each [`DataclassMixin`][fancy_dataclass.utils.DataclassMixin] class may store a `__settings_type__` attribute consisting of a subclass of this class. The settings object will be instantiated as a `__settings__` attribute on a mixin subclass when it is defined."""
+    Each [`DataclassMixin`][fancy_dataclass.mixin.DataclassMixin] class may store a `__settings_type__` attribute consisting of a subclass of this class. The settings object will be instantiated as a `__settings__` attribute on a mixin subclass when it is defined."""
 
 
 class FieldSettings:
     """Class storing a bundle of parameters that will be extracted from dataclass field metadata.
 
-    Each [`DataclassMixin`][fancy_dataclass.utils.DataclassMixin] class may store a `__field_settings_type__` attribute which is a `FieldSettings` subclass. This will specify which keys in the `field.metadata` dictionary are recognized by the mixin class. Other keys will be ignored (unless they are used by other mixin classes)."""
+    Each [`DataclassMixin`][fancy_dataclass.mixin.DataclassMixin] class may store a `__field_settings_type__` attribute which is a `FieldSettings` subclass. This will specify which keys in the `field.metadata` dictionary are recognized by the mixin class. Other keys will be ignored (unless they are used by other mixin classes)."""
+
+    def type_check(self) -> None:
+        """Checks that every field on the `FieldSettings` object is the proper type.
+
+        Raises:
+            TypeError: If a field is the wrong type"""
+        # NOTE: this type-checking is not very robust, but it mostly works with basic types
+        for fld in dataclasses.fields(self):  # type: ignore[arg-type]
+            val = getattr(self, fld.name)
+            if not isinstance(val, fld.type):
+                raise TypeError(f'expected type {fld.type.__name__} for field {fld.name!r}, got {type(val).__name__}')
 
     @classmethod
     def from_field(cls, field: dataclasses.Field) -> Self:  # type: ignore[type-arg]
-        """Constructs a `FieldSettings` object from a `dataclasses.Field`'s metadata."""
+        """Constructs a `FieldSettings` object from a `dataclasses.Field`'s metadata.
+
+        Raises:
+            TypeError: If any field has the wrong type"""
         assert check_dataclass(cls)
-        return cls(**{key: val for (key, val) in field.metadata.items() if key in cls.__dataclass_fields__})  # type: ignore[return-value]
+        obj: Self = cls(**{key: val for (key, val) in field.metadata.items() if key in cls.__dataclass_fields__})  # type: ignore[assignment]
+        obj.type_check()
+        return obj
 
 
 def _configure_mixin_settings(cls: Type['DataclassMixin'], **kwargs: Any) -> None:
@@ -80,10 +96,11 @@ def _configure_mixin_settings(cls: Type['DataclassMixin'], **kwargs: Any) -> Non
     if stype is not None:
         cls.__settings__ = stype(**d)
 
-# def _configure_field_settings(cls: Type['DataclassMixin']) -> None:
-#     """Performs type checking of a `DataclassMixin`'s fields to catch any errors at definition time."""
-#     breakpoint()
-    # for fld in dataclasses.fields(cls)
+def _configure_field_settings(cls: Type['DataclassMixin']) -> None:
+    """Performs type checking of a `DataclassMixin`'s fields to catch any errors at dataclass-wrap time."""
+    if (stype := cls.__field_settings_type__) is not None:
+        for fld in dataclasses.fields(cls):  # type: ignore[arg-type]
+            _ = stype.from_field(fld)
 
 
 ###################
@@ -95,11 +112,11 @@ class DataclassMixin:
 
     For example, this could provide features for conversion to/from JSON (see [`JSONDataclass`][fancy_dataclass.json.JSONDataclass]), or the ability to construct CLI argument parsers (see [`ArgparseDataclass`][fancy_dataclass.cli.ArgparseDataclass]).
 
-    This mixin provides a [`wrap_dataclass`][fancy_dataclass.utils.DataclassMixin.wrap_dataclass] decorator which can be used to wrap an existing dataclass into one that provides the mixin's functionality."""
+    This mixin provides a [`wrap_dataclass`][fancy_dataclass.mixin.DataclassMixin.wrap_dataclass] decorator which can be used to wrap an existing dataclass into one that provides the mixin's functionality."""
 
     __settings_type__: ClassVar[Optional[Type[DataclassMixinSettings]]] = None
     __settings__: ClassVar[Optional[DataclassMixinSettings]] = None
-    __field_settings_type__: ClassVar[Optional[FieldSettings]] = None
+    __field_settings_type__: ClassVar[Optional[Type[FieldSettings]]] = None
 
     @classmethod
     def __init_subclass__(cls, **kwargs: Any) -> None:
@@ -108,7 +125,16 @@ class DataclassMixin:
         These settings can be used to customize the behavior of the subclass."""
         super().__init_subclass__()
         _configure_mixin_settings(cls, **kwargs)
-        # _configure_field_settings(cls)
+
+    @classmethod
+    def __post_dataclass_wrap__(cls) -> None:
+        _configure_field_settings(cls)
+
+    @classmethod
+    def _field_settings(cls, field: dataclasses.Field) -> FieldSettings:  # type: ignore[type-arg]
+        """Gets the class-specific FieldSettings extracted from the metadata stored on a Field object."""
+        stype = cls.__field_settings_type__ or FieldSettings
+        return stype.from_field(field)
 
     @classmethod
     def wrap_dataclass(cls: Type[Self], tp: Type[T]) -> Type[Self]:
