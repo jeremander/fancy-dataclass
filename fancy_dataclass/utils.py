@@ -358,29 +358,39 @@ class DataclassMixin:
         If the base class has a `__settings_type__` class attribute, that class will be instantiated with the provided arguments and stored as a `__settings__` attribute on the subclass.
         These settings can be used to customize the behavior of the subclass."""
         super().__init_subclass__()
-        if cls.__settings_type__ is not None:
-            stype = cls.__settings_type__
-            assert issubclass(stype, DataclassMixinSettings)
-            assert check_dataclass(stype)
-            field_names = {fld.name for fld in dataclasses.fields(stype)}
+        # get user-specified settings (need to use __dict__ here rather than direct access, which inherits parent class's value)
+        stype = cls.__dict__.get('__settings_type__')
+        settings = cls.__dict__.get('__settings__')
+        cls.__settings_kwargs__ = {**getattr(cls, '__settings_kwargs__', {}), **kwargs}  # type: ignore[attr-defined]
+        if stype is None:  # merge settings types of base classes
+            stypes = [stype for base in cls.__bases__ if (stype := getattr(base, '__settings_type__', None))]
+            # remove duplicate settings classes
+            stypes = list(dict.fromkeys(stypes))
+            if stypes:
+                stype = stypes[0] if (len(stypes) == 1) else merge_dataclasses(*stypes, cls_name='MiscDataclassSettings')
+                cls.__settings_type__ = stype
         else:
-            # TODO: merge __bases__ settings
-            stype = None
-            field_names = set()
+            if not issubclass(stype, DataclassMixinSettings):
+                raise TypeError(f'invalid settings type {stype.__name__} for {cls.__name__}')
+            assert check_dataclass(stype)
+        field_names = set() if (stype is None) else {fld.name for fld in dataclasses.fields(stype)}
         d = {}
-        if getattr(cls, '__settings__', None) is not None:
-            settings = cls.__settings__
-            if (stype is not None) and (not isinstance(settings, stype)):
-                raise TypeError(f'settings type of {cls.__name__} must be {stype.__name__}')
-            for fld in dataclasses.fields(cls.__settings__):  # type: ignore[arg-type]
-                d[fld.name] = getattr(settings, fld.name)
-        # inheritance kwargs will override existing settings
-        for (key, val) in kwargs.items():
+        for (key, val) in cls.__settings_kwargs__.items():  # type: ignore[attr-defined]
             if key in field_names:
                 d[key] = val
             else:
                 raise TypeError(f'unknown settings field {key!r} for {cls.__name__}')
-        if cls.__settings_type__ is not None:
+        # explicit settings will override inheritance kwargs
+        if settings is not None:
+            # make sure user-configured settings type has all required fields
+            for fld in get_dataclass_fields(stype):
+                name = fld.name
+                if stype and (not hasattr(settings, name)):
+                    raise TypeError(f'settings for {cls.__name__} missing expected field {name!r}')
+                if name in kwargs:  # disallow kwarg specification alongside __settings__ specification
+                    raise TypeError(f'redundant specification of field {name!r} for {cls.__name__}')
+                d[name] = getattr(settings, name)
+        if stype is not None:
             cls.__settings__ = stype(**d)
 
     @classmethod
