@@ -3,11 +3,8 @@
 ## v0.2.0
 
 - Merging dataclass types
-  - `merge_dataclasses` helper function (similar to flattening, but just concatenate the fields together, ensuring no duplicates)
   - Have merging handle Settings specially?
     - Take union of Settings classes
-  - Tests
-    - ClassVar collision
 - Standardize field settings
   - Too complicated to nest within field metadata
   - Class should declare what fields it recognizes

@@ -167,18 +167,17 @@ def make_dataclass_with_constructors(cls_name: str, fields: Sequence[Union[str, 
 
 def get_dataclass_fields(obj: Union[type, object], include_classvars: bool = False) -> Tuple[Field, ...]:  # type: ignore[type-arg]
     """Variant of dataclasses.fields which can optionally include ClassVars."""
-    cls = obj if isinstance(obj, type) else type(obj)
-    flds = dataclasses.fields(cls)
     if include_classvars:
-        classvar_fields = []
-        for (name, tp) in get_type_hints(cls).items():
-            if get_origin(tp) is ClassVar:
-                fld = dataclasses.field(default=getattr(cls, name)) if hasattr(cls, name) else dataclasses.field()
-                fld.name = name
-                fld.type = tp
-                classvar_fields.append(fld)
-        return flds + tuple(classvar_fields)
-    return flds
+        try:
+            return tuple(obj.__dataclass_fields__.values())  # type: ignore[union-attr]
+        except AttributeError:
+            raise TypeError('must be called with a dataclass type or instance') from None
+    return dataclasses.fields(obj)  # type: ignore[arg-type]
+
+
+##############
+# FLATTENING #
+##############
 
 def traverse_dataclass(cls: type) -> Iterator[Tuple[RecordPath, Field]]:  # type: ignore[type-arg]
     """Iterates through the fields of a dataclass, yielding (name, field) pairs.
@@ -305,6 +304,34 @@ def _flatten_dataclass(cls: Type[T], bases: Tuple[type, ...] = ()) -> Tuple[Dict
     return (field_map, converter)
 
 
+###########
+# MERGING #
+###########
+
+def merge_dataclasses(*classes: type, cls_name: str = '_') -> type:
+    """Merges multiple dataclasses together into a single dataclass whose fields have been combined.
+    This preserves `ClassVar`s but does not recursively merge subfields.
+
+    Args:
+        classes: Multiple dataclass types
+        cls_name: Name of the output dataclass
+
+    Returns:
+        The merged dataclass type
+
+    Raises:
+        TypeError: if there are any duplicate field names"""
+    flds = []
+    field_names = set()
+    for cls in classes:
+        for fld in get_dataclass_fields(cls, include_classvars=True):
+            if fld.name in field_names:
+                raise TypeError(f'duplicate field name {fld.name!r}')
+            field_names.add(fld.name)
+            flds.append((fld.name, fld.type, fld))
+    return make_dataclass(cls_name, flds)
+
+
 ###################
 # DATACLASS MIXIN #
 ###################
@@ -328,7 +355,7 @@ class DataclassMixin:
     @classmethod
     def __init_subclass__(cls, **kwargs: Any) -> None:
         """When inheriting from this class, you may pass various flags as keyword arguments after the list of base classes.
-        If the base class has a `__settings_type__` class attribute, that class will be instantiated with the provided arguments and stored as a `_settings` attribute on the subclass.
+        If the base class has a `__settings_type__` class attribute, that class will be instantiated with the provided arguments and stored as a `__settings__` attribute on the subclass.
         These settings can be used to customize the behavior of the subclass."""
         super().__init_subclass__()
         if cls.__settings_type__ is not None:
@@ -337,6 +364,7 @@ class DataclassMixin:
             assert check_dataclass(stype)
             field_names = {fld.name for fld in dataclasses.fields(stype)}
         else:
+            # TODO: merge __bases__ settings
             stype = None
             field_names = set()
         d = {}
