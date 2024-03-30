@@ -4,7 +4,7 @@ from typing import List, Optional
 import pytest
 
 from fancy_dataclass.dict import DictDataclass, safe_dict_insert
-from fancy_dataclass.utils import DataclassMixin
+from fancy_dataclass.mixin import DataclassMixin
 
 
 @dataclass

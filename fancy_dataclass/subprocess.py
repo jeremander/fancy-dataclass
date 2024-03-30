@@ -2,7 +2,8 @@ from dataclasses import MISSING, fields
 import subprocess
 from typing import Any, ClassVar, List, Optional, Union, get_origin
 
-from fancy_dataclass.utils import DataclassMixin, obj_class_name
+from fancy_dataclass.mixin import DataclassMixin
+from fancy_dataclass.utils import obj_class_name
 
 
 class SubprocessDataclass(DataclassMixin):

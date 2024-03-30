@@ -117,8 +117,12 @@ module = "tests.test_inheritance"
 disable_error_code = ["assignment", "misc"]
 
 [[tool.mypy.overrides]]
-module = "tests.test_utils"
-disable_error_code = ["assignment", "attr-defined", "call-overload", "has-type", "misc", "union-attr"]
+module = "tests.test_mixin"
+disable_error_code = ["assignment", "call-overload", "has-type", "misc", "union-attr"]
+
+# [[tool.mypy.overrides]]
+# module = "tests.test_utils"
+# disable_error_code = ["assignment", "attr-defined", "call-overload", "has-type", "misc", "union-attr"]
 
 [tool.pytest.ini_options]
 addopts = "--verbose --cov=fancy_dataclass"

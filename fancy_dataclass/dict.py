@@ -9,7 +9,8 @@ from typing import TYPE_CHECKING, Any, ClassVar, Container, Dict, Literal, Type,
 
 from typing_extensions import Self, _AnnotatedAlias
 
-from fancy_dataclass.utils import DataclassMixin, DataclassMixinSettings, _flatten_dataclass, check_dataclass, fully_qualified_class_name, issubclass_safe, obj_class_name, safe_dict_insert
+from fancy_dataclass.mixin import DataclassMixin, DataclassMixinSettings
+from fancy_dataclass.utils import _flatten_dataclass, check_dataclass, fully_qualified_class_name, issubclass_safe, obj_class_name, safe_dict_insert
 
 
 NoneType = type(None)
@@ -141,7 +142,7 @@ class DictDataclass(DataclassMixin):
             tp_name = re.sub("'>$", '', re.sub(r"^<\w+ '", '', str(tp)))
             return ValueError(f'could not convert {x!r} to type {tp_name!r}')
         convert_val = partial(cls._convert_value, strict=strict)
-        if tp is NoneType:  # type: ignore[comparison-overlap]
+        if tp is NoneType:
             if x is None:
                 return None
             raise err()

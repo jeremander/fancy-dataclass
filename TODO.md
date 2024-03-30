@@ -7,9 +7,11 @@
   - Class should declare what fields it recognizes
     - If base classes share a field of the same name, raise a `TypeError` upon type construction
     - `DictDataclass` allows per-field `suppress` and `suppress_default`: canonize these
+    - Be strict about unrecognized metadata?
   - `SubprocessDataclass`: instead of `subprocess_exclude`, make `args` `None` or something?
   - Unit tests
     - Test no pre-made mixins have any field metadata overlap
+- Don't have SQLDataclass inherit from DictDataclass?
 - Docs
   - "Under construction" placeholders
   - CHANGELOG
@@ -34,6 +36,8 @@
   - SQL
   - Subprocess
   - Config
+  - Defining new mixins (what dunders need to be set)
+    - Top-level settings, field-level settings, collisions
 - Github Actions for automated testing (with different Python versions)
   - Coverage badge
 
