@@ -3,11 +3,8 @@
 ## v0.2.0
 
 - Standardize field settings
-  - Class should declare what fields it recognizes
-    - Be strict about unrecognized metadata?
   - Unit tests
     - Field settings
-- Don't have SQLDataclass inherit from DictDataclass?
 - Docs
   - "Under construction" placeholders
   - CHANGELOG
@@ -39,13 +36,14 @@
 
 ## Future
 
-- Allow `Annotated` as an alternative to `field.metadata`
-  - Esp. with `Doc`: this could auto-populate JSON schema, argparse description
 - `TabularDataclass`? CSV/TSV/parquet/feather
   - Make `SQLDataclass` inherit from it
 - Field metadata
   - Be strict about unknown field metadata keys? (Maybe issue warning?)
-- PEP 712 (`converter` argument for dataclass fields)
+    - Might be annoying if people want to store extra metadata.
+  - PEP 712 (`converter` argument for dataclass fields)
+  - Allow `Annotated` as an alternative to `field.metadata`
+    - Esp. with `Doc`: this could auto-populate JSON schema, argparse description
 - Automatic JSON schema generation (see `pydantic`)
   - Borrow/use: https://github.com/Peter554/dc_schema/tree/master?tab=MIT-1-ov-file#readme
     - Attribution?
@@ -64,6 +62,3 @@
   - Identify bottlenecks and focus on those.
   - Memory usage & speed
   - Use __slots__? (can set this in dataclass options: does it break other things?)
-- Auto-wrap dataclass decorator when inheriting from DataclassMixin?
-  - `__init_subclass__`
-  - Downside: makes the decoration implicit

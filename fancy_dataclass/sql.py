@@ -6,7 +6,7 @@ from sqlalchemy import Boolean, Column, DateTime, Integer, LargeBinary, Numeric,
 import sqlalchemy.orm
 from typing_extensions import TypeAlias
 
-from fancy_dataclass.dict import DictDataclass, DictDataclassFieldSettings
+from fancy_dataclass.mixin import DataclassMixin, FieldSettings
 from fancy_dataclass.utils import safe_dict_update
 
 
@@ -42,13 +42,13 @@ def get_column_type(tp: type) -> type:
 
 
 @dataclass
-class SQLDataclassFieldSettings(DictDataclassFieldSettings):
+class SQLDataclassFieldSettings(FieldSettings):
     """Settings for [`SQLDataclass`][fancy_dataclass.sql.SQLDataclass] fields."""
     sql: bool = True
     column: Optional[Dict[str, Any]] = None
 
 
-class SQLDataclass(DictDataclass):
+class SQLDataclass(DataclassMixin):
     """A dataclass backed by a SQL table using the [sqlalchemy](https://www.sqlalchemy.org) ORM.
 
     All dataclass fields will correspond to SQL fields unless their metadata is marked with `sql=False`.
