@@ -5,8 +5,9 @@ import sys
 import pytest
 
 from fancy_dataclass.cli import ArgparseDataclass, ArgparseDataclassFieldSettings
+from fancy_dataclass.dict import DictDataclass
 from fancy_dataclass.subprocess import SubprocessDataclass, SubprocessDataclassFieldSettings
-from fancy_dataclass.utils import merge_dataclasses
+from fancy_dataclass.utils import coerce_to_dataclass, merge_dataclasses
 from tests.test_cli import DC1
 
 
@@ -26,7 +27,7 @@ def test_subprocess_dataclass(tmpdir):
     """Tests SubprocessDataclass behavior."""
     DC2FieldSettings = merge_dataclasses(DC1.__field_settings_type__, SubprocessDataclassFieldSettings, allow_duplicates=True)
     @dataclass
-    class DC2(DC1, SubprocessDataclass):
+    class DC2(DictDataclass, DC1, SubprocessDataclass):
         __field_settings_type__ = DC2FieldSettings
         prog: str = field(default = 'prog', metadata = {'exec': True})
     prog = str(tmpdir / 'prog.py')
@@ -34,7 +35,7 @@ def test_subprocess_dataclass(tmpdir):
     assert dc2.args() == ['positional_arg', '-i', 'my_input', '-o', 'my_output', '--choice', 'a', '--optional', 'default', '--flag', '-x', '7', '-y', '3.14', '--pair', '0', '0']
     assert dc2.args(suppress_defaults=True) == ['positional_arg', '-i', 'my_input', '-o', 'my_output', '--flag']
     # create a script to run the CLIDataclass
-    dc1 = DC1.from_dict(dc2.to_dict())
+    dc1 = coerce_to_dataclass(DC1, dc2)
     cwd = str(Path(__file__).parent)
     with open(prog, 'w') as f:
         print(f"""#!{sys.executable}

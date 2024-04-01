@@ -3,7 +3,7 @@ from typing import Any, ClassVar, Optional, Type, TypeVar
 
 from typing_extensions import Self
 
-from fancy_dataclass.utils import _is_instance, check_dataclass, get_dataclass_fields, get_subclass_with_name, merge_dataclasses, obj_class_name
+from fancy_dataclass.utils import _is_instance, check_dataclass, coerce_to_dataclass, get_dataclass_fields, get_subclass_with_name, merge_dataclasses, obj_class_name
 
 
 T = TypeVar('T')
@@ -57,6 +57,13 @@ class FieldSettings:
         obj: Self = cls(**{key: val for (key, val) in field.metadata.items() if key in cls.__dataclass_fields__})  # type: ignore[assignment]
         obj.type_check()
         return obj
+
+    @classmethod
+    def coerce(cls, obj: object) -> Self:
+        """Constructs a `FieldSettings` object from the attributes of an arbitrary object.
+
+        Any missing attributes will be set to their default values."""
+        return coerce_to_dataclass(cls, obj)
 
 
 def _configure_mixin_settings(cls: Type['DataclassMixin'], **kwargs: Any) -> None:

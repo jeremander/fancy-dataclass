@@ -2,9 +2,6 @@
 
 ## v0.2.0
 
-- Standardize field settings
-  - Unit tests
-    - Field settings
 - Docs
   - "Under construction" placeholders
   - CHANGELOG

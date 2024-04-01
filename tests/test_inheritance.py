@@ -14,7 +14,7 @@ def test_multiple_inheritance():
     @dataclass
     class MyDC1(ArgparseDataclass, JSONDataclass):
         x: int
-    assert all(cls.__settings_type__ is DictDataclassSettings for cls in [ArgparseDataclass, JSONDataclass, MyDC1])
+    assert all(cls.__settings_type__ is DictDataclassSettings for cls in [JSONDataclass, MyDC1])
     # alternatively, add in mixins dynamically with wrap_dataclass
     @dataclass
     class MyDC2:

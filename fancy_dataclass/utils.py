@@ -195,6 +195,13 @@ def get_dataclass_fields(obj: Union[type, object], include_classvars: bool = Fal
             raise TypeError('must be called with a dataclass type or instance') from None
     return dataclasses.fields(obj)  # type: ignore[arg-type]
 
+def coerce_to_dataclass(cls: Type[T], obj: object) -> T:
+    """Coerces the fields from an arbitrary object to an instance of a dataclass type.
+
+    Any missing attributes will be set to the dataclass's default values."""
+    d = {fld.name: getattr(obj, fld.name) for fld in dataclasses.fields(cls) if hasattr(obj, fld.name)}  # type: ignore[arg-type]
+    return cls(**d)
+
 
 ##############
 # FLATTENING #

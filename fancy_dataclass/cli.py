@@ -7,7 +7,7 @@ from typing import Any, ClassVar, Dict, List, Optional, Sequence, Type, TypeVar,
 
 from typing_extensions import Self
 
-from fancy_dataclass.dict import DictDataclass, DictDataclassFieldSettings
+from fancy_dataclass.mixin import DataclassMixin, FieldSettings
 from fancy_dataclass.utils import check_dataclass, issubclass_safe
 
 
@@ -15,7 +15,7 @@ T = TypeVar('T')
 
 
 @dataclass
-class ArgparseDataclassFieldSettings(DictDataclassFieldSettings):
+class ArgparseDataclassFieldSettings(FieldSettings):
     """Settings for [`ArgparseDataclass`][fancy_dataclass.cli.ArgparseDataclass] fields."""
     # TODO: is this ever necessary?
     type: Optional[type] = None
@@ -29,7 +29,7 @@ class ArgparseDataclassFieldSettings(DictDataclassFieldSettings):
     parse_exclude: bool = False
 
 
-class ArgparseDataclass(DictDataclass):
+class ArgparseDataclass(DataclassMixin):
     """Mixin class providing a means of setting up an [`argparse`](https://docs.python.org/3/library/argparse.html) parser with the dataclass fields, and then converting the namespace of parsed arguments into an instance of the class.
 
     (NOTE: this borrows heavily from the [`argparse-dataclass`](https://github.com/mivade/argparse_dataclass) library.)
@@ -215,7 +215,7 @@ class ArgparseDataclass(DictDataclass):
                 val = getattr(args, field.name)
             else:  # argument not present
                 continue
-            if nested_field and cls.__settings__.flattened:  # merge in nested ArgparseDataclass
+            if nested_field:  # merge in nested ArgparseDataclass
                 d.update(val)
             else:
                 d[field.name] = val
@@ -230,7 +230,13 @@ class ArgparseDataclass(DictDataclass):
 
         Returns:
             An instance of this class derived from the parsed arguments"""
-        return cls.from_dict(cls.args_to_dict(args))
+        # do some basic type coercion if necessary
+        d = cls.args_to_dict(args)
+        for fld in fields(cls):  # type: ignore[arg-type]
+            origin = get_origin(fld.type)
+            if (origin is tuple) and isinstance(d.get(fld.name), list):
+                d[fld.name] = tuple(d[fld.name])
+        return cls(**d)
 
     @classmethod
     def process_args(cls, parser: ArgumentParser, args: Namespace) -> None:

@@ -5,7 +5,7 @@ from datetime import datetime
 from enum import Enum
 from functools import partial
 import re
-from typing import TYPE_CHECKING, Any, ClassVar, Container, Dict, Literal, Optional, Type, TypeVar, Union, _TypedDictMeta, cast, get_args, get_origin  # type: ignore[attr-defined]
+from typing import TYPE_CHECKING, Any, ClassVar, Container, Dict, Literal, Optional, Type, TypeVar, Union, _TypedDictMeta, get_args, get_origin  # type: ignore[attr-defined]
 
 from typing_extensions import Self, _AnnotatedAlias
 
@@ -112,7 +112,7 @@ class DictDataclass(DataclassMixin):
         class_suppress_defaults = self.__settings__.suppress_defaults
         for (name, field) in self.__dataclass_fields__.items():  # type: ignore[attr-defined]
             is_class_var = get_origin(field.type) is ClassVar
-            fld_settings = cast(DictDataclassFieldSettings, self._field_settings(field))
+            fld_settings = DictDataclassFieldSettings.coerce(self._field_settings(field))
             # suppress field by default if it is a ClassVar or init=False
             if (is_class_var or (not field.init)) if (fld_settings.suppress is None) else fld_settings.suppress:
                 continue
