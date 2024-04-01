@@ -4,15 +4,9 @@
 
 - Standardize field settings
   - Class should declare what fields it recognizes
-    - If base classes share a field of the same name, raise a `TypeError` upon type construction
-      - Test this
-    - `DictDataclass` allows per-field `suppress` and `suppress_default`: canonize these
     - Be strict about unrecognized metadata?
-  - `SubprocessDataclass`: instead of `subprocess_exclude`, make `args` `None` or something?
   - Unit tests
     - Field settings
-    - Test no pre-made mixins have any field metadata overlap
-    - `SubprocessDataclass` with empty args list
 - Don't have SQLDataclass inherit from DictDataclass?
 - Docs
   - "Under construction" placeholders
@@ -51,6 +45,7 @@
   - Make `SQLDataclass` inherit from it
 - Field metadata
   - Be strict about unknown field metadata keys? (Maybe issue warning?)
+- PEP 712 (`converter` argument for dataclass fields)
 - Automatic JSON schema generation (see `pydantic`)
   - Borrow/use: https://github.com/Peter554/dc_schema/tree/master?tab=MIT-1-ov-file#readme
     - Attribution?

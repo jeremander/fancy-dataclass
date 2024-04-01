@@ -21,7 +21,7 @@ class DC1(CLIDataclass):
     x: int = field(default = 7, metadata = {'help': 'x value', 'group': 'numeric arguments'})
     y: float = field(default = 3.14, metadata = {'help': 'y value', 'group': 'numeric arguments'})
     pair: Tuple[int, int] = field(default = (0, 0), metadata = {'nargs': 2, 'metavar': ('FIRST', 'SECOND'), 'help': 'pair of integers', 'group': 'numeric arguments'})
-    ignored_value: str = field(default = 'ignored', metadata = {'parse_exclude': True, 'subprocess_exclude': True})
+    ignored_value: str = field(default = 'ignored', metadata = {'args': [], 'parse_exclude': True})
 
     @classmethod
     def parser_kwargs(cls) -> Dict[str, Any]:

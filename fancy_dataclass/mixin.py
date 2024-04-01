@@ -45,7 +45,7 @@ class FieldSettings:
             val = getattr(self, fld.name)
             # semi-robust type checking (could still be improved)
             if not _is_instance(val, fld.type):
-                raise TypeError(f'expected type {fld.type.__name__} for field {fld.name!r}, got {type(val).__name__}')
+                raise TypeError(f'expected type {fld.type} for field {fld.name!r}, got {type(val)}')
 
     @classmethod
     def from_field(cls, field: dataclasses.Field) -> Self:  # type: ignore[type-arg]
@@ -71,7 +71,7 @@ def _configure_mixin_settings(cls: Type['DataclassMixin'], **kwargs: Any) -> Non
         stypes = list(dict.fromkeys(stypes))
         if stypes:
             try:
-                stype = stypes[0] if (len(stypes) == 1) else merge_dataclasses(*stypes, cls_name='MiscDataclassSettings', bases=(DataclassMixinSettings,))
+                stype = stypes[0] if (len(stypes) == 1) else merge_dataclasses(*stypes, cls_name='MiscDataclassSettings')
             except TypeError as e:
                 raise TypeError(f'error merging base class settings for {cls.__name__}: {e}') from e
             cls.__settings_type__ = stype
@@ -108,7 +108,7 @@ def _configure_field_settings_type(cls: Type['DataclassMixin']) -> None:
         # remove duplicate settings classes
         stypes = list(dict.fromkeys(stypes))
         if stypes:
-            stype = stypes[0] if (len(stypes) == 1) else merge_dataclasses(*stypes, cls_name='MiscFieldSettings', bases=(FieldSettings,))
+            stype = stypes[0] if (len(stypes) == 1) else merge_dataclasses(*stypes, cls_name='MiscFieldSettings')
             cls.__field_settings_type__ = stype
     else:
         if not issubclass(stype, FieldSettings):
@@ -157,11 +157,12 @@ class DataclassMixin:
         return stype.from_field(field)
 
     @classmethod
-    def wrap_dataclass(cls: Type[Self], tp: Type[T]) -> Type[Self]:
+    def wrap_dataclass(cls: Type[Self], tp: Type[T], **kwargs: Any) -> Type[Self]:
         """Wraps a dataclass type into a new one which inherits from this mixin class and is otherwise the same.
 
         Args:
             tp: A dataclass type
+            kwargs: Keyword arguments to type constructor
 
         Returns:
             New dataclass type inheriting from the mixin
@@ -172,7 +173,13 @@ class DataclassMixin:
         if issubclass(tp, cls):  # the type is already a subclass of this one, so just return it
             return tp
         # otherwise, create a new type that inherits from this class
-        return type(tp.__name__, (tp, cls), {})
+        try:
+            return type(tp.__name__, (tp, cls), {}, **kwargs)
+        except TypeError as e:
+            if 'Cannot create a consistent' in str(e):
+                # try the opposite order of inheritance
+                return type(tp.__name__, (cls, tp), {}, **kwargs)
+            raise
 
     def _replace(self: T, **kwargs: Any) -> T:
         """Constructs a new object with the provided fields modified.

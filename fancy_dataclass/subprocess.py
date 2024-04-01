@@ -50,7 +50,8 @@ class SubprocessDataclass(DataclassMixin):
         Returns:
             List of command-line args corresponding to the field"""
         field = self.__dataclass_fields__[name]  # type: ignore[attr-defined]
-        if field.metadata.get('subprocess_exclude', False):  # exclude the argument
+        args = field.metadata.get('args', None)
+        if args == []:  # exclude the argument
             return []
         if get_origin(field.type) is ClassVar:
             # ignore fields associated with the class, rather than the instance
@@ -74,8 +75,8 @@ class SubprocessDataclass(DataclassMixin):
                 default = field.default
             if has_default and (val == default):
                 return []
-        if field.metadata.get('args'):  # use arg name provided by the metadata
-            arg = field.metadata['args'][0]
+        if args:  # use arg name provided by the metadata
+            arg = args[0]
             if not arg.startswith('-'):
                 arg = None
         else:  # use the field name (assume a single dash if it is a single letter)
@@ -95,7 +96,7 @@ class SubprocessDataclass(DataclassMixin):
             val = str(val)
         args = [arg] if arg else []
         args += val if isinstance(val, list) else [val]
-        return args
+        return args  # type: ignore[no-any-return]
 
     def get_executable(self) -> Optional[str]:
         """Gets the name of an executable to run with the appropriate arguments.

@@ -4,16 +4,31 @@ import sys
 
 import pytest
 
-from fancy_dataclass.subprocess import SubprocessDataclass
+from fancy_dataclass.cli import ArgparseDataclass, ArgparseDataclassFieldSettings
+from fancy_dataclass.subprocess import SubprocessDataclass, SubprocessDataclassFieldSettings
+from fancy_dataclass.utils import merge_dataclasses
 from tests.test_cli import DC1
 
 
-@dataclass
-class DC2(DC1, SubprocessDataclass):
-    prog: str = field(default = 'prog', metadata = {'exec': True})
-
+def test_field_settings_collision():
+    """Tests inheriting multiple mixins with a FieldSettings name collision."""
+    with pytest.raises(TypeError, match="duplicate field name 'args'"):
+        @dataclass
+        class ArgparseSubprocessDataclass1(ArgparseDataclass, SubprocessDataclass):
+            ...
+    # field settings have a duplicate field, so make a custom merged settings class and set it explicitly
+    ArgparseSubprocessFieldSettings = merge_dataclasses(ArgparseDataclassFieldSettings, SubprocessDataclassFieldSettings, allow_duplicates=True)
+    @dataclass
+    class ArgparseSubprocessDataclass2(ArgparseDataclass, SubprocessDataclass):
+            __field_settings_type__ = ArgparseSubprocessFieldSettings
 
 def test_subprocess_dataclass(tmpdir):
+    """Tests SubprocessDataclass behavior."""
+    DC2FieldSettings = merge_dataclasses(DC1.__field_settings_type__, SubprocessDataclassFieldSettings, allow_duplicates=True)
+    @dataclass
+    class DC2(DC1, SubprocessDataclass):
+        __field_settings_type__ = DC2FieldSettings
+        prog: str = field(default = 'prog', metadata = {'exec': True})
     prog = str(tmpdir / 'prog.py')
     dc2 = DC2(required_string='positional_arg', input_file='my_input', output_file='my_output', choice='a', optional='default', flag=True, extra_items=[], x=7, y=3.14, pair=(0,0), ignored_value='ignored', prog = prog)
     assert dc2.args() == ['positional_arg', '-i', 'my_input', '-o', 'my_output', '--choice', 'a', '--optional', 'default', '--flag', '-x', '7', '-y', '3.14', '--pair', '0', '0']

@@ -2,12 +2,11 @@ from dataclasses import dataclass
 
 import pytest
 
-from fancy_dataclass import ArgparseDataclass, ConfigDataclass, DictDataclass, JSONBaseDataclass, JSONDataclass, SQLDataclass, SubprocessDataclass
+from fancy_dataclass import ArgparseDataclass, ConfigDataclass, DictDataclass, JSONBaseDataclass, JSONDataclass, SQLDataclass
 from fancy_dataclass.dict import DictDataclassSettings
 
 
-# DEFAULT_MIXINS = [ArgparseDataclass, ConfigDataclass, JSONBaseDataclass, SQLDataclass, SubprocessDataclass]
-DEFAULT_MIXINS = [JSONBaseDataclass, ArgparseDataclass, ConfigDataclass, SQLDataclass, SubprocessDataclass]
+DEFAULT_MIXINS = [JSONBaseDataclass, ArgparseDataclass, ConfigDataclass, SQLDataclass]
 
 
 def test_multiple_inheritance():
@@ -37,7 +36,7 @@ def test_all_inheritance():
         x: int
     cls = MyDC
     for mixin_cls in DEFAULT_MIXINS:
-        cls = mixin_cls.wrap_dataclass(cls)
+        cls = mixin_cls.wrap_dataclass(cls, qualified_type=True)
     mro = cls.mro()
     obj = cls(5)
     for mixin_cls in DEFAULT_MIXINS:

@@ -344,6 +344,16 @@ def test_subclass_json_dataclass():
         @dataclass
         class MyDC4(MyBaseDC, qualified_type=False):
             pass
+    with pytest.raises(TypeError, match='you must set qualified_type=True'):
+        @dataclass
+        class MyDC5(MyDC, JSONBaseDataclass):
+            pass
+    @dataclass
+    class MyDC6(JSONBaseDataclass, MyDC):
+        pass
+    @dataclass
+    class MyDC7(MyDC, JSONBaseDataclass, qualified_type=True):
+        pass
 
 def test_subclass_json_base_dataclass():
     """Tests JSONBaseDataclass."""

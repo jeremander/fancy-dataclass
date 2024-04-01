@@ -1,17 +1,32 @@
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser, Namespace
 from contextlib import suppress
-from dataclasses import MISSING, fields
+from dataclasses import MISSING, dataclass, fields
 from enum import IntEnum
-from typing import Any, ClassVar, Dict, List, Optional, Type, TypeVar, get_args, get_origin
+from typing import Any, ClassVar, Dict, List, Optional, Sequence, Type, TypeVar, Union, get_args, get_origin
 
 from typing_extensions import Self
 
-from fancy_dataclass.dict import DictDataclass
+from fancy_dataclass.dict import DictDataclass, DictDataclassFieldSettings
 from fancy_dataclass.utils import check_dataclass, issubclass_safe
 
 
 T = TypeVar('T')
+
+
+@dataclass
+class ArgparseDataclassFieldSettings(DictDataclassFieldSettings):
+    """Settings for [`ArgparseDataclass`][fancy_dataclass.cli.ArgparseDataclass] fields."""
+    # TODO: is this ever necessary?
+    type: Optional[type] = None
+    args: Optional[List[str]] = None
+    nargs: Optional[Union[str, int]] = None
+    const: Optional[Any] = None
+    choices: Optional[Sequence[Any]] = None
+    help: Optional[str] = None
+    metavar: Optional[Union[str, Sequence[str]]] = None
+    group: Optional[str] = None
+    parse_exclude: bool = False
 
 
 class ArgparseDataclass(DictDataclass):
@@ -32,6 +47,8 @@ class ArgparseDataclass(DictDataclass):
     - `metavar` (name for the argument in usage messages)
     - `group` (name of the argument group in which to put the argument; the group will be created if it does not already exist in the parser)
     - `parse_exclude` (boolean flag indicating that the field should not be included in the parser)"""
+
+    __field_settings_type__ = ArgparseDataclassFieldSettings
 
     @classmethod
     def parser_class(cls) -> Type[ArgumentParser]:

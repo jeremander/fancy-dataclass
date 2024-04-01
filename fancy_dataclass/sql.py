@@ -6,7 +6,7 @@ from sqlalchemy import Boolean, Column, DateTime, Integer, LargeBinary, Numeric,
 import sqlalchemy.orm
 from typing_extensions import TypeAlias
 
-from fancy_dataclass.dict import DictDataclass
+from fancy_dataclass.dict import DictDataclass, DictDataclassFieldSettings
 from fancy_dataclass.utils import safe_dict_update
 
 
@@ -41,6 +41,13 @@ def get_column_type(tp: type) -> type:
         return PickleType
 
 
+@dataclass
+class SQLDataclassFieldSettings(DictDataclassFieldSettings):
+    """Settings for [`SQLDataclass`][fancy_dataclass.sql.SQLDataclass] fields."""
+    sql: bool = True
+    column: Optional[Dict[str, Any]] = None
+
+
 class SQLDataclass(DictDataclass):
     """A dataclass backed by a SQL table using the [sqlalchemy](https://www.sqlalchemy.org) ORM.
 
@@ -50,6 +57,7 @@ class SQLDataclass(DictDataclass):
 
     Some types are invalid for SQL fields; if such a type occurs, a `TypeError` will be raised."""
 
+    __field_settings_type__ = SQLDataclassFieldSettings
     __table__: ClassVar[Table]
 
     @classmethod

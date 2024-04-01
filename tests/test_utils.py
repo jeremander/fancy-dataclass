@@ -1,5 +1,5 @@
 from dataclasses import dataclass, is_dataclass
-from typing import Any, ClassVar, Dict, List, Optional, Union
+from typing import Any, ClassVar, Dict, List, Optional, Sequence, Union
 
 import pytest
 from pytest import param
@@ -35,9 +35,13 @@ from fancy_dataclass.utils import _flatten_dataclass, _is_instance, get_dataclas
     (None, Optional[List[int]], True),
     ([1, 2], Optional[List[int]], True),
     ({}, Optional[List[int]], False),
+    ((), Sequence[int], True),
+    ((1, 2), Sequence[int], True),
+    (None, Sequence[int], False),
+    ((1, 2), Optional[Union[int, Sequence[int]]], True),
 ])
 def test_check_isinstance(obj, tp, output):
-    return _is_instance(obj, tp) is output
+    assert _is_instance(obj, tp) is output
 
 
 @dataclass
@@ -267,12 +271,14 @@ class TestMerge:
     @pytest.mark.parametrize(['classes', 'field_names'], [
         ([], []),
         ([D], []),
-        ([D, D, D], []),
         ([C], ['c1']),
-        ([D, C, D], ['c1']),
+        ([D, C], ['c1']),
         ([B], ['b1', 'b2', 'b3']),
+        # NOTE: the field ordering is rearranged from what we expect, since fields are processed in reverse MRO order
         ([B, C, D], ['b1', 'b2', 'b3', 'c1']),
+        # ([B, C, D], ['c1', 'b1', 'b2', 'b3']),
         ([H, GG], ['g1', 'g2', 'g3', 'g4']),
+        # ([H, GG], ['g3', 'g4', 'g1', 'g2']),
         ([X, X3], ['x', 'y', 'x1', 'x2']),
     ])
     def test_merge_valid(self, classes, field_names):
@@ -288,9 +294,56 @@ class TestMerge:
             _ = merge_dataclasses(None)
         class NonDC:
             pass
+        with pytest.raises(TypeError, match='duplicate base class D'):
+            _ = merge_dataclasses(D, D)
         with pytest.raises(TypeError, match='must be called with a dataclass type or instance'):
             _ = merge_dataclasses(NonDC())
         with pytest.raises(TypeError, match="duplicate field name 'g1'"):
             _ = merge_dataclasses(G, H)
+        with pytest.raises(TypeError, match="duplicate field name 'g2' with mismatched types"):
+            _ = merge_dataclasses(G, H, allow_duplicates=True)
         with pytest.raises(TypeError, match="duplicate field name 'y'"):
             _ = merge_dataclasses(X, X2)
+        X3 = merge_dataclasses(X, X2, allow_duplicates=True)
+        assert [fld.name for fld in get_dataclass_fields(X3, include_classvars=True)] == ['x', 'y']
+
+    def test_merge_inheritance(self):
+        @dataclass
+        class DC1:
+            x: int
+        @dataclass
+        class DC1_1:
+            x: int
+            y: int
+        @dataclass
+        class DC2(DC1):
+            ...
+        @dataclass
+        class DC3(DC1):
+            y: int
+        @dataclass
+        class DC4(DC2, DC3):
+            ...
+        @dataclass
+        class DC5(DC4):
+            z: int
+        @dataclass
+        class DC6(DC1):
+            w: int
+        def get_names(cls):
+            return [fld.name for fld in get_dataclass_fields(cls)]
+        with pytest.raises(TypeError, match="duplicate field name 'x'"):
+            _ = merge_dataclasses(DC1, DC1_1)
+        with pytest.raises(TypeError, match='duplicate base class DC1'):
+            _ = merge_dataclasses(DC1, DC1)
+        assert get_names(merge_dataclasses(DC1, DC1, bases=())) == ['x']
+        with pytest.raises(TypeError, match='Cannot create a consistent'):
+            _ = merge_dataclasses(DC1, DC2)
+        assert get_names(merge_dataclasses(DC1, DC2, bases=())) == ['x']
+        assert get_names(merge_dataclasses(DC1)) == ['x']
+        assert get_names(merge_dataclasses(DC2, DC1)) == ['x']
+        assert get_names(merge_dataclasses(DC2, DC3)) == ['x', 'y']
+        assert get_names(merge_dataclasses(DC3, DC4, bases=())) == ['x', 'y']
+        assert get_names(merge_dataclasses(DC4, DC3)) == ['x', 'y']
+        assert get_names(merge_dataclasses(DC6, DC5)) == ['x', 'w', 'y', 'z']
+        assert get_names(merge_dataclasses(DC1, DC2, DC3, DC4, bases=())) == ['x', 'y']

@@ -110,7 +110,7 @@ disable_error_code = ["arg-type", "attr-defined", "call-arg", "comparison-overla
 
 [[tool.mypy.overrides]]
 module = "tests.test_json"
-disable_error_code = ["assignment"]
+disable_error_code = ["assignment", "misc"]
 
 [[tool.mypy.overrides]]
 module = "tests.test_inheritance"
@@ -120,9 +120,9 @@ disable_error_code = ["assignment", "misc"]
 module = "tests.test_mixin"
 disable_error_code = ["assignment", "call-overload", "has-type", "misc", "union-attr"]
 
-# [[tool.mypy.overrides]]
-# module = "tests.test_utils"
-# disable_error_code = ["assignment", "attr-defined", "call-overload", "has-type", "misc", "union-attr"]
+[[tool.mypy.overrides]]
+module = "tests.test_subprocess"
+disable_error_code = ["assignment", "misc"]
 
 [tool.pytest.ini_options]
 addopts = "--verbose --cov=fancy_dataclass"

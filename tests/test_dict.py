@@ -115,6 +115,7 @@ def test_type_field():
             type: Optional[int] = None
 
 def test_flattened():
+    """Tests the flattened=True option for DictDataclass."""
     @dataclass
     class DC3(DictDataclass):
         y3: int

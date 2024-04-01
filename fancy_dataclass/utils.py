@@ -1,11 +1,14 @@
 """Various utility functions and classes."""
 
+import collections.abc
+from contextlib import suppress
 from copy import copy
 import dataclasses
 from dataclasses import Field, dataclass, is_dataclass, make_dataclass
+from functools import lru_cache
 import importlib
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, ForwardRef, Generic, Iterator, List, Optional, Sequence, Tuple, Type, TypeVar, Union, get_args, get_origin, get_type_hints
+from typing import TYPE_CHECKING, Any, Callable, Dict, ForwardRef, Generic, Iterator, List, Optional, Sequence, Set, Tuple, Type, TypeVar, Union, get_args, get_origin, get_type_hints
 
 from typing_extensions import TypeGuard
 
@@ -95,9 +98,9 @@ def _is_instance(obj: Any, tp: type) -> bool:
     origin = get_origin(tp)
     if origin is Union:
         return any(_is_instance(obj, arg) for arg in get_args(tp))
-    elif origin is list:
+    elif origin in [list, collections.abc.Sequence]:
         base_type = get_args(tp)[0]
-        return isinstance(obj, list) and all(_is_instance(val, base_type) for val in obj)
+        return isinstance(obj, origin) and all(_is_instance(val, base_type) for val in obj)
     elif origin is dict:
         (key_type, val_type) = get_args(tp)
         return isinstance(obj, dict) and all(_is_instance(key, key_type) and _is_instance(val, val_type) for (key, val) in obj.items())
@@ -121,7 +124,7 @@ def fully_qualified_class_name(cls: type) -> str:
 
     Returns:
         Fully qualified name of the class"""
-    return str(cls).split("'")[-2]
+    return f'{cls.__module__}.{cls.__qualname__}'
 
 def get_subclass_with_name(cls: Type[T], name: str) -> Type[T]:
     """Gets the subclass of a class with the given name.
@@ -327,7 +330,7 @@ def _flatten_dataclass(cls: Type[T], bases: Optional[Tuple[type, ...]] = None) -
 # MERGING #
 ###########
 
-def merge_dataclasses(*classes: type, cls_name: str = '_', bases: Tuple[type, ...] = ()) -> type:
+def merge_dataclasses(*classes: type, cls_name: str = '_', bases: Optional[Tuple[type, ...]] = None, allow_duplicates: bool = False) -> type:
     """Merges multiple dataclasses together into a single dataclass whose fields have been combined.
     This preserves `ClassVar`s but does not recursively merge subfields.
 
@@ -335,6 +338,7 @@ def merge_dataclasses(*classes: type, cls_name: str = '_', bases: Tuple[type, ..
         classes: Multiple dataclass types
         cls_name: Name of the output dataclass
         bases: Base classes for the new type
+        allow_duplicates: Whether to allow duplicate field names
 
     Returns:
         The merged dataclass type
@@ -342,11 +346,36 @@ def merge_dataclasses(*classes: type, cls_name: str = '_', bases: Tuple[type, ..
     Raises:
         TypeError: if there are any duplicate field names"""
     flds = []
-    field_names = set()
+    field_type_map: Dict[str, type] = {}
+    base_map: Dict[str, type] = {}
+    @lru_cache
+    def _get_field_names(tp: type) -> Set[str]:
+        return {fld.name for fld in get_dataclass_fields(tp, include_classvars=True)}
+    def _base_type_with_field(cls: type, name: str) -> type:
+        for tp in cls.mro()[::-1]:
+            with suppress(TypeError):
+                if name in _get_field_names(tp):
+                    return tp
+        raise TypeError(f'no field named {name!r} for {cls}')
     for cls in classes:
         for fld in get_dataclass_fields(cls, include_classvars=True):
-            if fld.name in field_names:
-                raise TypeError(f'duplicate field name {fld.name!r}')
-            field_names.add(fld.name)
-            flds.append((fld.name, fld.type, fld))
-    return make_dataclass(cls_name, flds, bases=bases)
+            base = _base_type_with_field(cls, fld.name)
+            if fld.name in field_type_map:
+                if allow_duplicates:
+                    if (field_type_map[fld.name] == fld.type):
+                        continue
+                    raise TypeError(f'duplicate field name {fld.name!r} with mismatched types')
+                # allow duplicate field if it came from the same ancestor class
+                if base != base_map[fld.name]:
+                    raise TypeError(f'duplicate field name {fld.name!r}')
+            else:
+                field_type_map[fld.name] = fld.type
+                base_map[fld.name] = base
+                flds.append((fld.name, fld.type, fld))
+    # if bases are unspecified, use the original classes
+    bases = classes if (bases is None) else bases
+    cls = make_dataclass(cls_name, flds, bases=bases)
+    # field ordering may get rearranged by make_dataclass (processes fields in reverse MRO order),
+    # so we revert them back to their canonical ordering
+    cls.__dataclass_fields__ = {name: cls.__dataclass_fields__[name] for (name, _, _) in flds}  # type: ignore[attr-defined]
+    return cls
