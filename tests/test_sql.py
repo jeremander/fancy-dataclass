@@ -6,7 +6,7 @@ import warnings
 
 import numpy as np
 import pytest
-from sqlalchemy import create_engine, text
+from sqlalchemy import Column, DateTime, Integer, Numeric, PickleType, String, create_engine, text
 from sqlalchemy.orm import sessionmaker
 
 from fancy_dataclass.sql import DEFAULT_REGISTRY, SQLDataclass, register
@@ -16,9 +16,8 @@ from fancy_dataclass.sql import DEFAULT_REGISTRY, SQLDataclass, register
 class Obj:
     pass
 
-@register()
 @dataclass
-class Example(SQLDataclass):
+class _Example(SQLDataclass):
     a: int
     b: float
     c: str
@@ -27,10 +26,19 @@ class Example(SQLDataclass):
     f: Dict[str, int]
     g: Obj
 
+@register()
+class Example(_Example):
+    ...
+
+@register(extra_cols={'h': Column('h', Integer, primary_key=True), 'i': Column('i', String())})
+class ExampleWithExtra(_Example):
+    ...
+
 @register()  # NOTE: register wraps the class into a dataclass
 class Container(SQLDataclass):
     example: Example
     tag: str = 'tag'
+
 
 @pytest.fixture
 def sqlite_engine(tmpdir):
@@ -41,6 +49,20 @@ def sqlite_engine(tmpdir):
 def session(sqlite_engine):
     DEFAULT_REGISTRY.metadata.create_all(sqlite_engine)
     return sessionmaker(bind = sqlite_engine)()
+
+example_cols = [('_id', Integer), ('a', Integer), ('b', Numeric), ('c', String), ('d', DateTime), ('e', PickleType), ('f', PickleType), ('g', PickleType)]
+
+@pytest.mark.parametrize(['cls', 'columns'], [
+    (Example, example_cols),
+    (ExampleWithExtra, [('h', Integer)] + example_cols[1:] + [('i', String)]),
+    (Container, example_cols + [('tag', String)]),
+])
+def test_schema(cls, columns):
+    actual_columns = [(col.name, col.type) for col in cls.__table__.columns]
+    assert len(actual_columns) == len(columns)
+    for ((name1, tp1), (name2, tp2)) in zip(actual_columns, columns):
+        assert name1 == name2
+        assert isinstance(tp1, tp2)
 
 def _test_sql_convert(obj, session):
     session.add(obj)
@@ -57,8 +79,23 @@ def test_example(sqlite_engine, session):
     _test_sql_convert(ex, session)
     with sqlite_engine.connect() as conn:
         tup = next(iter(conn.execute(text('SELECT * FROM Example'))))
+        assert len(tup) == 8
+        assert tup[0] == 1
+        assert tup[1:4] == (3, 4.7, 'abc')
         obj = pickle.loads(tup[-1])
         assert obj == ex.g
+        with pytest.raises(StopIteration):  # nonexistent table
+            _ = next(iter(conn.execute(text('SELECT * FROM ExampleWithExtra'))))
+
+def test_example_with_extra(sqlite_engine, session):
+    ex = ExampleWithExtra(3, 4.7, 'abc', datetime.now(), np.ones(5), {'a' : 1, 'b' : 2}, Obj())
+    _test_sql_convert(ex, session)
+    with sqlite_engine.connect() as conn:
+        tup = next(iter(conn.execute(text('SELECT * FROM ExampleWithExtra'))))
+        assert len(tup) == 9
+        assert tup[0] == 1
+        assert tup[1:4] == (3, 4.7, 'abc')
+        assert tup[-1] is None
 
 def test_container(session):
     ex = Example(3, 4.7, 'abc', datetime.now(), np.ones(5), {'a' : 1, 'b' : 2}, Obj())

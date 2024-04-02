@@ -6,7 +6,7 @@ import json
 import math
 import re
 import sys
-from typing import Any, ClassVar, List, Literal, NamedTuple, Optional, TypedDict
+from typing import Any, ClassVar, List, Literal, NamedTuple, Optional, TypedDict, Union
 
 import pytest
 from typing_extensions import Annotated, Doc
@@ -64,6 +64,10 @@ class DCOptionalInt(JSONDataclass):
 class DCOptionalStr(JSONDataclass):
     x: str
     y: Optional[str]
+
+@dataclass
+class DCUnion(JSONDataclass):
+    x: Union[int, str]
 
 @dataclass
 class DCLiteral(JSONDataclass):
@@ -162,6 +166,9 @@ TEST_JSON = [
     DCOptionalInt(1, None),
     DCOptionalStr('a', 'b'),
     DCOptionalStr('a', 'None'),
+    DCUnion(1),
+    DCUnion('a'),
+    DCUnion('1'),
     DCLiteral('a'),
     DCLiteral(1),
     DCDatetime(NOW),

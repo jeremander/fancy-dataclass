@@ -54,7 +54,7 @@ class DictDataclassFieldSettings(FieldSettings):
 
 
 class DictDataclass(DataclassMixin):
-    """Base class for dataclasses that can be converted to and from a JSON-serializable Python dict.
+    """Mixin class for dataclasses that can be converted to and from a JSON-serializable Python dict.
 
     A subclass may configure settings by using [`DictDataclassSettings`][fancy_dataclass.dict.DictDataclassSettings] fields as keyword arguments when inheriting from `DictDataclass`.
 
