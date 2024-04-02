@@ -56,7 +56,7 @@ class ConfigDataclass(Config, DictDataclass):
 
     @classmethod
     def load_config(cls, path: AnyPath) -> Self:
-        """Loads configuration from a file and sets them to be the global configuration for this class.
+        """Loads configurations from a file and sets them to be the global configurations for this class.
 
         Returns:
             The newly loaded global configuration"""

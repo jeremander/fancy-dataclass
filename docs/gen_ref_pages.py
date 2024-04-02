@@ -14,7 +14,11 @@ PKG_NAME = 'fancy_dataclass'
 PKG_DIR = Path(PKG_NAME)
 REF_DIR = Path('reference')
 
-for path in sorted(PKG_DIR.rglob('*.py')):
+# TODO: add config, toml, etc.
+REF_MODULES = ['cli', 'dict', 'json', 'mixin', 'sql', 'subprocess', 'utils']
+
+for mod_name in REF_MODULES:
+    path = PKG_DIR / f'{mod_name}.py'
     module_path = path.relative_to(PKG_DIR).with_suffix('')
     doc_path = path.relative_to(PKG_DIR).with_suffix('.md')
     full_doc_path = REF_DIR / doc_path

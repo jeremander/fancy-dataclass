@@ -4,7 +4,9 @@
 
 - Docs
   - "Under construction" placeholders
+  - Include a small example for each mixin
   - CHANGELOG
+- PyPI
 
 ## v0.3.0
 
@@ -19,7 +21,7 @@
 - documentation
   - Dataclass mixins/settings
     - For now, `dataclass` decorator is required
-    - Note purpose of `nested=False` (good for tabular data like CSV/SQL)
+    - Note purpose of `flattened=True` (good for tabular data like CSV/SQL)
   - JSON
   - TOML
   - CLI
@@ -35,12 +37,16 @@
 
 - `TabularDataclass`? CSV/TSV/parquet/feather
   - Make `SQLDataclass` inherit from it
+- Support subparsers in `ArgparseDataclass`
 - Field metadata
   - Be strict about unknown field metadata keys? (Maybe issue warning?)
     - Might be annoying if people want to store extra metadata.
   - PEP 712 (`converter` argument for dataclass fields)
   - Allow `Annotated` as an alternative to `field.metadata`
     - Esp. with `Doc`: this could auto-populate JSON schema, argparse description
+- Improve `mkdocs` documentation
+  - Auto-generate per-field descriptions via PEP 727?
+  - Auto-generate dataclass field docs?
 - Automatic JSON schema generation (see `pydantic`)
   - Borrow/use: https://github.com/Peter554/dc_schema/tree/master?tab=MIT-1-ov-file#readme
     - Attribution?

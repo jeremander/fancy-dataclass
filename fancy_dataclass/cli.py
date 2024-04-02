@@ -16,7 +16,21 @@ T = TypeVar('T')
 
 @dataclass
 class ArgparseDataclassFieldSettings(FieldSettings):
-    """Settings for [`ArgparseDataclass`][fancy_dataclass.cli.ArgparseDataclass] fields."""
+    """Settings for [`ArgparseDataclass`][fancy_dataclass.cli.ArgparseDataclass] fields.
+
+    Each field may define a `metadata` dict containing any of the following entries:
+
+    - `type`: override the dataclass field type with a different type
+    - `args`: lists the command-line arguments explicitly
+    - `nargs`: number of command-line arguments (use `*` for lists, `+` for non-empty lists
+    - `const`: constant value required by some action/nargs combinations
+    - `choices`: list of possible inputs allowed
+    - `help`: help string
+    - `metavar`: name for the argument in usage messages
+    - `group`: name of the argument group in which to put the argument; the group will be created if it does not already exist in the parser
+    - `parse_exclude`: boolean flag indicating that the field should not be included in the parser
+
+    Note that these line up closely with the usual options that can be passed to [`ArgumentParser.add_argument`](https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser.add_argument)."""
     # TODO: is this ever necessary?
     type: Optional[type] = None
     args: Optional[List[str]] = None
@@ -32,21 +46,9 @@ class ArgparseDataclassFieldSettings(FieldSettings):
 class ArgparseDataclass(DataclassMixin):
     """Mixin class providing a means of setting up an [`argparse`](https://docs.python.org/3/library/argparse.html) parser with the dataclass fields, and then converting the namespace of parsed arguments into an instance of the class.
 
-    (NOTE: this borrows heavily from the [`argparse-dataclass`](https://github.com/mivade/argparse_dataclass) library.)
+    The parser's argument names and types will be derived from the dataclass's fields.
 
-    The parser's argument names and types will be derived from the dataclass field names and types.
-
-    Per-field arguments can be passed into the `metadata` argument of a `dataclasses.field`:
-
-    - `type` (override the dataclass field type with a different type)
-    - `args` (lists the command-line arguments explicitly)
-    - `nargs` (number of command-line arguments (use `*` for lists, `+` for non-empty lists)
-    - `const` (constant value required by some action/nargs combinations)
-    - `choices` (list of possible inputs allowed)
-    - `help` (help string)
-    - `metavar` (name for the argument in usage messages)
-    - `group` (name of the argument group in which to put the argument; the group will be created if it does not already exist in the parser)
-    - `parse_exclude` (boolean flag indicating that the field should not be included in the parser)"""
+    Per-field arguments can be passed into the `metadata` argument of each `dataclasses.field`. See [`ArgparseDataclassFieldSettings`][fancy_dataclass.cli.ArgparseDataclassFieldSettings] for the full list of settings."""
 
     __field_settings_type__ = ArgparseDataclassFieldSettings
 
@@ -81,7 +83,7 @@ class ArgparseDataclass(DataclassMixin):
         """Gets keyword argument names that will be passed when adding arguments to the argument parser.
 
         Returns:
-            Keyword argument names passed when adding arguments to the `ArgumentParser`"""
+            Keyword argument names passed when adding arguments to the parser"""
         return ['nargs', 'const', 'choices', 'help', 'metavar']
 
     @classmethod
@@ -89,7 +91,7 @@ class ArgparseDataclass(DataclassMixin):
         """Constructs a new top-level argument parser..
 
         Returns:
-            New top-level `ArgumentParser` derived from the class's fields"""
+            New top-level parser derived from the class's fields"""
         return cls.parser_class()(**cls.parser_kwargs())
 
     @classmethod
@@ -101,7 +103,7 @@ class ArgparseDataclass(DataclassMixin):
         Subclasses may override this method to implement custom behavior.
 
         Args:
-            parser: `ArgumentParser` object to update with a new argument
+            parser: parser object to update with a new argument
             name: Name of the argument to configure"""
         kwargs: Dict[str, Any] = {}
         field = cls.__dataclass_fields__[name]  # type: ignore[attr-defined]
@@ -194,7 +196,7 @@ class ArgparseDataclass(DataclassMixin):
 
     @classmethod
     def args_to_dict(cls, args: Namespace) -> Dict[str, Any]:
-        """Converts a `Namespace` object to a dict that can be converted to the dataclass type.
+        """Converts a [`Namespace`](https://docs.python.org/3/library/argparse.html#argparse.Namespace) object to a dict that can be converted to the dataclass type.
 
         Override this to enable custom behavior.
 
@@ -265,9 +267,9 @@ class ArgparseDataclass(DataclassMixin):
 
 
 class CLIDataclass(ABC, ArgparseDataclass):
-    """This subclass of [`ArgparseDataclass`][fancy_dataclass.cli.ArgparseDataclass] allows the user to run a `main` program based on the parsed arguments.
+    """This subclass of [`ArgparseDataclass`][fancy_dataclass.cli.ArgparseDataclass] allows the user to execute arbitrary program logic using the parsed arguments as input.
 
-    Subclasses must override the `run` method to implement custom behavior."""
+    Subclasses should override the `run` method to implement custom behavior."""
 
     @abstractmethod
     def run(self) -> None:
@@ -279,12 +281,12 @@ class CLIDataclass(ABC, ArgparseDataclass):
     def main(cls, arg_list: Optional[List[str]] = None) -> None:
         """Executes the following procedures in sequence:
 
-            1. Constructs a new argument parser.
-            2. Configures the parser with appropriate arguments.
-            3. Parses command-line arguments.
-            4. Post-processes the arguments.
-            5. Constructs a dataclass instance from the parsed arguments.
-            6. Runs the main body of the program, using the parsed arguments.
+        1. Constructs a new argument parser.
+        2. Configures the parser with appropriate arguments.
+        3. Parses command-line arguments.
+        4. Post-processes the arguments.
+        5. Constructs a dataclass instance from the parsed arguments.
+        6. Runs the main body of the program, using the parsed arguments.
 
         Args:
             arg_list: List of arguments as strings (if `None`, uses `sys.argv`)"""

@@ -27,10 +27,11 @@ class DictDataclassSettings(DataclassMixinSettings):
     """Settings for the DictDataclass mixin.
 
     Inheritors of [`DictDataclass`][fancy_dataclass.dict.DictDataclass] may set the following boolean flags:
-        - `suppress_defaults`: suppress default values in its dict
-        - `store_type`: store the object's type in its dict
-        - `qualified_type`: fully qualify the object type's name in its dict
-        - `flattened`: if True, [`DictDataclass`][fancy_dataclass.dict.DictDataclass] subfields will be merged together with the main fields (provided there are no name collisions); otherwise, they are nested"""
+
+    - `suppress_defaults`: suppress default values in its dict
+    - `store_type`: store the object's type in its dict
+    - `qualified_type`: fully qualify the object type's name in its dict
+    - `flattened`: if True, [`DictDataclass`][fancy_dataclass.dict.DictDataclass] subfields will be merged together with the main fields (provided there are no name collisions); otherwise, they are nested"""
     suppress_defaults: bool = True
     store_type: bool = False
     qualified_type: bool = False
@@ -49,11 +50,12 @@ class DictDataclassFieldSettings(FieldSettings):
 class DictDataclass(DataclassMixin):
     """Base class for dataclasses that can be converted to and from a JSON-serializable Python dict.
 
-    A subclass may configure settings by storing a [`DictDataclassSettings`][fancy_dataclass.dict.DictDataclassSettings] object as its `_settings` attribute.
+    A subclass may configure settings by using [`DictDataclassSettings`][fancy_dataclass.dict.DictDataclassSettings] fields as keyword arguments when inheriting from `DictDataclass`.
 
     Per-field settings can be passed into the `metadata` argument of a `dataclasses.field`:
-        - `suppress`: suppress this field in the dict (note: a `ClassVar` assumes this is `True` by default; you can set it to `False` to force the field's inclusion)
-        - `suppress_default`: suppress this field in the dict if it matches its default value (overrides class-level `suppress_defaults`)"""
+
+    - `suppress`: suppress this field in the dict (note: a `ClassVar` assumes this is `True` by default; you can set it to `False` to force the field's inclusion)
+    - `suppress_default`: suppress this field in the dict if it matches its default value (overrides class-level `suppress_defaults`)"""
 
     __settings_type__ = DictDataclassSettings
     __settings__ = DictDataclassSettings()
