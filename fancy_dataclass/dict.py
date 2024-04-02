@@ -24,14 +24,14 @@ JSONDict = Dict[str, Any]
 
 @dataclass
 class DictDataclassSettings(DataclassMixinSettings):
-    """Settings for the DictDataclass mixin.
+    """Class-level settings for the [`DictDataclass`][fancy_dataclass.dict.DictDataclass] mixin.
 
-    Inheritors of [`DictDataclass`][fancy_dataclass.dict.DictDataclass] may set the following boolean flags:
+    Subclasses of `DictDataclass` may set the following boolean flags as keyword arguments during inheritance:
 
     - `suppress_defaults`: suppress default values in its dict
     - `store_type`: store the object's type in its dict
     - `qualified_type`: fully qualify the object type's name in its dict
-    - `flattened`: if True, [`DictDataclass`][fancy_dataclass.dict.DictDataclass] subfields will be merged together with the main fields (provided there are no name collisions); otherwise, they are nested"""
+    - `flattened`: if `True`, [`DictDataclass`][fancy_dataclass.dict.DictDataclass] subfields fields will be merged together with the main fields (provided there are no name collisions); otherwise, they are nested"""
     suppress_defaults: bool = True
     store_type: bool = False
     qualified_type: bool = False
@@ -40,7 +40,13 @@ class DictDataclassSettings(DataclassMixinSettings):
 
 @dataclass
 class DictDataclassFieldSettings(FieldSettings):
-    """Settings for [`DictDataclass`][fancy_dataclass.dict.DictDataclass] fields."""
+    """Settings for [`DictDataclass`][fancy_dataclass.dict.DictDataclass] fields.
+
+    Each field may define a `metadata` dict containing any of the following entries:
+
+    - `suppress`: suppress this field in the dict representation
+        - Note: if the field is a class variable, it is excluded by default; you can set `suppress=False` to force the field's inclusion.
+    - `suppress_default`: suppress this field in the dict if it matches its default value (overrides class-level `suppress_defaults`)"""
     # suppress the field in the dict
     suppress: Optional[bool] = None
     # suppress the field in the dict if its value matches the default
@@ -52,10 +58,7 @@ class DictDataclass(DataclassMixin):
 
     A subclass may configure settings by using [`DictDataclassSettings`][fancy_dataclass.dict.DictDataclassSettings] fields as keyword arguments when inheriting from `DictDataclass`.
 
-    Per-field settings can be passed into the `metadata` argument of a `dataclasses.field`:
-
-    - `suppress`: suppress this field in the dict (note: a `ClassVar` assumes this is `True` by default; you can set it to `False` to force the field's inclusion)
-    - `suppress_default`: suppress this field in the dict if it matches its default value (overrides class-level `suppress_defaults`)"""
+    Per-field settings can be passed into the `metadata` argument of each `dataclasses.field`. See [`DictDataclassFieldSettings`][fancy_dataclass.dict.DictDataclassFieldSettings] for the full list of settings."""
 
     __settings_type__ = DictDataclassSettings
     __settings__ = DictDataclassSettings()
@@ -135,7 +138,8 @@ class DictDataclass(DataclassMixin):
     def to_dict(self, **kwargs: Any) -> JSONDict:
         """Converts the object to a JSON-compatible dict which, by default, suppresses values matching their dataclass defaults.
 
-        If `full=True` or the class has set the `suppress_defaults` flag to False, does not suppress the defaults.
+        Args:
+            kwargs: Keyword arguments <ul><li>`full`: if `True` (or if the class has `suppress_defaults=False`), does not suppress default values</li></ul>
 
         Returns:
             A dict whose keys match the dataclass's fields"""
@@ -294,12 +298,11 @@ class DictDataclass(DataclassMixin):
     def from_dict(cls, d: JSONDict, **kwargs: Any) -> Self:
         """Constructs an object from a dictionary of fields.
 
-        This may also perform some basic type/validity checking.
+        This will also perform some basic type/validity checking.
 
         Args:
             d: Dict to convert into an object
-            kwargs: Keyword arguments
-                - `strict`: if True, raise an error if extraneous dict fields are present
+            kwargs: Keyword arguments <ul><li>`strict`: if `True`, raise an error if extraneous dict fields are present</li></ul>
 
         Returns:
             Converted object of this class"""

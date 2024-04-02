@@ -48,7 +48,7 @@ class ArgparseDataclass(DataclassMixin):
 
     The parser's argument names and types will be derived from the dataclass's fields.
 
-    Per-field arguments can be passed into the `metadata` argument of each `dataclasses.field`. See [`ArgparseDataclassFieldSettings`][fancy_dataclass.cli.ArgparseDataclassFieldSettings] for the full list of settings."""
+    Per-field settings can be passed into the `metadata` argument of each `dataclasses.field`. See [`ArgparseDataclassFieldSettings`][fancy_dataclass.cli.ArgparseDataclassFieldSettings] for the full list of settings."""
 
     __field_settings_type__ = ArgparseDataclassFieldSettings
 

@@ -34,7 +34,7 @@ class DataclassMixinSettings:
 class FieldSettings:
     """Class storing a bundle of parameters that will be extracted from dataclass field metadata.
 
-    Each [`DataclassMixin`][fancy_dataclass.mixin.DataclassMixin] class may store a `__field_settings_type__` attribute which is a `FieldSettings` subclass. This will specify which keys in the `field.metadata` dictionary are recognized by the mixin class. Other keys will be ignored (unless they are used by other mixin classes)."""
+    Each [`DataclassMixin`][fancy_dataclass.mixin.DataclassMixin] class may store a `__field_settings_type__` attribute which is a `FieldSettings` subclass. This specifies which keys in the `field.metadata` dictionary are recognized by the mixin class. Other keys will be ignored (unless they are used by other mixin classes)."""
 
     def type_check(self) -> None:
         """Checks that every field on the `FieldSettings` object is the proper type.
@@ -49,7 +49,7 @@ class FieldSettings:
 
     @classmethod
     def from_field(cls, field: dataclasses.Field) -> Self:  # type: ignore[type-arg]
-        """Constructs a `FieldSettings` object from a `dataclasses.Field`'s metadata.
+        """Constructs a `FieldSettings` object from a [`dataclasses.Field`](https://docs.python.org/3/library/dataclasses.html#dataclasses.Field)'s metadata.
 
         Raises:
             TypeError: If any field has the wrong type"""
@@ -134,11 +134,11 @@ def _check_field_settings(cls: Type['DataclassMixin']) -> None:
 ###################
 
 class DataclassMixin:
-    """Mixin class that adds some functionality to a dataclass.
+    """Mixin class for adding some kind functionality to a dataclass.
 
-    For example, this could provide features for conversion to/from JSON (see [`JSONDataclass`][fancy_dataclass.json.JSONDataclass]), or the ability to construct CLI argument parsers (see [`ArgparseDataclass`][fancy_dataclass.cli.ArgparseDataclass]).
+    For example, this could provide features for conversion to/from JSON ([`JSONDataclass`][fancy_dataclass.json.JSONDataclass]), the ability to construct CLI argument parsers ([`ArgparseDataclass`][fancy_dataclass.cli.ArgparseDataclass]), etc.
 
-    This mixin provides a [`wrap_dataclass`][fancy_dataclass.mixin.DataclassMixin.wrap_dataclass] decorator which can be used to wrap an existing dataclass into one that provides the mixin's functionality."""
+    This mixin also provides a [`wrap_dataclass`][fancy_dataclass.mixin.DataclassMixin.wrap_dataclass] decorator which can be used to wrap an existing dataclass type into one that provides the mixin's functionality."""
 
     __settings_type__: ClassVar[Optional[Type[DataclassMixinSettings]]] = None
     __settings__: ClassVar[Optional[DataclassMixinSettings]] = None
@@ -147,14 +147,19 @@ class DataclassMixin:
     @classmethod
     def __init_subclass__(cls, **kwargs: Any) -> None:
         """When inheriting from this class, you may pass various keyword arguments after the list of base classes.
-        If the base class has a `__settings_type__` class attribute, that class will be instantiated with the provided arguments and stored as a `__settings__` attribute on the subclass.
-        These settings can be used to customize the behavior of the subclass."""
+
+        If the base class has a `__settings_type__` class attribute (subclass of [`DataclassMixinSettings`][fancy_dataclass.mixin.DataclassMixinSettings]), that class will be instantiated with the provided arguments and stored as a `__settings__` attribute on the subclass. These settings can be used to customize the behavior of the subclass.
+
+        Additionally, the mixin may set the `__field_settings_type__` class attribute to indicate the type (subclass of [`FieldSettings`][fancy_dataclass.mixin.FieldSettings]) that should be used for field settings, which are extracted from each field's `metadata` dict."""
         super().__init_subclass__()
         _configure_mixin_settings(cls, **kwargs)
         _configure_field_settings_type(cls)
 
     @classmethod
     def __post_dataclass_wrap__(cls) -> None:
+        """A hook that is called after the [`dataclasses.dataclass`](https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass) decorator is applied to the mixin subclass.
+
+        This can be used, for instance, to validate the dataclass fields at definition time."""
         _check_field_settings(cls)
 
     @classmethod
@@ -188,7 +193,7 @@ class DataclassMixin:
                 return type(tp.__name__, (cls, tp), {}, **kwargs)
             raise
 
-    def _replace(self: T, **kwargs: Any) -> T:
+    def _replace(self, **kwargs: Any) -> Self:
         """Constructs a new object with the provided fields modified.
 
         Args:
@@ -209,7 +214,7 @@ class DataclassMixin:
         return self.__class__(**d)
 
     @classmethod
-    def get_subclass_with_name(cls: Type[T], typename: str) -> Type[T]:
+    def get_subclass_with_name(cls, typename: str) -> Type[Self]:
         """Gets the subclass of this class with the given name.
 
         Args:
