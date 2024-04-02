@@ -37,9 +37,9 @@ def safe_dict_insert(d: Dict[Any, Any], key: str, val: Any) -> None:
         val: Value to insert
 
     Raises:
-        TypeError: If the key is already in the dict"""
+        ValueError: If the key is already in the dict"""
     if key in d:
-        raise TypeError(f'duplicate key {key!r}')
+        raise ValueError(f'duplicate key {key!r}')
     d[key] = val
 
 def safe_dict_update(d1: Dict[str, Any], d2: Dict[str, Any]) -> None:
@@ -187,7 +187,14 @@ def make_dataclass_with_constructors(cls_name: str, fields: Sequence[Union[str, 
     return tp
 
 def get_dataclass_fields(obj: Union[type, object], include_classvars: bool = False) -> Tuple[Field, ...]:  # type: ignore[type-arg]
-    """Variant of dataclasses.fields which can optionally include ClassVars."""
+    """Variant of `dataclasses.fields` which can optionally include ClassVars.
+
+    Args:
+        obj: Python class or object
+        include_classvars: Whether to include `ClassVar` fields
+
+    Returns:
+        Tuple of `dataclasses.Field` objects for the dataclass"""
     if include_classvars:
         try:
             return tuple(obj.__dataclass_fields__.values())  # type: ignore[union-attr]
@@ -198,7 +205,14 @@ def get_dataclass_fields(obj: Union[type, object], include_classvars: bool = Fal
 def coerce_to_dataclass(cls: Type[T], obj: object) -> T:
     """Coerces the fields from an arbitrary object to an instance of a dataclass type.
 
-    Any missing attributes will be set to the dataclass's default values."""
+    Any missing attributes will be set to the dataclass's default values.
+
+    Args:
+        cls: Target dataclass type
+        obj: Object to coerce
+
+    Returns:
+        A new object of the desired type, coerced from the input object"""
     d = {fld.name: getattr(obj, fld.name) for fld in dataclasses.fields(cls) if hasattr(obj, fld.name)}  # type: ignore[arg-type]
     return cls(**d)
 
@@ -209,8 +223,19 @@ def coerce_to_dataclass(cls: Type[T], obj: object) -> T:
 
 def traverse_dataclass(cls: type) -> Iterator[Tuple[RecordPath, Field]]:  # type: ignore[type-arg]
     """Iterates through the fields of a dataclass, yielding (name, field) pairs.
+
     If the dataclass contains nested dataclasses, recursively iterates through their fields, in depth-first order.
-    Nesting is indicated in the field names via "record path" syntax, e.g. `outer.middle.inner`."""
+
+    Nesting is indicated in the field names via "record path" syntax, e.g. `outer.middle.inner`.
+
+    Args:
+        cls: Dataclass type
+
+    Returns:
+        Generator of (name, field) pairs, where each field is a `dataclasses.Field` object
+
+    Raises:
+        TypeError: if the type cannot be traversed"""
     def _make_optional(fld: Field) -> Field:  # type: ignore[type-arg]
         new_fld = Field
         new_fld = copy(fld)  # type: ignore[assignment]
@@ -282,7 +307,10 @@ def _flatten_dataclass(cls: Type[T], bases: Optional[Tuple[type, ...]] = None) -
     fields: List[Any] = []
     field_map: Dict[str, RecordPath] = {}
     for (path, fld) in traverse_dataclass(cls):
-        safe_dict_insert(field_map, fld.name, path)  # will error on name collision
+        try:
+            safe_dict_insert(field_map, fld.name, path)  # will error on name collision
+        except ValueError as e:
+            raise TypeError(str(e)) from None
         fields.append(fld)
     field_data = [(fld.name, fld.type, fld) for fld in fields]
     bases = cls.__bases__ if (bases is None) else bases
@@ -351,7 +379,7 @@ def merge_dataclasses(*classes: type, cls_name: str = '_', bases: Optional[Tuple
         The merged dataclass type
 
     Raises:
-        TypeError: if there are any duplicate field names"""
+        TypeError: If there are any duplicate field names"""
     flds = []
     field_type_map: Dict[str, type] = {}
     base_map: Dict[str, type] = {}

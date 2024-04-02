@@ -51,7 +51,7 @@ def test_safe_dict_insert():
     """Tests behavior of safe_dict_insert."""
     d = {'a': 1, 'b': 2}
     safe_dict_insert(d, 'c', 3)
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError, match="duplicate key 'c'"):
         safe_dict_insert(d, 'c', 3)
 
 def test_composition_nested():
