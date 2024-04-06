@@ -27,7 +27,7 @@ Convert to/from a Python dict.
     name='John Doe',
     age=47,
     height=71.5,
-    hobbies=["reading", "juggling", "cycling"]
+    hobbies=['reading', 'juggling', 'cycling']
 )
 
 # default values are suppressed by default
@@ -57,7 +57,7 @@ Convert to/from JSON.
     name='John Doe',
     age=47,
     height=71.5,
-    hobbies=["reading", "juggling", "cycling"]
+    hobbies=['reading', 'juggling', 'cycling']
 )
 
 >>> json_string = person.to_json_string(indent=2)

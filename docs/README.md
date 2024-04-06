@@ -52,7 +52,7 @@ Usage:
     name='John Doe',
     age=47,
     height=71.5,
-    hobbies=["reading", "juggling", "cycling"]
+    hobbies=['reading', 'juggling', 'cycling']
 )
 
 >>> print(person.to_json_string(indent=2))

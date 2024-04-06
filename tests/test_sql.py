@@ -48,7 +48,7 @@ def sqlite_engine(tmpdir):
 @pytest.fixture
 def session(sqlite_engine):
     DEFAULT_REGISTRY.metadata.create_all(sqlite_engine)
-    return sessionmaker(bind = sqlite_engine)()
+    return sessionmaker(bind=sqlite_engine)()
 
 example_cols = [('_id', Integer), ('a', Integer), ('b', Numeric), ('c', String), ('d', DateTime), ('e', PickleType), ('f', PickleType), ('g', PickleType)]
 

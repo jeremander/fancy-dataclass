@@ -1,9 +1,19 @@
 from dataclasses import MISSING, dataclass, fields
 import subprocess
-from typing import Any, ClassVar, List, Optional, Union, get_origin
+from typing import Any, ClassVar, List, Optional, Sequence, Union, get_origin
 
-from fancy_dataclass.mixin import DataclassMixin, FieldSettings
-from fancy_dataclass.utils import obj_class_name
+from fancy_dataclass.mixin import DataclassMixin, DataclassMixinSettings, FieldSettings
+from fancy_dataclass.utils import get_dataclass_fields, obj_class_name
+
+
+@dataclass
+class SubprocessDataclassSettings(DataclassMixinSettings):
+    """Class-level settings for the [`SubprocessDataclass`][fancy_dataclass.subprocess.SubprocessDataclass] mixin.
+
+    Subclasses of `SubprocessDataclass` may set the following fields as keyword arguments during inheritance:
+
+    - `exec`: name of command-line executable to call"""
+    exec: Optional[str] = None
 
 
 @dataclass
@@ -14,11 +24,11 @@ class SubprocessDataclassFieldSettings(FieldSettings):
 
     - `exec`: if `True`, use this field as the name of the executable, rather than an argument
     - `args`: command-line arguments corresponding to the field
-        - If a non-empty list, only the first will be used, and only if it starts with a dash
+        - If a non-empty list, use the first entry as the argument name (only if it starts with a dash)
         - If `None`, use the field name prefixed by one dash (if single letter) or two dashes, with underscores replaced by dashes
         - If an empty list, exclude this field from the arguments"""
     exec: bool = False
-    args: Optional[List[str]] = None
+    args: Optional[Union[str, Sequence[str]]] = None
 
 
 class SubprocessDataclass(DataclassMixin):
@@ -26,6 +36,8 @@ class SubprocessDataclass(DataclassMixin):
 
     Per-field settings can be passed into the `metadata` argument of each `dataclasses.field`. See [`SubprocessDataclassFieldSettings`][fancy_dataclass.subprocess.SubprocessDataclassFieldSettings] for the full list of settings."""
 
+    __settings_type__ = SubprocessDataclassSettings
+    __settings__ = SubprocessDataclassSettings()
     __field_settings_type__ = SubprocessDataclassFieldSettings
 
     @classmethod
@@ -34,7 +46,7 @@ class SubprocessDataclass(DataclassMixin):
         # make sure there is at most one exec field
         exec_field = None
         stype = cls.__field_settings_type__
-        for fld in fields(cls):  # type: ignore[arg-type]
+        for fld in get_dataclass_fields(cls, include_classvars=True):  # type: ignore[arg-type]
             if stype.from_field(fld).exec:
                 if exec_field is None:
                     exec_field = fld.name
@@ -53,6 +65,7 @@ class SubprocessDataclass(DataclassMixin):
         fld = self.__dataclass_fields__[name]  # type: ignore[attr-defined]
         settings = SubprocessDataclassFieldSettings.coerce(self._field_settings(fld))
         args = settings.args
+        args = [args] if isinstance(args, str) else args
         if args == []:  # exclude the argument
             return []
         if settings.exec:  # this field is the executable, so return no arguments
@@ -103,11 +116,16 @@ class SubprocessDataclass(DataclassMixin):
     def get_executable(self) -> Optional[str]:
         """Gets the name of an executable to run with the appropriate arguments.
 
-        By default, this returns the name of the first dataclass field whose `exec` metadata flag is set to `True`, if one exists, and `None` otherwise.
+        By default, this obtains the name of the executable as follows:
+
+        1. If the class settings have an `exec` member, uses that.
+        2. Otherwise, returns the value of the first dataclass field whose `exec` metadata flag is set to `True`, and `None` otherwise.
 
         Returns:
             Name of the executable to run"""
-        for fld in fields(self):  # type: ignore[arg-type]
+        if self.__settings__.exec:
+            return self.__settings__.exec
+        for fld in get_dataclass_fields(self, include_classvars=True):  # type: ignore[arg-type]
             if fld.metadata.get('exec', False):
                 return getattr(self, fld.name, None)
         return None

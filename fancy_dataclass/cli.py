@@ -30,10 +30,17 @@ class ArgparseDataclassFieldSettings(FieldSettings):
     - `group`: name of the argument group in which to put the argument; the group will be created if it does not already exist in the parser
     - `parse_exclude`: boolean flag indicating that the field should not be included in the parser
 
-    Note that these line up closely with the usual options that can be passed to [`ArgumentParser.add_argument`](https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser.add_argument)."""
+    Note that these line up closely with the usual options that can be passed to [`ArgumentParser.add_argument`](https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser.add_argument).
+
+    **Positional arguments vs. options**:
+
+    - If a field explicitly lists arguments in the `args` metadata field, the argument will be an option if the first listed argument starts with a dash, otherwise it will be a positional argument.
+        - If it is an option but specifies no default value, it will be a required option.
+    - If `args` are absent, the field will be an option if either (1) it specifies a default value, or (2) it is a boolean type; otherwise it is a positional argument.
+    """
     # TODO: is this ever necessary?
     type: Optional[type] = None
-    args: Optional[List[str]] = None
+    args: Optional[Union[str, Sequence[str]]] = None
     nargs: Optional[Union[str, int]] = None
     const: Optional[Any] = None
     choices: Optional[Sequence[Any]] = None
@@ -140,27 +147,34 @@ class ArgparseDataclass(DataclassMixin):
         if issubclass(tp, IntEnum):  # use a bare int type
             tp = int
         kwargs['type'] = tp
-        # get the names of the arguments associated with the field
-        if 'args' in field.metadata:
-            args = field.metadata['args']
-        else:
-            argname = field.name.replace('_', '-')
-            # use a single dash for 1-letter names
-            prefix = '-' if (len(field.name) == 1) else '--'
-            args = [prefix + argname]
-        # arg will be positional if the metadata provides an 'args' field, and the first argument does not start with a dash
-        positional = not args[0].startswith('-')
-        if field.metadata.get('args') and (not positional):
-            # store the argument based on the name of the field, and not whatever flag name was provided
-            kwargs['dest'] = field.name
+        # determine the default value
         if field.default == MISSING:
-            if field.default_factory == MISSING:
-                if not positional:  # no default available, so make the argument required
-                    kwargs['required'] = True
-            else:
+            if field.default_factory != MISSING:
                 kwargs['default'] = field.default_factory()
         else:
             kwargs['default'] = field.default
+        # get the names of the arguments associated with the field
+        if 'args' in field.metadata:
+            args = field.metadata['args']
+            if isinstance(args, str):
+                args = [args]
+            # argument is positional if it is explicitly given without a leading dash
+            positional = not args[0].startswith('-')
+            if (not positional) and ('default' not in kwargs):
+                # no default available, so make the field a required option
+                kwargs['required'] = True
+        else:
+            argname = field.name.replace('_', '-')
+            positional = (tp is not bool) and ('default' not in kwargs)
+            if positional:
+                args = [argname]
+            else:
+                # use a single dash for 1-letter names
+                prefix = '-' if (len(field.name) == 1) else '--'
+                args = [prefix + argname]
+        if field.metadata.get('args') and (not positional):
+            # store the argument based on the name of the field, and not whatever flag name was provided
+            kwargs['dest'] = field.name
         if field.type is bool:  # use boolean flag instead of an argument
             kwargs['action'] = 'store_true'
             for key in ('type', 'required'):

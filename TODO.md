@@ -3,9 +3,17 @@
 ## v0.2.0
 
 - Docs
-  - "Under construction" placeholders
   - Include a small example for each mixin
+  - Width of center column in mkdocs
   - CHANGELOG
+- Should `DictDataclass` coerce non-JSON types like `datetime`?
+- Unit tests for new behavior
+  - Positional, required optional CLI args
+  - `SubprocessDataclass`
+    - `exec` setting
+    - One or more `exec` fields (incl. on top of `exec` setting)
+    - String or list for `args`
+    - Empty-string `args`
 - PyPI
 
 ## v0.3.0
@@ -26,6 +34,8 @@
   - TOML
   - CLI
   - SQL
+    - Primary key (default `_id`)
+    - Relationships
   - Subprocess
   - Config
   - Defining new mixins (what dunders need to be set)

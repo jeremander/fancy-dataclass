@@ -120,7 +120,7 @@ def register(reg: Reg = DEFAULT_REGISTRY, extra_cols: Optional[Dict[str, Column[
         safe_dict_update(cols, cls.get_columns())
         if extra_cols:
             safe_dict_update(cols, extra_cols)
-        primary_key = next((name for (name, fld) in cols.items() if fld.primary_key), None)
+        primary_key = next((name for (name, col) in cols.items() if col.primary_key), None)
         if primary_key is None:
             if '_id' in cols:
                 raise ValueError(f'no primary key found for {cls.__name__!r}')
