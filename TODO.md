@@ -3,12 +3,12 @@
 ## v0.2.0
 
 - Docs
-  - Include a small example for each mixin
-  - Width of center column in mkdocs
   - CHANGELOG
 - Should `DictDataclass` coerce non-JSON types like `datetime`?
+  - Unit test
 - Unit tests for new behavior
-  - Positional, required optional CLI args
+  - `ArgparseDataclass`
+    - Positional, required optional CLI args
   - `SubprocessDataclass`
     - `exec` setting
     - One or more `exec` fields (incl. on top of `exec` setting)
