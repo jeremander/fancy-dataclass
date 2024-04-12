@@ -48,5 +48,3 @@ nav:
 
 watch:
   - fancy_dataclass
-  - CHANGELOG.md
-  - LICENSE.txt

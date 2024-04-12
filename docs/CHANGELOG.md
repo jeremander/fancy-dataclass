@@ -1,9 +1,3 @@
-<style>
-    .md-sidebar--secondary li li {
-        display: none;
-    }
-</style>
-
 # Changelog
 
 All notable changes to this project will be documented in this file.
@@ -62,3 +56,13 @@ Types of changes:
 
 [unreleased]: https://github.com/jeremander/fancy-dataclass/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.1.0
+
+<br>
+
+<!-- hide version subsections in nav sidebar -->
+
+<style>
+    .md-sidebar--secondary li li {
+        display: none;
+    }
+</style>
