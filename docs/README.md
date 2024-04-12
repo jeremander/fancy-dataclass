@@ -68,3 +68,14 @@ Usage:
   ]
 }
 ```
+
+## Documentation
+
+The documentation is made with [Material for MkDocs](https://squidfunk.github.io/mkdocs-material).
+<!-- TODO: "...and is hosted by ..." -->
+
+View the Changelog [here](CHANGELOG.md).
+
+## License
+
+This library is distributed under the terms of the [MIT](LICENSE.txt) license.

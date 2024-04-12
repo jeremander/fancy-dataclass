@@ -14,6 +14,12 @@ PKG_NAME = 'fancy_dataclass'
 PKG_DIR = Path(PKG_NAME)
 REF_DIR = Path('reference')
 
+# copy top-level static files into docs directory
+for path in ['CHANGELOG.md', 'LICENSE.txt']:
+    with open(path) as f:
+        with mkdocs_gen_files.open(path, 'w') as g:
+            g.write(f.read())
+
 # TODO: add config, toml, etc.
 REF_MODULES = ['cli', 'dict', 'json', 'mixin', 'sql', 'subprocess', 'utils']
 
@@ -35,4 +41,4 @@ for mod_name in REF_MODULES:
     mkdocs_gen_files.set_edit_path(full_doc_path, path)
 
 with mkdocs_gen_files.open(REF_DIR / 'SUMMARY.md', 'w') as nav_file:
-    nav_file.writelines(nav.build_literate_nav())  #
+    nav_file.writelines(nav.build_literate_nav())
