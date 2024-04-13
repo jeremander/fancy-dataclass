@@ -1,5 +1,5 @@
 from collections import namedtuple
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, fields
 from datetime import datetime
 from enum import Enum, Flag, auto
 import json
@@ -11,6 +11,7 @@ from typing import Any, ClassVar, List, Literal, NamedTuple, Optional, TypedDict
 import pytest
 from typing_extensions import Annotated, Doc
 
+from fancy_dataclass.dict import DictDataclass
 from fancy_dataclass.json import JSONBaseDataclass, JSONDataclass
 
 
@@ -109,6 +110,10 @@ class DCColors(JSONDataclass):
     colors: List[Color]
 
 @dataclass
+class DCRange(JSONDataclass):
+    range: range
+
+@dataclass
 class DCAnnotated(JSONDataclass):
     x: Annotated[int, 'an integer']
     y: Annotated[float, Doc('a float')]
@@ -175,6 +180,7 @@ TEST_JSON = [
     DCEnum(MyEnum.a),
     DCStrEnum(MyStrEnum.a),
     DCColors(list(Color)),
+    DCRange(range(1, 10, 3)),
     DCAnnotated(3, 4.7),
     DCTypedDict({'x': 3, 'y': 'a'}),
     DCUntypedNamedTuple(MyUntypedNamedTuple(3, 'a')),
@@ -187,14 +193,60 @@ TEST_JSON = [
     DCList([DCAny(None), DCAny(1), DCAny([1]), DCAny(None), DCAny({})]),
 ]
 
+def _make_dict_dataclass(cls: type) -> type:
+    """Converts a JSONDataclass into a plain DictDataclass."""
+    bases = []
+    for base in cls.__bases__:
+        bases.append(DictDataclass if (base is JSONDataclass) else _make_dict_dataclass(base))
+    return type(cls.__name__, tuple(bases), dict(cls.__dict__))
+
 @pytest.mark.parametrize('obj', TEST_JSON)
-def test_json_convert(obj, tmp_path):
-    # write to JSON text file
-    json_path = tmp_path / 'test.json'
+def test_dict_convert(obj):
+    """Tests conversion to/from dict."""
     if isinstance(obj, JSONBaseDataclass):
         assert 'type' in obj.to_dict()
     else:
         assert 'type' not in obj.to_dict()
+    assert type(obj).from_dict(obj.to_dict()) == obj
+    # test dict round-trip for regular DictDataclass
+    cls = _make_dict_dataclass(type(obj))
+    obj2 = cls(**{fld.name: getattr(obj, fld.name) for fld in fields(obj)})
+    assert cls.from_dict(obj2.to_dict()) == obj2
+
+def test_special_type_convert():
+    """Tests that DictDataclass does not do special type conversion for certain types, while JSONDataclass does."""
+    @dataclass
+    class DCDatetimePlain(DictDataclass):
+        dt: datetime
+    dt = datetime.now()
+    obj1 = DCDatetimePlain(dt)
+    assert obj1.to_dict() == {'dt': dt}
+    obj2 = DCDatetime(dt)
+    assert obj2.to_dict() == {'dt': dt.isoformat()}
+    @dataclass
+    class DCEnumPlain(DictDataclass):
+        enum: MyEnum
+    obj1 = DCEnumPlain(MyEnum.a)
+    assert obj1.to_dict() == {'enum': MyEnum.a}
+    obj2 = DCEnum(MyEnum.a)
+    assert obj2.to_dict() == {'enum': 1}
+    @dataclass
+    class DCRangePlain(DictDataclass):
+        range: range
+    r = range(1, 10, 3)
+    obj1 = DCRangePlain(r)
+    assert obj1.to_dict() == {'range': r}
+    obj2 = DCRange(r)
+    assert obj2.to_dict() == {'range': [1, 10, 3]}
+    r = range(1, 10)
+    obj2 = DCRange(r)
+    assert obj2.to_dict() == {'range': [1, 10]}
+
+@pytest.mark.parametrize('obj', TEST_JSON)
+def test_json_convert(obj, tmp_path):
+    """Tests conversion to/from JSON."""
+    # write to JSON text file
+    json_path = tmp_path / 'test.json'
     with open(json_path, 'w') as f:
         obj.to_json(f)
     with open(json_path) as f:

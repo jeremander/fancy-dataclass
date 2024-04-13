@@ -205,7 +205,7 @@ class DataclassMixin:
         Raises:
             TypeError: If an invalid dataclass field is provided"""
         assert hasattr(self, '__dataclass_fields__'), f'{obj_class_name(self)} is not a dataclass type'
-        d = {fld.name : getattr(self, fld.name) for fld in dataclasses.fields(self)}  # type: ignore[arg-type]
+        d = {fld.name: getattr(self, fld.name) for fld in dataclasses.fields(self)}  # type: ignore[arg-type]
         for (key, val) in kwargs.items():
             if key in d:
                 d[key] = val

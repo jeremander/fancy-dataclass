@@ -2,10 +2,6 @@
 
 ## v0.2.0
 
-- Docs
-  - CHANGELOG
-- Should `DictDataclass` coerce non-JSON types like `datetime`?
-  - Unit test
 - Unit tests for new behavior
   - `ArgparseDataclass`
     - Positional, required optional CLI args
@@ -14,15 +10,23 @@
     - One or more `exec` fields (incl. on top of `exec` setting)
     - String or list for `args`
     - Empty-string `args`
+- Documentation
+  - 1-2 sentence intro for each subpage
 - PyPI
 
 ## v0.3.0
 
 - ConfigDataclass
   - Handle nesting properly (updating nested ConfigDataclass should update the parent)
+  - Load from JSON/TOML
+    - Options:
+      1. Inherit from JSONDataclass/TOMLDataclass (superfluous)?
+      2. Method to load from either, which calls `from_dict` on a proxy class then `coerce_to_dataclass`?
+    - Infer file type from extension
 - TOMLDataclass
   - `tomlkit` maintains parsed structure (incl. whitespace & comments)
   - Let ConfigDataclass parse TOML
+- Basic usage examples in docs
 
 ## v0.3.1
 
@@ -40,7 +44,11 @@
   - Config
   - Defining new mixins (what dunders need to be set)
     - Top-level settings, field-level settings, collisions
-- Github Actions for automated testing (with different Python versions)
+  - Host on GH Pages or Readthedocs
+- Github Actions for automated testing
+  - Configure as much as possible via `hatch`
+    - `ruff`, `mypy`, `pytest`, `radon`
+    - Multiple versions of Python
   - Coverage badge
 
 ## Future
@@ -67,6 +75,10 @@
       - If `strict=True`, raises an error; otherwise, attempts to coerce and issues a warning
     - Error if duplicate versions are set
   - Migration
+- `CallableDataclass`
+  - ABC providing `__call__` method on variadic positional args
+  - `callable_dataclass` decorator wrapping a function into a `CallableDataclass` subclass where `kwargs` are parameters
+    - To make class name explicit, would probably need to call it directly, e.g. `MyType = callable_dataclass(my_func)`
 - More test coverage
   - More complex examples
   - Cover more data types (dynamically generate dataclass types)

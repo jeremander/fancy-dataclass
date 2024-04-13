@@ -1,4 +1,6 @@
 from abc import ABC, abstractmethod
+from datetime import datetime
+from enum import Enum
 from io import StringIO, TextIOBase
 import json
 from json import JSONEncoder
@@ -6,7 +8,8 @@ from typing import Any, BinaryIO, TextIO, Type, Union, get_args, get_origin
 
 from typing_extensions import Self
 
-from fancy_dataclass.dict import DictDataclass, JSONDict
+from fancy_dataclass.dict import AnyDict, DictDataclass
+from fancy_dataclass.utils import TypeConversionError
 
 
 AnyIO = Union[BinaryIO, TextIO]
@@ -16,7 +19,7 @@ class JSONSerializable(ABC):
     """Mixin class enabling conversion of an object to/from JSON."""
 
     @abstractmethod
-    def to_dict(self, **kwargs: Any) -> JSONDict:
+    def to_dict(self, **kwargs: Any) -> AnyDict:
         """Converts an object to a dict that can be readily converted into JSON.
 
         Returns:
@@ -73,7 +76,7 @@ class JSONSerializable(ABC):
 
     @classmethod
     @abstractmethod
-    def from_dict(cls, d: JSONDict, **kwargs: Any) -> Self:
+    def from_dict(cls, d: AnyDict, **kwargs: Any) -> Self:
         """Constructs an object from a dictionary of fields.
 
         Args:
@@ -129,14 +132,62 @@ class JSONDataclass(DictDataclass, JSONSerializable):  # type: ignore[misc]
                     raise TypeError('when subclassing a JSONDataclass, you must set qualified_type=True or subclass JSONBaseDataclass instead')
 
     @classmethod
-    def _convert_value(cls, tp: type, x: Any, strict: bool = False) -> Any:
-        # customize for JSONSerializable
+    def _to_dict_value_basic(cls, val: Any) -> Any:
+        if isinstance(val, Enum):
+            return val.value
+        elif isinstance(val, range):  # store the range bounds
+            bounds = [val.start, val.stop]
+            if val.step != 1:
+                bounds.append(val.step)
+            return bounds
+        elif isinstance(val, datetime):
+            return val.isoformat()
+        elif isinstance(val, (int, float)):  # handles numpy numeric types
+            return val
+        elif hasattr(val, 'dtype'):  # assume it's a numpy array of numbers
+            return [float(elt) for elt in val]
+        return val
+
+    @classmethod
+    def _to_dict_value(cls, val: Any, full: bool) -> Any:
+        if isinstance(val, tuple) and hasattr(val, '_fields'):
+            # if a namedtuple, render as a dict with named fields rather than a tuple
+            return {k: cls._to_dict_value(v, full) for (k, v) in zip(val._fields, val)}
+        return super()._to_dict_value(val, full)
+
+    @classmethod
+    def _from_dict_value_basic(cls, tp: type, val: Any) -> Any:
+        if issubclass(tp, float):
+            return tp(val)
+        if issubclass(tp, range):
+            return tp(*val)
+        if issubclass(tp, datetime):
+            return tp.fromisoformat(val)
+        if issubclass(tp, Enum):
+            try:
+                return tp(val)
+            except ValueError as e:
+                raise TypeConversionError(tp, val) from e
+        return super()._from_dict_value_basic(tp, val)
+
+    @classmethod
+    def _from_dict_value(cls, tp: type, val: Any, strict: bool = False) -> Any:
+        # customize behavior for JSONSerializable
         origin_type = get_origin(tp)
+        if (origin_type is None) and issubclass(tp, tuple) and isinstance(val, dict) and hasattr(tp, '_fields'):  # namedtuple
+            try:
+                vals = []
+                for key in tp._fields:
+                    # if NamedTuple's types are annotated, check them
+                    valtype = tp.__annotations__.get(key)
+                    vals.append(val[key] if (valtype is None) else cls._from_dict_value(valtype, val[key], strict=strict))
+                return tp(*vals)
+            except KeyError as e:
+                raise TypeConversionError(tp, val) from e
         if origin_type == dict:  # decode keys to be valid JSON
             (keytype, valtype) = get_args(tp)
-            return {cls._json_key_decoder(cls._convert_value(keytype, k)) : cls._convert_value(valtype, v, strict=strict) for (k, v) in x.items()}
-        # otherwise, fall back on superclass
-        return DictDataclass._convert_value(tp, x)
+            return {cls._json_key_decoder(cls._from_dict_value(keytype, k)) : cls._from_dict_value(valtype, v, strict=strict) for (k, v) in val.items()}
+        return super()._from_dict_value(tp, val)
 
 
 class JSONBaseDataclass(JSONDataclass, qualified_type=True):

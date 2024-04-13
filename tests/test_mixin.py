@@ -7,14 +7,16 @@ from fancy_dataclass.utils import get_dataclass_fields
 
 
 def test_field_settings():
+    """Tests the FieldSettings class."""
     fld_empty = field()
-    fld_pos = field(metadata = {'positive': True})
-    fld_wrong_type = field(metadata = {'positive': 1})
+    fld_pos = field(metadata={'positive': True})
+    fld_wrong_type = field(metadata={'positive': 1})
     class MyFieldSettings1(FieldSettings):
         pass
     with pytest.raises(TypeError, match='MyFieldSettings1 is not a dataclass'):
         _ = MyFieldSettings1.from_field(fld_pos)
     MyFieldSettings1 = dataclass(MyFieldSettings1)
+    # extra metadata is ignored
     assert MyFieldSettings1.from_field(fld_pos) == MyFieldSettings1()
     @dataclass
     class MyFieldSettings2(FieldSettings):
@@ -41,6 +43,7 @@ class MySettingsReq(DataclassMixinSettings):
 
 
 class TestDataclassMixin:
+    """Tests the DataclassMixin class."""
 
     def test_post_dataclass_wrap_hook(self):
         """Tests the __post_dataclass_wrap__ hook."""

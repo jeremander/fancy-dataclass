@@ -8,6 +8,7 @@ from dataclasses import Field, dataclass, is_dataclass, make_dataclass
 from functools import lru_cache
 import importlib
 from pathlib import Path
+import re
 from typing import TYPE_CHECKING, Any, Callable, Dict, ForwardRef, Generic, Iterator, List, Optional, Sequence, Set, Tuple, Type, TypeVar, Union, get_args, get_origin, get_type_hints
 
 from typing_extensions import TypeGuard
@@ -26,6 +27,21 @@ RecordPath = Tuple[str, ...]
 
 # maximum depth when traversing the fields of a dataclass
 MAX_DATACLASS_DEPTH = 100
+
+
+class TypeConversionError(ValueError):
+    """Error type for type conversion."""
+
+    def __init__(self, tp: type, val: Any) -> None:
+        """Constructor for `TypeConversionError`.
+
+        Args:
+            tp: type to convert to
+            val: value to convert"""
+        self.tp = tp
+        self.val = val
+        tp_name = re.sub("'>$", '', re.sub(r"^<\w+ '", '', str(tp)))
+        super().__init__(f'could not convert {val!r} to type {tp_name!r}')
 
 
 def safe_dict_insert(d: Dict[Any, Any], key: str, val: Any) -> None:
