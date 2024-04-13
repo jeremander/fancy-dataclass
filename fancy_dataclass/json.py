@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import Enum
 import json
 from json import JSONEncoder
-from typing import Any, TextIO, Type, get_args, get_origin
+from typing import Any, BinaryIO, TextIO, Type, cast, get_args, get_origin
 
 from typing_extensions import Self
 
@@ -38,18 +38,23 @@ class JSONSerializable(FileSerializable):
 
         Args:
             fp: A writable file-like object
-            kwargs: Keyword arguments passed to `json.dump`"""
+            kwargs: Keyword arguments"""
         return self._to_file(fp, **kwargs)
 
     def to_json_string(self, **kwargs: Any) -> str:
         """Converts the object into a JSON string.
 
         Args:
-            kwargs: Keyword arguments passed to `json.dump`
+            kwargs: Keyword arguments
 
         Returns:
             Object rendered as a JSON string"""
         return self._to_string(**kwargs)
+
+    @classmethod
+    def _from_binary_file(cls, fp: BinaryIO, **kwargs: Any) -> Self:
+        # json.load accepts binary file, so we avoid the string conversion
+        return cls._from_text_file(cast(TextIO, fp), **kwargs)
 
     @classmethod
     def from_json(cls, fp: AnyIO, **kwargs: Any) -> Self:
@@ -76,7 +81,7 @@ class JSONSerializable(FileSerializable):
         return cls._from_string(s, **kwargs)
 
 
-class JSONDataclass(DictFileSerializableDataclass, JSONSerializable):  # type: ignore[misc]
+class JSONDataclass(DictFileSerializableDataclass, JSONSerializable):
     """Dataclass mixin enabling default serialization of dataclass objects to and from JSON."""
 
     @classmethod

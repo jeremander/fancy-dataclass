@@ -3,7 +3,6 @@
 ## v0.3.0
 
 - TOMLDataclass
-  - `tomlkit` maintains parsed structure (incl. whitespace & comments)
   - Let ConfigDataclass parse TOML
 - Basic usage examples in docs
 - Host on GH Pages or Readthedocs
@@ -35,6 +34,10 @@
 
 ## Future
 
+- `TOMLDataclass`
+  - Require subclass to set `qualified_type=True`, like `JSONDataclass`?
+  - Preserve document structure via `tomlkit`
+  - For `None`, serialize as commented field?
 - `TabularDataclass`? CSV/TSV/parquet/feather
   - Make `SQLDataclass` inherit from it
 - Support subparsers in `ArgparseDataclass`
