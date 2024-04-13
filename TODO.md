@@ -1,11 +1,5 @@
 # TODO
 
-## v0.2.0
-
-- Documentation
-  - 1-2 sentence intro for each subpage
-- PyPI
-
 ## v0.3.0
 
 - ConfigDataclass

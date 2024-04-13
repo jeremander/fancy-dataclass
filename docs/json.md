@@ -1,14 +1,10 @@
-<style>
-.md-sidebar--secondary {
-    display: none !important;
-}
+<!-- markdownlint-disable MD052 -->
 
-.md-main__inner .md-content {
-    max-width: 45rem;
-}
-</style>
+The [`JSONDataclass`][fancy_dataclass.json.JSONDataclass] mixin provides automatic conversion to and from [JSON](https://en.wikipedia.org/wiki/JSON).
 
-🚧 **Under construction** 🚧
+- [`to_dict`][fancy_dataclass.dict.DictDataclass.to_dict] / [`from_dict`][fancy_dataclass.dict.DictDataclass.from_dict] convert to and from Python dicts (ensuring values are JSON serializable).
+- [`to_json`][fancy_dataclass.json.JSONSerializable.to_json] / [`from_json`][fancy_dataclass.json.JSONSerializable.from_json] convert to and from JSON file-like objects.
+- [`to_json_string`][fancy_dataclass.json.JSONSerializable.to_json_string] / [`from_json_string`][fancy_dataclass.json.JSONSerializable.from_json_string] convert to and from JSON strings.
 
 ## Usage Example
 
@@ -60,7 +56,7 @@ Convert to/from a Python dict.
 True
 ```
 
-Convert to/from JSON.
+Convert to/from a JSON string.
 
 ```python
 >>> person = Person(
@@ -88,3 +84,30 @@ Convert to/from JSON.
 >>> person == new_person
 True
 ```
+
+## Details
+
+🚧 **Under construction** 🚧
+
+<!--
+- Inherits from `DictDataclass`
+- Suppressing defaults
+- Other settings (`store_type`, `qualified_type`)
+- `JSONBaseDataclass` providing `qualified_type=True`
+- kwargs get passed to `json.dump`
+- `strict` argument in `from_dict`
+-->
+
+### Notes
+
+- `JSONDataclass` is configured to use the default JSON settings provided by Python's standard [`json`](https://docs.python.org/3/library/json.html) library. This allows out-of-range float values like `nan` and `inf` to be represented as `NaN` and `Infinity`, which are not strictly part of the JSON standard. To disallow these values, you can pass `allow_nan=False` when calling `to_json` or `to_json_string`, which will raise a `ValueError` if such values occur.
+
+<style>
+.md-sidebar--secondary {
+    display: none !important;
+}
+
+.md-main__inner .md-content {
+    max-width: 45rem;
+}
+</style>

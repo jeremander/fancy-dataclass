@@ -1,14 +1,12 @@
-<style>
-.md-sidebar--secondary {
-    display: none !important;
-}
+<!-- markdownlint-disable MD052 -->
 
-.md-main__inner .md-content {
-    max-width: 45rem;
-}
-</style>
+The [`SQLDataclass`][fancy_dataclass.sql.SQLDataclass] mixin provides SQL [ORM](https://en.wikipedia.org/wiki/Object–relational_mapping) (Object-Relational Mapping) functionality to a dataclass. This uses the [SQLAlchemy](https://www.sqlalchemy.org) library under the hood.
 
-🚧 **Under construction** 🚧
+After applying the [`register`][fancy_dataclass.sql.register] decorator to a custom dataclass, it will register a [`sqlalchemy.Table`](https://docs.sqlalchemy.org/en/20/core/metadata.html#sqlalchemy.schema.Table), after which you can use the class to perform database [CRUD](https://en.wikipedia.org/wiki/Create,_read,_update_and_delete) operations in the typical SQLAlchemy way. You can also define constraints and relationships on the tables after they are registered.
+
+Since SQLAlchemy is backend-agnostic, you can use `SQLDataclass` with many popular SQL backends such as SQLite, MySQL, and PostgreSQL.
+
+See the SQLAlchemy documentation on how to set up [engines](https://docs.sqlalchemy.org/en/20/core/engines.html) and [sessions](https://docs.sqlalchemy.org/en/20/orm/session_basics.html).
 
 ## Usage Example
 
@@ -36,7 +34,7 @@ engine = create_engine('sqlite:///:memory:')
 DEFAULT_REGISTRY.metadata.create_all(engine)
 ```
 
-Create a `sqlalchemy` session and populate the table.
+Create a SQLAlchemy session and populate the table.
 
 ```python
 >>> Session = sessionmaker(bind=engine)
@@ -49,6 +47,9 @@ Create a `sqlalchemy` session and populate the table.
 [Employee(first_name='John', last_name='Smith', _id=1), Employee(first_name='Jane', last_name='Doe', _id=2)]
 ```
 
+## Details
+
+🚧 **Under construction** 🚧
 
 <!-- from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
@@ -109,3 +110,13 @@ session.close() -->
 
 <!-- Add relationship after the fact -->
 <!-- Parent.children = relationship(Child, primaryjoin=Child.parent_id == Parent.id) -->
+
+<style>
+.md-sidebar--secondary {
+    display: none !important;
+}
+
+.md-main__inner .md-content {
+    max-width: 45rem;
+}
+</style>
