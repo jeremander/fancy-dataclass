@@ -119,7 +119,7 @@ class JSONSerializable(ABC):
 
 
 class JSONDataclass(DictDataclass, JSONSerializable):  # type: ignore[misc]
-    """Subclass of [`JSONSerializable`][fancy_dataclass.json.JSONSerializable] enabling default serialization of dataclass objects to and from JSON."""
+    """Dataclass mixin enabling default serialization of dataclass objects to and from JSON."""
 
     @classmethod
     def __init_subclass__(cls, **kwargs: Any) -> None:

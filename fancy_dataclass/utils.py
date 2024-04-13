@@ -120,6 +120,9 @@ def _is_instance(obj: Any, tp: type) -> bool:
     elif origin is dict:
         (key_type, val_type) = get_args(tp)
         return isinstance(obj, dict) and all(_is_instance(key, key_type) and _is_instance(val, val_type) for (key, val) in obj.items())
+    elif origin is collections.abc.Callable:
+        # TODO: try to check object's annotations
+        return isinstance(obj, Callable)  # type: ignore[arg-type]
     return isinstance(obj, tp)
 
 def obj_class_name(obj: object) -> str:

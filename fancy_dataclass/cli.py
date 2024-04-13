@@ -3,7 +3,7 @@ from argparse import ArgumentParser, Namespace
 from contextlib import suppress
 from dataclasses import MISSING, dataclass, fields
 from enum import IntEnum
-from typing import Any, ClassVar, Dict, List, Literal, Optional, Sequence, Type, TypeVar, Union, get_args, get_origin
+from typing import Any, Callable, ClassVar, Dict, List, Literal, Optional, Sequence, Type, TypeVar, Union, get_args, get_origin
 
 from typing_extensions import Self
 
@@ -39,8 +39,7 @@ class ArgparseDataclassFieldSettings(FieldSettings):
         - If it is an option but specifies no default value, it will be a required option.
     - If `args` are absent, the field will be an option if either (1) it specifies a default value, or (2) it is a boolean type; otherwise it is a positional argument.
     """
-    # TODO: is this ever necessary?
-    type: Optional[type] = None
+    type: Optional[Union[type, Callable[[Any], Any]]] = None  # can be used to define custom constructor
     args: Optional[Union[str, Sequence[str]]] = None
     action: Optional[str] = None
     nargs: Optional[Union[str, int]] = None

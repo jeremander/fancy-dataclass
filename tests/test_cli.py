@@ -249,3 +249,8 @@ def test_argparse_options():
     check_invalid_args(DC24, ['1'])
     check_invalid_args(DC24, ['1', 'a'])
     check_invalid_args(DC24, ['1', '2', '3'])
+    # custom type constructor
+    @dataclass
+    class DC25(ArgparseDataclass):
+        x: int = field(metadata={'type': lambda x: int(x) + 1})
+    assert DC25.from_cli_args(['1']).x == 2
