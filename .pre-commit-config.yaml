@@ -27,3 +27,11 @@ repos:
   hooks:
     - id: commitizen
       stages: [commit-msg]
+- repo: local
+  hooks:
+    - id: summarize
+      name: summarize
+      entry: summarize.sh
+      language: script
+      pass_filenames: false
+      verbose: true

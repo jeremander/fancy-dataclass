@@ -11,17 +11,17 @@ from fancy_dataclass.cli import ArgparseDataclass, CLIDataclass
 @dataclass
 class DC1(CLIDataclass):
     """An example of CLIDataclass."""
-    required_string: str = field(metadata = {'args': ['required_string'], 'help': 'a required string'})
-    input_file: str = field(metadata = {'args': ['-i', '--input-file'], 'help': 'input file', 'metavar': 'INFILE', 'group': 'IO arguments'})
-    output_file: str = field(metadata = {'args': ['-o', '--output-file'], 'help': 'output file', 'metavar': 'OUTFILE', 'group': 'IO arguments'})
-    choice: str = field(default = 'a', metadata = {'choices': ['a', 'b', 'c'], 'help': 'one of three choices'})
-    optional: str = field(default = 'default', metadata = {'nargs': '?', 'const': 'unspecified', 'help': 'optional argument'})
-    flag: bool = field(default = False, metadata = {'help': 'activate flag'})
-    extra_items: List[str] = field(default_factory = list, metadata = {'nargs': '*', 'help': 'list of extra items'})
-    x: int = field(default = 7, metadata = {'help': 'x value', 'group': 'numeric arguments'})
-    y: float = field(default = 3.14, metadata = {'help': 'y value', 'group': 'numeric arguments'})
-    pair: Tuple[int, int] = field(default = (0, 0), metadata = {'nargs': 2, 'metavar': ('FIRST', 'SECOND'), 'help': 'pair of integers', 'group': 'numeric arguments'})
-    ignored_value: str = field(default = 'ignored', metadata = {'args': [], 'parse_exclude': True})
+    required_string: str = field(metadata={'args': ['required_string'], 'help': 'a required string'})
+    input_file: str = field(metadata={'args': ['-i', '--input-file'], 'help': 'input file', 'metavar': 'INFILE', 'group': 'IO arguments'})
+    output_file: str = field(metadata={'args': ['-o', '--output-file'], 'help': 'output file', 'metavar': 'OUTFILE', 'group': 'IO arguments'})
+    choice: str = field(default='a', metadata={'choices': ['a', 'b', 'c'], 'help': 'one of three choices'})
+    optional: str = field(default='default', metadata={'nargs': '?', 'const': 'unspecified', 'help': 'optional argument'})
+    flag: bool = field(default=False, metadata={'help': 'activate flag'})
+    extra_items: List[str] = field(default_factory=list, metadata={'nargs': '*', 'help': 'list of extra items'})
+    x: int = field(default=7, metadata={'help': 'x value', 'group': 'numeric arguments'})
+    y: float = field(default=3.14, metadata={'help': 'y value', 'group': 'numeric arguments'})
+    pair: Tuple[int, int] = field(default=(0, 0), metadata={'nargs': 2, 'metavar': ('FIRST', 'SECOND'), 'help': 'pair of integers', 'group': 'numeric arguments'})
+    ignored_value: str = field(default='ignored', metadata={'args': [], 'parse_exclude': True})
 
     @classmethod
     def parser_kwargs(cls) -> Dict[str, Any]:
@@ -32,19 +32,19 @@ class DC1(CLIDataclass):
 
 def test_argparse_dataclass_help():
     """Tests equivalence of argparse-generated help string between an ArgparseDataclass and building the parser manually."""
-    parser = ArgumentParser(description = DC1.__doc__, formatter_class = ArgumentDefaultsHelpFormatter)
-    parser.add_argument('required_string', help = 'a required string')
+    parser = ArgumentParser(description=DC1.__doc__, formatter_class=ArgumentDefaultsHelpFormatter)
+    parser.add_argument('required_string', help='a required string')
     io_group = parser.add_argument_group('IO arguments')
-    io_group.add_argument('-i', '--input-file', required = True, metavar = 'INFILE', help = 'input file')
-    io_group.add_argument('-o', '--output-file', required = True, metavar = 'OUTFILE', help = 'output file')
-    parser.add_argument('--choice', default = 'a', choices = ['a', 'b', 'c'], help = 'one of three choices')
-    parser.add_argument('--optional', nargs = '?', default = 'default', const = 'unspecified', help = 'optional argument')
-    parser.add_argument('--flag', action = 'store_true', help = 'activate flag')
-    parser.add_argument('--extra-items', nargs = '*', default = [], help = 'list of extra items')
+    io_group.add_argument('-i', '--input-file', required=True, metavar='INFILE', help='input file')
+    io_group.add_argument('-o', '--output-file', required=True, metavar='OUTFILE', help='output file')
+    parser.add_argument('--choice', default='a', choices=['a', 'b', 'c'], help='one of three choices')
+    parser.add_argument('--optional', nargs='?', default='default', const='unspecified', help='optional argument')
+    parser.add_argument('--flag', action='store_true', help='activate flag')
+    parser.add_argument('--extra-items', nargs='*', default=[], help='list of extra items')
     num_group = parser.add_argument_group('numeric arguments')
-    num_group.add_argument('-x', type = int, default = 7, help = 'x value')
-    num_group.add_argument('-y', type = float, default = 3.14, help = 'y value')
-    num_group.add_argument('--pair', type = int, nargs = 2, default = (0, 0), metavar = ('FIRST', 'SECOND'), help = 'pair of integers')
+    num_group.add_argument('-x', type=int, default=7, help='x value')
+    num_group.add_argument('-y', type=float, default=3.14, help='y value')
+    num_group.add_argument('--pair', type=int, nargs=2, default=(0, 0), metavar=('FIRST', 'SECOND'), help='pair of integers')
     dc1_parser = DC1.make_parser()
     assert parser.format_help() == dc1_parser.format_help()
 
