@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from copy import copy
 import dataclasses
 from dataclasses import dataclass
@@ -17,6 +18,34 @@ T = TypeVar('T', bound=DataclassMixin)
 D = TypeVar('D', bound='DataclassInstance')
 
 AnyDict = Dict[str, Any]
+
+
+class DictConvertible(ABC):
+    """Mixin class enabling conversion of an object to/from a Python dict.
+
+    Subclasses should override `to_dict` and `from_dict` to implement the conversion"""
+
+    @abstractmethod
+    def to_dict(self, **kwargs: Any) -> AnyDict:
+        """Converts an object to a dict.
+
+        Args:
+            kwargs: Keyword arguments
+
+        Returns:
+            A Python dict"""
+
+    @classmethod
+    @abstractmethod
+    def from_dict(cls, d: AnyDict, **kwargs: Any) -> Self:
+        """Constructs an object from a dictionary of (attribute, value) pairs.
+
+        Args:
+            d: Dict to convert into an object
+            kwargs: Keyword arguments
+
+        Returns:
+            Converted object of this class"""
 
 
 @dataclass

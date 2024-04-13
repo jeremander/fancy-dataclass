@@ -1,4 +1,3 @@
-from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import Enum
 from io import StringIO, TextIOBase
@@ -8,22 +7,15 @@ from typing import Any, BinaryIO, TextIO, Type, Union, get_args, get_origin
 
 from typing_extensions import Self
 
-from fancy_dataclass.dict import AnyDict, DictDataclass
+from fancy_dataclass.dict import DictConvertible, DictDataclass
 from fancy_dataclass.utils import TypeConversionError
 
 
 AnyIO = Union[BinaryIO, TextIO]
 
 
-class JSONSerializable(ABC):
+class JSONSerializable(DictConvertible):
     """Mixin class enabling conversion of an object to/from JSON."""
-
-    @abstractmethod
-    def to_dict(self, **kwargs: Any) -> AnyDict:
-        """Converts an object to a dict that can be readily converted into JSON.
-
-        Returns:
-            A JSON-convertible dict"""
 
     def _json_encoder(self) -> Type[JSONEncoder]:
         """Override this method to create a custom `JSONEncoder` to handle specific data types.
@@ -73,18 +65,6 @@ class JSONSerializable(ABC):
         with StringIO() as stream:
             self._to_json(stream, **kwargs)
             return stream.getvalue()
-
-    @classmethod
-    @abstractmethod
-    def from_dict(cls, d: AnyDict, **kwargs: Any) -> Self:
-        """Constructs an object from a dictionary of fields.
-
-        Args:
-            d: Dict to convert into an object
-            kwargs: Keyword arguments
-
-        Returns:
-            Converted object of this class"""
 
     @classmethod
     def from_json(cls, fp: AnyIO, **kwargs: Any) -> Self:
