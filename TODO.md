@@ -3,7 +3,8 @@
 ## v0.3.0
 
 - TOMLDataclass
-  - Let ConfigDataclass parse TOML
+  - Value conversions (borrow from JSON)
+  - Unit tests (also for `ConfigDataclass.load_config`)
 - Basic usage examples in docs
 - Host on GH Pages or Readthedocs
   - Make PyPI page link to the hosted docs as well as Github
@@ -34,10 +35,15 @@
 
 ## Future
 
+- `FileSerializable`
+  - Add `save` and `load` convenience methods?
 - `TOMLDataclass`
   - Require subclass to set `qualified_type=True`, like `JSONDataclass`?
   - Preserve document structure via `tomlkit`
+    - NOTE: the parsed values themselves have a `_trivia` attribute storing various formatting info
+    - Use field metadata (`help`?) as comment prior to the field
   - For `None`, serialize as commented field?
+  - Test `None` when it's not the default value (can break round-trip fidelity)
 - `TabularDataclass`? CSV/TSV/parquet/feather
   - Make `SQLDataclass` inherit from it
 - Support subparsers in `ArgparseDataclass`

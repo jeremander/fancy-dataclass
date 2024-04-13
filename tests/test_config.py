@@ -91,6 +91,11 @@ def test_json(tmpdir):
     for obj in [obj3, obj4]:
         with open(outfile) as f:
             assert type(obj).from_json(f) == obj
+    # test that loading config sets it globally
+    JSONConfig1.clear_config()
+    assert JSONConfig1.get_config() is None
+    obj = JSONConfig1.load_config(outfile)
+    assert JSONConfig1.get_config() is obj
     # test extension inference
     outfile2 = tmpdir / 'test2'
     shutil.copy(outfile, outfile2)

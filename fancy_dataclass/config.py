@@ -8,6 +8,7 @@ from typing_extensions import Self
 
 from fancy_dataclass.dict import DictDataclass
 from fancy_dataclass.mixin import DataclassMixin
+from fancy_dataclass.serialize import FileSerializable
 from fancy_dataclass.utils import AnyPath, coerce_to_dataclass, get_dataclass_fields
 
 
@@ -74,21 +75,30 @@ class ConfigDataclass(Config, DictDataclass, suppress_defaults=False):
         return make_dataclass(cls.__name__, field_data, bases=wrapped_cls.__bases__)
 
     @classmethod
+    def _get_dataclass_type_for_extension(cls, ext: str) -> Type[FileSerializable]:
+        ext_lower = ext.lower()
+        if ext_lower == '.json':
+            from fancy_dataclass.json import JSONDataclass
+            return JSONDataclass
+        elif ext_lower == '.toml':
+            from fancy_dataclass.toml import TOMLDataclass
+            return TOMLDataclass
+        else:
+            raise ValueError(f'unknown config file extension {ext!r}')
+
+    @classmethod
     def load_config(cls, path: AnyPath) -> Self:
         """Loads configurations from a file and sets them to be the global configurations for this class.
 
         Returns:
             The newly loaded global configuration"""
         p = Path(path)
-        ext = p.suffix.lower()
+        ext = p.suffix
         if not ext:
             raise ValueError(f'filename {p} has no extension')
-        if ext == '.json':
-            from fancy_dataclass.json import JSONDataclass
-            new_cls: Type[JSONDataclass] = ConfigDataclass._wrap_config_dataclass(JSONDataclass, cls)  # type: ignore[assignment]
-            with open(path) as f:
-                cfg: Self = coerce_to_dataclass(cls, new_cls.from_json(f))
-        else:
-            raise ValueError(f'unknown config file extension {ext!r}')
+        tp = cls._get_dataclass_type_for_extension(ext)
+        new_cls: Type[FileSerializable] = ConfigDataclass._wrap_config_dataclass(tp, cls)  # type: ignore
+        with open(path) as f:
+            cfg: Self = coerce_to_dataclass(cls, new_cls._from_file(f))
         cfg.update_config()
         return cfg
