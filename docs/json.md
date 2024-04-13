@@ -96,6 +96,7 @@ True
 - `JSONBaseDataclass` providing `qualified_type=True`
 - kwargs get passed to `json.dump`
 - `strict` argument in `from_dict`
+- Override `_json_encoder`, `_json_key_decoder`
 -->
 
 ### Notes

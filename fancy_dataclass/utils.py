@@ -9,7 +9,7 @@ from functools import lru_cache
 import importlib
 from pathlib import Path
 import re
-from typing import TYPE_CHECKING, Any, Callable, Dict, ForwardRef, Generic, Iterator, List, Optional, Sequence, Set, Tuple, Type, TypeVar, Union, get_args, get_origin, get_type_hints
+from typing import TYPE_CHECKING, Any, BinaryIO, Callable, Dict, ForwardRef, Generic, Iterator, List, Optional, Sequence, Set, TextIO, Tuple, Type, TypeVar, Union, get_args, get_origin, get_type_hints
 
 from typing_extensions import TypeGuard
 
@@ -21,6 +21,7 @@ if TYPE_CHECKING:
 T = TypeVar('T')
 U = TypeVar('U')
 
+AnyIO = Union[BinaryIO, TextIO]
 Constructor = Callable[[Any], Any]
 AnyPath = str | Path
 RecordPath = Tuple[str, ...]

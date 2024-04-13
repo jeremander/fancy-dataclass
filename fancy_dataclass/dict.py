@@ -23,7 +23,7 @@ AnyDict = Dict[str, Any]
 class DictConvertible(ABC):
     """Mixin class enabling conversion of an object to/from a Python dict.
 
-    Subclasses should override `to_dict` and `from_dict` to implement the conversion"""
+    Subclasses should override `to_dict` and `from_dict` to implement the conversion."""
 
     @abstractmethod
     def to_dict(self, **kwargs: Any) -> AnyDict:

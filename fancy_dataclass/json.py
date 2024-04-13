@@ -1,23 +1,21 @@
 from datetime import datetime
 from enum import Enum
-from io import StringIO, TextIOBase
 import json
 from json import JSONEncoder
-from typing import Any, BinaryIO, TextIO, Type, Union, get_args, get_origin
+from typing import Any, TextIO, Type, get_args, get_origin
 
 from typing_extensions import Self
 
-from fancy_dataclass.dict import DictConvertible, DictDataclass
-from fancy_dataclass.utils import TypeConversionError
+from fancy_dataclass.dict import AnyDict
+from fancy_dataclass.serialize import DictFileSerializableDataclass, FileSerializable
+from fancy_dataclass.utils import AnyIO, TypeConversionError
 
 
-AnyIO = Union[BinaryIO, TextIO]
-
-
-class JSONSerializable(DictConvertible):
+class JSONSerializable(FileSerializable):
     """Mixin class enabling conversion of an object to/from JSON."""
 
-    def _json_encoder(self) -> Type[JSONEncoder]:
+    @classmethod
+    def _json_encoder(cls) -> Type[JSONEncoder]:
         """Override this method to create a custom `JSONEncoder` to handle specific data types.
         A skeleton for this looks like:
 
@@ -34,14 +32,6 @@ class JSONSerializable(DictConvertible):
         """Override this method to decode a JSON key, for use with `from_dict`."""
         return key
 
-    def _to_json(self, fp: TextIO, **kwargs: Any) -> None:
-        indent = kwargs.get('indent')
-        if (indent is not None) and (indent < 0):
-            kwargs['indent'] = None
-        kwargs['cls'] = self._json_encoder()
-        d = self.to_dict()
-        json.dump(d, fp, **kwargs)
-
     def to_json(self, fp: AnyIO, **kwargs: Any) -> None:
         """Writes the object as JSON to a file-like object (text or binary).
         If binary, applies UTF-8 encoding.
@@ -49,10 +39,7 @@ class JSONSerializable(DictConvertible):
         Args:
             fp: A writable file-like object
             kwargs: Keyword arguments passed to `json.dump`"""
-        if isinstance(fp, TextIOBase):  # text stream
-            self._to_json(fp, **kwargs)
-        else:  # binary
-            fp.write(self.to_json_string(**kwargs).encode())  # type: ignore[call-overload]
+        return self._to_file(fp, **kwargs)
 
     def to_json_string(self, **kwargs: Any) -> str:
         """Converts the object into a JSON string.
@@ -62,9 +49,7 @@ class JSONSerializable(DictConvertible):
 
         Returns:
             Object rendered as a JSON string"""
-        with StringIO() as stream:
-            self._to_json(stream, **kwargs)
-            return stream.getvalue()
+        return self._to_string(**kwargs)
 
     @classmethod
     def from_json(cls, fp: AnyIO, **kwargs: Any) -> Self:
@@ -76,11 +61,7 @@ class JSONSerializable(DictConvertible):
 
         Returns:
             Converted object of this class"""
-        # pop off known DictDataclass.from_dict kwargs
-        default_dict_kwargs = {'strict': False}
-        dict_kwargs = {key: kwargs.get(key, default_dict_kwargs[key]) for key in default_dict_kwargs}
-        json_kwargs = {key: val for (key, val) in kwargs.items() if (key not in default_dict_kwargs)}
-        return cls.from_dict(json.load(fp, **json_kwargs), **dict_kwargs)
+        return cls._from_file(fp, **kwargs)
 
     @classmethod
     def from_json_string(cls, s: str, **kwargs: Any) -> Self:
@@ -92,13 +73,10 @@ class JSONSerializable(DictConvertible):
 
         Returns:
             Converted object of this class"""
-        default_dict_kwargs = {'strict': False}
-        dict_kwargs = {key: kwargs.get(key, default_dict_kwargs[key]) for key in default_dict_kwargs}
-        json_kwargs = {key: val for (key, val) in kwargs.items() if (key not in default_dict_kwargs)}
-        return cls.from_dict(json.loads(s, **json_kwargs), **dict_kwargs)
+        return cls._from_string(s, **kwargs)
 
 
-class JSONDataclass(DictDataclass, JSONSerializable):  # type: ignore[misc]
+class JSONDataclass(DictFileSerializableDataclass, JSONSerializable):  # type: ignore[misc]
     """Dataclass mixin enabling default serialization of dataclass objects to and from JSON."""
 
     @classmethod
@@ -110,6 +88,21 @@ class JSONDataclass(DictDataclass, JSONSerializable):  # type: ignore[misc]
             for base in cls.mro():
                 if (base not in [cls, JSONDataclass]) and issubclass(base, JSONDataclass):
                     raise TypeError('when subclassing a JSONDataclass, you must set qualified_type=True or subclass JSONBaseDataclass instead')
+
+    @classmethod
+    def _dict_to_text_file(cls, d: AnyDict, fp: TextIO, **kwargs: Any) -> None:
+        indent = kwargs.get('indent')
+        if (indent is not None) and (indent < 0):
+            kwargs['indent'] = None
+        kwargs['cls'] = cls._json_encoder()
+        json.dump(d, fp, **kwargs)
+
+    @classmethod
+    def _text_file_to_dict(cls, fp: TextIO, **kwargs: Any) -> AnyDict:
+        d = json.load(fp, **kwargs)
+        if not isinstance(d, dict):
+            raise ValueError('loaded JSON is not a dict')
+        return d
 
     @classmethod
     def _to_dict_value_basic(cls, val: Any) -> Any:
