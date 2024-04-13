@@ -24,9 +24,10 @@ class SubprocessDataclassFieldSettings(FieldSettings):
 
     - `exec`: if `True`, use this field as the name of the executable, rather than an argument
     - `args`: command-line arguments corresponding to the field
-        - If a non-empty list, use the first entry as the argument name (only if it starts with a dash)
+        - If a non-empty list, use the first entry as the argument name if it starts with a dash, and treat it as a positional argument otherwise
         - If `None`, use the field name prefixed by one dash (if single letter) or two dashes, with underscores replaced by dashes
-        - If an empty list, exclude this field from the arguments"""
+        - If an empty list, exclude this field from the arguments
+        - If the field type is `bool`, will provide the argument as a flag if the value is `True`, and omit it otherwise"""
     exec: bool = False
     args: Optional[Union[str, Sequence[str]]] = None
 
@@ -43,15 +44,17 @@ class SubprocessDataclass(DataclassMixin):
     @classmethod
     def __post_dataclass_wrap__(cls) -> None:
         super().__post_dataclass_wrap__()
+        cls_exec_field = cls.__settings__.exec
         # make sure there is at most one exec field
         exec_field = None
         stype = cls.__field_settings_type__
         for fld in get_dataclass_fields(cls, include_classvars=True):
             if stype.from_field(fld).exec:
-                if exec_field is None:
-                    exec_field = fld.name
-                else:
-                    raise TypeError("cannot have more than one field with 'exec' flag set to True")
+                if cls_exec_field is not None:
+                    raise TypeError(f"cannot set field's 'exec' flag to True (class already set executable to {cls_exec_field})")
+                if exec_field is not None:
+                    raise TypeError(f"cannot have more than one field with 'exec' flag set to True (already set executable to {exec_field})")
+                exec_field = fld.name
 
     def get_arg(self, name: str, suppress_defaults: bool = False) -> List[str]:
         """Gets the command-line arguments for the given dataclass field.
@@ -118,27 +121,39 @@ class SubprocessDataclass(DataclassMixin):
 
         By default, this obtains the name of the executable as follows:
 
-        1. If the class settings have an `exec` member, uses that.
+        1. If the class settings specify an `exec` member, uses that.
         2. Otherwise, returns the value of the first dataclass field whose `exec` metadata flag is set to `True`, and `None` otherwise.
 
         Returns:
-            Name of the executable to run"""
+            Name of the executable to run
+
+        Raises:
+            ValueError: If the executable is not a string"""
+        def _check_type(val: Any) -> str:
+            if isinstance(val, str):
+                return val
+            raise ValueError(f'executable is {val} (must be a string)')
         if self.__settings__.exec:
-            return self.__settings__.exec
+            return _check_type(self.__settings__.exec)
         for fld in get_dataclass_fields(self, include_classvars=True):
             if fld.metadata.get('exec', False):
-                return getattr(self, fld.name, None)
+                return _check_type(getattr(self, fld.name, None))
         return None
 
     def args(self, suppress_defaults: bool = False) -> List[str]:
         """Converts dataclass fields to a list of command-line arguments for a subprocess call.
+
+        This includes the executable name itself as the first argument.
 
         Args:
             suppress_defaults: If `True`, suppresses arguments that are equal to the default values
 
         Returns:
             List of command-line args corresponding to the dataclass fields"""
-        args = []
+        executable = self.get_executable()
+        if not executable:
+            raise ValueError(f'no executable identified for use with {obj_class_name(self)} instance')
+        args = [executable]
         for fld in fields(self):  # type: ignore[arg-type]
             args += [arg for arg in self.get_arg(fld.name, suppress_defaults = suppress_defaults) if arg]
         return args
@@ -154,8 +169,4 @@ class SubprocessDataclass(DataclassMixin):
 
         Raises:
             ValueError: If no executable was found from the `get_executable` method"""
-        executable = self.get_executable()
-        if not executable:
-            raise ValueError(f'No executable identified for use with {obj_class_name(self)!r} instance')
-        args = [executable] + self.args()
-        return subprocess.run(args, **kwargs)
+        return subprocess.run(self.args(), **kwargs)

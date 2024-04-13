@@ -6,7 +6,7 @@
 
 Python 3.7 introduced the `dataclasses` module which lets you write "statically typed" classes using the type hinting mechanism.
 
-By inspecting dataclasses' type annotations, it is possible to endow them with special powers that help cut down on boilerplate code in a variety of domains. Applications include:
+By inspecting dataclasses' type annotations, it is possible to endow them with special powers that help cut down on boilerplate code in a wide variety of domains, such as:
 
 - *JSON conversion*: serialize dataclasses to JSON and vice versa
 - *SQL persistence*: define a SQL table, and save/load objects from a database

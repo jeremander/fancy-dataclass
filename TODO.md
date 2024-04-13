@@ -2,12 +2,6 @@
 
 ## v0.2.0
 
-- Unit tests for new behavior
-  - `SubprocessDataclass`
-    - `exec` setting
-    - One or more `exec` fields (incl. on top of `exec` setting)
-    - String or list for `args`
-    - Empty-string `args`
 - Documentation
   - 1-2 sentence intro for each subpage
 - PyPI
@@ -32,6 +26,7 @@
   - Dataclass mixins/settings
     - For now, `dataclass` decorator is required
     - Note purpose of `flattened=True` (good for tabular data like CSV/SQL)
+    - Advanced: how to handle name collisions in settings for multiple inheritance (e.g. `ArgparseDataclass`/`SubprocessDataclass`)
   - JSON
   - TOML
   - CLI
@@ -77,6 +72,9 @@
   - ABC providing `__call__` method on variadic positional args
   - `callable_dataclass` decorator wrapping a function into a `CallableDataclass` subclass where `kwargs` are parameters
     - To make class name explicit, would probably need to call it directly, e.g. `MyType = callable_dataclass(my_func)`
+- Validation
+  - More robust type validation when `validate=True` in `DictDataclass`
+  - `ValidatedDataclass` to validate at construction time?
 - More test coverage
   - More complex examples
   - Cover more data types (dynamically generate dataclass types)

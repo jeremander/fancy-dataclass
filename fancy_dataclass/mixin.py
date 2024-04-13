@@ -214,7 +214,7 @@ class DataclassMixin:
         return self.__class__(**d)
 
     @classmethod
-    def get_subclass_with_name(cls, typename: str) -> Type[Self]:
+    def _get_subclass_with_name(cls, typename: str) -> Type[Self]:
         """Gets the subclass of this class with the given name.
 
         Args:
