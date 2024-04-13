@@ -1,11 +1,11 @@
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
 from dataclasses import dataclass, field
 import sys
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 
 import pytest
 
-from fancy_dataclass.cli import CLIDataclass
+from fancy_dataclass.cli import ArgparseDataclass, CLIDataclass
 
 
 @dataclass
@@ -77,23 +77,175 @@ def test_cli_dataclass_parse_valid(capsys):
     obj = DC1(required_string='positional_arg', input_file='my_input', output_file='my_output', choice='a', optional='unspecified', extra_items=['1', '2', '3'], x=100, y=3.14, pair=(10,20), ignored_value='ignored')
     _check_equivalent(args, obj)
 
-def test_cli_dataclass_parse_invalid(capsys):
+def check_invalid_args(cls, args):
+    with pytest.raises(SystemExit):
+        cls.from_cli_args(args)
+
+def test_cli_dataclass_parse_invalid():
     """Tests that a CLIDataclass errors on invalid command-line arguments."""
-    def _check_invalid(args):
-        with pytest.raises(SystemExit):
-            DC1.from_cli_args(args)
     # missing required option
     args = ['positional_arg', '-i', 'my_input']
-    _check_invalid(args)
+    check_invalid_args(DC1, args)
     # missing required positional argument
     args = ['-i', 'my_input', '-o', 'my_output']
-    _check_invalid(args)
+    check_invalid_args(DC1, args)
     # can't parse positional argument at the end of argument list
     args = ['-i', 'my_input', '-o', 'my_output', '--extra-items', 'a', 'b', 'positional_arg']
-    _check_invalid(args)
+    check_invalid_args(DC1, args)
     # invalid type for integer argument
     args = ['positional_arg', '-i', 'my_input', '-o', 'my_output', '-x', 'a']
-    _check_invalid(args)
+    check_invalid_args(DC1, args)
     # invalid choice
     args = ['positional_arg', '-i', 'my_input', '-o', 'my_output', '--choice', 'd']
-    _check_invalid(args)
+    check_invalid_args(DC1, args)
+
+def test_argparse_options():
+    """Tests the behavior of various argparse options."""
+    # explicit positional argument
+    @dataclass
+    class DC2(ArgparseDataclass):
+        pos: int = field(metadata={'args': 'pos'})
+    # implicit positional argument
+    @dataclass
+    class DC3(ArgparseDataclass):
+        pos: int
+    for cls in [DC2, DC3]:
+        assert cls.from_cli_args(['1']).pos == 1
+        check_invalid_args(cls, ['--pos', '1'])
+    # required option (no default value)
+    @dataclass
+    class DC4(ArgparseDataclass):
+        opt: int = field(metadata={'args': '--opt'})
+    @dataclass
+    class DC5(ArgparseDataclass):
+        opt: int = field(metadata={'args': ['-o', '--opt']})
+    for cls in [DC4, DC5]:
+        assert cls.from_cli_args(['--opt', '1']).opt == 1
+        check_invalid_args(cls, ['--opt'])
+        check_invalid_args(cls, ['--opt', 'a'])
+        check_invalid_args(cls, ['-opt', '1'])
+        check_invalid_args(cls, ['1'])
+    check_invalid_args(DC4, ['-o', '1'])
+    assert DC5.from_cli_args(['-o', '1']).opt == 1
+    # optional option
+    @dataclass
+    class DC6(ArgparseDataclass):
+        opt: int = 42
+    @dataclass
+    class DC7(ArgparseDataclass):
+        opt: int = field(default=42)
+    for cls in [DC6, DC7]:
+        assert cls.from_cli_args(['--opt', '1']).opt == 1
+        assert cls.from_cli_args([]).opt == 42
+        check_invalid_args(cls, ['--opt'])
+        check_invalid_args(cls, ['-o', '1'])
+        check_invalid_args(cls, ['1'])
+    @dataclass
+    class DC8(ArgparseDataclass):
+        opt: int = field(default=42, metadata={'args': '--other'})
+    assert DC8.from_cli_args(['--other', '1']).opt == 1
+    assert DC8.from_cli_args([]).opt == 42
+    check_invalid_args(DC8, ['--opt', '1'])
+    # optional option (Optional)
+    @dataclass
+    class DC9(ArgparseDataclass):
+        opt: Optional[int]
+    assert DC9.from_cli_args(['--opt', '1']).opt == 1
+    assert DC9.from_cli_args([]).opt is None
+    # boolean flag
+    @dataclass
+    class DC10(ArgparseDataclass):
+        flag: bool
+    @dataclass
+    class DC11(ArgparseDataclass):
+        flag: bool = False
+    @dataclass
+    class DC12(ArgparseDataclass):
+        flag: bool = True
+    for cls in [DC10, DC11, DC12]:
+        assert cls.from_cli_args(['--flag']).flag is True
+        assert cls.from_cli_args([]).flag is (cls is DC12)
+    @dataclass
+    class DC13(ArgparseDataclass):
+        flag: bool = field(metadata={'action': 'store_false'})
+    assert DC13.from_cli_args(['--flag']).flag is False
+    assert DC13.from_cli_args([]).flag is True
+    # store_const
+    @dataclass
+    class DC14(ArgparseDataclass):
+        opt: Optional[int] = field(metadata={'action': 'store_const', 'const': 123})
+    assert DC14.from_cli_args(['--opt']).opt == 123
+    assert DC14.from_cli_args([]).opt is None
+    check_invalid_args(DC14, ['--opt', '1'])
+    # nargs='?' with const
+    @dataclass
+    class DC15(ArgparseDataclass):
+        opt: Optional[int] = field(metadata={'nargs': '?', 'const': 123})
+    assert DC15.from_cli_args(['--opt', '1']).opt == 1
+    assert DC15.from_cli_args(['--opt']).opt == 123
+    assert DC15.from_cli_args([]).opt is None
+    # positional list
+    @dataclass
+    class DC16(ArgparseDataclass):
+        vals: List[int]
+    assert DC16.from_cli_args([]).vals == []
+    assert DC16.from_cli_args(['1', '2']).vals == [1, 2]
+    check_invalid_args(DC16, ['1', 'a'])
+    check_invalid_args(DC16, ['--vals', '1'])
+    # optional list
+    @dataclass
+    class DC17(ArgparseDataclass):
+        vals: List[int] = field(default_factory=list)
+    @dataclass
+    class DC18(ArgparseDataclass):
+        vals: List[int] = field(default_factory=list, metadata={'nargs': '+'})
+    for cls in [DC17, DC18]:
+        assert cls.from_cli_args([]).vals == []
+        assert cls.from_cli_args(['--vals', '1']).vals == [1]
+        assert cls.from_cli_args(['--vals', '1', '2']).vals == [1, 2]
+        check_invalid_args(cls, ['--vals', '1', 'a'])
+    assert DC17.from_cli_args(['--vals']).vals == []
+    check_invalid_args(DC18, ['--vals'])
+    # argparse not flexible enough to handle union types
+    @dataclass
+    class DC19(ArgparseDataclass):
+        pos: Union[int, str]
+    assert DC19.from_cli_args(['7']).pos == 7
+    check_invalid_args(DC19, ['a'])
+    check_invalid_args(DC19, [])
+    # append action
+    @dataclass
+    class DC20(ArgparseDataclass):
+        vals: List[int] = field(default_factory=list, metadata={'action': 'append'})
+    assert DC20.from_cli_args([]).vals == []
+    assert DC20.from_cli_args(['--vals', '1']).vals == [1]
+    assert DC20.from_cli_args(['--vals', '1', '--vals', '2']).vals == [1, 2]
+    # abbrevation works
+    assert DC20.from_cli_args(['--val', '1', '--vals', '2']).vals == [1, 2]
+    # choices
+    @dataclass
+    class DC21(ArgparseDataclass):
+        choice: int = field(metadata={'choices': (1, 2)})
+    @dataclass
+    class DC22(ArgparseDataclass):
+        choice: Literal[1, 2]
+    for cls in [DC21, DC22]:
+        assert cls.from_cli_args(['1']).choice == 1
+        check_invalid_args(cls, [])
+        check_invalid_args(cls, ['a'])
+        check_invalid_args(cls, ['0'])  # invalid choice
+    @dataclass
+    class DC23(ArgparseDataclass):
+        choice: Literal[1, 'a']
+    assert DC23.from_cli_args(['1']).choice == 1
+    # not flexible enough to handle mixed types
+    check_invalid_args(DC23, ['a'])
+    # integer nargs
+    @dataclass
+    class DC24(ArgparseDataclass):
+        vals: List[int] = field(metadata={'nargs': 2})
+    assert DC24.from_cli_args(['1', '2']).vals == [1, 2]
+    check_invalid_args(DC24, [])
+    check_invalid_args(DC24, ['1'])
+    check_invalid_args(DC24, ['1', 'a'])
+    check_invalid_args(DC24, ['1', '2', '3'])

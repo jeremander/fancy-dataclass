@@ -3,8 +3,6 @@
 ## v0.2.0
 
 - Unit tests for new behavior
-  - `ArgparseDataclass`
-    - Positional, required optional CLI args
   - `SubprocessDataclass`
     - `exec` setting
     - One or more `exec` fields (incl. on top of `exec` setting)

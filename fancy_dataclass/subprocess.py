@@ -46,7 +46,7 @@ class SubprocessDataclass(DataclassMixin):
         # make sure there is at most one exec field
         exec_field = None
         stype = cls.__field_settings_type__
-        for fld in get_dataclass_fields(cls, include_classvars=True):  # type: ignore[arg-type]
+        for fld in get_dataclass_fields(cls, include_classvars=True):
             if stype.from_field(fld).exec:
                 if exec_field is None:
                     exec_field = fld.name
@@ -125,7 +125,7 @@ class SubprocessDataclass(DataclassMixin):
             Name of the executable to run"""
         if self.__settings__.exec:
             return self.__settings__.exec
-        for fld in get_dataclass_fields(self, include_classvars=True):  # type: ignore[arg-type]
+        for fld in get_dataclass_fields(self, include_classvars=True):
             if fld.metadata.get('exec', False):
                 return getattr(self, fld.name, None)
         return None

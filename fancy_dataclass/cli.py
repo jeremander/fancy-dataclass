@@ -3,7 +3,7 @@ from argparse import ArgumentParser, Namespace
 from contextlib import suppress
 from dataclasses import MISSING, dataclass, fields
 from enum import IntEnum
-from typing import Any, ClassVar, Dict, List, Optional, Sequence, Type, TypeVar, Union, get_args, get_origin
+from typing import Any, ClassVar, Dict, List, Literal, Optional, Sequence, Type, TypeVar, Union, get_args, get_origin
 
 from typing_extensions import Self
 
@@ -22,6 +22,7 @@ class ArgparseDataclassFieldSettings(FieldSettings):
 
     - `type`: override the dataclass field type with a different type
     - `args`: lists the command-line arguments explicitly
+    - `action`: type of action taken when the argument is encountered
     - `nargs`: number of command-line arguments (use `*` for lists, `+` for non-empty lists
     - `const`: constant value required by some action/nargs combinations
     - `choices`: list of possible inputs allowed
@@ -41,6 +42,7 @@ class ArgparseDataclassFieldSettings(FieldSettings):
     # TODO: is this ever necessary?
     type: Optional[type] = None
     args: Optional[Union[str, Sequence[str]]] = None
+    action: Optional[str] = None
     nargs: Optional[Union[str, int]] = None
     const: Optional[Any] = None
     choices: Optional[Sequence[Any]] = None
@@ -91,7 +93,7 @@ class ArgparseDataclass(DataclassMixin):
 
         Returns:
             Keyword argument names passed when adding arguments to the parser"""
-        return ['nargs', 'const', 'choices', 'help', 'metavar']
+        return ['action', 'nargs', 'const', 'choices', 'help', 'metavar']
 
     @classmethod
     def new_parser(cls) -> ArgumentParser:
@@ -133,18 +135,24 @@ class ArgparseDataclass(DataclassMixin):
             return
         # determine the type of the parser argument for the field
         tp = field.metadata.get('type', field.type)
+        action = field.metadata.get('action', 'store')
         origin_type = get_origin(tp)
         if origin_type is not None:  # compound type
-            if origin_type is ClassVar:  # by default, exclude ClassVars from the parser
+            if (origin_type == Union) and (getattr(tp, '_name', None) == 'Optional'):
+                kwargs['default'] = None
+            if origin_type == ClassVar:  # by default, exclude ClassVars from the parser
                 return
             tp_args = get_args(tp)
             if tp_args:  # extract the first wrapped type (should handle List/Optional/Union)
                 tp = tp_args[0]
+                if origin_type == Literal:  # literal options will become choices
+                    tp = type(tp)
+                    kwargs['choices'] = tp_args
             else:  # type cannot be inferred
                 raise ValueError(f'cannot infer type of items in field {name!r}')
-            if issubclass_safe(origin_type, list):
+            if issubclass_safe(origin_type, list) and (action == 'store'):
                 kwargs['nargs'] = '*'  # allow multiple arguments by default
-        if issubclass(tp, IntEnum):  # use a bare int type
+        if issubclass_safe(tp, IntEnum):  # use a bare int type
             tp = int
         kwargs['type'] = tp
         # determine the default value
@@ -184,6 +192,8 @@ class ArgparseDataclass(DataclassMixin):
         for key in cls.parser_argument_kwarg_names():
             if key in field.metadata:
                 kwargs[key] = field.metadata[key]
+        if (kwargs.get('action') == 'store_const'):
+            del kwargs['type']
         parser.add_argument(*args, **kwargs)
 
     @classmethod

@@ -91,7 +91,7 @@ def test_wrap_dataclass():
     assert obj.to_dict() == {'a1': 3, 'a2': 4.7}
 
 def test_type_field():
-    """Tests that a DictDataclass is not permitted to have a 'type' field."""
+    """Tests behavior of the 'type' field in a DictDataclass's output dict."""
     @dataclass
     class DC1(DictDataclass):
         type: int
@@ -103,7 +103,13 @@ def test_type_field():
     @dataclass
     class DC3(DictDataclass, qualified_type=True):
         x: int
-    assert DC3(1).to_dict() == {'type': 'tests.test_dict.test_type_field.<locals>.DC3', 'x': 1}
+    obj = DC3(1)
+    d = obj.to_dict()
+    assert d == {'type': 'tests.test_dict.test_type_field.<locals>.DC3', 'x': 1}
+    assert DC3.from_dict(d) == obj
+    assert DC3.from_dict({'type': 'DC3', 'x': 1}) == obj
+    with pytest.raises(ValueError, match='fake is not a known subclass of DC3'):
+        _ = DC3.from_dict({'type': 'fake', 'x': 1})
     # 'type' dataclass field prohibited (this is caught at dataclass wrap time)
     with pytest.raises(TypeError, match="'type' is a reserved dict field"):
         @dataclass
