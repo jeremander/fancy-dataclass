@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "fancy-dataclass"
 dynamic = ["version"]
-description = "Enhance dataclasses with additional features."
+description = "Spiff up your dataclasses with additional features."
 readme = "docs/README.md"
 requires-python = ">=3.8"
 license = "MIT"
@@ -111,6 +111,10 @@ disable_error_code = ["arg-type", "attr-defined", "call-arg", "comparison-overla
 [[tool.mypy.overrides]]
 module = "tests.test_cli"
 disable_error_code = ["assignment"]
+
+[[tool.mypy.overrides]]
+module = "tests.test_config"
+disable_error_code = ["misc", "union-attr"]
 
 [[tool.mypy.overrides]]
 module = "tests.test_json"

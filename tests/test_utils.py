@@ -174,10 +174,10 @@ DC_FLATTEN_VALID_PARAMS = [
 DC_FLATTEN_INVALID_PARAMS = [
     (G, "duplicate key 'g1'"),
     (P, "duplicate key 'g1'"),
-    (R, 'Type cannot contain a member field of its own type'),
-    (S, 'Type cannot contain a ForwardRef'),
-    (T, 'Type recursion exceeds depth'),
-    (U, 'Type recursion exceeds depth'),
+    (R, 'type cannot contain a member field of its own type'),
+    (S, 'type cannot contain a ForwardRef'),
+    (T, 'type recursion exceeds depth'),
+    (U, 'type recursion exceeds depth'),
 ]
 
 class TestFlatten:
@@ -205,13 +205,13 @@ class TestFlatten:
         assert get_names(P) == ['p', 'p.g1', 'p.g2.g1', 'p.g2.g2']
         assert all('typing.Optional' in str(fld.type) for (_, fld) in traverse_dataclass(P))
         assert get_names(Q) == ['q', 'q.g1', 'q.g2']
-        with pytest.raises(TypeError, match='Type cannot contain a member field of its own type'):
+        with pytest.raises(TypeError, match='type cannot contain a member field of its own type'):
             _ = get_names(R)
-        with pytest.raises(TypeError, match='Type cannot contain a ForwardRef'):
+        with pytest.raises(TypeError, match='type cannot contain a ForwardRef'):
             _ = get_names(S)
-        with pytest.raises(TypeError, match='Type recursion exceeds depth'):
+        with pytest.raises(TypeError, match='type recursion exceeds depth'):
             _ = get_names(T)
-        with pytest.raises(TypeError, match='Type recursion exceeds depth'):
+        with pytest.raises(TypeError, match='type recursion exceeds depth'):
             _ = get_names(U)
         assert get_names(V) == ['v']
         assert get_names(W) == ['w']

@@ -17,7 +17,7 @@ By inspecting dataclasses' type annotations, it is possible to endow them with s
 
 ## How to install
 
-```pip install fancy_dataclass```
+```pip install fancy-dataclass```
 
 Requires Python 3.8 or higher.
 

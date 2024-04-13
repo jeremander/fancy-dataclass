@@ -6,3 +6,4 @@ tmp*
 .coverage
 .hypothesis
 site/
+dist/

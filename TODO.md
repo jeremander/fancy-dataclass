@@ -2,17 +2,18 @@
 
 ## v0.3.0
 
-- ConfigDataclass
-  - Handle nesting properly (updating nested ConfigDataclass should update the parent)
-  - Load from JSON/TOML
-    - Options:
-      1. Inherit from JSONDataclass/TOMLDataclass (superfluous)?
-      2. Method to load from either, which calls `from_dict` on a proxy class then `coerce_to_dataclass`?
-    - Infer file type from extension
 - TOMLDataclass
   - `tomlkit` maintains parsed structure (incl. whitespace & comments)
   - Let ConfigDataclass parse TOML
 - Basic usage examples in docs
+- Host on GH Pages or Readthedocs
+  - Make PyPI page link to the hosted docs as well as Github
+- Github Actions for automated testing
+  - Configure as much as possible via `hatch`
+    - `ruff`, `mypy`, `pytest`, `radon`
+    - Multiple versions of Python
+  - Coverage badge
+  - Auto-publish when new tag is pushed (see: https://pypi.org/manage/project/fancy-dataclass/settings/publishing/)
 
 ## v0.3.1
 
@@ -31,12 +32,6 @@
   - Config
   - Defining new mixins (what dunders need to be set)
     - Top-level settings, field-level settings, collisions
-  - Host on GH Pages or Readthedocs
-- Github Actions for automated testing
-  - Configure as much as possible via `hatch`
-    - `ruff`, `mypy`, `pytest`, `radon`
-    - Multiple versions of Python
-  - Coverage badge
 
 ## Future
 

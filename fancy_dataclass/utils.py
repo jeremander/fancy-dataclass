@@ -263,11 +263,11 @@ def traverse_dataclass(cls: type) -> Iterator[Tuple[RecordPath, Field]]:  # type
         return new_fld  # type: ignore[return-value]
     def _traverse(prefix: RecordPath, tp: type) -> Iterator[Tuple[RecordPath, Field]]:  # type: ignore[type-arg]
         if len(prefix) > MAX_DATACLASS_DEPTH:
-            raise TypeError(f'Type recursion exceeds depth {MAX_DATACLASS_DEPTH}')
+            raise TypeError(f'type recursion exceeds depth {MAX_DATACLASS_DEPTH}')
         for fld in get_dataclass_fields(tp, include_classvars=True):
             fld_type = get_type_hints(tp)[fld.name] if isinstance(fld.type, str) else fld.type
             if fld_type is tp:  # prevent infinite recursion
-                raise TypeError('Type cannot contain a member field of its own type')
+                raise TypeError('type cannot contain a member field of its own type')
             path = prefix + (fld.name,)
             origin = get_origin(fld_type)
             is_union = origin is Union
@@ -277,7 +277,7 @@ def traverse_dataclass(cls: type) -> Iterator[Tuple[RecordPath, Field]]:  # type
                 base_types = []
                 for arg in args:
                     if isinstance(arg, ForwardRef):
-                        raise TypeError('Type cannot contain a ForwardRef')
+                        raise TypeError('type cannot contain a ForwardRef')
                     base_types.append(arg)
             else:
                 base_types = [fld_type]
