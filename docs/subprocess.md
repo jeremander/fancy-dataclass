@@ -13,13 +13,12 @@ Define a `SubprocessDataclass` to delegate calls to command-line programs within
 
 ```python
 from dataclasses import dataclass, field
-from typing import ClassVar
 
 from fancy_dataclass.subprocess import SubprocessDataclass
 
 
 @dataclass
-class ListDir(SubprocessDataclass, exec='ls'):
+class ListDir(SubprocessDataclass, exec='ls'):  # specify program to run
     """Lists directory contents."""
     # list in long form
     long: bool = field(default=False, metadata={'args': '-l'})

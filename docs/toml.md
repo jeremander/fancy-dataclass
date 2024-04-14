@@ -12,7 +12,6 @@ Define a `TOMLDataclass`.
 
 ```python
 from dataclasses import dataclass
-from typing import List
 
 from fancy_dataclass.toml import TOMLDataclass
 
@@ -20,7 +19,7 @@ from fancy_dataclass.toml import TOMLDataclass
 @dataclass
 class Database(TOMLDataclass):
     server: str
-    ports: List[int]
+    ports: list[int]
     connection_max: int = 5000
     enabled: bool = True
 ```
