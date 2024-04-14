@@ -2,16 +2,16 @@
 
 ## v0.3.0
 
-- Host on GH Pages or Readthedocs
-  - Link to actual page from README
-  - Make PyPI page link to the hosted docs as well as Github
 - Github Actions for automated testing
   - Configure as much as possible via `hatch`
     - `ruff`, `mypy`, `pytest`, `radon`
     - Multiple versions of Python
   - Coverage badge
   - Auto-publish when new tag is pushed (see: https://pypi.org/manage/project/fancy-dataclass/settings/publishing/)
-- CHANGELOG update
+- Release
+  - CHANGELOG update
+  - Tag v0.3.0
+  - Check PyPI page links to Read the Docs
 
 ## v0.3.1
 
@@ -42,7 +42,6 @@
     - NOTE: the parsed values themselves have a `_trivia` attribute storing various formatting info
     - Use field metadata (`help`?) as comment prior to the field
   - For `None`, serialize as commented field?
-  - Test `None` when it's not the default value (can break round-trip fidelity)
 - `TabularDataclass`? CSV/TSV/parquet/feather
   - Make `SQLDataclass` inherit from it
   - Convert to/from `pandas` `Series` and `DataFrame`?

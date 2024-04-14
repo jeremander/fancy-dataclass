@@ -85,6 +85,10 @@ class DCOptional(JSONDataclass):
     x: Optional[int]
 
 @dataclass
+class DCOptionalDefault(JSONDataclass):
+    x: Optional[int] = 1
+
+@dataclass
 class DCOptionalInt(JSONDataclass):
     x: int
     y: Optional[int]
@@ -240,10 +244,14 @@ class TestDict:
     base_cls = DictDataclass
     ext: str = None
 
+    def _convert_dataclass(self, tp):
+        """Converts a dataclass type to have the desired base class."""
+        return _convert_json_dataclass(tp, self.base_cls)
+
     def _coerce_object(self, obj):
         """Creates a new version of the object with the desired base class.
         Returns the class and the coerced object."""
-        tp = _convert_json_dataclass(type(obj), self.base_cls)
+        tp = self._convert_dataclass(type(obj))
         assert issubclass(tp, self.base_cls)
         obj = coerce_to_dataclass(tp, obj)
         assert isinstance(obj, self.base_cls)
@@ -657,6 +665,11 @@ class TestTOML(TestDict):
     base_cls = TOMLDataclass
     ext = 'toml'
 
+    def _convert_dataclass(self, tp):
+        tp = _convert_json_dataclass(tp, self.base_cls)
+        tp.__settings__.suppress_defaults = False
+        return tp
+
     @pytest.mark.parametrize('obj', TEST_JSON)
     def test_dict_round_trip(self, obj):
         """Tests round-trip to dict and back."""
@@ -678,13 +691,17 @@ class TestTOML(TestDict):
         """Tests floating-point support."""
         self._test_serialize_convert(obj, s, None)
 
-    @pytest.mark.parametrize(['obj', 's'], [
-        (DCOptional(1), 'x = 1\n'),
-        (DCOptional(None), ''),
+    @pytest.mark.parametrize(['obj', 's', 'err'], [
+        (DCOptional(1), 'x = 1\n', None),
+        (DCOptional(None), '', None),
+        (DCOptionalDefault(1), 'x = 1\n', None),
+        (DCOptionalDefault(2), 'x = 2\n', None),
+        # round-trip is violated because null value is omitted and default is non-null
+        (DCOptionalDefault(None), '', (True, AssertionError, '==')),
     ])
-    def test_optional(self, obj, s):
+    def test_optional(self, obj, s, err):
         """Tests behavior of Optional types with TOML conversion."""
-        self._test_serialize_convert(obj, s, None)
+        self._test_serialize_convert(obj, s, err)
 
     @pytest.mark.parametrize(['obj', 's'], [
         (DCDatetime(datetime.strptime('2024-01-01', '%Y-%m-%d')), 'dt = 2024-01-01T00:00:00\n'),
