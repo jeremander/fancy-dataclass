@@ -54,46 +54,54 @@ class FileSerializable(ABC):
 
     Subclasses should override `_to_text_file` and `_from_text_file` to implement them."""
 
+    @classmethod
     @abstractmethod
-    def _to_text_file(self, fp: TextIO, **kwargs: Any) -> None:
+    def _to_text_file(cls, obj: Self, fp: TextIO, **kwargs: Any) -> None:
         """Serializes the object to a file in text mode.
 
         Args:
+            obj: Object to serialize
             fp: A writable text file-like object
             kwargs: Keyword arguments"""
 
-    def _to_binary_file(self, fp: BinaryIO, **kwargs: Any) -> None:
+    @classmethod
+    def _to_binary_file(cls, obj: Self, fp: BinaryIO, **kwargs: Any) -> None:
         """Serializes the object to a file in binary mode.
 
         By default, this writes text encoded as UTF-8.
 
         Args:
+            obj: Object to serialize
             fp: A writable binary file-like object
             kwargs: Keyword arguments"""
         # by default, convert to a text string, then encode as UTF-8
-        fp.write(self._to_string(**kwargs).encode())
+        fp.write(cls._to_string(obj, **kwargs).encode())
 
-    def _to_file(self, fp: AnyIO, **kwargs: Any) -> None:
+    @classmethod
+    def _to_file(cls, obj: Self, fp: AnyIO, **kwargs: Any) -> None:
         """Serializes the object to a file-like object (text or binary).
 
         Args:
+            obj: Object to serialize
             fp: A writable file-like object
             kwargs: Keyword arguments"""
         if isinstance(fp, TextIOBase):  # text stream
-            self._to_text_file(fp, **kwargs)
+            cls._to_text_file(obj, fp, **kwargs)
         else:  # binary
-            self._to_binary_file(fp, **kwargs)  # type: ignore[arg-type]
+            cls._to_binary_file(obj, fp, **kwargs)  # type: ignore[arg-type]
 
-    def _to_string(self, **kwargs: Any) -> str:
+    @classmethod
+    def _to_string(cls, obj: Self, **kwargs: Any) -> str:
         """Converts the object into a text string.
 
         Args:
+            obj: Object to serialize
             kwargs: Keyword arguments
 
         Returns:
             Object rendered as a string"""
         with StringIO() as stream:
-            self._to_text_file(stream, **kwargs)
+            cls._to_text_file(obj, stream, **kwargs)
             return stream.getvalue()
 
     @classmethod
@@ -164,9 +172,10 @@ class DictFileSerializableDataclass(DictDataclass, FileSerializable):
             fp: A writable file-like object
             kwargs: Keyword arguments"""
 
-    def _to_text_file(self, fp: TextIO, **kwargs: Any) -> None:
+    @classmethod
+    def _to_text_file(cls, obj: Self, fp: TextIO, **kwargs: Any) -> None:
         # NOTE: by default, we pass all kwargs to `_dict_to_text_file` and none to `to_dict`
-        return self._dict_to_text_file(self.to_dict(), fp, **kwargs)
+        return cls._dict_to_text_file(cls.to_dict(obj), fp, **kwargs)
 
     @classmethod
     @abstractmethod

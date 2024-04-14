@@ -1,12 +1,13 @@
 from dataclasses import dataclass
+from datetime import datetime
 
 import pytest
 
-from fancy_dataclass import ArgparseDataclass, ConfigDataclass, DictDataclass, JSONBaseDataclass, JSONDataclass, SQLDataclass
+from fancy_dataclass import ArgparseDataclass, ConfigDataclass, DictDataclass, JSONBaseDataclass, JSONDataclass, SQLDataclass, TOMLDataclass
 from fancy_dataclass.dict import DictDataclassSettings
 
 
-DEFAULT_MIXINS = [JSONBaseDataclass, ArgparseDataclass, ConfigDataclass, SQLDataclass]
+DEFAULT_MIXINS = [JSONBaseDataclass, ArgparseDataclass, ConfigDataclass, SQLDataclass, TOMLDataclass]
 
 
 def test_multiple_inheritance():
@@ -70,3 +71,21 @@ def test_invalid_inheritance():
     assert issubclass(MyDC2, JSONDataclass)
     assert issubclass(MyDC2, MyDC1)
     assert MyDC2 is not MyDC1
+
+def test_json_toml():
+    """Tests inheritance from both JSONDataclass and TOMLDataclass."""
+    dt = datetime.strptime('2024-01-01', '%Y-%m-%d')
+    json_str = '{"dt": "2024-01-01T00:00:00"}'
+    toml_str = 'dt = 2024-01-01T00:00:00\n'
+    @dataclass
+    class JSONTOMLDC(JSONDataclass, TOMLDataclass):
+        dt: datetime
+    @dataclass
+    class TOMLJSONDC(TOMLDataclass, JSONDataclass):
+        dt: datetime
+    obj1 = JSONTOMLDC(dt)
+    obj2 = TOMLJSONDC(dt)
+    for obj in [obj1, obj2]:
+        assert isinstance(obj.to_dict()['dt'], datetime)
+        assert obj.to_json_string() == json_str
+        assert obj.to_toml_string() == toml_str

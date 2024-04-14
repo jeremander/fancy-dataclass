@@ -190,6 +190,11 @@ class DCSuppress(JSONDataclass, suppress_defaults=False):
 class DCList(JSONDataclass):
     vals: List[DCAny]
 
+@dataclass
+class DCListOptional(JSONDataclass):
+    vals: List[Optional[int]]
+
+
 # DictDataclass versions
 DictDCDatetime = _convert_json_dataclass(DCDatetime, DictDataclass)
 DictDCEnum = _convert_json_dataclass(DCEnum, DictDataclass)
@@ -253,22 +258,24 @@ class TestDict:
             assert 'type' not in obj.to_dict()
         assert tp.from_dict(obj.to_dict()) == obj
 
+    def _get_conversion_contexts(self, err):
+        if err is None:
+            return (True, nullcontext(), nullcontext())
+        else:
+            (fwd_ok, errtype, match) = err
+            err_ctx = pytest.raises(errtype, match=match)
+            if fwd_ok:  # error occurs when converting back
+                return (True, nullcontext(), err_ctx)
+            else:
+                return (False, err_ctx, nullcontext())
+
     def _test_dict_convert(self, obj, d, err):
         """Tests that an object gets converted to the expected dict and back."""
-        to_dict_ok = err is None
-        if err is None:
-            ctx1, ctx2 = nullcontext(), nullcontext()
-        else:
-            (to_dict_ok, errtype, match) = err
-            err_ctx = pytest.raises(errtype, match=match)
-            if to_dict_ok:
-                ctx1, ctx2 = nullcontext(), err_ctx
-            else:
-                ctx1, ctx2 = err_ctx, nullcontext()
-        with ctx1:
+        (fwd_ok, fwd_ctx, bwd_ctx) = self._get_conversion_contexts(err)
+        with fwd_ctx:
             assert obj.to_dict() == d
-        if to_dict_ok:
-            with ctx2:
+        if fwd_ok:
+            with bwd_ctx:
                 assert type(obj).from_dict(d) == obj
 
     def _test_serialize_round_trip(self, obj, tmp_path):
@@ -293,12 +300,16 @@ class TestDict:
         obj3 = getattr(tp, f'from_{ext}_string')(s)
         assert obj3 == obj
 
-    def _test_serialize_convert(self, obj, s):
+    def _test_serialize_convert(self, obj, s, err):
         """Tests that an object gets serialized to the expected string and back."""
         (tp, obj) = self._coerce_object(obj)
         ext = self.ext
-        assert getattr(obj, f'to_{ext}_string')() == s
-        assert getattr(type(obj), f'from_{ext}_string')(s) == obj
+        (fwd_ok, fwd_ctx, bwd_ctx) = self._get_conversion_contexts(err)
+        with fwd_ctx:
+            assert getattr(obj, f'to_{ext}_string')() == s
+        if fwd_ok:
+            with bwd_ctx:
+                assert getattr(type(obj), f'from_{ext}_string')(s) == obj
 
     @pytest.mark.parametrize('obj', TEST_JSON)
     def test_dict_round_trip(self, obj):
@@ -343,7 +354,7 @@ class TestJSON(TestDict):
 
     @pytest.mark.parametrize(['obj', 'd'], [
         (DictDCDatetime(NOW), {'dt': NOW}),
-        (DCDatetime(NOW), {'dt': NOW.isoformat()}),
+        (DCDatetime(NOW), {'dt': NOW}),
         (DictDCEnum(MyEnum.a), {'enum': MyEnum.a}),
         (DCEnum(MyEnum.a), {'enum': 1}),
         (DictDCRange(range(1, 10, 3)), {'range': range(1, 10, 3)}),
@@ -378,7 +389,7 @@ class TestJSON(TestDict):
         obj = DCDatetime(NOW)
         d = obj.to_dict()
         s = NOW.isoformat()
-        assert d == {'dt': s}
+        assert d == {'dt': NOW}
         # compare with dataclasses.asdict
         assert asdict(obj) == {'dt': NOW}
         assert DCDatetime.from_dict(d) == obj
@@ -665,7 +676,7 @@ class TestTOML(TestDict):
     ])
     def test_float(self, obj, s):
         """Tests floating-point support."""
-        self._test_serialize_convert(obj, s)
+        self._test_serialize_convert(obj, s, None)
 
     @pytest.mark.parametrize(['obj', 's'], [
         (DCOptional(1), 'x = 1\n'),
@@ -673,11 +684,20 @@ class TestTOML(TestDict):
     ])
     def test_optional(self, obj, s):
         """Tests behavior of Optional types with TOML conversion."""
-        self._test_serialize_convert(obj, s)
+        self._test_serialize_convert(obj, s, None)
 
     @pytest.mark.parametrize(['obj', 's'], [
         (DCDatetime(datetime.strptime('2024-01-01', '%Y-%m-%d')), 'dt = 2024-01-01T00:00:00\n'),
     ])
     def test_datetime(self, obj, s):
         """Tests support for the datetime type."""
-        self._test_serialize_convert(obj, s)
+        self._test_serialize_convert(obj, s, None)
+
+    @pytest.mark.parametrize(['obj', 's', 'err'], [
+        (DCListOptional([]), 'vals = []\n', None),
+        (DCListOptional([1, 2, 3]), 'vals = [1, 2, 3]\n', None),
+        (DCListOptional([1, None, 3]), 'vals = [1, None, 3]\n', (False, ValueError, "Invalid type <class 'NoneType'>")),
+    ])
+    def test_list(self, obj, s, err):
+        """Tests behavior of list types."""
+        self._test_serialize_convert(obj, s, err)

@@ -79,8 +79,8 @@ def test_json(tmpdir):
     d_json = {'x': inf, 'y': dt.isoformat()}
     assert obj1.to_dict() == d  # defaults not suppressed for ConfigDataclass by default
     assert obj2.to_dict() == {}
-    assert obj3.to_dict() == d_json
-    assert obj4.to_dict() == d_json
+    assert obj3.to_dict() == d
+    assert obj4.to_dict() == d
     with open(outfile, 'w') as f:
         obj4.to_json(f)
     with open(outfile) as f:

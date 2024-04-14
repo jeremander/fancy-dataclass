@@ -30,7 +30,7 @@ class TOMLSerializable(FileSerializable):
         Args:
             fp: A writable file-like object
             kwargs: Keyword arguments"""
-        return self._to_file(fp, **kwargs)
+        return TOMLDataclass._to_file(self, fp, **kwargs)  # type: ignore[arg-type]
 
     def to_toml_string(self, **kwargs: Any) -> str:
         """Converts the object into a TOML string.
@@ -40,7 +40,7 @@ class TOMLSerializable(FileSerializable):
 
         Returns:
             Object rendered as a TOML string"""
-        return self._to_string(**kwargs)
+        return TOMLDataclass._to_string(self, **kwargs)  # type: ignore[arg-type]
 
     @classmethod
     def from_toml(cls, fp: AnyIO, **kwargs: Any) -> Self:

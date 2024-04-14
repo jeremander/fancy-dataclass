@@ -4,8 +4,6 @@
 
 - TOMLDataclass
   - Unit tests
-    - Conflict with multiple inheritance from JSON/TOMLDataclass with `_to_file`?
-    - Can't do list of optionals with None included
     - `ConfigDataclass.load_config` from TOML
 - Basic usage examples in docs
 - Host on GH Pages or Readthedocs

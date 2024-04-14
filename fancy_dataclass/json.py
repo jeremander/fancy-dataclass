@@ -24,7 +24,12 @@ class JSONSerializable(FileSerializable):
                 return json.JSONEncoder.default(self, obj)
         ```
         """
-        return JSONEncoder
+        class Encoder(JSONEncoder):
+            def default(self, obj: Any) -> Any:
+                if isinstance(obj, datetime):
+                    return obj.isoformat()
+                return JSONEncoder.default(self, obj)
+        return Encoder
 
     @classmethod
     def _json_key_decoder(cls, key: Any) -> Any:
@@ -38,7 +43,7 @@ class JSONSerializable(FileSerializable):
         Args:
             fp: A writable file-like object
             kwargs: Keyword arguments"""
-        return self._to_file(fp, **kwargs)
+        return JSONDataclass._to_file(self, fp, **kwargs)  # type: ignore[arg-type]
 
     def to_json_string(self, **kwargs: Any) -> str:
         """Converts the object into a JSON string.
@@ -48,7 +53,7 @@ class JSONSerializable(FileSerializable):
 
         Returns:
             Object rendered as a JSON string"""
-        return self._to_string(**kwargs)
+        return JSONDataclass._to_string(self, **kwargs)  # type: ignore[arg-type]
 
     @classmethod
     def _from_binary_file(cls, fp: BinaryIO, **kwargs: Any) -> Self:
@@ -110,8 +115,8 @@ class JSONDataclass(DictFileSerializableDataclass, JSONSerializable):
 
     @classmethod
     def _to_dict_value_basic(cls, val: Any) -> Any:
-        if isinstance(val, datetime):
-            return val.isoformat()
+        # if isinstance(val, datetime):
+        #     return val.isoformat()
         return to_dict_value_basic(val)
 
     @classmethod
@@ -124,7 +129,7 @@ class JSONDataclass(DictFileSerializableDataclass, JSONSerializable):
     @classmethod
     def _from_dict_value_basic(cls, tp: type, val: Any) -> Any:
         if issubclass(tp, datetime):
-            return tp.fromisoformat(val)
+            return tp.fromisoformat(val) if isinstance(val, str) else val
         return super()._from_dict_value_basic(tp, from_dict_value_basic(tp, val))
 
     @classmethod
