@@ -72,7 +72,7 @@ Usage:
 
 ## Documentation
 
-Read the [official documentation](https://fancy-dataclass.readthedocs.io).
+Read the official documentation [here](https://fancy-dataclass.readthedocs.io).
 
 The documentation is made with [Material for MkDocs](https://squidfunk.github.io/mkdocs-material) and is hosted by [Read the Docs](https://readthedocs.org).
 

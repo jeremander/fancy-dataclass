@@ -1,6 +1,7 @@
 site_name: Fancy Dataclass
 site_author: Jeremy Silver
 repo_url: https://github.com/jeremander/fancy-dataclass
+edit_uri: tree/main/docs
 
 theme:
   name: material
