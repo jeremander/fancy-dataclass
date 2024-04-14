@@ -67,7 +67,7 @@ class TOMLSerializable(FileSerializable):
         return cls._from_string(s, **kwargs)
 
 
-class TOMLDataclass(DictFileSerializableDataclass, TOMLSerializable):
+class TOMLDataclass(DictFileSerializableDataclass, TOMLSerializable, suppress_defaults=False):
     """Dataclass mixin enabling default serialization of dataclass objects to and from TOML."""
 
     # TODO: require subclass to set qualified_type=True, like JSONDataclass?

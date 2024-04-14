@@ -40,6 +40,7 @@ markdown_extensions:
 nav:
   - README.md
   - JSON conversion: json.md
+  - TOML conversion: toml.md
   - SQL persistence: sql.md
   - CLI parsing: cli.md
   - Subprocess calls: subprocess.md

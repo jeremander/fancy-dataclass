@@ -14,7 +14,7 @@ from fancy_dataclass.utils import AnyPath, coerce_to_dataclass, dataclass_type_m
 class Config:
     """Base class for a collection of configurations.
 
-    This uses the Singleton pattern by storing a class attribute with the current configurations, which can be retrieved or updated by the user."""
+    This uses a quasi-Singleton pattern by storing a class attribute with the current global configurations, which can be retrieved or updated by the user."""
 
     _config: ClassVar[Optional[Self]] = None
 
@@ -57,7 +57,9 @@ class ConfigDataclass(Config, DictDataclass, suppress_defaults=False):
 
     The configurations can be loaded from a file, the type of which will be inferred from its extension.
     Supported file types are:
-        - JSON
+
+    - JSON
+    - TOML
     """
 
     @staticmethod
