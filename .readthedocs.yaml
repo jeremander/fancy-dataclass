@@ -4,5 +4,6 @@ build:
   tools:
     python: "3"
   commands:
-    - pip install mkdocs-material
-    - mkdocs build --site-dir $READTHEDOCS_OUTPUT/html
+    - pip install hatch
+    - hatch run doc:deploy
+    # - mkdocs build --site-dir $READTHEDOCS_OUTPUT/html

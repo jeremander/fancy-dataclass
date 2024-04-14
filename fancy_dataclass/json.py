@@ -155,4 +155,4 @@ class JSONDataclass(DictFileSerializableDataclass, JSONSerializable):
 class JSONBaseDataclass(JSONDataclass, qualified_type=True):
     """This class should be used in place of [`JSONDataclass`][fancy_dataclass.json.JSONDataclass] when you intend to inherit from the class.
 
-    When converting a subclass to a dict with [`to_dict`][fancy_dataclass.json.JSONSerializable.to_dict], it will store the subclass's type in the `type` field. It will also resolve this type when calling [`from_dict`][fancy_dataclass.json.JSONSerializable.from_dict]."""
+    When converting a subclass to a dict with [`to_dict`][fancy_dataclass.dict.DictDataclass.to_dict], it will store the subclass's type in the `type` field. It will also resolve this type when calling [`from_dict`][fancy_dataclass.dict.DictDataclass.from_dict]."""

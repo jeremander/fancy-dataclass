@@ -46,7 +46,8 @@ dependencies = [
 [tool.hatch.envs.doc.scripts]
 build = "mkdocs build --clean --strict"
 serve = "mkdocs serve"
-deploy = "mkdocs gh-deploy"
+# deploy = "mkdocs gh-deploy"
+deploy = "mkdocs build --site-dir $READTHEDOCS_OUTPUT/html"
 
 [tool.hatch.envs.lint]
 dependencies = [
