@@ -2,12 +2,15 @@ from dataclasses import dataclass
 from datetime import datetime
 import json
 from math import inf
-import shutil
+from pathlib import Path
+from typing import Optional
 
 import pytest
+import tomlkit
 
 from fancy_dataclass.config import ConfigDataclass
 from fancy_dataclass.json import JSONDataclass
+from fancy_dataclass.toml import TOMLDataclass
 
 
 def test_config_dataclass():
@@ -58,9 +61,9 @@ def test_config_dataclass():
 
 def test_json(tmpdir):
     """Tests JSON conversion of ConfigDataclass."""
-    dt = datetime.strptime('2024-01-01', '%Y-%m-%d')
+    dt = datetime.now()
     @dataclass
-    class JSONConfig1(ConfigDataclass):
+    class JSONConfig1(ConfigDataclass):  # defaults not suppressed, by default
         x: float = inf
         y: datetime = dt
     @dataclass
@@ -77,7 +80,7 @@ def test_json(tmpdir):
     obj4 = JSONConfig4()
     d = {'x': inf, 'y': dt}
     d_json = {'x': inf, 'y': dt.isoformat()}
-    assert obj1.to_dict() == d  # defaults not suppressed for ConfigDataclass by default
+    assert obj1.to_dict() == d
     assert obj2.to_dict() == {}
     assert obj3.to_dict() == d
     assert obj4.to_dict() == d
@@ -96,18 +99,6 @@ def test_json(tmpdir):
     assert JSONConfig1.get_config() is None
     obj = JSONConfig1.load_config(outfile)
     assert JSONConfig1.get_config() is obj
-    # test extension inference
-    outfile2 = tmpdir / 'test2'
-    shutil.copy(outfile, outfile2)
-    with pytest.raises(ValueError, match='has no extension'):
-        _ = JSONConfig1.load_config(outfile2)
-    outfile2 = tmpdir / 'test2.fake'
-    shutil.copy(outfile, outfile2)
-    with pytest.raises(ValueError, match="unknown config file extension '.fake'"):
-        _ = JSONConfig1.load_config(outfile2)
-    outfile2 = tmpdir / 'test2.JSON'
-    shutil.copy(outfile, outfile2)
-    assert JSONConfig1.load_config(outfile2) == obj1
     # ensure the inner JSON-coerced datetime field gets converted
     @dataclass
     class OuterConfig(ConfigDataclass):
@@ -117,3 +108,66 @@ def test_json(tmpdir):
         json.dump(d_json_outer, f)
     obj = OuterConfig.load_config(outfile)
     assert obj.inner.y == dt
+
+def test_toml(tmpdir):
+    """Tests TOML conversion of ConfigDataclass."""
+    dt = datetime.now()
+    @dataclass
+    class TOMLConfig1(ConfigDataclass):
+        x: float = inf
+        y: datetime = dt
+        z: Optional[str] = None
+    @dataclass
+    class TOMLConfig2(TOMLConfig1, TOMLDataclass):
+        ...
+    outfile = tmpdir / 'test.toml'
+    obj1 = TOMLConfig1()
+    obj2 = TOMLConfig2()
+    d = {'x': inf, 'y': dt, 'z': None}
+    assert obj1.to_dict() == d
+    assert obj2.to_dict() == d
+    with open(outfile, 'w') as f:
+        obj2.to_toml(f)
+    with open(outfile) as f:
+        # null value is not stored in the TOML
+        assert tomlkit.load(f) == {'x': inf, 'y': dt}
+    assert TOMLConfig1.load_config(outfile) == obj1
+    assert TOMLConfig2.load_config(outfile) == obj2
+    with open(outfile) as f:
+        assert TOMLConfig2.from_toml(f) == obj2
+
+def test_load_config(tmpdir):
+    """Tests config file loading."""
+    @dataclass
+    class MyConfig(ConfigDataclass):
+        ...
+    cfg = MyConfig()
+    outfile = tmpdir / 'test'
+    with pytest.raises(ValueError, match='has no extension'):
+        _ = MyConfig.load_config(outfile)
+    outfile = tmpdir / 'test.fake'
+    with pytest.raises(ValueError, match="unknown config file extension '.fake'"):
+        _ = MyConfig.load_config(outfile)
+    outfile = tmpdir / 'test.json'
+    with pytest.raises(FileNotFoundError, match='No such file or directory'):
+        _ = MyConfig.load_config(outfile)
+    Path(outfile).touch()
+    # empty file is invalid JSON
+    with pytest.raises(json.JSONDecodeError, match='Expecting value'):
+        _ = MyConfig.load_config(outfile)
+    assert MyConfig.get_config() is None
+    with open(outfile, 'w') as f:
+        json.dump({}, f)
+    assert MyConfig.load_config(outfile) == cfg
+    assert MyConfig.get_config() == cfg
+    with open(outfile, 'w') as f:
+        json.dump({'x': 5}, f)
+    # extra keys are ignored when loading
+    assert MyConfig.load_config(outfile) == cfg
+    outfile = tmpdir / 'test.toml'
+    Path(outfile).touch()
+    # empty file is valid TOML
+    assert MyConfig.load_config(outfile) == cfg
+    with open(outfile, 'w') as f:
+        f.write('x = 5')
+    assert MyConfig.load_config(outfile) == cfg

@@ -8,7 +8,7 @@ from typing_extensions import Self
 from fancy_dataclass.dict import DictDataclass
 from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.serialize import FileSerializable
-from fancy_dataclass.utils import AnyPath, coerce_to_dataclass, dataclass_type_map, get_dataclass_fields
+from fancy_dataclass.utils import AnyPath, coerce_to_dataclass, dataclass_type_map, get_dataclass_fields, issubclass_safe
 
 
 class Config:
@@ -64,7 +64,7 @@ class ConfigDataclass(Config, DictDataclass, suppress_defaults=False):
     def _wrap_config_dataclass(mixin_cls: Type[DataclassMixin], cls: Type['ConfigDataclass']) -> Type[DataclassMixin]:
         """Recursively wraps a DataclassMixin class around a ConfigDataclass so that nested ConfigDataclass fields inherit from the same mixin."""
         def _wrap(tp: type) -> type:
-            if issubclass(tp, ConfigDataclass):
+            if issubclass_safe(tp, ConfigDataclass):
                 wrapped_cls = mixin_cls.wrap_dataclass(tp)
                 field_data = [(fld.name, fld.type, fld) for fld in get_dataclass_fields(tp, include_classvars=True)]
                 return make_dataclass(tp.__name__, field_data, bases=wrapped_cls.__bases__)

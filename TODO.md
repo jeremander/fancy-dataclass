@@ -2,9 +2,6 @@
 
 ## v0.3.0
 
-- TOMLDataclass
-  - Unit tests
-    - `ConfigDataclass.load_config` from TOML
 - Basic usage examples in docs
 - Host on GH Pages or Readthedocs
   - Link to actual page from README
