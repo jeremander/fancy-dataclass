@@ -1,5 +1,4 @@
 from contextlib import contextmanager
-from copy import copy
 from dataclasses import make_dataclass
 from pathlib import Path
 from typing import ClassVar, Iterator, Optional, Type
@@ -9,7 +8,7 @@ from typing_extensions import Self
 from fancy_dataclass.dict import DictDataclass
 from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.serialize import FileSerializable
-from fancy_dataclass.utils import AnyPath, coerce_to_dataclass, get_dataclass_fields
+from fancy_dataclass.utils import AnyPath, coerce_to_dataclass, dataclass_type_map, get_dataclass_fields
 
 
 class Config:
@@ -21,7 +20,10 @@ class Config:
 
     @classmethod
     def get_config(cls) -> Optional[Self]:
-        """Gets the current global configuration."""
+        """Gets the current global configuration.
+
+        Returns:
+            Global configuration object (`None` if not set)"""
         return cls._config  # type: ignore[return-value]
 
     @classmethod
@@ -61,18 +63,13 @@ class ConfigDataclass(Config, DictDataclass, suppress_defaults=False):
     @staticmethod
     def _wrap_config_dataclass(mixin_cls: Type[DataclassMixin], cls: Type['ConfigDataclass']) -> Type[DataclassMixin]:
         """Recursively wraps a DataclassMixin class around a ConfigDataclass so that nested ConfigDataclass fields inherit from the same mixin."""
-        wrapped_cls = mixin_cls.wrap_dataclass(cls)
-        field_data = []
-        for fld in get_dataclass_fields(cls, include_classvars=True):
-            if issubclass(fld.type, ConfigDataclass):
-                tp = ConfigDataclass._wrap_config_dataclass(mixin_cls, fld.type)
-                new_fld = copy(fld)
-                new_fld.type = tp
-            else:
-                tp = fld.type
-                new_fld = fld
-            field_data.append((fld.name, tp, new_fld))
-        return make_dataclass(cls.__name__, field_data, bases=wrapped_cls.__bases__)
+        def _wrap(tp: type) -> type:
+            if issubclass(tp, ConfigDataclass):
+                wrapped_cls = mixin_cls.wrap_dataclass(tp)
+                field_data = [(fld.name, fld.type, fld) for fld in get_dataclass_fields(tp, include_classvars=True)]
+                return make_dataclass(tp.__name__, field_data, bases=wrapped_cls.__bases__)
+            return tp
+        return _wrap(dataclass_type_map(cls, _wrap))  # type: ignore[arg-type]
 
     @classmethod
     def _get_dataclass_type_for_extension(cls, ext: str) -> Type[FileSerializable]:
@@ -90,8 +87,11 @@ class ConfigDataclass(Config, DictDataclass, suppress_defaults=False):
     def load_config(cls, path: AnyPath) -> Self:
         """Loads configurations from a file and sets them to be the global configurations for this class.
 
+        Args:
+            path: File from which to load configurations
+
         Returns:
-            The newly loaded global configuration"""
+            The newly loaded global configurations"""
         p = Path(path)
         ext = p.suffix
         if not ext:

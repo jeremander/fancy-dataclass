@@ -19,9 +19,12 @@ Types of changes:
 ### Added
 
 - `TOMLDataclass` for saving/loading TOML via [`tomlkit`](https://tomlkit.readthedocs.io/en/latest/)
-- `FileSerializable` and `DictFileSerializableDataclass` mixins to factor shared behavior between JSON/TOML serialization
+    - Support for loading TOML configurations in `ConfigDataclass`
+- `FileSerializable` and `DictFileSerializableDataclass` mixins to factor out shared functionality between JSON/TOML serialization
 
 ## [0.2.0]
+
+2024-04-13
 
 ### Added
 
@@ -48,6 +51,8 @@ Types of changes:
 - More robust type handling
 
 ## [0.1.0]
+
+2022-06-06
 
 ### Added
 

@@ -1,14 +1,14 @@
 from abc import ABC, abstractmethod
 from copy import copy
 import dataclasses
-from dataclasses import dataclass
+from dataclasses import Field, dataclass
 from functools import partial
 from typing import TYPE_CHECKING, Any, ClassVar, Dict, Iterable, Literal, Optional, Type, TypeVar, Union, _TypedDictMeta, get_args, get_origin  # type: ignore[attr-defined]
 
 from typing_extensions import Self, _AnnotatedAlias
 
 from fancy_dataclass.mixin import DataclassMixin, DataclassMixinSettings, FieldSettings
-from fancy_dataclass.utils import TypeConversionError, _flatten_dataclass, check_dataclass, fully_qualified_class_name, issubclass_safe, obj_class_name, safe_dict_insert
+from fancy_dataclass.utils import TypeConversionError, _flatten_dataclass, check_dataclass, fully_qualified_class_name, issubclass_safe, obj_class_name, safe_dict_insert, type_is_optional
 
 
 if TYPE_CHECKING:
@@ -250,7 +250,7 @@ class DictDataclass(DataclassMixin):
                     return tuple(convert_val(subtype, elt) for elt in val)
                 return tuple(convert_val(subtype, elt) for (subtype, elt) in zip(args, val))
             elif origin_type == Union:
-                if getattr(tp, '_name', None) == 'Optional':
+                if type_is_optional(tp):
                     assert len(args) == 2
                     assert args[1] is type(None)
                     args = args[::-1]  # check None first
@@ -272,6 +272,10 @@ class DictDataclass(DataclassMixin):
         raise err()
 
     @classmethod
+    def _get_missing_value(cls, fld: Field) -> Any:  # type: ignore[type-arg]
+        raise ValueError(f'{fld.name!r} field is required')
+
+    @classmethod
     def _dataclass_args_from_dict(cls, d: AnyDict, strict: bool = False) -> AnyDict:
         """Given a dict of arguments, performs type conversion and/or validity checking, then returns a new dict that can be passed to the class's constructor."""
         check_dataclass(cls)
@@ -283,24 +287,27 @@ class DictDataclass(DataclassMixin):
             for key in d:
                 if (key not in field_names):
                     raise ValueError(f'{key!r} is not a valid field for {cls.__name__}')
-        for field in fields:
-            if not field.init:  # suppress fields where init=False
+        for fld in fields:
+            if not fld.init:  # suppress fields where init=False
                 continue
-            if field.name in d:
+            if fld.name in d:
                 # field may be defined in the dataclass itself or one of its ancestor dataclasses
                 for base in bases:
                     try:
-                        field_type = base.__annotations__[field.name]
-                        kwargs[field.name] = cls._from_dict_value(field_type, d[field.name], strict=strict)
+                        field_type = base.__annotations__[fld.name]
+                        kwargs[fld.name] = cls._from_dict_value(field_type, d[fld.name], strict=strict)
                         break
                     except (AttributeError, KeyError):
                         pass
                 else:
-                    raise ValueError(f'could not locate field {field.name!r}')
-            elif field.default == dataclasses.MISSING:
-                if field.default_factory == dataclasses.MISSING:
-                    raise ValueError(f'{field.name!r} field is required')
-                kwargs[field.name] = field.default_factory()
+                    raise ValueError(f'could not locate field {fld.name!r}')
+            elif fld.default == dataclasses.MISSING:
+                if fld.default_factory == dataclasses.MISSING:
+                    val = cls._get_missing_value(fld)
+                else:
+                    val = fld.default_factory()
+                    # raise ValueError(f'{fld.name!r} field is required')
+                kwargs[fld.name] = val
         return kwargs
 
     @classmethod

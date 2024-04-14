@@ -1,11 +1,52 @@
 from abc import ABC, abstractmethod
+from enum import Enum
 from io import StringIO, TextIOBase
 from typing import Any, BinaryIO, TextIO
 
 from typing_extensions import Self
 
 from fancy_dataclass.dict import AnyDict, DictDataclass
-from fancy_dataclass.utils import AnyIO
+from fancy_dataclass.utils import AnyIO, TypeConversionError
+
+
+def to_dict_value_basic(val: Any) -> Any:
+    """Converts an arbitrary value with a basic data type to an appropriate form for serializing to typical file formats (JSON, TOML).
+
+    Args:
+        val: Value with basic data type
+
+    Returns:
+        A version of that value suitable for serialization"""
+    if isinstance(val, Enum):
+        return val.value
+    elif isinstance(val, range):  # store the range bounds
+        bounds = [val.start, val.stop]
+        if val.step != 1:
+            bounds.append(val.step)
+        return bounds
+    elif hasattr(val, 'dtype'):  # assume it's a numpy array of numbers
+        return [float(elt) for elt in val]
+    return val
+
+def from_dict_value_basic(tp: type, val: Any) -> Any:
+    """Converts a deserialized value to the given type.
+
+    Args:
+        tp: Target type to convert to
+        val: Deserialized value
+
+    Returns:
+        Converted value"""
+    if issubclass(tp, float):
+        return tp(val)
+    if issubclass(tp, range):
+        return tp(*val)
+    if issubclass(tp, Enum):
+        try:
+            return tp(val)
+        except ValueError as e:
+            raise TypeConversionError(tp, val) from e
+    return val
 
 
 class FileSerializable(ABC):

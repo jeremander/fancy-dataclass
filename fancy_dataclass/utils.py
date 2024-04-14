@@ -9,7 +9,7 @@ from functools import lru_cache
 import importlib
 from pathlib import Path
 import re
-from typing import TYPE_CHECKING, Any, BinaryIO, Callable, Dict, ForwardRef, Generic, Iterator, List, Optional, Sequence, Set, TextIO, Tuple, Type, TypeVar, Union, get_args, get_origin, get_type_hints
+from typing import TYPE_CHECKING, Any, BinaryIO, Callable, Dict, ForwardRef, Generic, Iterable, Iterator, List, Optional, Sequence, Set, TextIO, Tuple, Type, TypeVar, Union, get_args, get_origin, get_type_hints
 
 from typing_extensions import TypeGuard
 
@@ -44,6 +44,17 @@ class TypeConversionError(ValueError):
         tp_name = re.sub("'>$", '', re.sub(r"^<\w+ '", '', str(tp)))
         super().__init__(f'could not convert {val!r} to type {tp_name!r}')
 
+
+def type_is_optional(tp: type) -> bool:
+    """Determines if a type is an Optional type.
+
+    Args:
+        tp: Type to check
+
+    Returns:
+        True if the type is Optional"""
+    origin_type = get_origin(tp)
+    return (origin_type == Union) and (getattr(tp, '_name', None) == 'Optional')
 
 def safe_dict_insert(d: Dict[Any, Any], key: str, val: Any) -> None:
     """Inserts a (key, value) pair into a dict, if the key is not already present.
@@ -233,8 +244,56 @@ def coerce_to_dataclass(cls: Type[T], obj: object) -> T:
 
     Returns:
         A new object of the desired type, coerced from the input object"""
-    d = {fld.name: getattr(obj, fld.name) for fld in dataclasses.fields(cls) if hasattr(obj, fld.name)}  # type: ignore[arg-type]
-    return cls(**d)
+    kwargs = {}
+    for fld in dataclasses.fields(cls):  # type: ignore[arg-type]
+        if hasattr(obj, fld.name):
+            val = getattr(obj, fld.name)
+            if is_dataclass(fld.type):
+                val = coerce_to_dataclass(fld.type, val)
+            else:
+                origin_type = get_origin(fld.type)
+                if origin_type and issubclass_safe(origin_type, Iterable):
+                    if issubclass(origin_type, dict):
+                        (_, val_type) = get_args(origin_type)
+                        if is_dataclass(val_type):
+                            val = type(val)({key: coerce_to_dataclass(val_type, elt) for (key, elt) in val.items()})
+                    elif issubclass(origin_type, tuple):
+                        val = type(val)(coerce_to_dataclass(tp, elt) if is_dataclass(tp) else elt for (tp, elt) in zip(get_args(fld.type), val))
+                    else:
+                        (elt_type,) = get_args(fld.type)
+                        if is_dataclass(elt_type):
+                            val = type(val)(coerce_to_dataclass(elt_type, elt) for elt in val)
+            kwargs[fld.name] = val
+    return cls(**kwargs)
+
+def dataclass_type_map(cls: Type['DataclassInstance'], func: Callable[[type], type]) -> Type['DataclassInstance']:
+    """Applies a type function to all dataclass field types, recursively through container types.
+
+    Args:
+        cls: Target dataclass type to manipulate
+        func: Function to map onto basic (non-container) field types
+
+    Returns:
+        A new dataclass type whose field types have been mapped by the function"""
+    def _map_func(tp: type) -> type:
+        return func(dataclass_type_map(tp, func)) if is_dataclass(tp) else func(tp)
+    field_data = []
+    for fld in get_dataclass_fields(cls, include_classvars=True):
+        new_fld = copy(fld)
+        origin_type = get_origin(fld.type)
+        if origin_type and issubclass_safe(origin_type, Iterable):
+            if issubclass(origin_type, dict):
+                (key_type, val_type) = get_args(origin_type)
+                tp = origin_type[key_type, _map_func(val_type)]
+            elif issubclass(origin_type, tuple):
+                tp = origin_type[*[_map_func(elt_type) for elt_type in get_args(fld.type)]]
+            else:
+                (elt_type,) = get_args(fld.type)
+                tp = origin_type[_map_func(elt_type)]
+        else:
+            tp = _map_func(fld.type)
+        field_data.append((fld.name, tp, new_fld))
+    return make_dataclass(cls.__name__, field_data, bases=cls.__bases__)
 
 
 ##############
@@ -257,7 +316,6 @@ def traverse_dataclass(cls: type) -> Iterator[Tuple[RecordPath, Field]]:  # type
     Raises:
         TypeError: if the type cannot be traversed"""
     def _make_optional(fld: Field) -> Field:  # type: ignore[type-arg]
-        new_fld = Field
         new_fld = copy(fld)  # type: ignore[assignment]
         new_fld.type = Optional[fld.type]  # type: ignore
         new_fld.default = None  # type: ignore

@@ -1,5 +1,4 @@
 from datetime import datetime
-from enum import Enum
 import json
 from json import JSONEncoder
 from typing import Any, BinaryIO, TextIO, Type, cast, get_args, get_origin
@@ -7,7 +6,7 @@ from typing import Any, BinaryIO, TextIO, Type, cast, get_args, get_origin
 from typing_extensions import Self
 
 from fancy_dataclass.dict import AnyDict
-from fancy_dataclass.serialize import DictFileSerializableDataclass, FileSerializable
+from fancy_dataclass.serialize import DictFileSerializableDataclass, FileSerializable, from_dict_value_basic, to_dict_value_basic
 from fancy_dataclass.utils import AnyIO, TypeConversionError
 
 
@@ -111,20 +110,9 @@ class JSONDataclass(DictFileSerializableDataclass, JSONSerializable):
 
     @classmethod
     def _to_dict_value_basic(cls, val: Any) -> Any:
-        if isinstance(val, Enum):
-            return val.value
-        elif isinstance(val, range):  # store the range bounds
-            bounds = [val.start, val.stop]
-            if val.step != 1:
-                bounds.append(val.step)
-            return bounds
-        elif isinstance(val, datetime):
+        if isinstance(val, datetime):
             return val.isoformat()
-        elif isinstance(val, (int, float)):  # handles numpy numeric types
-            return val
-        elif hasattr(val, 'dtype'):  # assume it's a numpy array of numbers
-            return [float(elt) for elt in val]
-        return val
+        return to_dict_value_basic(val)
 
     @classmethod
     def _to_dict_value(cls, val: Any, full: bool) -> Any:
@@ -135,18 +123,9 @@ class JSONDataclass(DictFileSerializableDataclass, JSONSerializable):
 
     @classmethod
     def _from_dict_value_basic(cls, tp: type, val: Any) -> Any:
-        if issubclass(tp, float):
-            return tp(val)
-        if issubclass(tp, range):
-            return tp(*val)
         if issubclass(tp, datetime):
             return tp.fromisoformat(val)
-        if issubclass(tp, Enum):
-            try:
-                return tp(val)
-            except ValueError as e:
-                raise TypeConversionError(tp, val) from e
-        return super()._from_dict_value_basic(tp, val)
+        return super()._from_dict_value_basic(tp, from_dict_value_basic(tp, val))
 
     @classmethod
     def _from_dict_value(cls, tp: type, val: Any, strict: bool = False) -> Any:

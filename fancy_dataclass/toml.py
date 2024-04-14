@@ -1,11 +1,23 @@
+from dataclasses import Field
 from typing import Any, TextIO
 
 import tomlkit
 from typing_extensions import Self
 
 from fancy_dataclass.dict import AnyDict
-from fancy_dataclass.serialize import DictFileSerializableDataclass, FileSerializable
+from fancy_dataclass.serialize import DictFileSerializableDataclass, FileSerializable, from_dict_value_basic, to_dict_value_basic
 from fancy_dataclass.utils import AnyIO
+
+
+def _remove_null_dict_values(val: Any) -> Any:
+    """Removes all null (None) values from a dict.
+
+    Does this recursively to any nested dicts or lists."""
+    if isinstance(val, (list, tuple)):
+        return type(val)(_remove_null_dict_values(elt) for elt in val)
+    if isinstance(val, dict):
+        return type(val)({key: _remove_null_dict_values(elt) for (key, elt) in val.items() if (elt is not None)})
+    return val
 
 
 class TOMLSerializable(FileSerializable):
@@ -59,11 +71,24 @@ class TOMLDataclass(DictFileSerializableDataclass, TOMLSerializable):
     """Dataclass mixin enabling default serialization of dataclass objects to and from TOML."""
 
     # TODO: require subclass to set qualified_type=True, like JSONDataclass?
-
     @classmethod
     def _dict_to_text_file(cls, d: AnyDict, fp: TextIO, **kwargs: Any) -> None:
+        d = _remove_null_dict_values(d)
         tomlkit.dump(d, fp, **kwargs)
 
     @classmethod
     def _text_file_to_dict(cls, fp: TextIO, **kwargs: Any) -> AnyDict:
         return tomlkit.load(fp)
+
+    @classmethod
+    def _to_dict_value_basic(cls, val: Any) -> Any:
+        return to_dict_value_basic(val)
+
+    @classmethod
+    def _from_dict_value_basic(cls, tp: type, val: Any) -> Any:
+        return super()._from_dict_value_basic(tp, from_dict_value_basic(tp, val))
+
+    @classmethod
+    def _get_missing_value(cls, fld: Field) -> Any:  # type: ignore[type-arg]
+        # replace any missing required fields with a default of None
+        return None

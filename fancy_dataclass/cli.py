@@ -8,7 +8,7 @@ from typing import Any, Callable, ClassVar, Dict, List, Literal, Optional, Seque
 from typing_extensions import Self
 
 from fancy_dataclass.mixin import DataclassMixin, FieldSettings
-from fancy_dataclass.utils import check_dataclass, issubclass_safe
+from fancy_dataclass.utils import check_dataclass, issubclass_safe, type_is_optional
 
 
 T = TypeVar('T')
@@ -137,7 +137,7 @@ class ArgparseDataclass(DataclassMixin):
         action = field.metadata.get('action', 'store')
         origin_type = get_origin(tp)
         if origin_type is not None:  # compound type
-            if (origin_type == Union) and (getattr(tp, '_name', None) == 'Optional'):
+            if type_is_optional(tp):
                 kwargs['default'] = None
             if origin_type == ClassVar:  # by default, exclude ClassVars from the parser
                 return

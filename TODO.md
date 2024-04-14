@@ -3,10 +3,14 @@
 ## v0.3.0
 
 - TOMLDataclass
-  - Value conversions (borrow from JSON)
-  - Unit tests (also for `ConfigDataclass.load_config`)
+  - Unit tests
+    - Clean up JSON/dict tests (organize into classes?)
+    - Conflict with multiple inheritance from JSON/TOMLDataclass with `_to_file`?
+    - Can't do list of optionals with None included
+    - `ConfigDataclass.load_config` from TOML
 - Basic usage examples in docs
 - Host on GH Pages or Readthedocs
+  - Link to actual page from README
   - Make PyPI page link to the hosted docs as well as Github
 - Github Actions for automated testing
   - Configure as much as possible via `hatch`
@@ -46,6 +50,7 @@
   - Test `None` when it's not the default value (can break round-trip fidelity)
 - `TabularDataclass`? CSV/TSV/parquet/feather
   - Make `SQLDataclass` inherit from it
+  - Convert to/from `pandas` `Series` and `DataFrame`?
 - Support subparsers in `ArgparseDataclass`
 - Field metadata
   - Be strict about unknown field metadata keys? (Maybe issue warning?)
