@@ -2,7 +2,6 @@
 
 ## v0.3.0
 
-- Basic usage examples in docs
 - Host on GH Pages or Readthedocs
   - Link to actual page from README
   - Make PyPI page link to the hosted docs as well as Github
@@ -12,9 +11,11 @@
     - Multiple versions of Python
   - Coverage badge
   - Auto-publish when new tag is pushed (see: https://pypi.org/manage/project/fancy-dataclass/settings/publishing/)
+- CHANGELOG update
 
 ## v0.3.1
 
+- `DictConfig` subclass of `Config` (unstructured configs loaded from JSON/TOML)
 - documentation
   - Dataclass mixins/settings
     - For now, `dataclass` decorator is required

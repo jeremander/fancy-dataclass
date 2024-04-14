@@ -1,5 +1,6 @@
 from contextlib import contextmanager
-from dataclasses import make_dataclass
+from copy import deepcopy
+from dataclasses import is_dataclass, make_dataclass
 from pathlib import Path
 from typing import ClassVar, Iterator, Optional, Type
 
@@ -8,7 +9,7 @@ from typing_extensions import Self
 from fancy_dataclass.dict import DictDataclass
 from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.serialize import FileSerializable
-from fancy_dataclass.utils import AnyPath, coerce_to_dataclass, dataclass_type_map, get_dataclass_fields, issubclass_safe
+from fancy_dataclass.utils import AnyPath, coerce_to_dataclass, dataclass_type_map, get_dataclass_fields
 
 
 class Config:
@@ -20,11 +21,11 @@ class Config:
 
     @classmethod
     def get_config(cls) -> Optional[Self]:
-        """Gets the current global configuration.
+        """Gets a copy of the current global configuration.
 
         Returns:
             Global configuration object (`None` if not set)"""
-        return cls._config  # type: ignore[return-value]
+        return deepcopy(cls._config)  # type: ignore[return-value]
 
     @classmethod
     def _set_config(cls, config: Optional[Self]) -> None:
@@ -64,9 +65,9 @@ class ConfigDataclass(Config, DictDataclass, suppress_defaults=False):
 
     @staticmethod
     def _wrap_config_dataclass(mixin_cls: Type[DataclassMixin], cls: Type['ConfigDataclass']) -> Type[DataclassMixin]:
-        """Recursively wraps a DataclassMixin class around a ConfigDataclass so that nested ConfigDataclass fields inherit from the same mixin."""
+        """Recursively wraps a DataclassMixin class around a ConfigDataclass so that nested dataclass fields inherit from the same mixin."""
         def _wrap(tp: type) -> type:
-            if issubclass_safe(tp, ConfigDataclass):
+            if is_dataclass(tp):
                 wrapped_cls = mixin_cls.wrap_dataclass(tp)
                 field_data = [(fld.name, fld.type, fld) for fld in get_dataclass_fields(tp, include_classvars=True)]
                 return make_dataclass(tp.__name__, field_data, bases=wrapped_cls.__bases__)

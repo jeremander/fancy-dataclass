@@ -9,6 +9,7 @@ Python 3.7 introduced the `dataclasses` module which lets you write "statically 
 By inspecting dataclasses' type annotations, it is possible to endow them with special powers that help cut down on boilerplate code in a wide variety of domains, such as:
 
 - *JSON/TOML conversion*: convert dataclasses to JSON/TOML files and vice versa
+- *Configuration management*: store global configurations and use them anywhere in your program
 - *SQL persistence*: define a SQL table, and save/load objects from a database
 - *CLI parsing*: parse command-line arguments and store their values in a dataclass, then use them to execute your main program logic
 - *Subprocess calls*: generate command-line arguments to be passed to another program

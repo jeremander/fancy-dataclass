@@ -41,11 +41,12 @@ nav:
   - README.md
   - JSON conversion: json.md
   - TOML conversion: toml.md
+  - Config management: config.md
   - SQL persistence: sql.md
   - CLI parsing: cli.md
   - Subprocess calls: subprocess.md
   # defer to gen-files + literate-nav
-  - Code Reference: reference/
+  - Code reference: reference/
 
 watch:
   - fancy_dataclass

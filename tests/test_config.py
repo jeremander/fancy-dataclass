@@ -1,3 +1,4 @@
+from copy import deepcopy
 from dataclasses import dataclass
 from datetime import datetime
 import json
@@ -23,22 +24,25 @@ def test_config_dataclass():
     cfg = MyConfig()
     assert MyConfig.get_config() is None
     cfg.update_config()
-    assert MyConfig.get_config() is cfg
+    assert MyConfig.get_config() == cfg
+    assert MyConfig.get_config() is not cfg
     cfg2 = MyConfig()
     assert MyConfig.get_config() == cfg2
     assert MyConfig.get_config() is not cfg2
     cfg2.y = 'b'
     assert cfg2 != cfg
     with cfg2.configure():
-        assert MyConfig.get_config() is cfg2
+        assert MyConfig.get_config() == cfg2
+        assert MyConfig.get_config() is not cfg2
         # updating instance field affects the global config
         cfg2.y = 'c'
         assert MyConfig.get_config().y == 'c'
-    assert MyConfig.get_config() is cfg
+    assert MyConfig.get_config() == cfg
     MyConfig.clear_config()
     assert MyConfig.get_config() is None
     with cfg2.configure():
-        assert MyConfig.get_config() is cfg2
+        assert MyConfig.get_config() == cfg2
+        assert MyConfig.get_config() is not cfg2
     assert MyConfig.get_config() is None
     @dataclass
     class OuterConfig(ConfigDataclass):
@@ -48,16 +52,50 @@ def test_config_dataclass():
     assert outer.inner is cfg
     assert OuterConfig.get_config() is None
     outer.update_config()
-    assert OuterConfig.get_config() is outer
+    assert OuterConfig.get_config() == outer
     # updating outer does not influence nested class's singleton instance
     assert MyConfig.get_config() is None
     # inner instance can update its own singleton
     outer.inner.update_config()
-    assert MyConfig.get_config() is outer.inner
-    cfg2.update_config()
+    assert MyConfig.get_config() == outer.inner
     assert MyConfig.get_config() is not outer.inner
-    assert MyConfig.get_config() is cfg2
-    assert OuterConfig.get_config().inner is outer.inner
+    cfg2.update_config()
+    assert MyConfig.get_config() != outer.inner
+    assert MyConfig.get_config() == cfg2
+    assert OuterConfig.get_config().inner == outer.inner
+
+def test_inner_plain(tmpdir):
+    """Tests nested dataclass where the inner dataclass is a regular dataclass, not a ConfigDataclass."""
+    @dataclass
+    class Inner:
+        x: int = 1
+    @dataclass
+    class Outer(ConfigDataclass):
+        inner: Inner
+        y: str = 'a'
+    assert Outer.get_config() is None
+    cfg = Outer(Inner())
+    cfg.update_config()
+    assert Outer.get_config() == cfg
+    assert Outer.get_config() is not cfg
+    cfg.inner.x = 2
+    assert Outer.get_config().inner.x == 2
+    inner = cfg.inner
+    inner.x = 3
+    assert Outer.get_config().inner.x == 3
+    inner_copy = deepcopy(inner)
+    inner_copy.x = 4
+    assert Outer.get_config().inner.x == 3
+    cfg.inner = inner_copy
+    assert Outer.get_config().inner.x == 4
+    with Outer(Inner(x=5)).configure():
+        assert Outer.get_config().inner.x == 5
+    assert Outer.get_config().inner.x == 4
+    toml_str = 'y = "a"\n[inner]\nx = 1\n'
+    cfg_path = tmpdir / 'test.toml'
+    Path(cfg_path).write_text(toml_str)
+    Outer.load_config(cfg_path)
+    assert Outer.get_config() == Outer(Inner())
 
 def test_json(tmpdir):
     """Tests JSON conversion of ConfigDataclass."""
@@ -98,7 +136,7 @@ def test_json(tmpdir):
     JSONConfig1.clear_config()
     assert JSONConfig1.get_config() is None
     obj = JSONConfig1.load_config(outfile)
-    assert JSONConfig1.get_config() is obj
+    assert JSONConfig1.get_config() == obj
     # ensure the inner JSON-coerced datetime field gets converted
     @dataclass
     class OuterConfig(ConfigDataclass):

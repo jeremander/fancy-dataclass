@@ -9,7 +9,7 @@ description = "Spiff up your dataclasses with additional features."
 readme = "docs/README.md"
 requires-python = ">=3.8"
 license = "MIT"
-keywords = ["dataclass", "cli", "orm", "serialize", "json"]
+keywords = ["dataclass", "cli", "config", "orm", "serialize", "json", "toml"]
 authors = [
   { name = "Jeremy Silver", email = "jeremys@nessiness.com" }
 ]
