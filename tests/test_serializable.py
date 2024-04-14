@@ -1,8 +1,8 @@
 from collections import namedtuple
+from contextlib import nullcontext
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum, Flag, auto
-import json
 import math
 import re
 import sys
@@ -154,19 +154,19 @@ class MyTypedDict(TypedDict):
 class DCTypedDict(JSONDataclass):
     d: MyTypedDict
 
-MyUntypedNamedTuple = namedtuple('MyUntypedNamedTuple', ['x', 'y'])
+UntypedNamedTuple = namedtuple('UntypedNamedTuple', ['x', 'y'])
 
-class MyTypedNamedTuple(NamedTuple):
+class TypedNamedTuple(NamedTuple):
     x: int
     y: str
 
 @dataclass
 class DCUntypedNamedTuple(JSONDataclass):
-    t: MyUntypedNamedTuple
+    t: UntypedNamedTuple
 
 @dataclass
 class DCTypedNamedTuple(JSONDataclass):
-    t: MyTypedNamedTuple
+    t: TypedNamedTuple
 
 @dataclass
 class DCAny(JSONDataclass):
@@ -189,6 +189,11 @@ class DCSuppress(JSONDataclass, suppress_defaults=False):
 @dataclass
 class DCList(JSONDataclass):
     vals: List[DCAny]
+
+# DictDataclass versions
+DictDCDatetime = _convert_json_dataclass(DCDatetime, DictDataclass)
+DictDCEnum = _convert_json_dataclass(DCEnum, DictDataclass)
+DictDCRange = _convert_json_dataclass(DCRange, DictDataclass)
 
 
 TEST_JSON = [
@@ -214,8 +219,8 @@ TEST_JSON = [
     DCRange(range(1, 10, 3)),
     DCAnnotated(3, 4.7),
     DCTypedDict({'x': 3, 'y': 'a'}),
-    DCUntypedNamedTuple(MyUntypedNamedTuple(3, 'a')),
-    DCTypedNamedTuple(MyTypedNamedTuple(3, 'a')),
+    DCUntypedNamedTuple(UntypedNamedTuple(3, 'a')),
+    DCTypedNamedTuple(TypedNamedTuple(3, 'a')),
     DCAny(3),
     DCAny('a'),
     DCAny({}),
@@ -228,123 +233,147 @@ class TestDict:
     """Unit tests for DictDataclass."""
 
     base_cls = DictDataclass
+    ext: str = None
 
-    def _test_dict_convert(self, obj):
-        # convert object to the desired base class
+    def _coerce_object(self, obj):
+        """Creates a new version of the object with the desired base class.
+        Returns the class and the coerced object."""
         tp = _convert_json_dataclass(type(obj), self.base_cls)
         assert issubclass(tp, self.base_cls)
         obj = coerce_to_dataclass(tp, obj)
         assert isinstance(obj, self.base_cls)
+        return (tp, obj)
+
+    def _test_dict_round_trip(self, obj):
+        """Tests round-trip conversion to/from a dict."""
+        (tp, obj) = self._coerce_object(obj)
         if obj.__settings__.qualified_type:
             assert 'type' in obj.to_dict()
         else:
             assert 'type' not in obj.to_dict()
         assert tp.from_dict(obj.to_dict()) == obj
 
-    # TODO: file round trips
+    def _test_dict_convert(self, obj, d, err):
+        """Tests that an object gets converted to the expected dict and back."""
+        to_dict_ok = err is None
+        if err is None:
+            ctx1, ctx2 = nullcontext(), nullcontext()
+        else:
+            (to_dict_ok, errtype, match) = err
+            err_ctx = pytest.raises(errtype, match=match)
+            if to_dict_ok:
+                ctx1, ctx2 = nullcontext(), err_ctx
+            else:
+                ctx1, ctx2 = err_ctx, nullcontext()
+        with ctx1:
+            assert obj.to_dict() == d
+        if to_dict_ok:
+            with ctx2:
+                assert type(obj).from_dict(d) == obj
+
+    def _test_serialize_round_trip(self, obj, tmp_path):
+        """Tests round-trip conversion to/from the serialized format."""
+        (tp, obj) = self._coerce_object(obj)
+        ext = self.ext
+        # write to text file
+        path = tmp_path / f'test.{ext}'
+        with open(path, 'w') as f:
+            getattr(obj, f'to_{ext}')(f)
+        with open(path) as f:
+            obj1 = getattr(tp, f'from_{ext}')(f)
+        assert obj1 == obj
+        # write to binary file
+        with open(path, 'wb') as f:
+            getattr(obj, f'to_{ext}')(f)
+        with open(path, 'rb') as f:
+            obj2 = getattr(tp, f'from_{ext}')(f)
+        assert obj2 == obj
+        # convert to string
+        s = getattr(obj, f'to_{ext}_string')()
+        obj3 = getattr(tp, f'from_{ext}_string')(s)
+        assert obj3 == obj
+
+    def _test_serialize_convert(self, obj, s):
+        """Tests that an object gets serialized to the expected string and back."""
+        (tp, obj) = self._coerce_object(obj)
+        ext = self.ext
+        assert getattr(obj, f'to_{ext}_string')() == s
+        assert getattr(type(obj), f'from_{ext}_string')(s) == obj
 
     @pytest.mark.parametrize('obj', TEST_JSON)
-    def test_dict_convert(self, obj):
-        """Tests conversion to/from dict."""
-        self._test_dict_convert(obj)
+    def test_dict_round_trip(self, obj):
+        """Tests round-trip to dict and back."""
+        self._test_dict_round_trip(obj)
 
 
 class TestJSON(TestDict):
     """Unit tests for JSONDataclass."""
 
     base_cls = JSONDataclass
+    ext = 'json'
 
     @pytest.mark.parametrize('obj', TEST_JSON)
-    def test_dict_convert(self, obj):
-        """Tests conversion to/from dict."""
-        self._test_dict_convert(obj)
+    def test_dict_round_trip(self, obj):
+        """Tests round-trip to dict and back."""
+        self._test_dict_round_trip(obj)
 
-    def test_special_type_convert(self):
+    @pytest.mark.parametrize('obj', TEST_JSON)
+    def test_json_round_trip(self, obj, tmp_path):
+        """Tests round-trip to JSON and back."""
+        self._test_serialize_round_trip(obj, tmp_path)
+
+    @pytest.mark.parametrize(['obj', 'd'], [
+        (DCEmpty(), {}),
+        (DCFloat(1), {'x': 1}),
+        (DCFloat(math.inf), {'x': math.inf}),
+        (DCFloat(math.nan), {'x': math.nan}),
+        (DCColors([Color.RED, Color.BLUE]), {'colors': [1, 4]}),
+        (DCStrEnum(MyStrEnum.a), {'enum': 'a'}),
+        (DCNonJSONSerializable(1, MyObject()), {'x': 1, 'obj': MyObject()}),
+        (DCList([]), {'vals': []}),
+        (DCList([DCAny(None)]), {'vals': [{'val': None}]}),
+        (DCList([DCAny(1)]), {'vals': [{'val': 1}]}),
+        (DCList([DCAny([])]), {'vals': [{'val': []}]}),
+        (DCList([DCAny({})]), {'vals': [{'val': {}}]}),
+
+    ])
+    def test_dict_convert(self, obj, d):
+        """Tests round-trip fidelity to/from dict."""
+        self._test_dict_convert(obj, d, None)
+
+    @pytest.mark.parametrize(['obj', 'd'], [
+        (DictDCDatetime(NOW), {'dt': NOW}),
+        (DCDatetime(NOW), {'dt': NOW.isoformat()}),
+        (DictDCEnum(MyEnum.a), {'enum': MyEnum.a}),
+        (DCEnum(MyEnum.a), {'enum': 1}),
+        (DictDCRange(range(1, 10, 3)), {'range': range(1, 10, 3)}),
+        (DCRange(range(1, 10, 3)), {'range': [1, 10, 3]}),
+        (DictDCRange(range(1, 10)), {'range': range(1, 10)}),
+        (DCRange(range(1, 10)), {'range': [1, 10]}),
+    ])
+    def test_special_types(self, obj, d):
         """Tests that DictDataclass does not do special type conversion for certain types, while JSONDataclass does."""
-        DCDatetimePlain = _convert_json_dataclass(DCDatetime, DictDataclass)
-        DCEnumPlain = _convert_json_dataclass(DCEnum, DictDataclass)
-        DCRangePlain = _convert_json_dataclass(DCRange, DictDataclass)
-        dt = NOW
-        obj1 = DCDatetimePlain(dt)
-        assert obj1.to_dict() == {'dt': dt}
-        obj2 = DCDatetime(dt)
-        assert obj2.to_dict() == {'dt': dt.isoformat()}
-        obj1 = DCEnumPlain(MyEnum.a)
-        assert obj1.to_dict() == {'enum': MyEnum.a}
-        obj2 = DCEnum(MyEnum.a)
-        assert obj2.to_dict() == {'enum': 1}
-        r = range(1, 10, 3)
-        obj1 = DCRangePlain(r)
-        assert obj1.to_dict() == {'range': r}
-        obj2 = DCRange(r)
-        assert obj2.to_dict() == {'range': [1, 10, 3]}
-        r = range(1, 10)
-        obj2 = DCRange(r)
-        assert obj2.to_dict() == {'range': [1, 10]}
+        self._test_dict_convert(obj, d, None)
 
-    @pytest.mark.parametrize('obj', TEST_JSON)
-    def test_json_convert(self, obj, tmp_path):
-        """Tests conversion to/from JSON."""
-        # write to JSON text file
-        json_path = tmp_path / 'test.json'
-        with open(json_path, 'w') as f:
-            obj.to_json(f)
-        with open(json_path) as f:
-            obj1 = type(obj).from_json(f)
-        assert obj1 == obj
-        # write to JSON binary file
-        with open(json_path, 'wb') as f:
-            obj.to_json(f)
-        with open(json_path, 'rb') as f:
-            obj2 = type(obj).from_json(f)
-        assert obj2 == obj
-        # convert to JSON string
-        s = obj.to_json_string()
-        assert s == json.dumps(obj.to_dict())
-        obj3 = type(obj).from_json_string(s)
-        assert obj3 == obj
+    @pytest.mark.parametrize(['obj', 'd', 'err'], [
+        (DCOptionalInt(1, 2), {'x': 1, 'y': 2}, None),
+        (DCOptionalInt(1, None), {'x': 1, 'y': None}, None),
+        # validation does not occur when converting to dict, only from dict
+        (DCOptionalInt(None, 1), {'x': None, 'y': 1}, (True, ValueError, "could not convert None to type 'int'")),
+        (DCOptionalStr('a', 'b'), {'x': 'a', 'y': 'b'}, None),
+        (DCOptionalStr('a', None), {'x': 'a', 'y': None}, None),
+        (DCOptionalStr(None, 'b'), {'x': None, 'y': 'b'}, (True, ValueError, "could not convert None to type 'str'")),
+    ])
+    def test_optional(self, obj, d, err):
+        self._test_dict_convert(obj, d, err)
 
-    # TODO: parametrize
-    def test_optional(self):
-        obj: Any = DCOptionalInt(1, 2)
-        d = obj.to_dict()
-        assert d == {'x': 1, 'y': 2}
-        assert DCOptionalInt.from_dict(d) == obj
-        obj = DCOptionalInt(1, None)
-        d = obj.to_dict()
-        assert d == {'x': 1, 'y': None}
-        assert DCOptionalInt.from_dict(d) == obj
-        obj = DCOptionalInt(None, 1)  # type: ignore[arg-type]
-        # validation does not occur when converting to dict, only the reverse
-        d = obj.to_dict()
-        assert d == {'x': None, 'y': 1}
-        with pytest.raises(ValueError, match="could not convert None to type 'int'"):
-            _ = DCOptionalInt.from_dict(d)
-        obj = DCOptionalStr('a', 'b')
-        d = obj.to_dict()
-        assert d == {'x': 'a', 'y': 'b'}
-        assert DCOptionalStr.from_dict(d) == obj
-        obj = DCOptionalStr('a', None)
-        d = obj.to_dict()
-        assert d == {'x': 'a', 'y': None}
-        assert DCOptionalStr.from_dict(d) == obj
-        obj = DCOptionalStr(None, 'b')  # type: ignore[arg-type]
-        d = obj.to_dict()
-        assert d == {'x': None, 'y': 'b'}
-        with pytest.raises(ValueError, match="could not convert None to type 'str'"):
-            _ = DCOptionalStr.from_dict(d)
+    @pytest.mark.parametrize(['obj', 'd', 'err'], [
+        (DCLiteral(1), {'lit': 1}, None),
+        (DCLiteral('b'), {'lit': 'b'}, (True, ValueError, re.escape("could not convert 'b' to type \"typing.Literal['a', 1]\""))),
+    ])
+    def test_literal(self, obj, d, err):
+        self._test_dict_convert(obj, d, err)
 
-    # TODO: parametrize
-    def test_literal(self):
-        obj = DCLiteral(1)
-        assert obj.to_dict() == {'lit': 1}
-        obj = DCLiteral('b')  # type: ignore[arg-type]
-        d = obj.to_dict()
-        assert d == {'lit': 'b'}
-        with pytest.raises(ValueError, match=re.escape("could not convert 'b' to type \"typing.Literal['a', 1]\"")):
-            _ = DCLiteral.from_dict(d)
-
-    # TODO: parametrize
     def test_datetime(self):
         obj = DCDatetime(NOW)
         d = obj.to_dict()
@@ -386,20 +415,24 @@ class TestJSON(TestDict):
             with pytest.raises(ValueError, match="could not convert .* to type .*"):
                 _ = DCTypedDict.from_dict({'d': d})
 
-    def test_namedtuple(self):
-        nt1 = MyUntypedNamedTuple(3, 'a')
-        obj1 = DCUntypedNamedTuple(nt1)
-        assert obj1.to_dict() == {'t': {'x': 3, 'y': 'a'}}
-        nt2 = MyTypedNamedTuple(3, 'a')
-        obj2 = DCTypedNamedTuple(nt2)
-        assert obj2.to_dict() == {'t': {'x': 3, 'y': 'a'}}
+    @pytest.mark.parametrize(['obj', 'd', 'err'], [
+        (DCUntypedNamedTuple(UntypedNamedTuple(3, 'a')), {'t': {'x': 3, 'y': 'a'}}, None),
+        (DCTypedNamedTuple(TypedNamedTuple(3, 'a')), {'t': {'x': 3, 'y': 'a'}}, None),
         # invalid NamedTuple field (validation occurs on from_dict)
-        nt2 = MyTypedNamedTuple(3, 4)  # type: ignore[arg-type]
-        obj2 = DCTypedNamedTuple(nt2)
-        d = {'t': {'x': 3, 'y': 4}}
+        (DCTypedNamedTuple(TypedNamedTuple(3, 4)), {'t': {'x': 3, 'y': 4}}, (True, ValueError, "could not convert 4 to type 'str'")),
+    ])
+    def test_namedtuple(self, obj, d, err):
+        self._test_dict_convert(obj, d, err)
+
+    def test_any(self):
+        # two non-identical objects get mapped to the same dict, resulting in round-trip failure
+        obj1 = DCList([DCAny(DCAny(1))])
+        obj2 = DCList([DCAny({'val': 1})])
+        d = {'vals': [{'val': {'val': 1}}]}
+        assert obj1.to_dict() == d
         assert obj2.to_dict() == d
-        with pytest.raises(ValueError, match="could not convert 4 to type 'str'"):
-            _ = DCTypedNamedTuple.from_dict(d)
+        assert type(obj1).from_dict(d) == obj2
+        assert obj1 != obj2
 
     def test_subclass_json_dataclass(self):
         def _remove_type(d):
@@ -606,50 +639,22 @@ class TestJSON(TestDict):
         with pytest.raises(TypeError, match="unexpected keyword argument 'fake_kwarg'"):
             _ = MyDC.from_json_string(s, fake_kwarg=True)
 
-    @pytest.mark.parametrize(['obj', 'd', 'obj2'], [
-        (DCEmpty(), {}, None),
-        (DCFloat(1), {'x': 1}, None),
-        (DCFloat(math.inf), {'x': math.inf}, None),
-        (DCFloat(math.nan), {'x': math.nan}, None),
-        (DCColors([Color.RED, Color.BLUE]), {'colors': [1, 4]}, None),
-        (DCStrEnum(MyStrEnum.a), {'enum': 'a'}, None),
-        (DCNonJSONSerializable(1, MyObject()), {'x': 1, 'obj': MyObject()}, None),
-        (DCList([]), {'vals': []}, None),
-        (DCList([DCAny(None)]), {'vals': [{'val': None}]}, None),
-        (DCList([DCAny(1)]), {'vals': [{'val': 1}]}, None),
-        (DCList([DCAny([])]), {'vals': [{'val': []}]}, None),
-        (DCList([DCAny({})]), {'vals': [{'val': {}}]}, None),
-        (DCList([DCAny(DCAny(1))]), {'vals': [{'val': {'val': 1}}]}, DCList([DCAny({'val': 1})])),
-    ])
-    def test_dict_round_trips(self, obj, d, obj2):
-        """Tests round-trip fidelity to/from dict."""
-        assert obj.to_dict() == d
-        obj2 = type(obj).from_dict(d)
-        if obj2 is None:  # round-trip is valid
-            assert obj == obj2
-        d2 = obj2.to_dict()
-        assert d == d2
-
 
 class TestTOML(TestDict):
     """Unit tests for TOMLDataclass."""
 
     base_cls = TOMLDataclass
+    ext = 'toml'
 
     @pytest.mark.parametrize('obj', TEST_JSON)
-    def test_dict_convert(self, obj):
-        """Tests conversion to/from dict."""
-        self._test_dict_convert(obj)
+    def test_dict_round_trip(self, obj):
+        """Tests round-trip to dict and back."""
+        self._test_dict_round_trip(obj)
 
-    @staticmethod
-    def _json_to_toml_dataclass(obj):
-        return coerce_to_dataclass(_convert_json_dataclass(type(obj), TOMLDataclass), obj)
-
-    def _test_toml_string(self, obj, s):
-        cls = _convert_json_dataclass(type(obj), TOMLDataclass)
-        obj = coerce_to_dataclass(cls, obj)
-        assert obj.to_toml_string() == s
-        assert cls.from_toml_string(s) == obj
+    @pytest.mark.parametrize('obj', TEST_JSON)
+    def test_toml_round_trip(self, obj, tmp_path):
+        """Tests round-trip to TOML and back."""
+        self._test_serialize_round_trip(obj, tmp_path)
 
     @pytest.mark.parametrize(['obj', 's'], [
         (DCFloat(1), 'x = 1\n'),
@@ -660,7 +665,7 @@ class TestTOML(TestDict):
     ])
     def test_float(self, obj, s):
         """Tests floating-point support."""
-        self._test_toml_string(obj, s)
+        self._test_serialize_convert(obj, s)
 
     @pytest.mark.parametrize(['obj', 's'], [
         (DCOptional(1), 'x = 1\n'),
@@ -668,34 +673,11 @@ class TestTOML(TestDict):
     ])
     def test_optional(self, obj, s):
         """Tests behavior of Optional types with TOML conversion."""
-        self._test_toml_string(obj, s)
+        self._test_serialize_convert(obj, s)
 
     @pytest.mark.parametrize(['obj', 's'], [
         (DCDatetime(datetime.strptime('2024-01-01', '%Y-%m-%d')), 'dt = 2024-01-01T00:00:00\n'),
     ])
     def test_datetime(self, obj, s):
         """Tests support for the datetime type."""
-        self._test_toml_string(obj, s)
-
-    @pytest.mark.parametrize('obj', TEST_JSON)
-    def test_toml_convert(self, obj, tmp_path):
-        """Tests conversion to/from TOML."""
-        obj = TestTOML._json_to_toml_dataclass(obj)
-        assert isinstance(obj, TOMLDataclass)
-        # write to TOML text file
-        toml_path = tmp_path / 'test.toml'
-        with open(toml_path, 'w') as f:
-            obj.to_toml(f)
-        with open(toml_path) as f:
-            obj1 = type(obj).from_toml(f)
-        assert obj1 == obj
-        # write to TOML binary file
-        with open(toml_path, 'wb') as f:
-            obj.to_toml(f)
-        with open(toml_path, 'rb') as f:
-            obj2 = type(obj).from_toml(f)
-        assert obj2 == obj
-        # convert to TOML string
-        s = obj.to_toml_string()
-        obj3 = type(obj).from_toml_string(s)
-        assert obj3 == obj
+        self._test_serialize_convert(obj, s)

@@ -4,7 +4,6 @@
 
 - TOMLDataclass
   - Unit tests
-    - Clean up JSON/dict tests (organize into classes?)
     - Conflict with multiple inheritance from JSON/TOMLDataclass with `_to_file`?
     - Can't do list of optionals with None included
     - `ConfigDataclass.load_config` from TOML
