@@ -23,7 +23,7 @@ U = TypeVar('U')
 
 AnyIO = Union[BinaryIO, TextIO]
 Constructor = Callable[[Any], Any]
-AnyPath = str | Path
+AnyPath = Union[str, Path]
 RecordPath = Tuple[str, ...]
 
 # maximum depth when traversing the fields of a dataclass
@@ -54,7 +54,8 @@ def type_is_optional(tp: type) -> bool:
     Returns:
         True if the type is Optional"""
     origin_type = get_origin(tp)
-    return (origin_type == Union) and (getattr(tp, '_name', None) == 'Optional')
+    args = get_args(tp)
+    return (origin_type == Union) and (len(args) == 2) and (type(None) in args)
 
 def safe_dict_insert(d: Dict[Any, Any], key: str, val: Any) -> None:
     """Inserts a (key, value) pair into a dict, if the key is not already present.
@@ -277,19 +278,22 @@ def dataclass_type_map(cls: Type['DataclassInstance'], func: Callable[[type], ty
         A new dataclass type whose field types have been mapped by the function"""
     def _map_func(tp: type) -> type:
         return func(dataclass_type_map(tp, func)) if is_dataclass(tp) else func(tp)
+    # for Py3.8 compatibility, can only subscript typing classes
+    container_type_map: Dict[type, type] = {dict: Dict, tuple: Tuple, list: List}  # type: ignore[dict-item]
     field_data = []
     for fld in get_dataclass_fields(cls, include_classvars=True):
         new_fld = copy(fld)
         origin_type = get_origin(fld.type)
         if origin_type and issubclass_safe(origin_type, Iterable):
+            otype = container_type_map.get(origin_type, origin_type)
             if issubclass(origin_type, dict):
                 (key_type, val_type) = get_args(origin_type)
-                tp = origin_type[key_type, _map_func(val_type)]
+                tp = otype[key_type, _map_func(val_type)]
             elif issubclass(origin_type, tuple):
-                tp = origin_type[*[_map_func(elt_type) for elt_type in get_args(fld.type)]]
+                tp = otype[tuple([_map_func(elt_type) for elt_type in get_args(fld.type)])]
             else:
                 (elt_type,) = get_args(fld.type)
-                tp = origin_type[_map_func(elt_type)]
+                tp = otype[_map_func(elt_type)]
         else:
             tp = _map_func(fld.type)
         field_data.append((fld.name, tp, new_fld))

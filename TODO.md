@@ -3,9 +3,6 @@
 ## v0.3.0
 
 - Github Actions for automated testing
-  - Configure as much as possible via `hatch`
-    - `ruff`, `mypy`, `pytest`, `radon`
-    - Multiple versions of Python
   - Coverage badge
   - Auto-publish when new tag is pushed (see: https://pypi.org/manage/project/fancy-dataclass/settings/publishing/)
 - Release

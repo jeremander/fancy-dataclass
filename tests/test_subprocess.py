@@ -1,7 +1,6 @@
 from dataclasses import dataclass, field
 from pathlib import Path
 import re
-import sys
 from typing import ClassVar
 
 import pytest
@@ -40,7 +39,7 @@ def test_subprocess_dataclass(tmpdir):
     dc1 = coerce_to_dataclass(DC1, dc2)
     cwd = str(Path(__file__).parent)
     with open(prog, 'w') as f:
-        print(f"""#!{sys.executable}
+        print(f"""#!/usr/bin/env python3
 import sys
 sys.path.insert(0, {cwd!r})
 from test_cli import DC1

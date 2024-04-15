@@ -7,7 +7,7 @@ from typing_extensions import Self
 
 from fancy_dataclass.dict import AnyDict
 from fancy_dataclass.serialize import DictFileSerializableDataclass, FileSerializable, from_dict_value_basic, to_dict_value_basic
-from fancy_dataclass.utils import AnyIO, TypeConversionError
+from fancy_dataclass.utils import AnyIO, TypeConversionError, issubclass_safe
 
 
 class JSONSerializable(FileSerializable):
@@ -115,8 +115,6 @@ class JSONDataclass(DictFileSerializableDataclass, JSONSerializable):
 
     @classmethod
     def _to_dict_value_basic(cls, val: Any) -> Any:
-        # if isinstance(val, datetime):
-        #     return val.isoformat()
         return to_dict_value_basic(val)
 
     @classmethod
@@ -136,12 +134,12 @@ class JSONDataclass(DictFileSerializableDataclass, JSONSerializable):
     def _from_dict_value(cls, tp: type, val: Any, strict: bool = False) -> Any:
         # customize behavior for JSONSerializable
         origin_type = get_origin(tp)
-        if (origin_type is None) and issubclass(tp, tuple) and isinstance(val, dict) and hasattr(tp, '_fields'):  # namedtuple
+        if (origin_type is None) and issubclass_safe(tp, tuple) and isinstance(val, dict) and hasattr(tp, '_fields'):  # namedtuple
             try:
                 vals = []
                 for key in tp._fields:
                     # if NamedTuple's types are annotated, check them
-                    valtype = tp.__annotations__.get(key)
+                    valtype = getattr(tp, '__annotations__', {}).get(key)
                     vals.append(val[key] if (valtype is None) else cls._from_dict_value(valtype, val[key], strict=strict))
                 return tp(*vals)
             except KeyError as e:

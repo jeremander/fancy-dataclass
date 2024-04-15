@@ -56,10 +56,8 @@ jobs:
         with:
           name: loc-summary
           path: loc-summary.txt
-      - name: Test Py3.8
-        run: hatch run +py=3.8 test:test
-      - name: Test Py3.12
-        run: hatch run +py=3.12 test:test
+      - name: Test (pytest)
+        run: hatch run test:test --verbosity=0
       # - name: Build dist
       #   run: hatch build
       # - name: Publish on PyPI

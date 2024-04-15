@@ -158,7 +158,7 @@ class SubprocessDataclass(DataclassMixin):
             args += [arg for arg in self.get_arg(fld.name, suppress_defaults = suppress_defaults) if arg]
         return args
 
-    def run_subprocess(self, **kwargs: Any) -> subprocess.CompletedProcess[Union[str, bytes]]:
+    def run_subprocess(self, **kwargs: Any) -> subprocess.CompletedProcess:  # type: ignore[type-arg]
         """Executes the full subprocess command corresponding to the dataclass parameters.
 
         Args:

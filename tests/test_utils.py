@@ -4,8 +4,20 @@ from typing import Any, ClassVar, Dict, List, Optional, Sequence, Union
 import pytest
 from pytest import param
 
-from fancy_dataclass.utils import _flatten_dataclass, _is_instance, get_dataclass_fields, merge_dataclasses, traverse_dataclass
+from fancy_dataclass.utils import _flatten_dataclass, _is_instance, get_dataclass_fields, merge_dataclasses, traverse_dataclass, type_is_optional
 
+
+@pytest.mark.parametrize(['tp', 'is_optional'], [
+    (int, False),
+    (Optional[int], True),
+    (Optional[Optional[int]], True),
+    (Union[int, Optional[float]], False),
+    (Union[Optional[float], int], False),
+    (Optional[type(None)], False),  # Optional[NoneType] -> NoneType
+    (List[Optional[int]], False),
+])
+def test_type_is_optional(tp, is_optional):
+    assert type_is_optional(tp) == is_optional
 
 @pytest.mark.parametrize(['obj', 'tp', 'output'], [
     (1, int, True),
@@ -203,7 +215,7 @@ class TestFlatten:
         assert get_names(M) == ['m', 'm.k']
         assert get_names(N) == ['n.j', 'n.k']
         assert get_names(P) == ['p', 'p.g1', 'p.g2.g1', 'p.g2.g2']
-        assert all('typing.Optional' in str(fld.type) for (_, fld) in traverse_dataclass(P))
+        assert all(type_is_optional(fld.type) for (_, fld) in traverse_dataclass(P))
         assert get_names(Q) == ['q', 'q.g1', 'q.g2']
         with pytest.raises(TypeError, match='type cannot contain a member field of its own type'):
             _ = get_names(R)
