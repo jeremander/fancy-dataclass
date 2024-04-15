@@ -1,0 +1,67 @@
+name: fancy-dataclass
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: "Code checks"
+    runs-on: ubuntu-latest
+    # strategy:
+    #   matrix:
+    #     python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: |
+            3.8
+            3.9
+            3.10
+            3.11
+            3.12
+      - name: Set up pip cache
+        if: runner.os == 'Linux'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml') }}
+          restore-keys: ${{ runner.os }}-pip-
+      - name: Install hatch
+        run: pip install hatch
+      - name: Configure hatch
+        run: hatch config set dirs.env.virtual .venv
+      - name: Cache hatch virtualenv
+        uses: actions/cache@v2
+        id: cache-venv
+        with:
+          path: ./.venv/
+          # cache key depends on pyproject.toml
+          key: ${{ runner.os }}-venv-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-venv-
+      - name: Create virtualenvs
+        # build virtualenvs, but only if they're not already cached
+        run: hatch env create lint && hatch env create test
+        if: steps.cache-venv.outputs.cache-hit != 'true'
+      - name: Lint (ruff)
+        run: hatch run lint:run-ruff
+      - name: Python compatibility (vermin)
+        run: hatch run lint:run-vermin
+      - name: Type-check (mypy)
+        run: hatch run lint:run-mypy
+      - name: Lines of code (radon)
+        run: hatch run lint:run-loc-summary | tee loc-summary.txt
+      - name: Upload lines of code
+        uses: actions/upload-artifact@v4
+        with:
+          name: loc-summary
+          path: loc-summary.txt
+      - name: Test Py3.8
+        run: hatch run +py=3.8 test:test
+      - name: Test Py3.12
+        run: hatch run +py=3.12 test:test
+      # - name: Build dist
+      #   run: hatch build
+      # - name: Publish on PyPI
+      #   if: github.ref == 'refs/heads/main'
+      #   run: hatch publish

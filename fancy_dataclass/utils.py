@@ -316,10 +316,10 @@ def traverse_dataclass(cls: type) -> Iterator[Tuple[RecordPath, Field]]:  # type
     Raises:
         TypeError: if the type cannot be traversed"""
     def _make_optional(fld: Field) -> Field:  # type: ignore[type-arg]
-        new_fld = copy(fld)  # type: ignore[assignment]
+        new_fld = copy(fld)
         new_fld.type = Optional[fld.type]  # type: ignore
-        new_fld.default = None  # type: ignore
-        return new_fld  # type: ignore[return-value]
+        new_fld.default = None
+        return new_fld
     def _traverse(prefix: RecordPath, tp: type) -> Iterator[Tuple[RecordPath, Field]]:  # type: ignore[type-arg]
         if len(prefix) > MAX_DATACLASS_DEPTH:
             raise TypeError(f'type recursion exceeds depth {MAX_DATACLASS_DEPTH}')

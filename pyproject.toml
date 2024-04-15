@@ -53,22 +53,25 @@ deploy = "mkdocs build --site-dir $READTHEDOCS_OUTPUT/html"
 [tool.hatch.envs.lint]
 dependencies = [
   "mypy>=1.0",
+  "numpy",
+  "pytest",
+  "radon",
   "ruff>=0.3",
-  "vermin"
+  "vermin",
 ]
 
 [tool.hatch.envs.lint.scripts]
-run-mypy = "mypy --install-types --non-interactive {args:fancy_dataclass tests}"
 run-ruff = "ruff check"
-run-vermin = "vermin {args:--eval-annotations --no-tips --exclude 'tests.test_serializable.StrEnum' fancy_dataclass}"
-all = ["run-ruff", "run-vermin", "run-mypy"]
+run-vermin = "vermin {args:-t=3.8- --eval-annotations --no-tips --violations --exclude 'tests.test_serializable.StrEnum' fancy_dataclass}"
+run-mypy = "mypy --install-types --non-interactive {args:fancy_dataclass tests}"
+run-loc-summary = "./summarize.sh"
+all = ["run-ruff", "run-vermin", "run-mypy", "run-loc-summary"]
 
 [tool.hatch.envs.test]
 dependencies = [
     "numpy",
     "pytest",
     "pytest-cov",
-    "pytest-stub"
 ]
 
 [tool.hatch.envs.test.scripts]
