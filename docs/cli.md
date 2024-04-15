@@ -91,6 +91,10 @@ python calculator.py div 8 3 --round
 
 🚧 **Under construction** 🚧
 
+<!--
+- Can modify parser manually, or customize handling a specific arg
+-->
+
 <style>
 .md-sidebar--secondary {
     display: none !important;

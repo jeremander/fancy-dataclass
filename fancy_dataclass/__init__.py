@@ -9,4 +9,4 @@ from .subprocess import SubprocessDataclass
 from .toml import TOMLDataclass
 
 
-__version__ = '0.3.0'
+__version__ = '0.3.1'

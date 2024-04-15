@@ -6,9 +6,6 @@ jobs:
   build:
     name: "Code checks"
     runs-on: ubuntu-latest
-    # strategy:
-    #   matrix:
-    #     python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -43,12 +40,6 @@ jobs:
         # build virtualenvs, but only if they're not already cached
         run: hatch env create lint && hatch env create test
         if: steps.cache-venv.outputs.cache-hit != 'true'
-      - name: Lint (ruff)
-        run: hatch run lint:run-ruff
-      - name: Python compatibility (vermin)
-        run: hatch run lint:run-vermin
-      - name: Type-check (mypy)
-        run: hatch run lint:run-mypy
       - name: Lines of code (radon)
         run: hatch run lint:run-loc-summary | tee loc-summary.txt
       - name: Upload lines of code
@@ -56,6 +47,12 @@ jobs:
         with:
           name: loc-summary
           path: loc-summary.txt
+      - name: Lint (ruff)
+        run: hatch run lint:run-ruff
+      - name: Python compatibility (vermin)
+        run: hatch run lint:run-vermin
+      - name: Type-check (mypy)
+        run: hatch run lint:run-mypy
       - name: Test (pytest)
         run: hatch run test:test --verbosity=0
       # - name: Build dist

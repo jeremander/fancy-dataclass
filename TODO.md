@@ -1,18 +1,18 @@
 # TODO
 
-## v0.3.0
+## v0.4.0
 
 - Github Actions for automated testing
   - Coverage badge
   - Auto-publish when new tag is pushed (see: https://pypi.org/manage/project/fancy-dataclass/settings/publishing/)
+      - Require tag to match version?
+- `DictConfig` subclass of `Config` (unstructured configs loaded from JSON/TOML)
 - Release
   - CHANGELOG update
-  - Tag v0.3.0
-  - Check PyPI page links to Read the Docs
+  - Tag new version
 
-## v0.3.1
+## v0.4.1
 
-- `DictConfig` subclass of `Config` (unstructured configs loaded from JSON/TOML)
 - documentation
   - Dataclass mixins/settings
     - For now, `dataclass` decorator is required
@@ -33,16 +33,18 @@
 
 - `FileSerializable`
   - Add `save` and `load` convenience methods?
+- `TabularDataclass`? CSV/TSV/parquet/feather
+  - Make `SQLDataclass` inherit from it
+  - Convert to/from `pandas` `Series` and `DataFrame`?
 - `TOMLDataclass`
   - Require subclass to set `qualified_type=True`, like `JSONDataclass`?
   - Preserve document structure via `tomlkit`
     - NOTE: the parsed values themselves have a `_trivia` attribute storing various formatting info
     - Use field metadata (`help`?) as comment prior to the field
   - For `None`, serialize as commented field?
-- `TabularDataclass`? CSV/TSV/parquet/feather
-  - Make `SQLDataclass` inherit from it
-  - Convert to/from `pandas` `Series` and `DataFrame`?
-- Support subparsers in `ArgparseDataclass`
+- `ArgparseDataclass`
+  - Support subparsers
+  - Test subparsers, groups, mutually exclusive groups
 - Field metadata
   - Be strict about unknown field metadata keys? (Maybe issue warning?)
     - Might be annoying if people want to store extra metadata.
