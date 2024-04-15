@@ -104,7 +104,7 @@ Sometimes it is useful to modify the configs temporarily:
 test
 >>> cfg.database.username = 'temporary'
 # temporarily update global config with the local version
->>> with cfg.configure():
+>>> with cfg.as_config():
         print_current_username()
 temporary
 # global config reverts back to its value before 'configure' was called

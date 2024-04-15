@@ -31,7 +31,7 @@ def test_config_dataclass():
     assert MyConfig.get_config() is not cfg2
     cfg2.y = 'b'
     assert cfg2 != cfg
-    with cfg2.configure():
+    with cfg2.as_config():
         assert MyConfig.get_config() == cfg2
         assert MyConfig.get_config() is not cfg2
         # updating instance field affects the global config
@@ -40,7 +40,7 @@ def test_config_dataclass():
     assert MyConfig.get_config() == cfg
     MyConfig.clear_config()
     assert MyConfig.get_config() is None
-    with cfg2.configure():
+    with cfg2.as_config():
         assert MyConfig.get_config() == cfg2
         assert MyConfig.get_config() is not cfg2
     assert MyConfig.get_config() is None
@@ -88,7 +88,7 @@ def test_inner_plain(tmpdir):
     assert Outer.get_config().inner.x == 3
     cfg.inner = inner_copy
     assert Outer.get_config().inner.x == 4
-    with Outer(Inner(x=5)).configure():
+    with Outer(Inner(x=5)).as_config():
         assert Outer.get_config().inner.x == 5
     assert Outer.get_config().inner.x == 4
     toml_str = 'y = "a"\n[inner]\nx = 1\n'

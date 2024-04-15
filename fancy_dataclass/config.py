@@ -43,7 +43,7 @@ class Config:
         type(self)._set_config(self)
 
     @contextmanager
-    def configure(self) -> Iterator[None]:
+    def as_config(self) -> Iterator[None]:
         """Context manager which temporarily updates the global configuration with this object."""
         try:
             orig_config = type(self).get_config()
