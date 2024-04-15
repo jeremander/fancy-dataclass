@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, Dict, Iterable, Literal, Option
 from typing_extensions import Self, _AnnotatedAlias
 
 from fancy_dataclass.mixin import DataclassMixin, DataclassMixinSettings, FieldSettings
-from fancy_dataclass.utils import TypeConversionError, _flatten_dataclass, check_dataclass, fully_qualified_class_name, issubclass_safe, obj_class_name, safe_dict_insert, type_is_optional
+from fancy_dataclass.utils import TypeConversionError, _flatten_dataclass, check_dataclass, fully_qualified_class_name, issubclass_safe, obj_class_name, safe_dict_insert
 
 
 if TYPE_CHECKING:
@@ -250,10 +250,6 @@ class DictDataclass(DataclassMixin):
                     return tuple(convert_val(subtype, elt) for elt in val)
                 return tuple(convert_val(subtype, elt) for (subtype, elt) in zip(args, val))
             elif origin_type == Union:
-                if type_is_optional(tp):
-                    assert len(args) == 2
-                    assert args[1] is type(None)
-                    args = args[::-1]  # check None first
                 for subtype in args:
                     try:
                         # NB: will resolve to the first valid type in the Union

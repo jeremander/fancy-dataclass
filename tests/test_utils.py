@@ -1,4 +1,5 @@
 from dataclasses import dataclass, is_dataclass
+import sys
 from typing import Any, ClassVar, Dict, List, Optional, Sequence, Union
 
 import pytest
@@ -9,15 +10,25 @@ from fancy_dataclass.utils import _flatten_dataclass, _is_instance, get_dataclas
 
 @pytest.mark.parametrize(['tp', 'is_optional'], [
     (int, False),
+    (type(None), False),
     (Optional[int], True),
     (Optional[Optional[int]], True),
-    (Union[int, Optional[float]], False),
-    (Union[Optional[float], int], False),
+    (Union[int, Optional[float]], True),
+    (Union[Optional[float], int], True),
     (Optional[type(None)], False),  # Optional[NoneType] -> NoneType
     (List[Optional[int]], False),
 ])
 def test_type_is_optional(tp, is_optional):
     assert type_is_optional(tp) == is_optional
+
+@pytest.mark.skipif(sys.version_info[:2] < (3, 10), reason='Py3.10 union type')
+def test_type_is_optional_py39():
+    assert type_is_optional(int | None)
+    assert type_is_optional(None | int)
+    assert type_is_optional(None | int | str)
+    assert type_is_optional(int | str | None)
+    assert type_is_optional(Optional[int | str])
+    assert type_is_optional(Optional[int] | str)
 
 @pytest.mark.parametrize(['obj', 'tp', 'output'], [
     (1, int, True),

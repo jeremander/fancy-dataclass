@@ -9,6 +9,7 @@ from functools import lru_cache
 import importlib
 from pathlib import Path
 import re
+import types
 from typing import TYPE_CHECKING, Any, BinaryIO, Callable, Dict, ForwardRef, Generic, Iterable, Iterator, List, Optional, Sequence, Set, TextIO, Tuple, Type, TypeVar, Union, get_args, get_origin, get_type_hints
 
 from typing_extensions import TypeGuard
@@ -55,7 +56,10 @@ def type_is_optional(tp: type) -> bool:
         True if the type is Optional"""
     origin_type = get_origin(tp)
     args = get_args(tp)
-    return (origin_type == Union) and (len(args) == 2) and (type(None) in args)
+    union_types: List[Any] = [Union]
+    if hasattr(types, 'UnionType'):  # Python >= 3.10
+        union_types.append(types.UnionType)
+    return (origin_type in union_types) and (type(None) in args)
 
 def safe_dict_insert(d: Dict[Any, Any], key: str, val: Any) -> None:
     """Inserts a (key, value) pair into a dict, if the key is not already present.

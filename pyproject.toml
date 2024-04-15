@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "fancy-dataclass"
 dynamic = ["version"]
-description = "Spiff up your dataclasses with additional features."
+description = "Spiff up your dataclasses with extra features."
 readme = "docs/README.md"
 requires-python = ">=3.8"
 license = "MIT"
@@ -62,7 +62,7 @@ dependencies = [
 
 [tool.hatch.envs.lint.scripts]
 run-ruff = "ruff check"
-run-vermin = "vermin {args:-t=3.8- --eval-annotations --no-tips --violations --exclude 'tests.test_serializable.StrEnum' fancy_dataclass}"
+run-vermin = "vermin {args:-t=3.8- --eval-annotations --no-tips --violations --exclude enum.StrEnum --exclude types.UnionType .}"
 run-mypy = "mypy --install-types --non-interactive {args:fancy_dataclass tests}"
 run-loc-summary = "./summarize.sh"
 all = ["run-ruff", "run-vermin", "run-mypy", "run-loc-summary"]

@@ -1,15 +1,29 @@
 # TODO
 
-## v0.4.0
+## v0.3.1
 
+- `ConfigDataclass`: rename `configure` to `as_config`?
 - Github Actions for automated testing
-  - Coverage badge
+  - Special branch prefix to not run pipeline
+  - Badges (shields.io)
+    - Version
+    - Coverage
+    - CI status
+    - Read the Docs
+    - PyPI version
   - Auto-publish when new tag is pushed (see: https://pypi.org/manage/project/fancy-dataclass/settings/publishing/)
       - Require tag to match version?
-- `DictConfig` subclass of `Config` (unstructured configs loaded from JSON/TOML)
+      - Do "hatch version" and check if it's a prefix of "git describe --tags" or matches "git describe --tags --abbrev=0"
+  - PyPI Links
+    - Changelog
 - Release
   - CHANGELOG update
+    - pre-push hook to ensure it contains an entry for the latest tag
   - Tag new version
+
+## v0.4.0
+
+- `DictConfig` subclass of `Config` (unstructured configs loaded from JSON/TOML)
 
 ## v0.4.1
 
@@ -51,6 +65,7 @@
   - PEP 712 (`converter` argument for dataclass fields)
   - Allow `Annotated` as an alternative to `field.metadata`
     - Esp. with `Doc`: this could auto-populate JSON schema, argparse description
+- Tiered configs?
 - Improve `mkdocs` documentation
   - Auto-generate per-field descriptions via PEP 727?
   - Auto-generate dataclass field docs?
