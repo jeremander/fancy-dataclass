@@ -2,7 +2,6 @@
 
 ## v0.3.1
 
-- `ConfigDataclass`: rename `configure` to `as_config`?
 - Github Actions for automated testing
   - Special branch prefix to not run pipeline
   - Badges (shields.io)

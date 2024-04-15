@@ -1,6 +1,10 @@
 name: fancy-dataclass
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - '*'  # matches every branch that doesn't contain a '/'
+  pull_request:
 
 jobs:
   build:
