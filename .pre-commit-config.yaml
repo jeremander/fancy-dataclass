@@ -36,6 +36,7 @@ repos:
       pass_filenames: false
       verbose: true
     - id: check-version
+      stages: [commit, push]
       name: check-version
       entry: scripts/check_version.py
       language: python
