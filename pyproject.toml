@@ -24,7 +24,7 @@ dependencies = [
 
 [project.urls]
 # Documentation = "https://github.com/jeremander/fancy-dataclass#readme"
-Documentation = "https://fancy-dataclass.readthedocs.io/en/stable"
+Documentation = "https://fancy-dataclass.readthedocs.io"
 Issues = "https://github.com/jeremander/fancy-dataclass/issues"
 Source = "https://github.com/jeremander/fancy-dataclass"
 Changelog = "https://fancy-dataclass.readthedocs.io/en/stable/CHANGELOG"
