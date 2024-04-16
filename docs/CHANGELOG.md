@@ -16,6 +16,27 @@ Types of changes:
 
 ## [Unreleased]
 
+## [0.3.1]
+
+2024-04-16
+
+### Added
+
+- Documentation: Badges in README (workflow passing, coverage, docs, etc.)
+- CI:
+    - More GH Actions code checks
+    - Testing Python versions 3.8-3.12 via `hatch` matrix
+
+### Changed
+
+- Top-level `*`-imports mostly limited to mixin classes via `__all__`
+- Renamed `Config.configure` context manager to `as_config`
+- Renamed `SubprocessDataclass.args` method to `get_args`
+
+### Fixed
+
+- Support for Python 3.8, 3.9 (which lack some newer type annotation features)
+
 ## [0.3.0]
 
 2024-04-14
@@ -72,7 +93,8 @@ Types of changes:
     - `SQLDataclass`: SQL persistence via `sqlalchemy`
     - `SubprocessDataclass`: call out to another program via `subprocess`
 
-[unreleased]: https://github.com/jeremander/fancy-dataclass/compare/v0.3.0...HEAD
+[unreleased]: https://github.com/jeremander/fancy-dataclass/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.3.1
 [0.3.0]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.3.0
 [0.2.0]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.2.0
 [0.1.0]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.1.0

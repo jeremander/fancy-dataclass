@@ -1,13 +1,5 @@
 # TODO
 
-## v0.3.1
-
-- Release
-  - Pre-commit hook to require publish immediately after new tag
-      - Do "hatch version" and check if it's a prefix of "git describe --tags" or matches "git describe --tags --abbrev=0"
-  - Tag new version
-  - Check PyPI links to current Changelog
-
 ## v0.4.0
 
 - `DictConfig` subclass of `Config` (unstructured configs loaded from JSON/TOML)
