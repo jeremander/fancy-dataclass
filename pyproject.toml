@@ -83,6 +83,16 @@ cov = ["test-cov", "cov-report"]
 [[tool.hatch.envs.test.matrix]]
 python = ["3.8", "3.9", "3.10", "3.11", "3.12"]
 
+[tool.hatch.envs.badge]
+dependencies = [
+  "coverage",
+  "genbadge[tests,coverage]"
+]
+
+[tool.hatch.envs.badge.scripts]
+badge-cov = ["coverage xml", "genbadge coverage -i coverage.xml"]
+badges = ["badge-cov"]
+
 [tool.hatch.publish.index]
 disable = true
 
