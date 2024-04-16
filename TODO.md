@@ -2,23 +2,27 @@
 
 ## v0.3.1
 
-- Github Actions for automated testing
-  - Auto-publish when new tag is pushed (see: https://pypi.org/manage/project/fancy-dataclass/settings/publishing/)
-      - Require tag to match version?
-      - Do "hatch version" and check if it's a prefix of "git describe --tags" or matches "git describe --tags --abbrev=0"
-  - PyPI Links
-    - Changelog
 - Release
+  - Pre-commit hook to require publish immediately after new tag
+      - Do "hatch version" and check if it's a prefix of "git describe --tags" or matches "git describe --tags --abbrev=0"
   - CHANGELOG update
     - pre-commit hook to ensure it contains an entry for the latest tag
   - Tag new version
+  - Check PyPI links to current Changelog
 
 ## v0.4.0
 
 - `DictConfig` subclass of `Config` (unstructured configs loaded from JSON/TOML)
+- `FileSerializable`
+  - Add `save` and `load` convenience methods?
 
 ## v0.4.1
 
+- `mkdocs` output in `package_data`?
+  - `_docs` subdirectory?
+  - Pre-commit hook to run `mkdocs build`
+    - Takse only a second, but could use file hashes to prevent redundant build
+  - Need some hook (post-tag?) to require the docs be up-to-date
 - documentation
   - Dataclass mixins/settings
     - For now, `dataclass` decorator is required
@@ -37,11 +41,11 @@
 
 ## Future
 
-- `FileSerializable`
-  - Add `save` and `load` convenience methods?
 - `TabularDataclass`? CSV/TSV/parquet/feather
-  - Make `SQLDataclass` inherit from it
+  - Simplest if single class can save/load all these file types
   - Convert to/from `pandas` `Series` and `DataFrame`?
+    - If so, make `pandas` an optional dependency
+    - Easy to implement conversion via `dict`, if we subclass `DictDataclass`
 - `TOMLDataclass`
   - Require subclass to set `qualified_type=True`, like `JSONDataclass`?
   - Preserve document structure via `tomlkit`
@@ -71,7 +75,7 @@
       - If `strict=True`, raises an error; otherwise, attempts to coerce and issues a warning
     - Error if duplicate versions are set
   - Migration
-- `CallableDataclass`
+- `CallableDataclass` / `FuncDataclass`
   - ABC providing `__call__` method on variadic positional args
   - `callable_dataclass` decorator wrapping a function into a `CallableDataclass` subclass where `kwargs` are parameters
     - To make class name explicit, would probably need to call it directly, e.g. `MyType = callable_dataclass(my_func)`

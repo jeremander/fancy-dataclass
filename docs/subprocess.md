@@ -46,8 +46,8 @@ Instantiate `ListDir`, inspect its arguments, and call `ls` in a subprocess.
 >>> listdir = ListDir(long=True, dir_name='test_dir')
 >>> listdir.get_executable()
 'ls'
->>> listdir.args()
-['-l', 'test_dir']
+>>> listdir.get_args()
+['ls', '-l', 'test_dir']
 >>> listdir.run_subprocess()
 total 0
 -rw-r--r--  1 root  root  0 Apr  5 23:33 test.txt

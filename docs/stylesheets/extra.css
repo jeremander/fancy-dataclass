@@ -16,6 +16,10 @@
   visibility: hidden;
 }
 
+.md-nav__source {
+  background-color: var(--md-primary-fg-color);
+}
+
 .md-search__input {
   background-color: #707070;
   border-radius: 3px;

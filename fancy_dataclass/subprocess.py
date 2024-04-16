@@ -80,7 +80,7 @@ class SubprocessDataclass(DataclassMixin):
         if val is None:  # optional value is None
             return []
         if isinstance(val, SubprocessDataclass):  # get args via nested SubprocessDataclass
-            return val.args(suppress_defaults=suppress_defaults)
+            return val.get_args(suppress_defaults=suppress_defaults)
         if suppress_defaults:  # if value matches the default, suppress the argument
             default = None
             has_default = True
@@ -140,7 +140,7 @@ class SubprocessDataclass(DataclassMixin):
                 return _check_type(getattr(self, fld.name, None))
         return None
 
-    def args(self, suppress_defaults: bool = False) -> List[str]:
+    def get_args(self, suppress_defaults: bool = False) -> List[str]:
         """Converts dataclass fields to a list of command-line arguments for a subprocess call.
 
         This includes the executable name itself as the first argument.
@@ -169,4 +169,4 @@ class SubprocessDataclass(DataclassMixin):
 
         Raises:
             ValueError: If no executable was found from the `get_executable` method"""
-        return subprocess.run(self.args(), **kwargs)
+        return subprocess.run(self.get_args(), **kwargs)

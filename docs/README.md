@@ -16,7 +16,7 @@ By inspecting dataclasses' type annotations, it is possible to endow them with s
 
 - *JSON/TOML conversion*: convert dataclasses to JSON/TOML files and vice versa
 - *Configuration management*: store global configurations and use them anywhere in your program
-- *SQL persistence*: define a SQL table, and save/load objects from a database
+- *SQL persistence*: define SQL tables, and save/load objects from a database
 - *CLI parsing*: parse command-line arguments and store their values in a dataclass, then use them to execute your main program logic
 - *Subprocess calls*: generate command-line arguments to be passed to another program
 
@@ -80,7 +80,7 @@ Usage:
 
 Read the official documentation [here](https://fancy-dataclass.readthedocs.io).
 
-The documentation is made with [Material for MkDocs](https://squidfunk.github.io/mkdocs-material) and is hosted by [Read the Docs](https://readthedocs.org).
+The documentation is made with [Material for MkDocs](https://squidfunk.github.io/mkdocs-material) and is hosted by [Read the Docs](https://readthedocs.com).
 
 View the Changelog [here](CHANGELOG.md).
 

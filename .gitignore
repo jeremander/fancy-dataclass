@@ -7,3 +7,4 @@ tmp*
 .hypothesis
 site/
 dist/
+htmlcov

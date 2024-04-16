@@ -37,7 +37,7 @@ class WebsiteConfig(ConfigDataclass):
     database: DatabaseConfig
 ```
 
-Now suppose you have a configuration file we want to load from, `website_config.toml`, whose schema matches the `WebsiteConfig` class:
+Now suppose you have a configuration file you want to load from, `website_config.toml`, whose schema matches the `WebsiteConfig` class:
 
 ```toml
 # Website Configuration
@@ -87,11 +87,13 @@ def print_current_username():
 ```python
 >>> print_current_username()
 admin
-# updates only the local copy
+
+# update only the local copy
 >>> cfg.database.username = 'test'
 >>> print_current_username()
 admin
-# updates the global config
+
+# update the global config
 >>> cfg.update_config()
 >>> print_current_username()
 test
@@ -103,10 +105,12 @@ Sometimes it is useful to modify the configs temporarily:
 >>> print_current_username()
 test
 >>> cfg.database.username = 'temporary'
+
 # temporarily update global config with the local version
 >>> with cfg.as_config():
         print_current_username()
 temporary
+
 # global config reverts back to its value before 'configure' was called
 >>> print_current_username()
 test

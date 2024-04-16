@@ -33,8 +33,8 @@ def test_subprocess_dataclass(tmpdir):
         prog: str = field(default = 'prog', metadata = {'exec': True})
     prog = str(tmpdir / 'prog.py')
     dc2 = DC2(required_string='positional_arg', input_file='my_input', output_file='my_output', choice='a', optional='default', flag=True, extra_items=[], x=7, y=3.14, pair=(0,0), ignored_value='ignored', prog = prog)
-    assert dc2.args() == [prog, 'positional_arg', '-i', 'my_input', '-o', 'my_output', '--choice', 'a', '--optional', 'default', '--flag', '-x', '7', '-y', '3.14', '--pair', '0', '0']
-    assert dc2.args(suppress_defaults=True) == [prog, 'positional_arg', '-i', 'my_input', '-o', 'my_output', '--flag']
+    assert dc2.get_args() == [prog, 'positional_arg', '-i', 'my_input', '-o', 'my_output', '--choice', 'a', '--optional', 'default', '--flag', '-x', '7', '-y', '3.14', '--pair', '0', '0']
+    assert dc2.get_args(suppress_defaults=True) == [prog, 'positional_arg', '-i', 'my_input', '-o', 'my_output', '--flag']
     # create a script to run the CLIDataclass
     dc1 = coerce_to_dataclass(DC1, dc2)
     cwd = str(Path(__file__).parent)
@@ -57,7 +57,7 @@ def test_executable():
         prog: str = field(metadata={'exec': True})
     obj = DC3('myprog')
     assert obj.get_executable() == 'myprog'
-    assert obj.args() == ['myprog']
+    assert obj.get_args() == ['myprog']
     # non-string executable
     obj = DC3(1)
     with pytest.raises(ValueError, match=re.escape('executable is 1 (must be a string)')):
@@ -83,7 +83,7 @@ def test_executable():
     obj = DC6()
     assert obj.get_executable() is None
     with pytest.raises(ValueError, match='no executable identified for use with DC6 instance'):
-        _ = obj.args()
+        _ = obj.get_args()
     # multiple exec fields
     with pytest.raises(TypeError, match=re.escape("cannot have more than one field with 'exec' flag set to True (already set executable to prog1)")):
         @dataclass
@@ -103,7 +103,7 @@ def test_executable():
         prog: str = field(metadata={'exec': True})
     obj = DC9(3, 4.7, 'myprog')
     assert obj.get_executable() == 'myprog'
-    assert obj.args() == ['myprog', '-x', '3', '--yy', '4.7']
+    assert obj.get_args() == ['myprog', '-x', '3', '--yy', '4.7']
 
 def test_field_args():
     """Tests behavior of the 'args' metadata in a field."""
@@ -121,40 +121,40 @@ def test_field_args():
         g: int = field(metadata={'args': []})
         # string is the same as singleton list
         h: int = field(metadata={'args': '--hh'})
-    assert DC10(1, 2, 3, 4, 5, 6, 7, 8).args() == ['prog', '-a', '1', '-b', '2', '--c', '3', '-d', '4', '--ee', '5', '-f', '6', '--hh', '8']
+    assert DC10(1, 2, 3, 4, 5, 6, 7, 8).get_args() == ['prog', '-a', '1', '-b', '2', '--c', '3', '-d', '4', '--ee', '5', '-f', '6', '--hh', '8']
     # args not starting with dash
     @dataclass
     class DC11(SubprocessDataclass, exec='prog'):
         a: int = field(metadata={'args': ['a']})
-    assert DC11(1).args() == ['prog', '1']
+    assert DC11(1).get_args() == ['prog', '1']
     @dataclass
     class DC12(SubprocessDataclass, exec='prog'):
         a: int = field(metadata={'args': ['a']})
         b: int = field(metadata={'args': ''})
         c: int = field(metadata={'args': ['c', '-c']})
-    assert DC12(1, 2, 3).args() == ['prog', '1', '2', '3']
+    assert DC12(1, 2, 3).get_args() == ['prog', '1', '2', '3']
     @dataclass
     class DC13(SubprocessDataclass, exec='prog'):
         a: int = field(metadata={'args': ['a']})
         b: int
-    assert DC13(1, 2).args() == ['prog', '1', '-b', '2']
+    assert DC13(1, 2).get_args() == ['prog', '1', '-b', '2']
     @dataclass
     class DC14(SubprocessDataclass, exec='prog'):
         a: int
         b: int = field(metadata={'args': ['b']})
-    assert DC14(1, 2).args() == ['prog', '-a', '1', '2']
+    assert DC14(1, 2).get_args() == ['prog', '-a', '1', '2']
 
 def test_flag():
     """Tests a boolean field being treated as an on/off flag."""
     @dataclass
     class DC15(SubprocessDataclass, exec='prog'):
         flag: bool
-    assert DC15(False).args() == ['prog']
-    assert DC15(True).args() == ['prog', '--flag']
+    assert DC15(False).get_args() == ['prog']
+    assert DC15(True).get_args() == ['prog', '--flag']
 
 def test_underscore_conversion():
     """Tests that underscores are converted to dashes for automatic argument naming."""
     @dataclass
     class DC16(SubprocessDataclass, exec='prog'):
         my_arg: int
-    assert DC16(1).args() == ['prog', '--my-arg', '1']
+    assert DC16(1).get_args() == ['prog', '--my-arg', '1']
