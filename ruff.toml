@@ -60,7 +60,8 @@ lint.ignore = [
 # paths to exclude
 lint.exclude = [
     ".venv",
-    "tmp*"
+    "tmp*",
+    "scripts/*",
 ]
 
 # ignore unused imports in __init__.py files

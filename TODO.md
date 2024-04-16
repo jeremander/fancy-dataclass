@@ -5,8 +5,6 @@
 - Release
   - Pre-commit hook to require publish immediately after new tag
       - Do "hatch version" and check if it's a prefix of "git describe --tags" or matches "git describe --tags --abbrev=0"
-  - CHANGELOG update
-    - pre-commit hook to ensure it contains an entry for the latest tag
   - Tag new version
   - Check PyPI links to current Changelog
 

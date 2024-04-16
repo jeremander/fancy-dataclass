@@ -116,7 +116,7 @@ exclude_lines = [
 tag_format = "v$major.$minor.$patch"
 
 [tool.mypy]
-exclude = ["docs/", "site/", "tmp.*"]
+exclude = ["docs/", "scripts/", "site/", "tmp.*"]
 warn_unused_configs = true
 strict = true
 
