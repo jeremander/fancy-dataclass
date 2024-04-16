@@ -10,7 +10,7 @@
     - Changelog
 - Release
   - CHANGELOG update
-    - pre-push hook to ensure it contains an entry for the latest tag
+    - pre-commit hook to ensure it contains an entry for the latest tag
   - Tag new version
 
 ## v0.4.0

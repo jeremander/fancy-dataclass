@@ -31,7 +31,7 @@ repos:
   hooks:
     - id: summarize
       name: summarize
-      entry: summarize.sh
+      entry: scripts/summarize.sh
       language: script
       pass_filenames: false
       verbose: true

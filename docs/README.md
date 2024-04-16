@@ -1,9 +1,8 @@
 ![PyPI - Version](https://img.shields.io/pypi/v/fancy-dataclass)
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/jeremander/fancy-dataclass/workflow.yml)
-![Coverage Status](https://github.com/jeremander/fancy-dataclass/blob/coverage-badge/coverage-badge.svg)
+![Coverage Status](https://github.com/jeremander/fancy-dataclass/raw/coverage-badge/coverage-badge.svg)
 ![Read the Docs](https://img.shields.io/readthedocs/fancy-dataclass)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-<!-- https://github.com/jeremander/fancy-dataclass/blob/coverage-badge/coverage-badge.svg -->
 
 # Basics
 
