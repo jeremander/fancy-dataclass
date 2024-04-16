@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - '*'  # matches every branch that doesn't contain a '/'
+      - '!coverage-badge'
   pull_request:
 
 jobs:
@@ -18,8 +19,8 @@ jobs:
             3.8
             3.9
             3.10
-            3.11
             3.12
+            3.11
       - name: Set up pip cache
         if: runner.os == 'Linux'
         uses: actions/cache@v4
@@ -58,7 +59,23 @@ jobs:
       - name: Type-check (mypy)
         run: hatch run lint:run-mypy
       - name: Test (pytest)
-        run: hatch run test:test --verbosity=0
+        run: |
+          hatch run test:test --verbosity=0
+          hatch run test.py3.11:cov-report
+      - name: Coverage Badge
+        run: |
+          hatch run badge:badges
+          git checkout -B coverage-badge
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add coverage-badge.svg
+          git commit -m "ci: update coverage badge"
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.github_token }}
+          branch: coverage-badge
+          force: true
       # - name: Build dist
       #   run: hatch build
       # - name: Publish on PyPI

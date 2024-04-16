@@ -3,13 +3,6 @@
 ## v0.3.1
 
 - Github Actions for automated testing
-  - Special branch prefix to not run pipeline
-  - Badges (shields.io)
-    - Version
-    - Coverage
-    - CI status
-    - Read the Docs
-    - PyPI version
   - Auto-publish when new tag is pushed (see: https://pypi.org/manage/project/fancy-dataclass/settings/publishing/)
       - Require tag to match version?
       - Do "hatch version" and check if it's a prefix of "git describe --tags" or matches "git describe --tags --abbrev=0"
