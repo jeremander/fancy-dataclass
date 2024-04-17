@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from io import StringIO, TextIOBase
+from io import BytesIO, StringIO, TextIOBase
 from typing import Any, BinaryIO, TextIO
 
 from typing_extensions import Self
@@ -49,8 +49,38 @@ def from_dict_value_basic(tp: type, val: Any) -> Any:
     return val
 
 
-class FileSerializable(ABC):
-    """Mixin class enabling serialization of an object to/from a file.
+class TextSerializable(ABC):
+    """Mixin class enabling serialization of an object to/from a text string.
+
+    Subclasses should override `_to_string` and `_from_string` to implement them."""
+
+    @classmethod
+    @abstractmethod
+    def _to_string(cls, obj: Self, **kwargs: Any) -> str:
+        """Converts the object into a text string.
+
+        Args:
+            obj: Object to serialize
+            kwargs: Keyword arguments
+
+        Returns:
+            Object rendered as a string"""
+
+    @classmethod
+    @abstractmethod
+    def _from_string(cls, s: str, **kwargs: Any) -> Self:
+        """Deserializes the object from a string.
+
+        Args:
+            s: String to deserialize
+            kwargs: Keyword arguments
+
+        Returns:
+            The deserialized object"""
+
+
+class TextFileSerializable(TextSerializable, ABC):
+    """Mixin class enabling serialization of an object to/from a text file.
 
     Subclasses should override `_to_text_file` and `_from_text_file` to implement them."""
 
@@ -65,17 +95,109 @@ class FileSerializable(ABC):
             kwargs: Keyword arguments"""
 
     @classmethod
-    def _to_binary_file(cls, obj: Self, fp: BinaryIO, **kwargs: Any) -> None:
-        """Serializes the object to a file in binary mode.
+    @abstractmethod
+    def _from_text_file(cls, fp: TextIO, **kwargs: Any) -> Self:
+        """Deserializes the object from a file in text mode.
 
-        By default, this writes text encoded as UTF-8.
+        Args:
+            fp: A readable text file-like object
+            kwargs: Keyword arguments
+
+        Returns:
+            The deserialized object"""
+
+    @classmethod
+    def _to_string(cls, obj: Self, **kwargs: Any) -> str:
+        with StringIO() as stream:
+            cls._to_text_file(obj, stream, **kwargs)
+            return stream.getvalue()
+
+    @classmethod
+    def _from_string(cls, s: str, **kwargs: Any) -> Self:
+        with StringIO(s) as sio:
+            return cls._from_text_file(sio, **kwargs)
+
+
+class BinarySerializable(ABC):
+    """Mixin class enabling serialization of an object to/from a binary string.
+
+    Subclasses should override `_to_bytes` and `_from_bytes` to implement them."""
+
+    @classmethod
+    @abstractmethod
+    def _to_bytes(cls, obj: Self, **kwargs: Any) -> bytes:
+        """Converts the object into raw bytes.
+
+        Args:
+            obj: Object to serialize
+            kwargs: Keyword arguments
+
+        Returns:
+            Object rendered as raw bytes"""
+
+    @classmethod
+    @abstractmethod
+    def _from_bytes(cls, b: bytes, **kwargs: Any) -> Self:
+        """Deserializes the object from raw bytes.
+
+        Args:
+            b: Bytes to deserialize
+            kwargs: Keyword arguments
+
+        Returns:
+            The deserialized object"""
+
+
+class BinaryFileSerializable(BinarySerializable, ABC):
+    """Mixin class enabling serialization of an object to/from a binary file.
+
+    Subclasses should override `_to_binary_file` and `_from_binary_file` to implement them."""
+
+    @classmethod
+    @abstractmethod
+    def _to_binary_file(cls, obj: Self, fp: BytesIO, **kwargs: Any) -> None:
+        """Serializes the object to a file in binary mode.
 
         Args:
             obj: Object to serialize
             fp: A writable binary file-like object
             kwargs: Keyword arguments"""
+
+    @classmethod
+    @abstractmethod
+    def _from_binary_file(cls, fp: BytesIO, **kwargs: Any) -> Self:
+        """Deserializes the object from a file in binary mode.
+
+        Args:
+            fp: A readable binary file-like object
+            kwargs: Keyword arguments
+
+        Returns:
+            The deserialized object"""
+
+    @classmethod
+    def _to_bytes(cls, obj: Self, **kwargs: Any) -> bytes:
+        with BytesIO() as stream:
+            cls._to_binary_file(obj, stream, **kwargs)
+            return stream.getvalue()
+
+    @classmethod
+    def _from_bytes(cls, b: bytes, **kwargs: Any) -> Self:
+        with BytesIO(b) as bio:
+            return cls._from_binary_file(bio, **kwargs)
+
+
+class FileSerializable(TextFileSerializable, BinaryFileSerializable):
+    """Mixin class enabling serialization of an object to/from a file (either text or binary)."""
+
+    @classmethod
+    def _to_bytes(cls, obj: Self, **kwargs: Any) -> bytes:
         # by default, convert to a text string, then encode as UTF-8
-        fp.write(cls._to_string(obj, **kwargs).encode())
+        return cls._to_string(obj, **kwargs).encode()
+
+    @classmethod
+    def _to_binary_file(cls, obj: Self, fp: BinaryIO, **kwargs: Any) -> None:
+        fp.write(cls._to_bytes(obj, **kwargs))
 
     @classmethod
     def _to_file(cls, obj: Self, fp: AnyIO, **kwargs: Any) -> None:
@@ -91,43 +213,13 @@ class FileSerializable(ABC):
             cls._to_binary_file(obj, fp, **kwargs)  # type: ignore[arg-type]
 
     @classmethod
-    def _to_string(cls, obj: Self, **kwargs: Any) -> str:
-        """Converts the object into a text string.
-
-        Args:
-            obj: Object to serialize
-            kwargs: Keyword arguments
-
-        Returns:
-            Object rendered as a string"""
-        with StringIO() as stream:
-            cls._to_text_file(obj, stream, **kwargs)
-            return stream.getvalue()
-
-    @classmethod
-    @abstractmethod
-    def _from_text_file(cls, fp: TextIO, **kwargs: Any) -> Self:
-        """Deserializes the object from a file in text mode.
-
-        Args:
-            fp: A readable text file-like object
-            kwargs: Keyword arguments
-
-        Returns:
-            The deserialized object"""
+    def _from_bytes(cls, b: bytes, **kwargs: Any) -> Self:
+        # by default, decode from a UTF-8 byte string
+        return cls._from_string(b.decode(), **kwargs)
 
     @classmethod
     def _from_binary_file(cls, fp: BinaryIO, **kwargs: Any) -> Self:
-        """Deserializes the object from a file in binary mode.
-
-        Args:
-            fp: A readable binary file-like object
-            kwargs: Keyword arguments
-
-        Returns:
-            The deserialized object"""
-        # by default, read binary stream, decode to a text string, then deserialize
-        return cls._from_string(fp.read().decode(), **kwargs)
+        return cls._from_bytes(fp.read(), **kwargs)
 
     @classmethod
     def _from_file(cls, fp: AnyIO, **kwargs: Any) -> Self:
@@ -142,19 +234,6 @@ class FileSerializable(ABC):
             return cls._from_text_file(fp, **kwargs)
         else:  # binary
             return cls._from_binary_file(fp, **kwargs)  # type: ignore[arg-type]
-
-    @classmethod
-    def _from_string(cls, s: str, **kwargs: Any) -> Self:
-        """Deserializes the object from a string.
-
-        Args:
-            s: String to deserialize
-            kwargs: Keyword arguments
-
-        Returns:
-            The deserialized object"""
-        with StringIO(s) as sio:
-            return cls._from_text_file(sio, **kwargs)
 
 
 class DictFileSerializableDataclass(DictDataclass, FileSerializable):
