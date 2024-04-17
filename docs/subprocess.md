@@ -21,13 +21,25 @@ from fancy_dataclass.subprocess import SubprocessDataclass
 class ListDir(SubprocessDataclass, exec='ls'):  # specify program to run
     """Lists directory contents."""
     # list in long form
-    long: bool = field(default=False, metadata={'args': '-l'})
+    long: bool = field(
+        default=False,
+        metadata={'args': '-l'}
+    )
     # list in reverse order
-    reverse: bool = field(default=False, metadata={'args': '-r'})
+    reverse: bool = field(
+        default=False,
+        metadata={'args': '-r'}
+    )
     # sort by time
-    time: bool = field(default=False, metadata={'args': '-t'})
+    time: bool = field(
+        default=False,
+        metadata={'args': '-t'}
+    )
     # name of directory to list
-    dir_name: str = field(default='.', metadata={'args': ''})
+    dir_name: str = field(
+        default='.',
+        metadata={'args': ''}
+    )
 ```
 
 Set up a test directory with an example file.

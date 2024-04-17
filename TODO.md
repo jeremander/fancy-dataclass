@@ -2,9 +2,10 @@
 
 ## v0.4.0
 
-- `DictConfig` subclass of `Config` (unstructured configs loaded from JSON/TOML)
 - `FileSerializable`
+  - Split into `TextFileSerializable` and `BinaryFileSerializable`
   - Add `save` and `load` convenience methods?
+- `DictConfig` subclass of `Config` (unstructured configs loaded from JSON/TOML)
 
 ## v0.4.1
 
@@ -45,19 +46,11 @@
 - `ArgparseDataclass`
   - Support subparsers
   - Test subparsers, groups, mutually exclusive groups
-- Field metadata
-  - Be strict about unknown field metadata keys? (Maybe issue warning?)
-    - Might be annoying if people want to store extra metadata.
-  - PEP 712 (`converter` argument for dataclass fields)
-  - Allow `Annotated` as an alternative to `field.metadata`
-    - Esp. with `Doc`: this could auto-populate JSON schema, argparse description
-- Tiered configs?
-- Improve `mkdocs` documentation
-  - Auto-generate per-field descriptions via PEP 727?
-  - Auto-generate dataclass field docs?
-- Automatic JSON schema generation (see `pydantic`)
-  - Borrow/use: https://github.com/Peter554/dc_schema/tree/master?tab=MIT-1-ov-file#readme
-    - Attribution?
+- `ConfigDataclass`
+  - Have child `Config` objects store weak references to their parents?
+    - Would let the child update the global parent
+    - But would break current update semantics
+    - Could have the parent set a class setting to opt into this behavior
 - Versioning (`version` ClassVar, with suppress=False)
   - `@version` decorator (with required integer argument)
     - Allows you to define multiple classes with the same name; stores distinct `version` `ClassVar` attributes and registers them with the same name
@@ -69,6 +62,20 @@
   - ABC providing `__call__` method on variadic positional args
   - `callable_dataclass` decorator wrapping a function into a `CallableDataclass` subclass where `kwargs` are parameters
     - To make class name explicit, would probably need to call it directly, e.g. `MyType = callable_dataclass(my_func)`
+- Field metadata
+  - Be strict about unknown field metadata keys? (Maybe issue warning?)
+    - Might be annoying if people want to store extra metadata.
+  - PEP 712 (`converter` argument for dataclass fields)
+  - Allow `Annotated` as an alternative to `field.metadata`
+    - Esp. with `Doc`: this could auto-populate JSON schema, argparse description
+  - `BinaryDataclass`?
+- Tiered configs?
+- Improve `mkdocs` documentation
+  - Auto-generate per-field descriptions via PEP 727?
+  - Auto-generate dataclass field docs?
+- Automatic JSON schema generation (see `pydantic`)
+  - Borrow/use: https://github.com/Peter554/dc_schema/tree/master?tab=MIT-1-ov-file#readme
+    - Attribution?
 - Validation
   - More robust type validation when `validate=True` in `DictDataclass`
   - `ValidatedDataclass` to validate at construction time?

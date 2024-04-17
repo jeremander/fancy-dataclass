@@ -25,9 +25,15 @@ class Calculator(CLIDataclass):
         'choices': ('add', 'sub', 'mul', 'div'),
         'help': 'operation to perform'
     })
-    num1: float = field(metadata={'help': 'first number'})
-    num2: float = field(metadata={'help': 'second number'})
-    round: bool = field(metadata={'help': 'round result to the nearest whole number'})
+    num1: float = field(metadata={
+        'help': 'first number'
+    })
+    num2: float = field(metadata={
+        'help': 'second number'
+    })
+    round: bool = field(metadata={
+        'help': 'round result to the nearest whole number'
+    })
 
     def run(self) -> None:
         # implement core program logic

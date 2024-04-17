@@ -41,7 +41,7 @@ connection_max = 5000
 enabled = true
 ```
 
-You can load the data from the file as well:
+Load the data from a TOML file:
 
 ```python
 >>> with open('db_config.toml') as f:

@@ -111,7 +111,7 @@ test
         print_current_username()
 temporary
 
-# global config reverts back to its value before 'configure' was called
+# global config reverts back to its value before 'as_config' was called
 >>> print_current_username()
 test
 ```

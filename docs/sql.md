@@ -26,7 +26,10 @@ class Employee(SQLDataclass):
     first_name: str
     last_name: str
     # set _id as primary key, which will auto-increment if omitted
-    _id: int = field(default=None, metadata={'column': {'primary_key':True}})
+    _id: int = field(
+        default=None,
+        metadata={'column': {'primary_key':True}}
+    )
 
 # create sqlalchemy engine
 engine = create_engine('sqlite:///:memory:')

@@ -33,7 +33,7 @@ jobs:
       - name: Configure hatch
         run: hatch config set dirs.env.virtual .venv
       - name: Cache hatch virtualenv
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         id: cache-venv
         with:
           path: ./.venv/
