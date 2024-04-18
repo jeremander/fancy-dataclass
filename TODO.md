@@ -2,8 +2,6 @@
 
 ## v0.4.0
 
-- `FileSerializable`
-  - Add `save` and `load` convenience methods?
 - `DictConfig` subclass of `Config` (unstructured configs loaded from JSON/TOML)
 - `DCMixin` classmethod to coerce this class's settings or field settings to another type?
   - E.g. to adapt new settings to a parent class (`CLIAdapterDataclass` example)

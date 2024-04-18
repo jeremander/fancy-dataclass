@@ -1,12 +1,13 @@
 from abc import ABC, abstractmethod
 from enum import Enum
 from io import BytesIO, StringIO, TextIOBase
-from typing import IO, Any, BinaryIO, cast
+from pathlib import Path
+from typing import IO, Any, BinaryIO, Union, cast
 
 from typing_extensions import Self
 
 from fancy_dataclass.dict import AnyDict, DictDataclass
-from fancy_dataclass.utils import AnyIO, TypeConversionError
+from fancy_dataclass.utils import AnyIO, AnyPath, TypeConversionError
 
 
 def to_dict_value_basic(val: Any) -> Any:
@@ -71,6 +72,37 @@ class FileSerializable:
             fp: A writable file-like object
             kwargs: Keyword arguments"""
 
+    @classmethod
+    @abstractmethod
+    def _file_mode_is_binary(cls) -> bool:
+        """Returns True if the class's default mode for opening files is binary."""
+
+    def save(self, file: Union[AnyPath, AnyIO], **kwargs: Any) -> None:
+        """Serializes the object to a path or file-like object (text or binary).
+
+        Args:
+            file: Path or file-like object to save to
+            kwargs: Keyword arguments for serialization"""
+        if isinstance(file, (str, Path)):
+            mode = 'wb' if self._file_mode_is_binary() else 'w'
+            with open(file, mode) as fp:
+                self._to_file(self, fp, **kwargs)
+        else:
+            self._to_file(self, file, **kwargs)
+
+    @classmethod
+    def load(cls, file: Union[AnyPath, AnyIO], **kwargs: Any) -> Self:
+        """Deserializes the object from a file, given a path or file-like object.
+
+        Args:
+            file: Path or file-like object to load from
+            kwargs: Keyword arguments for deserialization"""
+        if isinstance(file, (str, Path)):
+            mode = 'rb' if cls._file_mode_is_binary() else 'r'
+            with open(file, mode) as fp:
+                return cls._from_file(fp, **kwargs)
+        return cls._from_file(file, **kwargs)
+
 
 class BinarySerializable(ABC):
     """Mixin class enabling serialization of an object to/from a binary string.
@@ -106,6 +138,10 @@ class BinaryFileSerializable(BinarySerializable, FileSerializable):
     """Mixin class enabling serialization of an object to/from a binary file.
 
     Subclasses should override `_to_binary_file` and `_from_binary_file` to implement them."""
+
+    @classmethod
+    def _file_mode_is_binary(cls) -> bool:
+        return True
 
     @classmethod
     @abstractmethod
@@ -193,6 +229,10 @@ class TextFileSerializable(TextSerializable, BinaryFileSerializable, FileSeriali
     """Mixin class enabling serialization of an object to/from a text file.
 
     Subclasses should override `_to_text_file` and `_from_text_file` to implement them."""
+
+    @classmethod
+    def _file_mode_is_binary(cls) -> bool:
+        return False
 
     @classmethod
     @abstractmethod

@@ -4,6 +4,7 @@ The [`TOMLDataclass`][fancy_dataclass.toml.TOMLDataclass] mixin provides automat
 
 - [`to_dict`][fancy_dataclass.dict.DictDataclass.to_dict] / [`from_dict`][fancy_dataclass.dict.DictDataclass.from_dict] convert to and from Python dicts.
 - [`to_toml`][fancy_dataclass.toml.TOMLSerializable.to_toml] / [`from_toml`][fancy_dataclass.toml.TOMLSerializable.from_toml] convert to and from TOML file-like objects.
+- [`save`][fancy_dataclass.serialize.FileSerializable.save] / [`load`][fancy_dataclass.serialize.FileSerializable.load] convert to and from a TOML file-like object or path.
 - [`to_toml_string`][fancy_dataclass.toml.TOMLSerializable.to_toml_string] / [`from_toml_string`][fancy_dataclass.toml.TOMLSerializable.from_toml_string] convert to and from TOML strings.
 
 ## Usage Example

@@ -303,6 +303,11 @@ class TestDict:
         with open(path, 'rb') as f:
             obj2 = getattr(tp, f'from_{ext}')(f)
         assert obj2 == obj
+        # call save/load
+        obj.save(path)
+        with open(path) as f:
+            assert tp.load(f) == obj
+        assert tp.load(path) == obj
         # convert to string
         s = getattr(obj, f'to_{ext}_string')()
         obj3 = getattr(tp, f'from_{ext}_string')(s)

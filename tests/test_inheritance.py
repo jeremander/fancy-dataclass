@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
+from io import StringIO
 
 import pytest
 
@@ -89,3 +90,16 @@ def test_json_toml():
         assert isinstance(obj.to_dict()['dt'], datetime)
         assert obj.to_json_string() == json_str
         assert obj.to_toml_string() == toml_str
+    # first class in inheritance list takes priority for saving/loading
+    with StringIO() as sio:
+        obj1.save(sio)
+        sio.seek(0)
+        assert type(obj1).from_json_string(sio.read()) == obj1
+        sio.seek(0)
+        assert type(obj1).load(sio) == obj1
+    with StringIO() as sio:
+        obj2.save(sio)
+        sio.seek(0)
+        assert type(obj2).from_toml_string(sio.read()) == obj2
+        sio.seek(0)
+        assert type(obj2).load(sio) == obj2
