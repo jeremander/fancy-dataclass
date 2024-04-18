@@ -10,7 +10,7 @@ import importlib
 from pathlib import Path
 import re
 import types
-from typing import TYPE_CHECKING, Any, BinaryIO, Callable, Dict, ForwardRef, Generic, Iterable, Iterator, List, Optional, Sequence, Set, TextIO, Tuple, Type, TypeVar, Union, get_args, get_origin, get_type_hints
+from typing import IO, TYPE_CHECKING, Any, Callable, Dict, ForwardRef, Generic, Iterable, Iterator, List, Optional, Sequence, Set, Tuple, Type, TypeVar, Union, get_args, get_origin, get_type_hints
 
 from typing_extensions import TypeGuard
 
@@ -22,9 +22,9 @@ if TYPE_CHECKING:
 T = TypeVar('T')
 U = TypeVar('U')
 
-AnyIO = Union[BinaryIO, TextIO]
 Constructor = Callable[[Any], Any]
 AnyPath = Union[str, Path]
+AnyIO = Union[IO[str], IO[bytes]]
 RecordPath = Tuple[str, ...]
 
 # maximum depth when traversing the fields of a dataclass

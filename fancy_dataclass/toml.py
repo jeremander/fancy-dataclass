@@ -1,11 +1,12 @@
 from dataclasses import Field
-from typing import Any, TextIO
+from io import IOBase
+from typing import IO, Any
 
 import tomlkit
 from typing_extensions import Self
 
 from fancy_dataclass.dict import AnyDict
-from fancy_dataclass.serialize import DictFileSerializableDataclass, FileSerializable, from_dict_value_basic, to_dict_value_basic
+from fancy_dataclass.serialize import DictFileSerializableDataclass, TextFileSerializable, from_dict_value_basic, to_dict_value_basic
 from fancy_dataclass.utils import AnyIO
 
 
@@ -20,10 +21,10 @@ def _remove_null_dict_values(val: Any) -> Any:
     return val
 
 
-class TOMLSerializable(FileSerializable):
+class TOMLSerializable(TextFileSerializable):
     """Mixin class enabling conversion of an object to/from TOML."""
 
-    def to_toml(self, fp: AnyIO, **kwargs: Any) -> None:
+    def to_toml(self, fp: IOBase, **kwargs: Any) -> None:
         """Writes the object as TOML to a file-like object (text or binary).
         If binary, applies UTF-8 encoding.
 
@@ -67,17 +68,17 @@ class TOMLSerializable(FileSerializable):
         return cls._from_string(s, **kwargs)
 
 
-class TOMLDataclass(DictFileSerializableDataclass, TOMLSerializable, suppress_defaults=False):
+class TOMLDataclass(DictFileSerializableDataclass, TOMLSerializable, suppress_defaults=False):  # type: ignore[misc]
     """Dataclass mixin enabling default serialization of dataclass objects to and from TOML."""
 
     # TODO: require subclass to set qualified_type=True, like JSONDataclass?
     @classmethod
-    def _dict_to_text_file(cls, d: AnyDict, fp: TextIO, **kwargs: Any) -> None:
+    def _dict_to_text_file(cls, d: AnyDict, fp: IO[str], **kwargs: Any) -> None:
         d = _remove_null_dict_values(d)
         tomlkit.dump(d, fp, **kwargs)
 
     @classmethod
-    def _text_file_to_dict(cls, fp: TextIO, **kwargs: Any) -> AnyDict:
+    def _text_file_to_dict(cls, fp: IO[str], **kwargs: Any) -> AnyDict:
         return tomlkit.load(fp)
 
     @classmethod

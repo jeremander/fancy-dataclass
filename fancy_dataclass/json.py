@@ -1,16 +1,17 @@
 from datetime import datetime
+from io import IOBase
 import json
 from json import JSONEncoder
-from typing import Any, BinaryIO, TextIO, Type, cast, get_args, get_origin
+from typing import IO, Any, Type, cast, get_args, get_origin
 
 from typing_extensions import Self
 
 from fancy_dataclass.dict import AnyDict
-from fancy_dataclass.serialize import DictFileSerializableDataclass, FileSerializable, from_dict_value_basic, to_dict_value_basic
+from fancy_dataclass.serialize import DictFileSerializableDataclass, TextFileSerializable, from_dict_value_basic, to_dict_value_basic
 from fancy_dataclass.utils import AnyIO, TypeConversionError, issubclass_safe
 
 
-class JSONSerializable(FileSerializable):
+class JSONSerializable(TextFileSerializable):
     """Mixin class enabling conversion of an object to/from JSON."""
 
     @classmethod
@@ -36,7 +37,7 @@ class JSONSerializable(FileSerializable):
         """Override this method to decode a JSON key, for use with `from_dict`."""
         return key
 
-    def to_json(self, fp: AnyIO, **kwargs: Any) -> None:
+    def to_json(self, fp: IOBase, **kwargs: Any) -> None:
         """Writes the object as JSON to a file-like object (text or binary).
         If binary, applies UTF-8 encoding.
 
@@ -56,9 +57,9 @@ class JSONSerializable(FileSerializable):
         return JSONDataclass._to_string(self, **kwargs)  # type: ignore[arg-type]
 
     @classmethod
-    def _from_binary_file(cls, fp: BinaryIO, **kwargs: Any) -> Self:
+    def _from_binary_file(cls, fp: IO[bytes], **kwargs: Any) -> Self:
         # json.load accepts binary file, so we avoid the string conversion
-        return cls._from_text_file(cast(TextIO, fp), **kwargs)
+        return cls._from_text_file(cast(IO[str], fp), **kwargs)
 
     @classmethod
     def from_json(cls, fp: AnyIO, **kwargs: Any) -> Self:
@@ -85,7 +86,7 @@ class JSONSerializable(FileSerializable):
         return cls._from_string(s, **kwargs)
 
 
-class JSONDataclass(DictFileSerializableDataclass, JSONSerializable):
+class JSONDataclass(DictFileSerializableDataclass, JSONSerializable):  # type: ignore[misc]
     """Dataclass mixin enabling default serialization of dataclass objects to and from JSON."""
 
     @classmethod
@@ -99,7 +100,7 @@ class JSONDataclass(DictFileSerializableDataclass, JSONSerializable):
                     raise TypeError('when subclassing a JSONDataclass, you must set qualified_type=True or subclass JSONBaseDataclass instead')
 
     @classmethod
-    def _dict_to_text_file(cls, d: AnyDict, fp: TextIO, **kwargs: Any) -> None:
+    def _dict_to_text_file(cls, d: AnyDict, fp: IO[str], **kwargs: Any) -> None:
         indent = kwargs.get('indent')
         if (indent is not None) and (indent < 0):
             kwargs['indent'] = None
@@ -107,7 +108,7 @@ class JSONDataclass(DictFileSerializableDataclass, JSONSerializable):
         json.dump(d, fp, **kwargs)
 
     @classmethod
-    def _text_file_to_dict(cls, fp: TextIO, **kwargs: Any) -> AnyDict:
+    def _text_file_to_dict(cls, fp: IO[str], **kwargs: Any) -> AnyDict:
         d = json.load(fp, **kwargs)
         if not isinstance(d, dict):
             raise ValueError('loaded JSON is not a dict')
