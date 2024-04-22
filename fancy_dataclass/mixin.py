@@ -7,7 +7,7 @@ from fancy_dataclass.utils import _is_instance, check_dataclass, coerce_to_datac
 
 
 T = TypeVar('T')
-FS = TypeVar('FS', bound='FieldSettings')
+DA = TypeVar('DA', bound='DataclassAdaptable')
 
 _orig_process_class = dataclasses._process_class  # type: ignore[attr-defined]
 
@@ -26,13 +26,30 @@ dataclasses._process_class = _process_class  # type: ignore[attr-defined]
 # SETTINGS #
 ############
 
-class DataclassMixinSettings:
+class DataclassAdaptable:
+    """Mixin class providing the ability to convert (adapt) one dataclass type to another."""
+
+    @classmethod
+    def coerce(cls, obj: object) -> Self:
+        """Constructs a `DataclassAdaptable` object from the attributes of an arbitrary object.
+
+        Any missing attributes will be set to their default values."""
+        return coerce_to_dataclass(cls, obj)
+
+    def adapt_to(self, dest_type: Type[DA]) -> DA:
+        """Converts a `DataclassAdaptable` object to another type, `dest_type`.
+
+        By default this will attempt to coerce the fields from the original type to the new type, but subclasses may override the behavior, e.g. to allow field renaming."""
+        return dest_type.coerce(self)
+
+
+class DataclassMixinSettings(DataclassAdaptable):
     """Base class for settings to be associated with `fancy_dataclass` mixins.
 
     Each [`DataclassMixin`][fancy_dataclass.mixin.DataclassMixin] class may store a `__settings_type__` attribute consisting of a subclass of this class. The settings object will be instantiated as a `__settings__` attribute on a mixin subclass when it is defined."""
 
 
-class FieldSettings:
+class FieldSettings(DataclassAdaptable):
     """Class storing a bundle of parameters that will be extracted from dataclass field metadata.
 
     Each [`DataclassMixin`][fancy_dataclass.mixin.DataclassMixin] class may store a `__field_settings_type__` attribute which is a `FieldSettings` subclass. This specifies which keys in the `field.metadata` dictionary are recognized by the mixin class. Other keys will be ignored (unless they are used by other mixin classes)."""
@@ -58,19 +75,6 @@ class FieldSettings:
         obj: Self = cls(**{key: val for (key, val) in field.metadata.items() if key in cls.__dataclass_fields__})  # type: ignore[assignment]
         obj.type_check()
         return obj
-
-    @classmethod
-    def coerce(cls, obj: object) -> Self:
-        """Constructs a `FieldSettings` object from the attributes of an arbitrary object.
-
-        Any missing attributes will be set to their default values."""
-        return coerce_to_dataclass(cls, obj)
-
-    def adapt_to(self, dest_type: Type[FS]) -> FS:
-        """Converts a `FieldSettings` object to another type, `dest_type`.
-
-        By default this will attempt to coerce the fields from the original type to the new type, but subclasses may override the behavior, e.g. to allow field renaming."""
-        return dest_type.coerce(self)
 
 
 def _configure_mixin_settings(cls: Type['DataclassMixin'], **kwargs: Any) -> None:

@@ -1,4 +1,5 @@
 from dataclasses import astuple, dataclass, field
+from typing import ClassVar
 
 import pytest
 
@@ -258,3 +259,20 @@ class TestDataclassMixin:
             @dataclass
             class DC11(Mixin2, Mixin4):
                 ...
+
+    def test_replace(self):
+        """Tests the `_replace` method."""
+        @dataclass
+        class DC12(DataclassMixin):
+            a: ClassVar[int] = 1
+            b: int
+        obj = DC12(1)
+        assert obj._replace(b=2) == DC12(2)
+        # no type-checking occurs
+        assert obj._replace(b='b') == DC12('b')
+        # replace a non-field
+        with pytest.raises(TypeError, match="'c' is not a valid field for DC12"):
+            _ = obj._replace(c=3)
+        # replace a ClassVar field
+        with pytest.raises(TypeError, match="'a' is not a valid field for DC12"):
+            _ = obj._replace(a=3)

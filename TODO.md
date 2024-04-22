@@ -2,11 +2,7 @@
 
 ## v0.4.0
 
-- `DataclassMixin` classmethod to coerce this class's settings or field settings to another type?
-  - Make `coerce` and `adapt_to` part of interface, give it to `DataclassMixinSettings`
-  - Unit tests
-    - Colliding fields in `DataclassMixinSettings` (contrived)
-    - `coerce_to_dataclass` in case target object is missing a required field
+- `_replace` in config example
 
 ## v0.4.1
 

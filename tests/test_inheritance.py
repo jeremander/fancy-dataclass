@@ -8,7 +8,7 @@ import pytest
 from fancy_dataclass import ArgparseDataclass, ConfigDataclass, DictDataclass, JSONBaseDataclass, JSONDataclass, SQLDataclass, SubprocessDataclass, TOMLDataclass
 from fancy_dataclass.cli import ArgparseDataclassFieldSettings
 from fancy_dataclass.dict import DictDataclassSettings
-from fancy_dataclass.mixin import FieldSettings
+from fancy_dataclass.mixin import DataclassMixin, DataclassMixinSettings, FieldSettings
 from fancy_dataclass.subprocess import SubprocessDataclassFieldSettings
 from fancy_dataclass.utils import merge_dataclasses
 
@@ -77,6 +77,30 @@ def test_invalid_inheritance():
     assert issubclass(MyDC2, JSONDataclass)
     assert issubclass(MyDC2, MyDC1)
     assert MyDC2 is not MyDC1
+
+def test_settings_field_collision():
+    """Tests multiple inheritance from `DataclassMixinSettings` classes with overlapping field names."""
+    @dataclass
+    class Settings1(DataclassMixinSettings):
+        a: int = 1
+    @dataclass
+    class Settings2(DataclassMixinSettings):
+        a: int = 2
+        b: int = 3
+    @dataclass
+    class Settings3(Settings1, Settings2):
+        ...
+    assert list(Settings3.__dataclass_fields__) == ['a', 'b']
+    assert Settings3() == Settings3(1, 3)
+    class DC1(DataclassMixin):
+        __settings_type__ = Settings1
+    class DC2(DataclassMixin):
+        __settings_type__ = Settings2
+    with pytest.raises(TypeError, match="error merging base class settings for DC3: duplicate field name 'a'"):
+        class DC3(DC1, DC2):
+            ...
+    class DC4(DC1, DC2):
+        __settings_type__ = Settings2
 
 def test_json_toml():
     """Tests inheritance from both JSONDataclass and TOMLDataclass."""

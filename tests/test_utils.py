@@ -5,7 +5,7 @@ from typing import Any, ClassVar, Dict, List, Optional, Sequence, Union
 import pytest
 from pytest import param
 
-from fancy_dataclass.utils import _flatten_dataclass, _is_instance, get_dataclass_fields, merge_dataclasses, traverse_dataclass, type_is_optional
+from fancy_dataclass.utils import _flatten_dataclass, _is_instance, coerce_to_dataclass, get_dataclass_fields, merge_dataclasses, traverse_dataclass, type_is_optional
 
 
 @pytest.mark.parametrize(['tp', 'is_optional'], [
@@ -65,6 +65,32 @@ def test_type_is_optional_py39():
 ])
 def test_check_isinstance(obj, tp, output):
     assert _is_instance(obj, tp) is output
+
+def test_coerce_to_dataclass():
+    """Tests behavior of `coerce_to_dataclass`."""
+    @dataclass
+    class DC1:
+        x: int
+        y: int
+    @dataclass
+    class DC2:
+        x: int
+        y: int = 1
+    @dataclass
+    class DC3:
+        x: int
+    obj1 = DC1(1, 2)
+    assert coerce_to_dataclass(DC1, obj1) == obj1
+    obj2 = coerce_to_dataclass(DC2, obj1)
+    assert isinstance(obj2, DC2)
+    assert obj1 != obj2
+    assert obj2 == DC2(1, 2)
+    obj3 = coerce_to_dataclass(DC3, obj1)
+    assert isinstance(obj3, DC3)
+    assert obj3 == DC3(1)
+    assert coerce_to_dataclass(DC2, obj3) == DC2(1, 1)
+    with pytest.raises(TypeError, match="missing 1 required positional argument: 'y'"):
+        _ = coerce_to_dataclass(DC1, obj3)
 
 
 @dataclass
