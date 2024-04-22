@@ -15,12 +15,6 @@ from fancy_dataclass.config import ConfigDataclass
 
 
 @dataclass
-class SiteInfo:
-    title: str
-    author: str
-    description: str
-
-@dataclass
 class ServerConfig:
     hostname: str
     port: int
@@ -32,7 +26,9 @@ class DatabaseConfig:
 
 @dataclass
 class WebsiteConfig(ConfigDataclass):
-    site: SiteInfo
+    title: str
+    author: str
+    description: str
     server: ServerConfig
     database: DatabaseConfig
 ```
@@ -42,7 +38,6 @@ Now suppose you have a configuration file you want to load from, `website_config
 ```toml
 # Website Configuration
 
-[site]
 title = "My Awesome Website"
 author = "Webby McWebface"
 description = "A simple example of a TOML configuration file for a website."
@@ -69,7 +64,7 @@ Then, at any point in your program, you can fetch the configs like so:
 >>> cfg = WebsiteConfig.get_config()
 
 # then do stuff with the configs...
->>> print(cfg.site.title)
+>>> print(cfg.title)
 My Awesome Website
 ```
 
