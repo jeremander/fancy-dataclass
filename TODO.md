@@ -2,8 +2,7 @@
 
 ## v0.4.0
 
-- `DictConfig` subclass of `Config` (unstructured configs loaded from JSON/TOML)
-- `DCMixin` classmethod to coerce this class's settings or field settings to another type?
+- `DataclassMixin` classmethod to coerce this class's settings or field settings to another type?
   - E.g. to adapt new settings to a parent class (`CLIAdapterDataclass` example)
 
 ## v0.4.1
@@ -11,7 +10,7 @@
 - `mkdocs` output in `package_data`?
   - `_docs` subdirectory?
   - Pre-commit hook to run `mkdocs build`
-    - Takse only a second, but could use file hashes to prevent redundant build
+    - Takes only a second, but could use file hashes to prevent redundant build, e.g. `sha1sum docs/*.md | sha1sum | head -c 40`
   - Need some hook (post-tag?) to require the docs be up-to-date
 - documentation
   - Dataclass mixins/settings
@@ -42,6 +41,7 @@
     - NOTE: the parsed values themselves have a `_trivia` attribute storing various formatting info
     - Use field metadata (`help`?) as comment prior to the field
   - For `None`, serialize as commented field?
+- `JSON5Dataclass`?
 - `ArgparseDataclass`
   - Support subparsers
   - Test subparsers, groups, mutually exclusive groups

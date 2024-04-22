@@ -131,7 +131,7 @@ disable_error_code = ["assignment"]
 
 [[tool.mypy.overrides]]
 module = "tests.test_config"
-disable_error_code = ["misc", "union-attr"]
+disable_error_code = ["index", "misc", "union-attr"]
 
 [[tool.mypy.overrides]]
 module = "tests.test_inheritance"

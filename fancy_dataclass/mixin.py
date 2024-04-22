@@ -107,7 +107,7 @@ def _configure_mixin_settings(cls: Type['DataclassMixin'], **kwargs: Any) -> Non
         cls.__settings__ = stype(**d)
 
 def _configure_field_settings_type(cls: Type['DataclassMixin']) -> None:
-    """Sets up the __field_settings_type__ attribute on a `DataclassMixin` subclass at definition type.
+    """Sets up the __field_settings_type__ attribute on a `DataclassMixin` subclass at definition time.
     This reconciles any such attributes inherited from multiple parent classes."""
     stype = cls.__dict__.get('__field_settings_type__')
     if stype is None:

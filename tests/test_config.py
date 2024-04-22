@@ -9,7 +9,7 @@ from typing import Optional
 import pytest
 import tomlkit
 
-from fancy_dataclass.config import ConfigDataclass
+from fancy_dataclass.config import ConfigDataclass, DictConfig
 from fancy_dataclass.json import JSONDataclass
 from fancy_dataclass.toml import TOMLDataclass
 
@@ -24,16 +24,14 @@ def test_config_dataclass():
     cfg = MyConfig()
     assert MyConfig.get_config() is None
     cfg.update_config()
-    assert MyConfig.get_config() == cfg
-    assert MyConfig.get_config() is not cfg
+    assert MyConfig.get_config() is cfg
     cfg2 = MyConfig()
-    assert MyConfig.get_config() == cfg2
     assert MyConfig.get_config() is not cfg2
+    assert MyConfig.get_config() == cfg2
     cfg2.y = 'b'
     assert cfg2 != cfg
     with cfg2.as_config():
-        assert MyConfig.get_config() == cfg2
-        assert MyConfig.get_config() is not cfg2
+        assert MyConfig.get_config() is cfg2
         # updating instance field affects the global config
         cfg2.y = 'c'
         assert MyConfig.get_config().y == 'c'
@@ -41,8 +39,7 @@ def test_config_dataclass():
     MyConfig.clear_config()
     assert MyConfig.get_config() is None
     with cfg2.as_config():
-        assert MyConfig.get_config() == cfg2
-        assert MyConfig.get_config() is not cfg2
+        assert MyConfig.get_config() is cfg2
     assert MyConfig.get_config() is None
     @dataclass
     class OuterConfig(ConfigDataclass):
@@ -57,11 +54,10 @@ def test_config_dataclass():
     assert MyConfig.get_config() is None
     # inner instance can update its own singleton
     outer.inner.update_config()
-    assert MyConfig.get_config() == outer.inner
-    assert MyConfig.get_config() is not outer.inner
+    assert MyConfig.get_config() is outer.inner
     cfg2.update_config()
     assert MyConfig.get_config() != outer.inner
-    assert MyConfig.get_config() == cfg2
+    assert MyConfig.get_config() is cfg2
     assert OuterConfig.get_config().inner == outer.inner
 
 def test_inner_plain(tmpdir):
@@ -76,8 +72,7 @@ def test_inner_plain(tmpdir):
     assert Outer.get_config() is None
     cfg = Outer(Inner())
     cfg.update_config()
-    assert Outer.get_config() == cfg
-    assert Outer.get_config() is not cfg
+    assert Outer.get_config() is cfg
     cfg.inner.x = 2
     assert Outer.get_config().inner.x == 2
     inner = cfg.inner
@@ -96,6 +91,26 @@ def test_inner_plain(tmpdir):
     Path(cfg_path).write_text(toml_str)
     Outer.load_config(cfg_path)
     assert Outer.get_config() == Outer(Inner())
+
+def test_dict_config():
+    """Tests behavior of DictConfig."""
+    assert DictConfig.get_config() is None
+    class MyConfig(DictConfig):
+        ...
+    assert MyConfig.get_config() is None
+    cfg = MyConfig()
+    assert MyConfig.get_config() is None
+    cfg.update_config()
+    assert MyConfig.get_config() is cfg
+    cfg['a'] = 1
+    assert MyConfig.get_config()['a'] == 1
+    cfg2 = MyConfig()
+    with cfg2.as_config():
+        assert MyConfig.get_config() is cfg2
+        assert MyConfig.get_config() == {}
+    assert MyConfig.get_config() is cfg
+    cfg2.update_config()
+    assert MyConfig.get_config() is cfg2
 
 def test_json(tmpdir):
     """Tests JSON conversion of ConfigDataclass."""

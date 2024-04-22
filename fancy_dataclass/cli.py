@@ -114,30 +114,30 @@ class ArgparseDataclass(DataclassMixin):
             parser: parser object to update with a new argument
             name: Name of the argument to configure"""
         kwargs: Dict[str, Any] = {}
-        field = cls.__dataclass_fields__[name]  # type: ignore[attr-defined]
-        if field.metadata.get('parse_exclude', False):  # exclude the argument from the parser
+        fld = cls.__dataclass_fields__[name]  # type: ignore[attr-defined]
+        settings = ArgparseDataclassFieldSettings.coerce(cls._field_settings(fld))
+        if settings.parse_exclude:  # exclude the argument from the parser
             return
-        group_name = field.metadata.get('group')
-        if group_name is not None:  # add argument to a group instead of the main parser
+        if (group_name := settings.group) is not None:  # add argument to a group instead of the main parser
             for group in getattr(parser, '_action_groups', []):  # get argument group with the given name
                 if getattr(group, 'title', None) == group_name:
                     break
             else:  # group not found, so create it
                 group_kwargs = {}
-                if issubclass_safe(field.type, ArgparseDataclass):  # get kwargs from nested ArgparseDataclass
-                    group_kwargs = field.type.parser_kwargs()
+                if issubclass_safe(fld.type, ArgparseDataclass):  # get kwargs from nested ArgparseDataclass
+                    group_kwargs = fld.type.parser_kwargs()
                 group = parser.add_argument_group(group_name, **group_kwargs)
             parser = group
-        if issubclass_safe(field.type, ArgparseDataclass):
+        if issubclass_safe(fld.type, ArgparseDataclass):
             # recursively configure a nested ArgparseDataclass field
-            field.type.configure_parser(parser)
+            fld.type.configure_parser(parser)
             return
         # determine the type of the parser argument for the field
-        tp = field.metadata.get('type', field.type)
-        action = field.metadata.get('action', 'store')
+        tp = settings.type or fld.type
+        action = settings.action or 'store'
         origin_type = get_origin(tp)
         if origin_type is not None:  # compound type
-            if type_is_optional(tp):
+            if type_is_optional(tp):  # type: ignore[arg-type]
                 kwargs['default'] = None
             if origin_type == ClassVar:  # by default, exclude ClassVars from the parser
                 return
@@ -151,18 +151,19 @@ class ArgparseDataclass(DataclassMixin):
                 raise ValueError(f'cannot infer type of items in field {name!r}')
             if issubclass_safe(origin_type, list) and (action == 'store'):
                 kwargs['nargs'] = '*'  # allow multiple arguments by default
-        if issubclass_safe(tp, IntEnum):  # use a bare int type
+        if issubclass_safe(tp, IntEnum):  # type: ignore[arg-type]
+            # use a bare int type
             tp = int
         kwargs['type'] = tp
         # determine the default value
-        if field.default == MISSING:
-            if field.default_factory != MISSING:
-                kwargs['default'] = field.default_factory()
+        if fld.default == MISSING:
+            if fld.default_factory != MISSING:
+                kwargs['default'] = fld.default_factory()
         else:
-            kwargs['default'] = field.default
+            kwargs['default'] = fld.default
         # get the names of the arguments associated with the field
-        if 'args' in field.metadata:
-            args = field.metadata['args']
+        args = settings.args
+        if args is not None:
             if isinstance(args, str):
                 args = [args]
             # argument is positional if it is explicitly given without a leading dash
@@ -171,26 +172,26 @@ class ArgparseDataclass(DataclassMixin):
                 # no default available, so make the field a required option
                 kwargs['required'] = True
         else:
-            argname = field.name.replace('_', '-')
+            argname = fld.name.replace('_', '-')
             positional = (tp is not bool) and ('default' not in kwargs)
             if positional:
                 args = [argname]
             else:
                 # use a single dash for 1-letter names
-                prefix = '-' if (len(field.name) == 1) else '--'
+                prefix = '-' if (len(fld.name) == 1) else '--'
                 args = [prefix + argname]
-        if field.metadata.get('args') and (not positional):
+        if args and (not positional):
             # store the argument based on the name of the field, and not whatever flag name was provided
-            kwargs['dest'] = field.name
-        if field.type is bool:  # use boolean flag instead of an argument
+            kwargs['dest'] = fld.name
+        if fld.type is bool:  # use boolean flag instead of an argument
             kwargs['action'] = 'store_true'
             for key in ('type', 'required'):
                 with suppress(KeyError):
                     kwargs.pop(key)
         # extract additional items from metadata
         for key in cls.parser_argument_kwarg_names():
-            if key in field.metadata:
-                kwargs[key] = field.metadata[key]
+            if key in fld.metadata:
+                kwargs[key] = fld.metadata[key]
         if (kwargs.get('action') == 'store_const'):
             del kwargs['type']
         parser.add_argument(*args, **kwargs)

@@ -1,8 +1,8 @@
+from abc import ABC, abstractmethod
 from contextlib import contextmanager
-from copy import deepcopy
 from dataclasses import is_dataclass, make_dataclass
 from pathlib import Path
-from typing import ClassVar, Iterator, Optional, Type
+from typing import Any, ClassVar, Dict, Iterator, Optional, Type
 
 from typing_extensions import Self
 
@@ -13,9 +13,9 @@ from fancy_dataclass.utils import AnyPath, coerce_to_dataclass, dataclass_type_m
 
 
 class Config:
-    """Base class for a collection of configurations.
+    """Base class for storing a collection of configurations.
 
-    This uses a quasi-Singleton pattern by storing a class attribute with the current global configurations, which can be retrieved or updated by the user."""
+    Subclasses may store a class attribute, `_config`, with the current global configurations, which can be retrieved or updated by the user."""
 
     _config: ClassVar[Optional[Self]] = None
 
@@ -25,7 +25,8 @@ class Config:
 
         Returns:
             Global configuration object (`None` if not set)"""
-        return deepcopy(cls._config)  # type: ignore[return-value]
+        # return deepcopy(cls._config)  # type: ignore[return-value]
+        return cls._config  # type: ignore[return-value]
 
     @classmethod
     def _set_config(cls, config: Optional[Self]) -> None:
@@ -53,7 +54,22 @@ class Config:
             type(self)._set_config(orig_config)
 
 
-class ConfigDataclass(Config, DictDataclass, suppress_defaults=False):
+class FileConfig(Config, ABC):
+    """A collection of configurations that can be loaded from a file."""
+
+    @classmethod
+    @abstractmethod
+    def load_config(cls, path: AnyPath) -> Self:
+        """Loads configurations from a file and sets them to be the global configurations for this class.
+
+        Args:
+            path: File from which to load configurations
+
+        Returns:
+            The newly loaded global configurations"""
+
+
+class ConfigDataclass(DictDataclass, FileConfig, suppress_defaults=False):
     """A dataclass representing a collection of configurations.
 
     The configurations can be loaded from a file, the type of which will be inferred from its extension.
@@ -75,8 +91,11 @@ class ConfigDataclass(Config, DictDataclass, suppress_defaults=False):
         return _wrap(dataclass_type_map(cls, _wrap))  # type: ignore[arg-type]
 
     @classmethod
-    def _get_dataclass_type_for_extension(cls, ext: str) -> Type[FileSerializable]:
-        ext_lower = ext.lower()
+    def _get_dataclass_type_for_path(cls, path: AnyPath) -> Type[FileSerializable]:
+        p = Path(path)
+        if not p.suffix:
+            raise ValueError(f'filename {p} has no extension')
+        ext_lower = p.suffix.lower()
         if ext_lower == '.json':
             from fancy_dataclass.json import JSONDataclass
             return JSONDataclass
@@ -84,24 +103,34 @@ class ConfigDataclass(Config, DictDataclass, suppress_defaults=False):
             from fancy_dataclass.toml import TOMLDataclass
             return TOMLDataclass
         else:
-            raise ValueError(f'unknown config file extension {ext!r}')
+            raise ValueError(f'unknown config file extension {p.suffix!r}')
 
     @classmethod
-    def load_config(cls, path: AnyPath) -> Self:
-        """Loads configurations from a file and sets them to be the global configurations for this class.
-
-        Args:
-            path: File from which to load configurations
-
-        Returns:
-            The newly loaded global configurations"""
-        p = Path(path)
-        ext = p.suffix
-        if not ext:
-            raise ValueError(f'filename {p} has no extension')
-        tp = cls._get_dataclass_type_for_extension(ext)
+    def load_config(cls, path: AnyPath) -> Self:  # noqa: D102
+        tp = cls._get_dataclass_type_for_path(path)
         new_cls: Type[FileSerializable] = ConfigDataclass._wrap_config_dataclass(tp, cls)  # type: ignore
-        with open(path) as f:
-            cfg: Self = coerce_to_dataclass(cls, new_cls._from_file(f))
+        with open(path) as fp:
+            cfg: Self = coerce_to_dataclass(cls, new_cls._from_file(fp))
+        cfg.update_config()
+        return cfg
+
+
+class DictConfig(Config, Dict[Any, Any]):
+    """A collection of configurations, stored as a Python dict.
+
+    To impose a type schema on the configurations, use [`ConfigDataclass`][fancy_dataclass.config.ConfigDataclass] instead.
+
+    The configurations can be loaded from a file, the type of which will be inferred from its extension.
+    Supported file types are:
+
+    - JSON
+    - TOML
+    """
+
+    @classmethod
+    def load_config(cls, path: AnyPath) -> Self:  # noqa: D102
+        tp = ConfigDataclass._get_dataclass_type_for_path(path)
+        with open(path) as fp:
+            cfg = cls(tp._text_file_to_dict(fp))  # type: ignore[attr-defined]
         cfg.update_config()
         return cfg

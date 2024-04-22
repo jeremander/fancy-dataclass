@@ -88,22 +88,28 @@ def print_current_username():
 >>> print_current_username()
 admin
 
-# update only the local copy
->>> cfg.database.username = 'test'
+# update the config by mutating a local reference
+>>> cfg.database.username = 'test1'
 >>> print_current_username()
-admin
+test1
+
+# update the config with another object
+>>> from copy import deepcopy
+>>> cfg2 = deepcopy(cfg)
+>>> cfg2.database.username = 'test2'
+>>> cfg2.update_config()
 
 # update the global config
->>> cfg.update_config()
+>>> cfg2.update_config()
 >>> print_current_username()
-test
+test2
 ```
 
 Sometimes it is useful to modify the configs temporarily:
 
 ```python
 >>> print_current_username()
-test
+test2
 >>> cfg.database.username = 'temporary'
 
 # temporarily update global config with the local version
@@ -113,7 +119,7 @@ temporary
 
 # global config reverts back to its value before 'as_config' was called
 >>> print_current_username()
-test
+test2
 ```
 
 ## Details
