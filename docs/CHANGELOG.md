@@ -16,6 +16,24 @@ Types of changes:
 
 ## [Unreleased]
 
+## [0.4.1]
+
+2024-04-22
+
+### Added
+
+- `DictConfig` class for configs stored as untyped dict
+- `DataclassAdaptable` mixin to convert one dataclass to another
+    - Can be used to handle field name collisions in `DataclassMixin` settings
+- `save` and `load` convenience methods for `FileSerializable` (includes `JSONDataclass` and `TOMLDataclass`)
+
+### Changed
+
+- `Config.get_config` returns reference instead of deepcopy
+- Class hierarchy of `FileSerializable`
+    - Split into `TextSerializable`, `BinarySerializable`
+    - `TextFileSerializable` subclasses `BinaryFileSerializable`
+
 ## [0.3.1]
 
 2024-04-16
@@ -93,7 +111,8 @@ Types of changes:
     - `SQLDataclass`: SQL persistence via `sqlalchemy`
     - `SubprocessDataclass`: call out to another program via `subprocess`
 
-[unreleased]: https://github.com/jeremander/fancy-dataclass/compare/v0.3.1...HEAD
+[unreleased]: https://github.com/jeremander/fancy-dataclass/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.4.1
 [0.3.1]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.3.1
 [0.3.0]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.3.0
 [0.2.0]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.2.0

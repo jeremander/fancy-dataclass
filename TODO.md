@@ -2,7 +2,7 @@
 
 ## v0.4.0
 
-- `_replace` in config example
+- CHANGELOG
 
 ## v0.4.1
 
@@ -11,6 +11,9 @@
   - Pre-commit hook to run `mkdocs build`
     - Takes only a second, but could use file hashes to prevent redundant build, e.g. `sha1sum docs/*.md | sha1sum | head -c 40`
   - Need some hook (post-tag?) to require the docs be up-to-date
+
+## v0.4.2
+
 - documentation
   - Dataclass mixins/settings
     - For now, `dataclass` decorator is required

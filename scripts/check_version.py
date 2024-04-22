@@ -43,14 +43,15 @@ if __name__ == '__main__':
     if not VERSION_REGEX.match(pkg_version):
         error(f'package version string {pkg_version_str!r} is not a valid version')
     if pkg_version != tag_version:
-        error(f'mismatch between tag version ({tag_version}) and package version ({pkg_version})')
+        print(f'WARNING: mismatch between tag version ({tag_version}) and package version ({pkg_version}) -- remember to update tag')
+        # error(f'mismatch between tag version ({tag_version}) and package version ({pkg_version})')
 
     # check the latest built version
     built_version = get_latest_built_version()
     if built_version:
         print(f'Latest built version: {built_version}')
-    if (not built_version) or (built_version != tag_version):
-        print(f'WARNING: latest version has not been built -- remember to build & publish v{tag_version}')
+    if (not built_version) or (built_version != pkg_version):
+        print(f'WARNING: latest version has not been built -- remember to build & publish v{pkg_version}')
 
     # check the CHANGELOG has an URL for the latest version
     url_regex = re.compile(r'\[' + str(tag_version) + r'\]:\s*\w+')
