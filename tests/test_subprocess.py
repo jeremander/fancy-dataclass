@@ -5,24 +5,11 @@ from typing import ClassVar
 
 import pytest
 
-from fancy_dataclass.cli import ArgparseDataclass, ArgparseDataclassFieldSettings
 from fancy_dataclass.dict import DictDataclass
 from fancy_dataclass.subprocess import SubprocessDataclass, SubprocessDataclassFieldSettings
 from fancy_dataclass.utils import coerce_to_dataclass, merge_dataclasses
 from tests.test_cli import DC1
 
-
-def test_field_settings_collision():
-    """Tests inheriting multiple mixins with a FieldSettings name collision."""
-    with pytest.raises(TypeError, match="duplicate field name 'args'"):
-        @dataclass
-        class ArgparseSubprocessDataclass1(ArgparseDataclass, SubprocessDataclass):
-            ...
-    # field settings have a duplicate field, so make a custom merged settings class and set it explicitly
-    ArgparseSubprocessFieldSettings = merge_dataclasses(ArgparseDataclassFieldSettings, SubprocessDataclassFieldSettings, allow_duplicates=True)
-    @dataclass
-    class ArgparseSubprocessDataclass2(ArgparseDataclass, SubprocessDataclass):
-            __field_settings_type__ = ArgparseSubprocessFieldSettings
 
 def test_subprocess_dataclass(tmpdir):
     """Tests SubprocessDataclass behavior."""

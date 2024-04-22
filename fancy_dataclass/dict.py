@@ -139,20 +139,20 @@ class DictDataclass(DataclassMixin):
             return flat_obj._to_dict(full)  # type: ignore
         d = self._dict_init()
         class_suppress_defaults = self.__settings__.suppress_defaults
-        for (name, field) in self.__dataclass_fields__.items():  # type: ignore[attr-defined]
-            is_class_var = get_origin(field.type) is ClassVar
-            fld_settings = DictDataclassFieldSettings.coerce(self._field_settings(field))
+        for (name, fld) in self.__dataclass_fields__.items():  # type: ignore[attr-defined]
+            is_class_var = get_origin(fld.type) is ClassVar
+            settings = self._field_settings(fld).adapt_to(DictDataclassFieldSettings)
             # suppress field by default if it is a ClassVar or init=False
-            if (is_class_var or (not field.init)) if (fld_settings.suppress is None) else fld_settings.suppress:
+            if (is_class_var or (not fld.init)) if (settings.suppress is None) else settings.suppress:
                 continue
             val = getattr(self, name)
             # suppress default (by default) if full=False and class-configured suppress_defaults=True
-            if (not full) and (class_suppress_defaults if (fld_settings.suppress_default is None) else fld_settings.suppress_default):
+            if (not full) and (class_suppress_defaults if (settings.suppress_default is None) else settings.suppress_default):
                 # suppress values that match the default
                 try:
-                    if val == field.default:
+                    if val == fld.default:
                         continue
-                    if (field.default_factory != dataclasses.MISSING) and (val == field.default_factory()):
+                    if (fld.default_factory != dataclasses.MISSING) and (val == fld.default_factory()):
                         continue
                 except ValueError:  # some types may fail to compare
                     pass

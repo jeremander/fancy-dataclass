@@ -115,7 +115,7 @@ class ArgparseDataclass(DataclassMixin):
             name: Name of the argument to configure"""
         kwargs: Dict[str, Any] = {}
         fld = cls.__dataclass_fields__[name]  # type: ignore[attr-defined]
-        settings = ArgparseDataclassFieldSettings.coerce(cls._field_settings(fld))
+        settings = cls._field_settings(fld).adapt_to(ArgparseDataclassFieldSettings)
         if settings.parse_exclude:  # exclude the argument from the parser
             return
         if (group_name := settings.group) is not None:  # add argument to a group instead of the main parser

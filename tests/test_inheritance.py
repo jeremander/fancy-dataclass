@@ -1,11 +1,16 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from io import StringIO
+from typing import Optional, Sequence
 
 import pytest
 
-from fancy_dataclass import ArgparseDataclass, ConfigDataclass, DictDataclass, JSONBaseDataclass, JSONDataclass, SQLDataclass, TOMLDataclass
+from fancy_dataclass import ArgparseDataclass, ConfigDataclass, DictDataclass, JSONBaseDataclass, JSONDataclass, SQLDataclass, SubprocessDataclass, TOMLDataclass
+from fancy_dataclass.cli import ArgparseDataclassFieldSettings
 from fancy_dataclass.dict import DictDataclassSettings
+from fancy_dataclass.mixin import FieldSettings
+from fancy_dataclass.subprocess import SubprocessDataclassFieldSettings
+from fancy_dataclass.utils import merge_dataclasses
 
 
 DEFAULT_MIXINS = [JSONBaseDataclass, ArgparseDataclass, ConfigDataclass, SQLDataclass, TOMLDataclass]
@@ -103,3 +108,51 @@ def test_json_toml():
         assert type(obj2).from_toml_string(sio.read()) == obj2
         sio.seek(0)
         assert type(obj2).load(sio) == obj2
+
+def test_argparse_subprocess():
+    """Tests inheritance from both ArgparseDataclass and SubprocessDataclass."""
+    # field settings have a name collision, 'args'
+    with pytest.raises(TypeError, match="duplicate field name 'args'"):
+        class ArgparseSubprocessDC(ArgparseDataclass, SubprocessDataclass):
+            ...
+    # field settings have a duplicate field, so make a custom merged settings class and set it explicitly
+    ArgparseSubprocessFieldSettings = merge_dataclasses(ArgparseDataclassFieldSettings, SubprocessDataclassFieldSettings, allow_duplicates=True)
+    class ArgparseSubprocessDC2(ArgparseDataclass, SubprocessDataclass):
+        __field_settings_type__ = ArgparseSubprocessFieldSettings
+    @dataclass
+    class MyDC2(ArgparseSubprocessDC2):
+        x: int = field(metadata={'args': ['--ex']})
+    # same attribute is used for both parent classes' FieldSettings
+    obj = MyDC2(1)
+    fld_settings = MyDC2._field_settings(obj.__dataclass_fields__['x'])
+    assert fld_settings.adapt_to(ArgparseDataclassFieldSettings).args == ['--ex']
+    assert fld_settings.adapt_to(SubprocessDataclassFieldSettings).args == ['--ex']
+    # custom adapter for FieldSettings
+    @dataclass
+    class FieldSettings3(FieldSettings):
+        input_args: Optional[Sequence[str]] = None
+        output_args: Optional[Sequence[str]] = None
+        def adapt_to(self, dest_type):
+            if dest_type is ArgparseDataclassFieldSettings:
+                return dest_type(args=self.input_args)
+            if dest_type is SubprocessDataclassFieldSettings:
+                return dest_type(args=self.output_args)
+            return super().adapt_to(dest_type)
+    class ArgparseSubprocessDC3(ArgparseDataclass, SubprocessDataclass):
+        __field_settings_type__ = FieldSettings3
+    @dataclass
+    class MyDC3(ArgparseSubprocessDC3):
+        x: int = field(metadata={'args': ['--ex']})
+    obj = MyDC3(1)
+    fld_settings = MyDC3._field_settings(obj.__dataclass_fields__['x'])
+    assert fld_settings == FieldSettings3(input_args=None, output_args=None)
+    assert fld_settings.adapt_to(ArgparseDataclassFieldSettings).args is None
+    assert fld_settings.adapt_to(SubprocessDataclassFieldSettings).args is None
+    @dataclass
+    class MyDC4(ArgparseSubprocessDC3):
+        x: int = field(metadata={'input_args': ['--ex1'], 'output_args': ['--ex2']})
+    obj = MyDC4(1)
+    fld_settings = MyDC4._field_settings(obj.__dataclass_fields__['x'])
+    assert fld_settings == FieldSettings3(input_args=['--ex1'], output_args=['--ex2'])
+    assert fld_settings.adapt_to(ArgparseDataclassFieldSettings).args == ['--ex1']
+    assert fld_settings.adapt_to(SubprocessDataclassFieldSettings).args == ['--ex2']

@@ -3,7 +3,10 @@
 ## v0.4.0
 
 - `DataclassMixin` classmethod to coerce this class's settings or field settings to another type?
-  - E.g. to adapt new settings to a parent class (`CLIAdapterDataclass` example)
+  - Make `coerce` and `adapt_to` part of interface, give it to `DataclassMixinSettings`
+  - Unit tests
+    - Colliding fields in `DataclassMixinSettings` (contrived)
+    - `coerce_to_dataclass` in case target object is missing a required field
 
 ## v0.4.1
 
@@ -26,7 +29,9 @@
   - Subprocess
   - Config
   - Defining new mixins (what dunders need to be set)
-    - Top-level settings, field-level settings, collisions
+    - Top-level settings, field-level settings
+    - Collisions
+      - Colliding `FieldSettings` and custom adapters
 
 ## Future
 

@@ -7,6 +7,7 @@ from fancy_dataclass.utils import _is_instance, check_dataclass, coerce_to_datac
 
 
 T = TypeVar('T')
+FS = TypeVar('FS', bound='FieldSettings')
 
 _orig_process_class = dataclasses._process_class  # type: ignore[attr-defined]
 
@@ -64,6 +65,12 @@ class FieldSettings:
 
         Any missing attributes will be set to their default values."""
         return coerce_to_dataclass(cls, obj)
+
+    def adapt_to(self, dest_type: Type[FS]) -> FS:
+        """Converts a `FieldSettings` object to another type, `dest_type`.
+
+        By default this will attempt to coerce the fields from the original type to the new type, but subclasses may override the behavior, e.g. to allow field renaming."""
+        return dest_type.coerce(self)
 
 
 def _configure_mixin_settings(cls: Type['DataclassMixin'], **kwargs: Any) -> None:

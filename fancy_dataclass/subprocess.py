@@ -47,9 +47,9 @@ class SubprocessDataclass(DataclassMixin):
         cls_exec_field = cls.__settings__.exec
         # make sure there is at most one exec field
         exec_field = None
-        stype = cls.__field_settings_type__
         for fld in get_dataclass_fields(cls, include_classvars=True):
-            if stype.from_field(fld).exec:
+            fld_settings = cls._field_settings(fld).adapt_to(SubprocessDataclassFieldSettings)
+            if fld_settings.exec:
                 if cls_exec_field is not None:
                     raise TypeError(f"cannot set field's 'exec' flag to True (class already set executable to {cls_exec_field})")
                 if exec_field is not None:
@@ -66,7 +66,7 @@ class SubprocessDataclass(DataclassMixin):
         Returns:
             List of command-line args corresponding to the field"""
         fld = self.__dataclass_fields__[name]  # type: ignore[attr-defined]
-        settings = SubprocessDataclassFieldSettings.coerce(self._field_settings(fld))
+        settings = self._field_settings(fld).adapt_to(SubprocessDataclassFieldSettings)
         args = settings.args
         args = [args] if isinstance(args, str) else args
         if args == []:  # exclude the argument
