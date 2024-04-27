@@ -46,7 +46,7 @@ jobs:
         run: hatch env create lint && hatch env create test
         if: steps.cache-venv.outputs.cache-hit != 'true'
       - name: Lines of code (radon)
-        run: hatch run lint:run-loc-summary | tee loc-summary.txt
+        run: hatch run lint:run-loc-summarize | tee loc-summary.txt
       - name: Upload lines of code
         uses: actions/upload-artifact@v4
         with:

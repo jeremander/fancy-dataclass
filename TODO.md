@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD034 -->
+
 # TODO
 
 ## v0.4.2
@@ -11,6 +13,9 @@
 
 ## v0.5.0
 
+- Optional dependencies
+  - Allow `tomlkit` for now, make `sql` optional
+  - Document this
 - `FuncDataclass`
   - ABC providing `__call__` method on variadic positional args
   - Could have more general version that lets you control what method name to use (`__call__` is the default)
@@ -55,11 +60,6 @@
 - `ArgparseDataclass`
   - Support subparsers
   - Test subparsers, groups, mutually exclusive groups
-- `ConfigDataclass`
-  - Have child `Config` objects store weak references to their parents?
-    - Would let the child update the global parent
-    - But would break current update semantics
-    - Could have the parent set a class setting to opt into this behavior
 - Versioning (`version` ClassVar, with suppress=False)
   - `@version` decorator (with required integer argument)
     - Allows you to define multiple classes with the same name; stores distinct `version` `ClassVar` attributes and registers them with the same name

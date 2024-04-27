@@ -30,7 +30,7 @@ Source = "https://github.com/jeremander/fancy-dataclass"
 Changelog = "https://fancy-dataclass.readthedocs.io/en/stable/CHANGELOG"
 
 [tool.hatch.build.targets.sdist]
-exclude = ["TODO.txt"]
+exclude = ["TODO.md"]
 
 [tool.hatch.version]
 path = "fancy_dataclass/__init__.py"
@@ -48,25 +48,28 @@ dependencies = [
 [tool.hatch.envs.doc.scripts]
 build = "mkdocs build --clean --strict"
 serve = "mkdocs serve"
-# deploy = "mkdocs gh-deploy"
 deploy = "mkdocs build --site-dir $READTHEDOCS_OUTPUT/html"
 
 [tool.hatch.envs.lint]
 dependencies = [
   "mypy>=1.0",
   "numpy",
+  "py-gadzooks>=0.2",
   "pytest",
-  "radon",
   "ruff>=0.3",
   "vermin",
 ]
 
 [tool.hatch.envs.lint.scripts]
+# linting
 run-ruff = "ruff check"
+# ensure compatibility with Py3.8 and higher
 run-vermin = "vermin {args:-t=3.8- --eval-annotations --no-tips --violations --exclude enum.StrEnum --exclude types.UnionType .}"
+# type-checking
 run-mypy = "mypy --install-types --non-interactive {args:fancy_dataclass tests}"
-run-loc-summary = "./scripts/summarize.sh"
-all = ["run-ruff", "run-vermin", "run-mypy", "run-loc-summary"]
+# print info about lines of code
+run-loc-summarize = "gadzooks loc-summarize fancy_dataclass"
+all = ["run-ruff", "run-vermin", "run-mypy", "run-loc-summarize"]
 
 [tool.hatch.envs.test]
 dependencies = [

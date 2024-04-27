@@ -2,7 +2,7 @@
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/jeremander/fancy-dataclass/workflow.yml)
 ![Coverage Status](https://github.com/jeremander/fancy-dataclass/raw/coverage-badge/coverage-badge.svg)
 [![Read the Docs](https://img.shields.io/readthedocs/fancy-dataclass)](https://fancy-dataclass.readthedocs.io)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/jeremander/fancy-dataclass/raw/readme-badges/docs/LICENSE.txt)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/jeremander/fancy-dataclass/raw/main/docs/LICENSE.txt)
 
 # Basics
 
