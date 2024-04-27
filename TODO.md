@@ -1,18 +1,24 @@
 # TODO
 
-## v0.4.0
-
-- CHANGELOG
-
-## v0.4.1
+## v0.4.2
 
 - `mkdocs` output in `package_data`?
   - `_docs` subdirectory?
   - Pre-commit hook to run `mkdocs build`
     - Takes only a second, but could use file hashes to prevent redundant build, e.g. `sha1sum docs/*.md | sha1sum | head -c 40`
   - Need some hook (post-tag?) to require the docs be up-to-date
+- Make pre-push include tag in version check, but not pre-commit (check this behavior when pushing)
 
-## v0.4.2
+## v0.5.0
+
+- `FuncDataclass`
+  - ABC providing `__call__` method on variadic positional args
+  - Could have more general version that lets you control what method name to use (`__call__` is the default)
+    - Could confuse static type-checkers looking for method name, so may not be worth it
+  - `func_dataclass` decorator wrapping a function into a `FuncDataclass` subclass where `kwargs` are parameters
+    - To make class name explicit, would probably need to call it directly, e.g. `MyType = func_dataclass(my_func)`
+
+## v0.5.1
 
 - documentation
   - Dataclass mixins/settings
@@ -61,10 +67,6 @@
       - If `strict=True`, raises an error; otherwise, attempts to coerce and issues a warning
     - Error if duplicate versions are set
   - Migration
-- `CallableDataclass` / `FuncDataclass`
-  - ABC providing `__call__` method on variadic positional args
-  - `callable_dataclass` decorator wrapping a function into a `CallableDataclass` subclass where `kwargs` are parameters
-    - To make class name explicit, would probably need to call it directly, e.g. `MyType = callable_dataclass(my_func)`
 - Field metadata
   - Be strict about unknown field metadata keys? (Maybe issue warning?)
     - Might be annoying if people want to store extra metadata.

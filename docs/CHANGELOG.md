@@ -16,6 +16,11 @@ Types of changes:
 
 ## [Unreleased]
 
+### Removed
+
+- `pre-commit` hooks for line-counting and version checking
+    - Instead, will pull them from external [gadzooks](https://github.com/jeremander/gadzooks) repo
+
 ## [0.4.1]
 
 2024-04-22

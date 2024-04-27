@@ -4,7 +4,7 @@ default_install_hook_types: [commit-msg, pre-commit, pre-push]
 default_stages: [commit]
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.5.0
+  rev: v4.6.0
   hooks:
     - id: check-added-large-files
       args: ['--maxkb=5000']
@@ -13,7 +13,7 @@ repos:
     - id: detect-private-key
     - id: check-docstring-first
 - repo: https://github.com/charliermarsh/ruff-pre-commit
-  rev: 'v0.3.3'
+  rev: v0.4.2
   hooks:
     - id: ruff
 - repo: https://github.com/netromdk/vermin
@@ -23,21 +23,25 @@ repos:
       # specify your target version here, OR in a Vermin config file as usual:
       args: ['-t=3.8-', '--no-tips', '--violations', '--exclude', 'enum.StrEnum', '--exclude', 'types.UnionType', '.']
 - repo: https://github.com/commitizen-tools/commitizen
-  rev: v3.20.0
+  rev: v3.24.0
   hooks:
     - id: commitizen
       stages: [commit-msg]
-- repo: local
+- repo: https://github.com/jeremander/gadzooks
+  rev: v0.1.1
   hooks:
-    - id: summarize
-      name: summarize
-      entry: scripts/summarize.sh
-      language: script
+    - id: python-loc-summarize
+      args: ['fancy_dataclass/*.py']
       pass_filenames: false
       verbose: true
-    - id: check-version
-      stages: [commit, push]
-      name: check-version
-      entry: scripts/check_version.py
-      language: python
+    - id: python-check-version
+      args: ['--dist-dir', 'dist', '--changelog', 'docs/CHANGELOG.md', '--changelog-version-regex', '\[{version}\]:\s*\w+']
+      pass_filenames: false
       verbose: true
+      stages: [commit]
+      # before pushing, require the git tag match the package version
+    - id: python-check-version
+      args: ['--check-tag', '--dist-dir', 'dist', '--changelog', 'docs/CHANGELOG.md', '--changelog-version-regex', '\[{version}\]:\s*\w+']
+      pass_filenames: false
+      verbose: true
+      stages: [push]
