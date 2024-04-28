@@ -9,3 +9,6 @@ site/
 dist/
 htmlcov
 .DS_Store
+fancy_dataclass/docs/assets/javascripts
+fancy_dataclass/docs/search
+fancy_dataclass/docs/sitemap.xml.gz

@@ -9,6 +9,7 @@ repos:
     - id: check-added-large-files
       args: ['--maxkb=5000']
     - id: end-of-file-fixer
+      exclude: fancy_dataclass/docs
     - id: check-case-conflict
     - id: detect-private-key
     - id: check-docstring-first

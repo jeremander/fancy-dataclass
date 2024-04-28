@@ -1,0 +1,43 @@
+:root {
+  --md-primary-fg-color: black;
+  --md-accent-fg-color: red;
+}
+
+.md-header__topic {
+  font-size: 17pt;
+  font-style: italic;
+  font-family: Apple Chancery, cursive;
+}
+
+.md-nav__title {
+  /* color: #303030;
+  font-size: 12pt;
+  font-style: italic; */
+  visibility: hidden;
+}
+
+.md-nav__source {
+  background-color: var(--md-primary-fg-color);
+}
+
+.md-search__input {
+  background-color: #707070;
+  border-radius: 3px;
+}
+
+.md-nav__link--active {
+  font-weight: bold;
+}
+
+.md-content h1 {
+  color: #303030;
+  font-weight: bold;
+}
+
+.md-content a:not(:hover), a.autorefs:not(:hover) {
+  color: #2000bb;
+}
+
+readthedocs-flyout {
+  display: none;
+}
