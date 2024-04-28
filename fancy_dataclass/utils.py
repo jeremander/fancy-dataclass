@@ -58,7 +58,7 @@ def type_is_optional(tp: type) -> bool:
     args = get_args(tp)
     union_types: List[Any] = [Union]
     if hasattr(types, 'UnionType'):  # Python >= 3.10
-        union_types.append(types.UnionType)
+        union_types.append(types.UnionType)  # novermin
     return (origin_type in union_types) and (type(None) in args)
 
 def safe_dict_insert(d: Dict[Any, Any], key: str, val: Any) -> None:

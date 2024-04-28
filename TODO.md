@@ -9,7 +9,8 @@
   - Pre-commit hook to run `mkdocs build`
     - Takes only a second, but could use file hashes to prevent redundant build, e.g. `sha1sum docs/*.md | sha1sum | head -c 40`
   - Need some hook (post-tag?) to require the docs be up-to-date
-- Make pre-push include tag in version check, but not pre-commit (check this behavior when pushing)
+- CHANGELOG
+  - Check version enforcement when attempting to push new tag
 
 ## v0.5.0
 

@@ -22,7 +22,7 @@ def test_type_is_optional(tp, is_optional):
     assert type_is_optional(tp) == is_optional
 
 @pytest.mark.skipif(sys.version_info[:2] < (3, 10), reason='Py3.10 union type')
-def test_type_is_optional_py39():
+def test_type_is_optional_py310():  # novermin
     assert type_is_optional(int | None)
     assert type_is_optional(None | int)
     assert type_is_optional(None | int | str)

@@ -122,7 +122,7 @@ if sys.version_info[:2] < (3, 11):
     class StrEnum(str, Enum):
         pass
 else:
-    from enum import StrEnum
+    from enum import StrEnum  # novermin
 
 class MyStrEnum(StrEnum):
     a = 'a'

@@ -30,7 +30,7 @@ Source = "https://github.com/jeremander/fancy-dataclass"
 Changelog = "https://fancy-dataclass.readthedocs.io/en/stable/CHANGELOG"
 
 [tool.hatch.build.targets.sdist]
-exclude = ["TODO.md"]
+exclude = [".venv", "TODO.md"]
 
 [tool.hatch.version]
 path = "fancy_dataclass/__init__.py"
@@ -46,7 +46,7 @@ dependencies = [
 ]
 
 [tool.hatch.envs.doc.scripts]
-build = "mkdocs build --clean --strict"
+build = "mkdocs build --clean --strict --no-directory-urls {args}"
 serve = "mkdocs serve"
 deploy = "mkdocs build --site-dir $READTHEDOCS_OUTPUT/html"
 
@@ -57,14 +57,15 @@ dependencies = [
   "py-gadzooks>=0.2",
   "pytest",
   "ruff>=0.3",
-  "vermin",
+  "vermin>=1.5",
 ]
 
 [tool.hatch.envs.lint.scripts]
 # linting
 run-ruff = "ruff check"
 # ensure compatibility with Py3.8 and higher
-run-vermin = "vermin {args:-t=3.8- --eval-annotations --no-tips --violations --exclude enum.StrEnum --exclude types.UnionType .}"
+run-vermin = "vermin {args:.}"
+# run-vermin = "vermin {args:-t=3.8- --eval-annotations --no-tips --violations --exclude enum.StrEnum --exclude types.UnionType --exclude tests.test_utils .}"
 # type-checking
 run-mypy = "mypy --install-types --non-interactive {args:fancy_dataclass tests}"
 # print info about lines of code
