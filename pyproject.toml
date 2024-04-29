@@ -47,6 +47,8 @@ dependencies = [
 
 [tool.hatch.envs.doc.scripts]
 build = "mkdocs build --clean --strict --no-directory-urls {args}"
+# build docs within the package, if not already up-to-date
+build-pkg = "gadzooks build-docs --src-docs docs -- mkdocs build --strict --no-directory-urls -d fancy_dataclass/docs"
 serve = "mkdocs serve"
 deploy = "mkdocs build --site-dir $READTHEDOCS_OUTPUT/html"
 
@@ -65,7 +67,6 @@ dependencies = [
 run-ruff = "ruff check"
 # ensure compatibility with Py3.8 and higher
 run-vermin = "vermin {args:.}"
-# run-vermin = "vermin {args:-t=3.8- --eval-annotations --no-tips --violations --exclude enum.StrEnum --exclude types.UnionType --exclude tests.test_utils .}"
 # type-checking
 run-mypy = "mypy --install-types --non-interactive {args:fancy_dataclass tests}"
 # print info about lines of code

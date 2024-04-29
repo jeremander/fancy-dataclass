@@ -28,14 +28,23 @@ repos:
     - id: commitizen
       stages: [commit-msg]
 - repo: https://github.com/jeremander/gadzooks
-  rev: v0.2.3
+  rev: v0.2.4
   hooks:
+    - id: build-docs
+      args: ['--src-docs', 'docs', '--', 'mkdocs', 'build', '--strict', '--no-directory-urls', '-d', 'fancy_dataclass/docs']
+      pass_filenames: false
+      verbose: true
     - id: loc-summarize
       args: ['fancy_dataclass/*.py']
       pass_filenames: false
       verbose: true
     - id: check-version
-      args: ['--dist-dir', 'dist', '--changelog', 'docs/CHANGELOG.md', '--changelog-version-regex', '\[{version}\]:\s*\w+']
+      args: []
       pass_filenames: false
       verbose: true
-      stages: [commit, push]
+      stages: [commit]
+    - id: check-version
+      args: ['--check-tag', '--dist-dir', 'dist', '--changelog', 'docs/CHANGELOG.md', '--changelog-version-regex', '\[{version}\]:\s*\w+']
+      pass_filenames: false
+      verbose: true
+      stages: [push]
