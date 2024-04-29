@@ -16,10 +16,20 @@ Types of changes:
 
 ## [Unreleased]
 
-### Removed
+## [0.4.2]
 
-- `pre-commit` hooks for line-counting and version checking
-    - Instead, will pull them from external [gadzooks](https://github.com/jeremander/gadzooks) repo
+2024-04-29
+
+### Added
+
+- `fancy_dataclass/docs` subfolder containing HTML documentation (accessible without Internet access)
+
+### Changed
+
+- Using [`gadzooks`](https://github.com/jeremander/gadzooks) repo for the following `pre-commit` hooks:
+    - `build-docs`: rebuild docs if any source markdown files changed
+    - `loc-summarize`: print lines of code summary
+    - `check-version`: check version consistency (package, Git tag, built distribution, changelog)
 
 ## [0.4.1]
 
@@ -116,8 +126,9 @@ Types of changes:
     - `SQLDataclass`: SQL persistence via `sqlalchemy`
     - `SubprocessDataclass`: call out to another program via `subprocess`
 
-[unreleased]: https://github.com/jeremander/fancy-dataclass/compare/v0.4.1...HEAD
-[0.4.1]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.4.1
+[unreleased]: https://github.com/jeremander/fancy-dataclass/compare/v0.4.2...HEAD
+[0.4.1]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.4.2
+[0.4.2]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.4.1
 [0.3.1]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.3.1
 [0.3.0]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.3.0
 [0.2.0]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.2.0
