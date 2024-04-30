@@ -65,7 +65,7 @@ model = trainer.train(input_data)
 
 If you omit `method_name`, it will default to `__call__`, which lets you call the object directly as a function. So instead of `trainer.train(input_data)` you would just write `trainer(input_data)`.
 
-Another advantage to this approach is that you can supply one or more base classes to `func_dataclass` to provide extra functionality; in particular you can use various `fancy_dataclass` mixins such as [`JSONDataclass`](/json):
+Another advantage to this approach is that you can supply one or more base classes to `func_dataclass` to provide extra functionality; in particular you can use various `fancy_dataclass` mixins such as [`JSONDataclass`](json.md):
 
 ```python
 from fancy_dataclass import JSONDataclass, func_dataclass

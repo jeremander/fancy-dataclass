@@ -48,7 +48,7 @@ dependencies = [
 [tool.hatch.envs.doc.scripts]
 build = "mkdocs build --clean --strict --no-directory-urls {args}"
 # build docs within the package, if not already up-to-date
-build-pkg = "gadzooks build-docs --src-docs docs -- mkdocs build --strict --no-directory-urls -d fancy_dataclass/docs"
+build-pkg = "gadzooks build-docs --src-docs docs {args} -- mkdocs build --strict --no-directory-urls -d fancy_dataclass/docs"
 serve = "mkdocs serve"
 deploy = "mkdocs build --site-dir $READTHEDOCS_OUTPUT/html"
 

@@ -29,13 +29,6 @@
   - Convert to/from `pandas` `Series` and `DataFrame`?
     - If so, make `pandas` an optional dependency
     - Easy to implement conversion via `dict`, if we subclass `DictDataclass`
-- `TOMLDataclass`
-  - Require subclass to set `qualified_type=True`, like `JSONDataclass`?
-  - Preserve document structure via `tomlkit`
-    - NOTE: the parsed values themselves have a `_trivia` attribute storing various formatting info
-    - Use field metadata (`help`?) as comment prior to the field
-  - For `None`, serialize as commented field?
-- `JSON5Dataclass`?
 - `ArgparseDataclass`
   - Support subparsers
   - Test subparsers, groups, mutually exclusive groups
@@ -46,6 +39,13 @@
       - If `strict=True`, raises an error; otherwise, attempts to coerce and issues a warning
     - Error if duplicate versions are set
   - Migration
+- `TOMLDataclass`
+  - Require subclass to set `qualified_type=True`, like `JSONDataclass`?
+  - Preserve document structure via `tomlkit`
+    - NOTE: the parsed values themselves have a `_trivia` attribute storing various formatting info
+    - Use field metadata (`help`?) as comment prior to the field
+  - For `None`, serialize as commented field?
+- `JSON5Dataclass`?
 - Field metadata
   - Be strict about unknown field metadata keys? (Maybe issue warning?)
     - Might be annoying if people want to store extra metadata.

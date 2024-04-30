@@ -11,17 +11,17 @@
       
       
       
-        <link rel="prev" href="sql.html">
+        <link rel="prev" href="subprocess.html">
       
       
-        <link rel="next" href="subprocess.html">
+        <link rel="next" href="reference/cli.html">
       
       <link rel="icon" href="assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.1.8">
     
     
       
-        <title>CLI parsing - Fancy Dataclass</title>
+        <title>Parametrized functions - Fancy Dataclass</title>
       
     
     
@@ -67,7 +67,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#usage-example" class="md-skip">
+        <a href="#partial-function-as-dataclass" class="md-skip">
           Skip to content
         </a>
       
@@ -102,7 +102,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              CLI parsing
+              Parametrized functions
             
           </span>
         </div>
@@ -285,55 +285,11 @@
 
   
   
-    
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          CLI parsing
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="cli.html" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="cli.html" class="md-nav__link">
         CLI parsing
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#usage-example" class="md-nav__link">
-    Usage Example
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#details" class="md-nav__link">
-    Details
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -359,11 +315,48 @@
 
   
   
+    
   
-    <li class="md-nav__item">
-      <a href="func.html" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Parametrized functions
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="func.html" class="md-nav__link md-nav__link--active">
         Parametrized functions
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#partial-function-as-dataclass" class="md-nav__link">
+    Partial Function as Dataclass
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -582,15 +575,8 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#usage-example" class="md-nav__link">
-    Usage Example
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#details" class="md-nav__link">
-    Details
+  <a href="#partial-function-as-dataclass" class="md-nav__link">
+    Partial Function as Dataclass
   </a>
   
 </li>
@@ -613,92 +599,82 @@
   
 
 
-  <h1>CLI parsing</h1>
+  <h1>Parametrized functions</h1>
 
-<!-- markdownlint-disable MD052 -->
-
-<p><code>fancy_dataclass</code> makes it super-easy to create command-line programs.</p>
-<p>The <a class="autorefs autorefs-internal" href="reference/cli.html#fancy_dataclass.cli.ArgparseDataclass"><code>ArgparseDataclass</code></a> mixin lets you automatically generate an <a href="https://docs.python.org/3/library/argparse.html"><code>argparse</code></a> argument parser from a dataclass. This saves a lot of boilerplate code which would be required to set up the parser manually.</p>
-<p>The <a class="autorefs autorefs-internal" href="reference/cli.html#fancy_dataclass.cli.CLIDataclass"><code>CLIDataclass</code></a> mixin extends <code>ArgparseDataclass</code> by additionally providing a <a class="autorefs autorefs-internal" href="reference/cli.html#fancy_dataclass.cli.CLIDataclass.run"><code>run</code></a> method which you override to perform arbitrary program logic, given the parsed arguments. You can then call <a class="autorefs autorefs-internal" href="reference/cli.html#fancy_dataclass.cli.CLIDataclass.main"><code>main</code></a> on your custom dataclass to run an entire program end-to-end (parser construction, argument parsing, main program logic).</p>
-<p>By default, <code>ArgparseDataclass</code> and <code>CLIDataclass</code> provide a "help" option so that a help menu is printed out when the user passes in <code>-h</code> or <code>--help</code> as an argument. The help string for each argument can be provided in the dataclass field metadata.</p>
-<h2 id="usage-example">Usage Example</h2>
-<p>Define a <code>CLIDataclass</code> instantiating a simple command-line calculator program.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kn">from</span> <span class="nn">fancy_dataclass</span> <span class="kn">import</span> <span class="n">CLIDataclass</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="nd">@dataclass</span>
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="k">class</span> <span class="nc">Calculator</span><span class="p">(</span><span class="n">CLIDataclass</span><span class="p">):</span>
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;A simple calculator program.&quot;&quot;&quot;</span>
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">operation</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">metadata</span><span class="o">=</span><span class="p">{</span>
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>        <span class="s1">&#39;choices&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;add&#39;</span><span class="p">,</span> <span class="s1">&#39;sub&#39;</span><span class="p">,</span> <span class="s1">&#39;mul&#39;</span><span class="p">,</span> <span class="s1">&#39;div&#39;</span><span class="p">),</span>
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>        <span class="s1">&#39;help&#39;</span><span class="p">:</span> <span class="s1">&#39;operation to perform&#39;</span>
-</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    <span class="p">})</span>
-</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    <span class="n">num1</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">metadata</span><span class="o">=</span><span class="p">{</span>
-</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>        <span class="s1">&#39;help&#39;</span><span class="p">:</span> <span class="s1">&#39;first number&#39;</span>
-</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    <span class="p">})</span>
-</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    <span class="n">num2</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">metadata</span><span class="o">=</span><span class="p">{</span>
-</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>        <span class="s1">&#39;help&#39;</span><span class="p">:</span> <span class="s1">&#39;second number&#39;</span>
-</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>    <span class="p">})</span>
-</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>    <span class="nb">round</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">metadata</span><span class="o">=</span><span class="p">{</span>
-</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>        <span class="s1">&#39;help&#39;</span><span class="p">:</span> <span class="s1">&#39;round result to the nearest whole number&#39;</span>
-</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>    <span class="p">})</span>
-</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>
-</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>        <span class="c1"># implement core program logic</span>
-</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation</span> <span class="o">==</span> <span class="s1">&#39;add&#39;</span><span class="p">:</span>
-</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">num2</span>
-</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation</span> <span class="o">==</span> <span class="s1">&#39;sub&#39;</span><span class="p">:</span>
-</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">num2</span>
-</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation</span> <span class="o">==</span> <span class="s1">&#39;mul&#39;</span><span class="p">:</span>
-</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num1</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num2</span>
-</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation</span> <span class="o">==</span> <span class="s1">&#39;div&#39;</span><span class="p">:</span>
-</span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num1</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">num2</span>
-</span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>        <span class="k">else</span><span class="p">:</span>
-</span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;invalid operation&#39;</span><span class="p">)</span>
-</span><span id="__span-0-35"><a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a>        <span class="nb">print</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">result</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">round</span> <span class="k">else</span> <span class="n">result</span><span class="p">)</span>
-</span><span id="__span-0-36"><a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a>
-</span><span id="__span-0-37"><a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a>
-</span><span id="__span-0-38"><a id="__codelineno-0-38" name="__codelineno-0-38" href="#__codelineno-0-38"></a><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
-</span><span id="__span-0-39"><a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a>    <span class="n">Calculator</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
+<p>It is a common pattern to consolidate a bundle of function parameters into a dataclass.</p>
+<p>For example, let's say we've written an algorithm to train a <a href="https://en.wikipedia.org/wiki/Neural_network_(machine_learning)">neural network</a>. You might start out writing it like this:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">def</span> <span class="nf">train_neural_network</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">input_data</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">num_layers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">neurons_per_layer</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">128</span><span class="p">,</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">num_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">learning_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">object</span><span class="p">:</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Train a neural network from data.&quot;&quot;&quot;</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="o">...</span>
 </span></code></pre></div>
-<p>Saving the code above as <code>calculator.py</code>, you can run:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>python calculator.py --help
+<p>However, the large number of parameters can start to become unwieldy. You can use a dataclass to refactor:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="nd">@dataclass</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="k">class</span> <span class="nc">TrainNeuralNetwork</span><span class="p">:</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for training a neural network.&quot;&quot;&quot;</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="n">num_layers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="n">neurons_per_layer</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">128</span>
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    <span class="n">num_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span>
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>    <span class="n">learning_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span>
+</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>    <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>
+</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_data</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">object</span><span class="p">:</span>
+</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Train the neural network from data.&quot;&quot;&quot;</span>
+</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>        <span class="o">...</span>
 </span></code></pre></div>
-<p>This prints out the help menu:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>usage: calculator.py [-h] [--round] {add,sub,mul,div} num1 num2
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>A simple calculator program.
-</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
-</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>positional arguments:
-</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>  {add,sub,mul,div}  operation to perform
-</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>  num1               first number
-</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>  num2               second number
-</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>
-</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>options:
-</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>  -h, --help         show this help message and exit
-</span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>  --round            round result to the nearest whole number
+<p>Now the parameters have become dataclass fields, which you can customize when constructing <code>TrainNeuralNetwork</code>, e.g.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">trainer</span> <span class="o">=</span> <span class="n">TrainNeuralNetwork</span><span class="p">(</span><span class="n">num_layers</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">model</span> <span class="o">=</span> <span class="n">trainer</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">input_data</span><span class="p">)</span>
 </span></code></pre></div>
-<p>Run the program with a few different options:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>python calculator.py add 2 3
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>5.0
+<p>You are also at liberty to define other methods on the class. For example, you could use <a href="https://docs.python.org/3/library/dataclasses.html#dataclasses.__post_init__"><code>__post_init__</code></a> to validate the parameters, and you could add a method <code>init_neural_network</code> to initialize the neural net structure and weights prior to training.</p>
+<h2 id="partial-function-as-dataclass">Partial Function as Dataclass</h2>
+<p>While the approach above is recommended in complex situations, <code>fancy_dataclass</code> offers an alternative feature that can convert the <code>train_neural_network</code> function into the <code>TrainNeuralNetwork</code> dataclass automatically:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span> <span class="nn">fancy_dataclass</span> <span class="kn">import</span> <span class="n">func_dataclass</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
 </span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>python calculator.py add 3 -4
-</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>7.0
-</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
-</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>python calculator.py div 8 3
-</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>2.6666666666666665
-</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>
-</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>python calculator.py div 8 3 --round
-</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>3
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># def train_neural_network(...)</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="c1"># wrap the function into a dataclass</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="n">TrainNeuralNetwork</span> <span class="o">=</span> <span class="n">func_dataclass</span><span class="p">(</span><span class="n">train_neural_network</span><span class="p">,</span> <span class="n">method_name</span><span class="o">=</span><span class="s1">&#39;train&#39;</span><span class="p">)</span>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="n">trainer</span> <span class="o">=</span> <span class="n">TrainNeuralNetwork</span><span class="p">(</span><span class="n">num_layers</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="n">model</span> <span class="o">=</span> <span class="n">trainer</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">input_data</span><span class="p">)</span>
 </span></code></pre></div>
-<h2 id="details">Details</h2>
-<p>🚧 <strong>Under construction</strong> 🚧</p>
-<!--
-- Can modify parser manually, or customize handling a specific arg
--->
-
+<p><code>func_dataclass</code> takes a regular function as input and converts it into a new dataclass type with a single method named <code>method_name</code> (in this case, <code>train</code>). The dataclass's fields will be the function's keyword arguments, and the inputs to the method will be the positional arguments. In other words, it turns the function into a <em>partial function</em> whose keyword parameters are supplied at initialization time, and whose core logic is only invoked when the method is called.</p>
+<p>If you omit <code>method_name</code>, it will default to <code>__call__</code>, which lets you call the object directly as a function. So instead of <code>trainer.train(input_data)</code> you would just write <code>trainer(input_data)</code>.</p>
+<p>Another advantage to this approach is that you can supply one or more base classes to <code>func_dataclass</code> to provide extra functionality; in particular you can use various <code>fancy_dataclass</code> mixins such as <a href="json.html"><code>JSONDataclass</code></a>:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span> <span class="nn">fancy_dataclass</span> <span class="kn">import</span> <span class="n">JSONDataclass</span><span class="p">,</span> <span class="n">func_dataclass</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># def train_neural_network(...)</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="c1"># wrap the function into a JSON-serializable dataclass</span>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="n">TrainNeuralNetwork</span> <span class="o">=</span> <span class="n">func_dataclass</span><span class="p">(</span><span class="n">train_neural_network</span><span class="p">,</span> <span class="n">bases</span><span class="o">=</span><span class="n">JSONDataclass</span><span class="p">)</span>
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="n">trainer</span> <span class="o">=</span> <span class="n">TrainNeuralNetwork</span><span class="p">(</span><span class="n">num_layers</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>
+</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="c1"># the function becomes the __call__ method by default, so just call the object</span>
+</span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="n">model</span> <span class="o">=</span> <span class="n">trainer</span><span class="p">(</span><span class="n">input_data</span><span class="p">)</span>
+</span><span id="__span-4-13"><a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>
+</span><span id="__span-4-14"><a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="c1"># serialize the training parameters</span>
+</span><span id="__span-4-15"><a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="nb">print</span><span class="p">(</span><span class="n">trainer</span><span class="o">.</span><span class="n">to_json_string</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+</span></code></pre></div>
+<p>Output:</p>
+<div class="language-json highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="p">{</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="nt">&quot;num_layers&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span><span class="nt">&quot;verbose&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="p">}</span>
+</span></code></pre></div>
+<p>This makes it easy to define a single class that can both run your function logic and serialize its own parameters.</p>
 <style>
 .md-sidebar--secondary {
     display: none !important;
@@ -729,7 +705,7 @@
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="sql.html" class="md-footer__link md-footer__link--prev" aria-label="Previous: SQL persistence" rel="prev">
+          <a href="subprocess.html" class="md-footer__link md-footer__link--prev" aria-label="Previous: Subprocess calls" rel="prev">
             <div class="md-footer__button md-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
             </div>
@@ -738,20 +714,20 @@
                 Previous
               </span>
               <div class="md-ellipsis">
-                SQL persistence
+                Subprocess calls
               </div>
             </div>
           </a>
         
         
           
-          <a href="subprocess.html" class="md-footer__link md-footer__link--next" aria-label="Next: Subprocess calls" rel="next">
+          <a href="reference/cli.html" class="md-footer__link md-footer__link--next" aria-label="Next: cli" rel="next">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Subprocess calls
+                cli
               </div>
             </div>
             <div class="md-footer__button md-icon">
