@@ -15,7 +15,7 @@ Define a `CLIDataclass` instantiating a simple command-line calculator program.
 ```python
 from dataclasses import dataclass, field
 
-from fancy_dataclass.cli import CLIDataclass
+from fancy_dataclass import CLIDataclass
 
 
 @dataclass

@@ -14,7 +14,7 @@ Define a `TOMLDataclass`.
 ```python
 from dataclasses import dataclass
 
-from fancy_dataclass.toml import TOMLDataclass
+from fancy_dataclass import TOMLDataclass
 
 
 @dataclass

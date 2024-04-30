@@ -14,7 +14,7 @@ PKG_NAME = 'fancy_dataclass'
 PKG_DIR = Path(PKG_NAME)
 REF_DIR = Path('reference')
 
-REF_MODULES = ['cli', 'config', 'dict', 'json', 'mixin', 'serialize', 'sql', 'subprocess', 'toml', 'utils']
+REF_MODULES = ['cli', 'config', 'func', 'dict', 'json', 'mixin', 'serialize', 'sql', 'subprocess', 'toml', 'utils']
 
 for mod_name in REF_MODULES:
     path = PKG_DIR / f'{mod_name}.py'

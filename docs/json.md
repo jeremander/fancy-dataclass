@@ -15,7 +15,7 @@ Define a `JSONDataclass`.
 from dataclasses import dataclass
 from typing import Optional
 
-from fancy_dataclass.json import JSONDataclass
+from fancy_dataclass import JSONDataclass
 
 
 @dataclass

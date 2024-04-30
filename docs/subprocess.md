@@ -14,7 +14,7 @@ Define a `SubprocessDataclass` to delegate calls to command-line programs within
 ```python
 from dataclasses import dataclass, field
 
-from fancy_dataclass.subprocess import SubprocessDataclass
+from fancy_dataclass import SubprocessDataclass
 
 
 @dataclass

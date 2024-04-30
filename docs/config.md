@@ -11,7 +11,7 @@ Define a `ConfigDataclass` representing a website configuration. This will inclu
 ```python
 from dataclasses import dataclass
 
-from fancy_dataclass.config import ConfigDataclass
+from fancy_dataclass import ConfigDataclass
 
 
 @dataclass

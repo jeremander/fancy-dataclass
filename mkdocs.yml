@@ -45,6 +45,7 @@ nav:
   - SQL persistence: sql.md
   - CLI parsing: cli.md
   - Subprocess calls: subprocess.md
+  - Parametrized functions: func.md
   # defer to gen-files + literate-nav
   - Code reference: reference/
 

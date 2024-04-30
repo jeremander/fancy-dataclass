@@ -2,13 +2,7 @@
 
 # TODO
 
-## v0.5.0
-
-- `FuncDataclass`
-  - ABC providing `__call__` method on variadic positional args
-  - See how `mypy` handles things
-
-## v0.5.1
+## v0.4.4
 
 - documentation
   - Dataclass mixins/settings
