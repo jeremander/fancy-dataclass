@@ -4,15 +4,9 @@
 
 ## v0.5.0
 
-- Optional dependencies
-  - Allow `tomlkit` for now, make `sql` optional
-  - Document this
 - `FuncDataclass`
   - ABC providing `__call__` method on variadic positional args
-  - Could have more general version that lets you control what method name to use (`__call__` is the default)
-    - Could confuse static type-checkers looking for method name, so may not be worth it
-  - `func_dataclass` decorator wrapping a function into a `FuncDataclass` subclass where `kwargs` are parameters
-    - To make class name explicit, would probably need to call it directly, e.g. `MyType = func_dataclass(my_func)`
+  - See how `mypy` handles things
 
 ## v0.5.1
 
@@ -83,3 +77,7 @@
   - Identify bottlenecks and focus on those.
   - Memory usage & speed
   - Use __slots__? (can set this in dataclass options: does it break other things?)
+- Optional dependencies
+  - Allow `tomlkit` for now, make `sql` optional
+  - May be overkill unless dependencies are heavy
+  - Document this

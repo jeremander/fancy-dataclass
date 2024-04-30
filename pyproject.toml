@@ -139,6 +139,10 @@ module = "tests.test_config"
 disable_error_code = ["index", "misc", "union-attr"]
 
 [[tool.mypy.overrides]]
+module = "tests.test_func"
+disable_error_code = ["no-any-return", "operator"]
+
+[[tool.mypy.overrides]]
 module = "tests.test_inheritance"
 disable_error_code = ["assignment", "misc"]
 
