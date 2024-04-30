@@ -31,18 +31,18 @@ def test_func_dataclass():
     Return123 = func_dataclass(return_123)
     # snake case to camel case
     assert Return123.__name__ == 'Return123'
-    obj = Return123()
-    assert isinstance(obj, Return123)
-    assert obj() == 123
+    obj1 = Return123()
+    assert isinstance(obj1, Return123)
+    assert obj1() == 123
     # one arg
     def square(x: int) -> int:
         return x ** 2
-    # explicit cls_name
+    # explicit cls_nameg
     Square = func_dataclass(square, cls_name='MySquare')
     assert Square.__name__ == 'MySquare'
-    obj = Square()
-    assert isinstance(obj, Square)
-    assert obj(5) == 25
+    obj2 = Square()
+    assert isinstance(obj2, Square)
+    assert obj2(5) == 25
     # two args
     def add2(x: int, y: int) -> int:
         return x + y
@@ -56,10 +56,10 @@ def test_func_dataclass():
     ConcatLists = func_dataclass(concat_lists)
     assert ConcatLists()() == []
     assert ConcatLists([1, 2, 3])() == [1, 2, 3]
-    obj = ConcatLists([1, 2], [3])
-    assert obj.x == [1, 2]
-    assert obj.y == [3]
-    assert obj() == [1, 2, 3]
+    obj3 = ConcatLists([1, 2], [3])
+    assert obj3.x == [1, 2]
+    assert obj3.y == [3]
+    assert obj3() == [1, 2, 3]
     # arg and kwarg
     def append_list(x: List[int], y: List[int] = []) -> List[int]:
         return y + x
@@ -87,24 +87,24 @@ def test_func_dataclass():
     # explicit method_name
     Square = func_dataclass(square, method_name='func')
     assert hasattr(Square, '__call__')  # constructor exists
-    obj = Square()
-    assert not hasattr(obj, '__call__')
-    assert obj.func(5) == 25
+    obj4 = Square()
+    assert not hasattr(obj4, '__call__')
+    assert obj4.func(5) == 25
     # explicit base class
     @dataclass
     class Base:
         y: str = 'abc'
         def square_twice(self, x: int) -> int:
-            return self(self(x))
+            return self(self(x))  # type: ignore
     SquareTwice = func_dataclass(square, bases=(Base,))
-    obj1 = SquareTwice()
+    obj5 = SquareTwice()
     assert issubclass(SquareTwice, Base)
-    assert isinstance(obj1, SquareTwice)
-    assert obj1.y == 'abc'
-    assert obj1(5) == 25
-    assert obj1.square_twice(3) == 81
-    obj2 = SquareTwice('')
-    assert obj2.y == ''
-    assert obj2.square_twice(3) == 81
-    assert obj1 == SquareTwice()
-    assert obj1 != obj2
+    assert isinstance(obj5, SquareTwice)
+    assert obj5.y == 'abc'
+    assert obj5(5) == 25
+    assert obj5.square_twice(3) == 81
+    obj6 = SquareTwice('')
+    assert obj6.y == ''
+    assert obj6.square_twice(3) == 81
+    assert obj5 == SquareTwice()
+    assert obj5 != obj6

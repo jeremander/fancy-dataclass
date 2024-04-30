@@ -1,12 +1,14 @@
 from dataclasses import field, make_dataclass
 from inspect import getfullargspec
-from typing import Any, Callable, Optional, Tuple, TypeVar
+from typing import Any, Callable, Literal, Optional, Protocol, Sequence, Tuple, Type, TypeVar, Union, overload
 
 from typing_extensions import ParamSpec
 
 
 P = ParamSpec('P')
-R = TypeVar('R')
+R = TypeVar('R', covariant=True)
+
+Bases = Union[type, Tuple[type, ...]]
 
 
 def snake_case_to_camel_case(name: str) -> str:
@@ -20,7 +22,7 @@ def snake_case_to_camel_case(name: str) -> str:
     capitalize = lambda s: (s[0].upper() + s[1:]) if s else ''
     return ''.join(map(capitalize, name.split('_')))
 
-def func_dataclass(func: Callable[[Any], Any], method_name: str = '__call__', cls_name: Optional[str] = None, bases: Tuple[type, ...] = ()) -> type:
+def _func_dataclass(func: Callable[[Any], Any], method_name: str = '__call__', cls_name: Optional[str] = None, bases: Tuple[type, ...] = ()) -> type:
     """Wraps a function into a new dataclass type with a single method whose positional arguments (other than self) are equivalent to that of the given function, and whose kwargs are dataclass parameters.
 
     Args:
@@ -53,3 +55,35 @@ def func_dataclass(func: Callable[[Any], Any], method_name: str = '__call__', cl
         return func(*args, **kwargs)
     namespace = {method_name: method}
     return make_dataclass(cls_name, field_data, bases=bases, namespace=namespace)
+
+
+class _FuncDataclass(Protocol[P, R]):
+    """Protocol type designating a callable function with positional args.
+
+    This is for use in static type checking and need not be subclassed directly."""
+
+    def __call__(self, *args: P.args) -> R:
+        ...
+
+
+@overload
+def func_dataclass(func: Callable[P, R], method_name: Literal['__call__'] = '__call__', cls_name: Optional[str] = None, bases: Bases = ()) -> Type[_FuncDataclass[P, R]]:
+    ...
+
+@overload
+def func_dataclass(func: Callable[P, R], method_name: str = '__call__', cls_name: Optional[str] = None, bases: Bases = ()) -> type:
+    ...
+
+def func_dataclass(func: Callable[[Any], Any], method_name: str = '__call__', cls_name: Optional[str] = None, bases: Bases = ()) -> type:
+    """Wraps a function into a new dataclass type with a single method whose positional arguments (other than self) are equivalent to that of the given function, and whose kwargs are dataclass parameters.
+
+    Args:
+        func: Function to convert to a dataclass
+        method_name: Name of method that will call the function
+        cls_name: Name of the new type (if `None`, converts the function's name from snake case to camel case)
+        bases: Base classes for the new type
+
+    Returns:
+        A new type inheriting from `bases` with the name `cls_name` and a single method `method_name`"""
+    bases = tuple(bases) if isinstance(bases, Sequence) else (bases,)
+    return _func_dataclass(func, method_name=method_name, cls_name=cls_name, bases=bases)
