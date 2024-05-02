@@ -525,7 +525,7 @@
         <li class="md-nav__item">
   <a href="#fancy_dataclass.dict" class="md-nav__link">
     <span class="md-ellipsis">
-      dict
+      fancy_dataclass.dict
     </span>
   </a>
   
@@ -544,7 +544,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.dict.DictConvertible.from_dict" class="md-nav__link">
     <span class="md-ellipsis">
-      from_dict
+      from_dict()
     </span>
   </a>
   
@@ -553,7 +553,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.dict.DictConvertible.to_dict" class="md-nav__link">
     <span class="md-ellipsis">
-      to_dict
+      to_dict()
     </span>
   </a>
   
@@ -577,7 +577,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.dict.DictDataclass.from_dict" class="md-nav__link">
     <span class="md-ellipsis">
-      from_dict
+      from_dict()
     </span>
   </a>
   
@@ -586,7 +586,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.dict.DictDataclass.to_dict" class="md-nav__link">
     <span class="md-ellipsis">
-      to_dict
+      to_dict()
     </span>
   </a>
   
@@ -805,7 +805,7 @@
         <li class="md-nav__item">
   <a href="#fancy_dataclass.dict" class="md-nav__link">
     <span class="md-ellipsis">
-      dict
+      fancy_dataclass.dict
     </span>
   </a>
   
@@ -824,7 +824,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.dict.DictConvertible.from_dict" class="md-nav__link">
     <span class="md-ellipsis">
-      from_dict
+      from_dict()
     </span>
   </a>
   
@@ -833,7 +833,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.dict.DictConvertible.to_dict" class="md-nav__link">
     <span class="md-ellipsis">
-      to_dict
+      to_dict()
     </span>
   </a>
   
@@ -857,7 +857,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.dict.DictDataclass.from_dict" class="md-nav__link">
     <span class="md-ellipsis">
-      from_dict
+      from_dict()
     </span>
   </a>
   
@@ -866,7 +866,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.dict.DictDataclass.to_dict" class="md-nav__link">
     <span class="md-ellipsis">
-      to_dict
+      to_dict()
     </span>
   </a>
   
@@ -918,7 +918,6 @@
 <div class="doc doc-object doc-module">
 
 
-
 <a id="fancy_dataclass.dict"></a>
   <div class="doc doc-contents first">
 
@@ -938,23 +937,24 @@
 
 
 <h2 id="fancy_dataclass.dict.DictConvertible" class="doc doc-heading">
-          <code>DictConvertible</code>
+        <code>DictConvertible</code>
 
 
 </h2>
 
 
   <div class="doc doc-contents ">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="abc.ABC">ABC</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="abc.ABC">ABC</span></code></p>
 
   
       <p>Mixin class enabling conversion of an object to/from a Python dict.</p>
 <p>Subclasses should override <code>to_dict</code> and <code>from_dict</code> to implement the conversion.</p>
 
-            <details class="quote">
-              <summary>Source code in <code>fancy_dataclass/dict.py</code></summary>
-              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-23">23</a></span>
+
+        <details class="quote">
+          <summary>Source code in <code>fancy_dataclass/dict.py</code></summary>
+          <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-23">23</a></span>
 <span class="normal"><a href="#__codelineno-0-24">24</a></span>
 <span class="normal"><a href="#__codelineno-0-25">25</a></span>
 <span class="normal"><a href="#__codelineno-0-26">26</a></span>
@@ -1006,12 +1006,11 @@
 </span><span id="__span-0-47"><a id="__codelineno-0-47" name="__codelineno-0-47"></a><span class="sd">        Returns:</span>
 </span><span id="__span-0-48"><a id="__codelineno-0-48" name="__codelineno-0-48"></a><span class="sd">            Converted object of this class&quot;&quot;&quot;</span>
 </span></code></pre></div></td></tr></table></div>
-            </details>
+        </details>
 
   
 
   <div class="doc doc-children">
-
 
 
 
@@ -1026,11 +1025,11 @@
 
 
 <h3 id="fancy_dataclass.dict.DictConvertible.from_dict" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">from_dict</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">from_dict</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
       <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+      <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
   </span>
 
 </h3>
@@ -1039,8 +1038,6 @@
   <div class="doc doc-contents ">
   
       <p>Constructs an object from a dictionary of (attribute, value) pairs.</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1058,11 +1055,7 @@
           <td>
                 <code><span title="fancy_dataclass.dict.AnyDict">AnyDict</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Dict to convert into an object</p>
-            </div>
-          </td>
+          <td><p>Dict to convert into an object</p></td>
           <td>
               <em>required</em>
           </td>
@@ -1072,19 +1065,13 @@
           <td>
                 <code><span title="typing.Any">Any</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Keyword arguments</p>
-            </div>
-          </td>
+          <td><p>Keyword arguments</p></td>
           <td>
                 <code>{}</code>
           </td>
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1099,18 +1086,14 @@
           <td>
                 <code><span title="typing_extensions.Self">Self</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Converted object of this class</p>
-            </div>
-          </td>
+          <td><p>Converted object of this class</p></td>
         </tr>
     </tbody>
   </table>
 
-          <details class="quote">
-            <summary>Source code in <code>fancy_dataclass/dict.py</code></summary>
-            <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-38">38</a></span>
+      <details class="quote">
+        <summary>Source code in <code>fancy_dataclass/dict.py</code></summary>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-38">38</a></span>
 <span class="normal"><a href="#__codelineno-0-39">39</a></span>
 <span class="normal"><a href="#__codelineno-0-40">40</a></span>
 <span class="normal"><a href="#__codelineno-0-41">41</a></span>
@@ -1132,18 +1115,17 @@
 </span><span id="__span-0-47"><a id="__codelineno-0-47" name="__codelineno-0-47"></a><span class="sd">    Returns:</span>
 </span><span id="__span-0-48"><a id="__codelineno-0-48" name="__codelineno-0-48"></a><span class="sd">        Converted object of this class&quot;&quot;&quot;</span>
 </span></code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="fancy_dataclass.dict.DictConvertible.to_dict" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">to_dict</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">to_dict</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
   
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
@@ -1155,8 +1137,6 @@
   <div class="doc doc-contents ">
   
       <p>Converts an object to a dict.</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1174,19 +1154,13 @@
           <td>
                 <code><span title="typing.Any">Any</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Keyword arguments</p>
-            </div>
-          </td>
+          <td><p>Keyword arguments</p></td>
           <td>
                 <code>{}</code>
           </td>
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1201,18 +1175,14 @@
           <td>
                 <code><span title="fancy_dataclass.dict.AnyDict">AnyDict</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>A Python dict</p>
-            </div>
-          </td>
+          <td><p>A Python dict</p></td>
         </tr>
     </tbody>
   </table>
 
-          <details class="quote">
-            <summary>Source code in <code>fancy_dataclass/dict.py</code></summary>
-            <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-28">28</a></span>
+      <details class="quote">
+        <summary>Source code in <code>fancy_dataclass/dict.py</code></summary>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-28">28</a></span>
 <span class="normal"><a href="#__codelineno-0-29">29</a></span>
 <span class="normal"><a href="#__codelineno-0-30">30</a></span>
 <span class="normal"><a href="#__codelineno-0-31">31</a></span>
@@ -1230,7 +1200,7 @@
 </span><span id="__span-0-35"><a id="__codelineno-0-35" name="__codelineno-0-35"></a><span class="sd">    Returns:</span>
 </span><span id="__span-0-36"><a id="__codelineno-0-36" name="__codelineno-0-36"></a><span class="sd">        A Python dict&quot;&quot;&quot;</span>
 </span></code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
@@ -1240,7 +1210,6 @@
   </div>
 
   </div>
-
 
 </div>
 
@@ -1249,24 +1218,25 @@
 
 
 <h2 id="fancy_dataclass.dict.DictDataclass" class="doc doc-heading">
-          <code>DictDataclass</code>
+        <code>DictDataclass</code>
 
 
 </h2>
 
 
   <div class="doc doc-contents ">
-          <p class="doc doc-class-bases">
-            Bases: <code><a class="autorefs autorefs-internal" title="fancy_dataclass.mixin.DataclassMixin" href="mixin.html#fancy_dataclass.mixin.DataclassMixin">DataclassMixin</a></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><a class="autorefs autorefs-internal" title="fancy_dataclass.mixin.DataclassMixin" href="mixin.html#fancy_dataclass.mixin.DataclassMixin">DataclassMixin</a></code></p>
 
   
       <p>Mixin class for dataclasses that can be converted to and from a Python dict.</p>
 <p>A subclass may configure settings by using <a class="autorefs autorefs-internal" href="#fancy_dataclass.dict.DictDataclassSettings"><code>DictDataclassSettings</code></a> fields as keyword arguments when inheriting from <code>DictDataclass</code>.</p>
 <p>Per-field settings can be passed into the <code>metadata</code> argument of each <code>dataclasses.field</code>. See <a class="autorefs autorefs-internal" href="#fancy_dataclass.dict.DictDataclassFieldSettings"><code>DictDataclassFieldSettings</code></a> for the full list of settings.</p>
 
-            <details class="quote">
-              <summary>Source code in <code>fancy_dataclass/dict.py</code></summary>
-              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-84"> 84</a></span>
+
+        <details class="quote">
+          <summary>Source code in <code>fancy_dataclass/dict.py</code></summary>
+          <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-84"> 84</a></span>
 <span class="normal"><a href="#__codelineno-0-85"> 85</a></span>
 <span class="normal"><a href="#__codelineno-0-86"> 86</a></span>
 <span class="normal"><a href="#__codelineno-0-87"> 87</a></span>
@@ -1796,12 +1766,11 @@
 </span><span id="__span-0-347"><a id="__codelineno-0-347" name="__codelineno-0-347"></a>        <span class="n">result</span><span class="p">:</span> <span class="n">Self</span> <span class="o">=</span> <span class="n">tp</span><span class="p">(</span><span class="o">**</span><span class="n">tp</span><span class="o">.</span><span class="n">_dataclass_args_from_dict</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="n">strict</span><span class="p">))</span>
 </span><span id="__span-0-348"><a id="__codelineno-0-348" name="__codelineno-0-348"></a>        <span class="k">return</span> <span class="n">conv</span><span class="o">.</span><span class="n">backward</span><span class="p">(</span><span class="n">result</span><span class="p">)</span> <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">__settings__</span><span class="o">.</span><span class="n">flattened</span> <span class="k">else</span> <span class="n">result</span>  <span class="c1"># type: ignore</span>
 </span></code></pre></div></td></tr></table></div>
-            </details>
+        </details>
 
   
 
   <div class="doc doc-children">
-
 
 
 
@@ -1816,7 +1785,7 @@
 
 
 <h3 id="fancy_dataclass.dict.DictDataclass.from_dict" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">from_dict</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">from_dict</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
   
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
@@ -1829,8 +1798,6 @@
   
       <p>Constructs an object from a dictionary of fields.</p>
 <p>This may also perform some basic type/validity checking.</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1848,11 +1815,7 @@
           <td>
                 <code><span title="fancy_dataclass.dict.AnyDict">AnyDict</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Dict to convert into an object</p>
-            </div>
-          </td>
+          <td><p>Dict to convert into an object</p></td>
           <td>
               <em>required</em>
           </td>
@@ -1862,19 +1825,13 @@
           <td>
                 <code><span title="typing.Any">Any</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Keyword arguments <ul><li><code>strict</code>: if <code>True</code>, raise an error if extraneous dict fields are present</li></ul></p>
-            </div>
-          </td>
+          <td><p>Keyword arguments <ul><li><code>strict</code>: if <code>True</code>, raise an error if extraneous dict fields are present</li></ul></p></td>
           <td>
                 <code>{}</code>
           </td>
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1889,18 +1846,14 @@
           <td>
                 <code><span title="typing_extensions.Self">Self</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Converted object of this class</p>
-            </div>
-          </td>
+          <td><p>Converted object of this class</p></td>
         </tr>
     </tbody>
   </table>
 
-          <details class="quote">
-            <summary>Source code in <code>fancy_dataclass/dict.py</code></summary>
-            <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-309">309</a></span>
+      <details class="quote">
+        <summary>Source code in <code>fancy_dataclass/dict.py</code></summary>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-309">309</a></span>
 <span class="normal"><a href="#__codelineno-0-310">310</a></span>
 <span class="normal"><a href="#__codelineno-0-311">311</a></span>
 <span class="normal"><a href="#__codelineno-0-312">312</a></span>
@@ -1980,18 +1933,17 @@
 </span><span id="__span-0-347"><a id="__codelineno-0-347" name="__codelineno-0-347"></a>    <span class="n">result</span><span class="p">:</span> <span class="n">Self</span> <span class="o">=</span> <span class="n">tp</span><span class="p">(</span><span class="o">**</span><span class="n">tp</span><span class="o">.</span><span class="n">_dataclass_args_from_dict</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="n">strict</span><span class="p">))</span>
 </span><span id="__span-0-348"><a id="__codelineno-0-348" name="__codelineno-0-348"></a>    <span class="k">return</span> <span class="n">conv</span><span class="o">.</span><span class="n">backward</span><span class="p">(</span><span class="n">result</span><span class="p">)</span> <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">__settings__</span><span class="o">.</span><span class="n">flattened</span> <span class="k">else</span> <span class="n">result</span>  <span class="c1"># type: ignore</span>
 </span></code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="fancy_dataclass.dict.DictDataclass.to_dict" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">to_dict</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">to_dict</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h3>
 
@@ -1999,8 +1951,6 @@
   <div class="doc doc-contents ">
   
       <p>Converts the object to a Python dict which, by default, suppresses values matching their dataclass defaults.</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -2018,19 +1968,13 @@
           <td>
                 <code><span title="typing.Any">Any</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Keyword arguments <ul><li><code>full</code>: if <code>True</code> (or if the class has <code>suppress_defaults=False</code>), does not suppress default values</li></ul></p>
-            </div>
-          </td>
+          <td><p>Keyword arguments <ul><li><code>full</code>: if <code>True</code> (or if the class has <code>suppress_defaults=False</code>), does not suppress default values</li></ul></p></td>
           <td>
                 <code>{}</code>
           </td>
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -2045,18 +1989,14 @@
           <td>
                 <code><span title="fancy_dataclass.dict.AnyDict">AnyDict</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>A dict whose keys match the dataclass's fields</p>
-            </div>
-          </td>
+          <td><p>A dict whose keys match the dataclass's fields</p></td>
         </tr>
     </tbody>
   </table>
 
-          <details class="quote">
-            <summary>Source code in <code>fancy_dataclass/dict.py</code></summary>
-            <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-162">162</a></span>
+      <details class="quote">
+        <summary>Source code in <code>fancy_dataclass/dict.py</code></summary>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-162">162</a></span>
 <span class="normal"><a href="#__codelineno-0-163">163</a></span>
 <span class="normal"><a href="#__codelineno-0-164">164</a></span>
 <span class="normal"><a href="#__codelineno-0-165">165</a></span>
@@ -2076,7 +2016,7 @@
 </span><span id="__span-0-170"><a id="__codelineno-0-170" name="__codelineno-0-170"></a>    <span class="n">full</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;full&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
 </span><span id="__span-0-171"><a id="__codelineno-0-171" name="__codelineno-0-171"></a>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_to_dict</span><span class="p">(</span><span class="n">full</span><span class="p">)</span>
 </span></code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
@@ -2086,7 +2026,6 @@
   </div>
 
   </div>
-
 
 </div>
 
@@ -2095,7 +2034,7 @@
 
 
 <h2 id="fancy_dataclass.dict.DictDataclassFieldSettings" class="doc doc-heading">
-          <code>DictDataclassFieldSettings</code>
+        <code>DictDataclassFieldSettings</code>
 
   
   <span class="doc doc-labels">
@@ -2106,8 +2045,8 @@
 
 
   <div class="doc doc-contents ">
-          <p class="doc doc-class-bases">
-            Bases: <code><a class="autorefs autorefs-internal" title="fancy_dataclass.mixin.FieldSettings" href="mixin.html#fancy_dataclass.mixin.FieldSettings">FieldSettings</a></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><a class="autorefs autorefs-internal" title="fancy_dataclass.mixin.FieldSettings" href="mixin.html#fancy_dataclass.mixin.FieldSettings">FieldSettings</a></code></p>
 
   
       <p>Settings for <a class="autorefs autorefs-internal" href="#fancy_dataclass.dict.DictDataclass"><code>DictDataclass</code></a> fields.</p>
@@ -2120,9 +2059,10 @@
 <li><code>suppress_default</code>: suppress this field in the dict if it matches its default value (overrides class-level <code>suppress_defaults</code>)</li>
 </ul>
 
-            <details class="quote">
-              <summary>Source code in <code>fancy_dataclass/dict.py</code></summary>
-              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-69">69</a></span>
+
+        <details class="quote">
+          <summary>Source code in <code>fancy_dataclass/dict.py</code></summary>
+          <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-69">69</a></span>
 <span class="normal"><a href="#__codelineno-0-70">70</a></span>
 <span class="normal"><a href="#__codelineno-0-71">71</a></span>
 <span class="normal"><a href="#__codelineno-0-72">72</a></span>
@@ -2148,7 +2088,7 @@
 </span><span id="__span-0-80"><a id="__codelineno-0-80" name="__codelineno-0-80"></a>    <span class="c1"># suppress the field in the dict if its value matches the default</span>
 </span><span id="__span-0-81"><a id="__codelineno-0-81" name="__codelineno-0-81"></a>    <span class="n">suppress_default</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 </span></code></pre></div></td></tr></table></div>
-            </details>
+        </details>
 
   
 
@@ -2168,7 +2108,6 @@
 
   </div>
 
-
 </div>
 
 <div class="doc doc-object doc-class">
@@ -2176,7 +2115,7 @@
 
 
 <h2 id="fancy_dataclass.dict.DictDataclassSettings" class="doc doc-heading">
-          <code>DictDataclassSettings</code>
+        <code>DictDataclassSettings</code>
 
   
   <span class="doc doc-labels">
@@ -2187,8 +2126,8 @@
 
 
   <div class="doc doc-contents ">
-          <p class="doc doc-class-bases">
-            Bases: <code><a class="autorefs autorefs-internal" title="fancy_dataclass.mixin.DataclassMixinSettings" href="mixin.html#fancy_dataclass.mixin.DataclassMixinSettings">DataclassMixinSettings</a></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><a class="autorefs autorefs-internal" title="fancy_dataclass.mixin.DataclassMixinSettings" href="mixin.html#fancy_dataclass.mixin.DataclassMixinSettings">DataclassMixinSettings</a></code></p>
 
   
       <p>Class-level settings for the <a class="autorefs autorefs-internal" href="#fancy_dataclass.dict.DictDataclass"><code>DictDataclass</code></a> mixin.</p>
@@ -2201,9 +2140,10 @@
 <li><code>validate</code>: if <code>True</code>, attempt to validate data when converting from a dict</li>
 </ul>
 
-            <details class="quote">
-              <summary>Source code in <code>fancy_dataclass/dict.py</code></summary>
-              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-51">51</a></span>
+
+        <details class="quote">
+          <summary>Source code in <code>fancy_dataclass/dict.py</code></summary>
+          <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-51">51</a></span>
 <span class="normal"><a href="#__codelineno-0-52">52</a></span>
 <span class="normal"><a href="#__codelineno-0-53">53</a></span>
 <span class="normal"><a href="#__codelineno-0-54">54</a></span>
@@ -2235,7 +2175,7 @@
 </span><span id="__span-0-65"><a id="__codelineno-0-65" name="__codelineno-0-65"></a>    <span class="n">flattened</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 </span><span id="__span-0-66"><a id="__codelineno-0-66" name="__codelineno-0-66"></a>    <span class="n">validate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
 </span></code></pre></div></td></tr></table></div>
-            </details>
+        </details>
 
   
 
@@ -2254,7 +2194,6 @@
   </div>
 
   </div>
-
 
 </div>
 

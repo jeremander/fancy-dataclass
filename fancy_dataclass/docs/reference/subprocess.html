@@ -630,7 +630,7 @@
         <li class="md-nav__item">
   <a href="#fancy_dataclass.subprocess" class="md-nav__link">
     <span class="md-ellipsis">
-      subprocess
+      fancy_dataclass.subprocess
     </span>
   </a>
   
@@ -649,7 +649,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.subprocess.SubprocessDataclass.get_arg" class="md-nav__link">
     <span class="md-ellipsis">
-      get_arg
+      get_arg()
     </span>
   </a>
   
@@ -658,7 +658,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.subprocess.SubprocessDataclass.get_args" class="md-nav__link">
     <span class="md-ellipsis">
-      get_args
+      get_args()
     </span>
   </a>
   
@@ -667,7 +667,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.subprocess.SubprocessDataclass.get_executable" class="md-nav__link">
     <span class="md-ellipsis">
-      get_executable
+      get_executable()
     </span>
   </a>
   
@@ -676,7 +676,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.subprocess.SubprocessDataclass.run_subprocess" class="md-nav__link">
     <span class="md-ellipsis">
-      run_subprocess
+      run_subprocess()
     </span>
   </a>
   
@@ -790,7 +790,7 @@
         <li class="md-nav__item">
   <a href="#fancy_dataclass.subprocess" class="md-nav__link">
     <span class="md-ellipsis">
-      subprocess
+      fancy_dataclass.subprocess
     </span>
   </a>
   
@@ -809,7 +809,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.subprocess.SubprocessDataclass.get_arg" class="md-nav__link">
     <span class="md-ellipsis">
-      get_arg
+      get_arg()
     </span>
   </a>
   
@@ -818,7 +818,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.subprocess.SubprocessDataclass.get_args" class="md-nav__link">
     <span class="md-ellipsis">
-      get_args
+      get_args()
     </span>
   </a>
   
@@ -827,7 +827,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.subprocess.SubprocessDataclass.get_executable" class="md-nav__link">
     <span class="md-ellipsis">
-      get_executable
+      get_executable()
     </span>
   </a>
   
@@ -836,7 +836,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.subprocess.SubprocessDataclass.run_subprocess" class="md-nav__link">
     <span class="md-ellipsis">
-      run_subprocess
+      run_subprocess()
     </span>
   </a>
   
@@ -888,7 +888,6 @@
 <div class="doc doc-object doc-module">
 
 
-
 <a id="fancy_dataclass.subprocess"></a>
   <div class="doc doc-contents first">
 
@@ -908,23 +907,24 @@
 
 
 <h2 id="fancy_dataclass.subprocess.SubprocessDataclass" class="doc doc-heading">
-          <code>SubprocessDataclass</code>
+        <code>SubprocessDataclass</code>
 
 
 </h2>
 
 
   <div class="doc doc-contents ">
-          <p class="doc doc-class-bases">
-            Bases: <code><a class="autorefs autorefs-internal" title="fancy_dataclass.mixin.DataclassMixin" href="mixin.html#fancy_dataclass.mixin.DataclassMixin">DataclassMixin</a></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><a class="autorefs autorefs-internal" title="fancy_dataclass.mixin.DataclassMixin" href="mixin.html#fancy_dataclass.mixin.DataclassMixin">DataclassMixin</a></code></p>
 
   
       <p>Mixin class providing a means of converting dataclass fields to command-line arguments that can be used to make a <a href="https://docs.python.org/3/library/subprocess.html">subprocess</a> call.</p>
 <p>Per-field settings can be passed into the <code>metadata</code> argument of each <code>dataclasses.field</code>. See <a class="autorefs autorefs-internal" href="#fancy_dataclass.subprocess.SubprocessDataclassFieldSettings"><code>SubprocessDataclassFieldSettings</code></a> for the full list of settings.</p>
 
-            <details class="quote">
-              <summary>Source code in <code>fancy_dataclass/subprocess.py</code></summary>
-              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-35"> 35</a></span>
+
+        <details class="quote">
+          <summary>Source code in <code>fancy_dataclass/subprocess.py</code></summary>
+          <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-35"> 35</a></span>
 <span class="normal"><a href="#__codelineno-0-36"> 36</a></span>
 <span class="normal"><a href="#__codelineno-0-37"> 37</a></span>
 <span class="normal"><a href="#__codelineno-0-38"> 38</a></span>
@@ -1200,12 +1200,11 @@
 </span><span id="__span-0-171"><a id="__codelineno-0-171" name="__codelineno-0-171"></a><span class="sd">            ValueError: If no executable was found from the `get_executable` method&quot;&quot;&quot;</span>
 </span><span id="__span-0-172"><a id="__codelineno-0-172" name="__codelineno-0-172"></a>        <span class="k">return</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_args</span><span class="p">(),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </span></code></pre></div></td></tr></table></div>
-            </details>
+        </details>
 
   
 
   <div class="doc doc-children">
-
 
 
 
@@ -1220,7 +1219,7 @@
 
 
 <h3 id="fancy_dataclass.subprocess.SubprocessDataclass.get_arg" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">get_arg</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">suppress_defaults</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">get_arg</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">suppress_defaults</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
 </h3>
 
@@ -1228,8 +1227,6 @@
   <div class="doc doc-contents ">
   
       <p>Gets the command-line arguments for the given dataclass field.</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1247,11 +1244,7 @@
           <td>
                 <code>str</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Name of dataclass field</p>
-            </div>
-          </td>
+          <td><p>Name of dataclass field</p></td>
           <td>
               <em>required</em>
           </td>
@@ -1261,19 +1254,13 @@
           <td>
                 <code>bool</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>If <code>True</code>, suppresses arguments that are equal to the default values</p>
-            </div>
-          </td>
+          <td><p>If <code>True</code>, suppresses arguments that are equal to the default values</p></td>
           <td>
                 <code>False</code>
           </td>
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1288,18 +1275,14 @@
           <td>
                 <code><span title="typing.List">List</span>[str]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>List of command-line args corresponding to the field</p>
-            </div>
-          </td>
+          <td><p>List of command-line args corresponding to the field</p></td>
         </tr>
     </tbody>
   </table>
 
-          <details class="quote">
-            <summary>Source code in <code>fancy_dataclass/subprocess.py</code></summary>
-            <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-59"> 59</a></span>
+      <details class="quote">
+        <summary>Source code in <code>fancy_dataclass/subprocess.py</code></summary>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-59"> 59</a></span>
 <span class="normal"><a href="#__codelineno-0-60"> 60</a></span>
 <span class="normal"><a href="#__codelineno-0-61"> 61</a></span>
 <span class="normal"><a href="#__codelineno-0-62"> 62</a></span>
@@ -1417,18 +1400,17 @@
 </span><span id="__span-0-116"><a id="__codelineno-0-116" name="__codelineno-0-116"></a>    <span class="n">args</span> <span class="o">+=</span> <span class="n">val</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="p">[</span><span class="n">val</span><span class="p">]</span>
 </span><span id="__span-0-117"><a id="__codelineno-0-117" name="__codelineno-0-117"></a>    <span class="k">return</span> <span class="n">args</span>
 </span></code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="fancy_dataclass.subprocess.SubprocessDataclass.get_args" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">get_args</span><span class="p">(</span><span class="n">suppress_defaults</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">get_args</span><span class="p">(</span><span class="n">suppress_defaults</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
 </h3>
 
@@ -1437,8 +1419,6 @@
   
       <p>Converts dataclass fields to a list of command-line arguments for a subprocess call.</p>
 <p>This includes the executable name itself as the first argument.</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1456,19 +1436,13 @@
           <td>
                 <code>bool</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>If <code>True</code>, suppresses arguments that are equal to the default values</p>
-            </div>
-          </td>
+          <td><p>If <code>True</code>, suppresses arguments that are equal to the default values</p></td>
           <td>
                 <code>False</code>
           </td>
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1483,18 +1457,14 @@
           <td>
                 <code><span title="typing.List">List</span>[str]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>List of command-line args corresponding to the dataclass fields</p>
-            </div>
-          </td>
+          <td><p>List of command-line args corresponding to the dataclass fields</p></td>
         </tr>
     </tbody>
   </table>
 
-          <details class="quote">
-            <summary>Source code in <code>fancy_dataclass/subprocess.py</code></summary>
-            <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-143">143</a></span>
+      <details class="quote">
+        <summary>Source code in <code>fancy_dataclass/subprocess.py</code></summary>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-143">143</a></span>
 <span class="normal"><a href="#__codelineno-0-144">144</a></span>
 <span class="normal"><a href="#__codelineno-0-145">145</a></span>
 <span class="normal"><a href="#__codelineno-0-146">146</a></span>
@@ -1528,18 +1498,17 @@
 </span><span id="__span-0-158"><a id="__codelineno-0-158" name="__codelineno-0-158"></a>        <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="n">arg</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_arg</span><span class="p">(</span><span class="n">fld</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">suppress_defaults</span> <span class="o">=</span> <span class="n">suppress_defaults</span><span class="p">)</span> <span class="k">if</span> <span class="n">arg</span><span class="p">]</span>
 </span><span id="__span-0-159"><a id="__codelineno-0-159" name="__codelineno-0-159"></a>    <span class="k">return</span> <span class="n">args</span>
 </span></code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="fancy_dataclass.subprocess.SubprocessDataclass.get_executable" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">get_executable</span><span class="p">()</span></code>
+<code class="highlight language-python"><span class="n">get_executable</span><span class="p">()</span></code>
 
 </h3>
 
@@ -1552,8 +1521,6 @@
 <li>If the class settings specify an <code>exec</code> member, uses that.</li>
 <li>Otherwise, returns the value of the first dataclass field whose <code>exec</code> metadata flag is set to <code>True</code>, and <code>None</code> otherwise.</li>
 </ol>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1568,16 +1535,10 @@
           <td>
                 <code><span title="typing.Optional">Optional</span>[str]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Name of the executable to run</p>
-            </div>
-          </td>
+          <td><p>Name of the executable to run</p></td>
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Raises:</strong></p>
   <table>
@@ -1592,18 +1553,14 @@
           <td>
                 <code>ValueError</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>If the executable is not a string</p>
-            </div>
-          </td>
+          <td><p>If the executable is not a string</p></td>
         </tr>
     </tbody>
   </table>
 
-          <details class="quote">
-            <summary>Source code in <code>fancy_dataclass/subprocess.py</code></summary>
-            <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-119">119</a></span>
+      <details class="quote">
+        <summary>Source code in <code>fancy_dataclass/subprocess.py</code></summary>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-119">119</a></span>
 <span class="normal"><a href="#__codelineno-0-120">120</a></span>
 <span class="normal"><a href="#__codelineno-0-121">121</a></span>
 <span class="normal"><a href="#__codelineno-0-122">122</a></span>
@@ -1649,18 +1606,17 @@
 </span><span id="__span-0-140"><a id="__codelineno-0-140" name="__codelineno-0-140"></a>            <span class="k">return</span> <span class="n">_check_type</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fld</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
 </span><span id="__span-0-141"><a id="__codelineno-0-141" name="__codelineno-0-141"></a>    <span class="k">return</span> <span class="kc">None</span>
 </span></code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="fancy_dataclass.subprocess.SubprocessDataclass.run_subprocess" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">run_subprocess</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">run_subprocess</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h3>
 
@@ -1668,8 +1624,6 @@
   <div class="doc doc-contents ">
   
       <p>Executes the full subprocess command corresponding to the dataclass parameters.</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1687,19 +1641,13 @@
           <td>
                 <code><span title="typing.Any">Any</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Keyword arguments passed to <code>subprocess.run</code></p>
-            </div>
-          </td>
+          <td><p>Keyword arguments passed to <code>subprocess.run</code></p></td>
           <td>
                 <code>{}</code>
           </td>
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1712,18 +1660,12 @@
     <tbody>
         <tr>
           <td>
-                <code><span title="subprocess.CompletedProcess">CompletedProcess</span></code>
+                <code>subprocess.<span title="subprocess.CompletedProcess">CompletedProcess</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p><code>CompletedProcess</code> object produced by <code>subprocess.run</code></p>
-            </div>
-          </td>
+          <td><p><code>CompletedProcess</code> object produced by <code>subprocess.run</code></p></td>
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Raises:</strong></p>
   <table>
@@ -1738,18 +1680,14 @@
           <td>
                 <code>ValueError</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>If no executable was found from the <code>get_executable</code> method</p>
-            </div>
-          </td>
+          <td><p>If no executable was found from the <code>get_executable</code> method</p></td>
         </tr>
     </tbody>
   </table>
 
-          <details class="quote">
-            <summary>Source code in <code>fancy_dataclass/subprocess.py</code></summary>
-            <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-161">161</a></span>
+      <details class="quote">
+        <summary>Source code in <code>fancy_dataclass/subprocess.py</code></summary>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-161">161</a></span>
 <span class="normal"><a href="#__codelineno-0-162">162</a></span>
 <span class="normal"><a href="#__codelineno-0-163">163</a></span>
 <span class="normal"><a href="#__codelineno-0-164">164</a></span>
@@ -1773,7 +1711,7 @@
 </span><span id="__span-0-171"><a id="__codelineno-0-171" name="__codelineno-0-171"></a><span class="sd">        ValueError: If no executable was found from the `get_executable` method&quot;&quot;&quot;</span>
 </span><span id="__span-0-172"><a id="__codelineno-0-172" name="__codelineno-0-172"></a>    <span class="k">return</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_args</span><span class="p">(),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </span></code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
@@ -1783,7 +1721,6 @@
   </div>
 
   </div>
-
 
 </div>
 
@@ -1792,7 +1729,7 @@
 
 
 <h2 id="fancy_dataclass.subprocess.SubprocessDataclassFieldSettings" class="doc doc-heading">
-          <code>SubprocessDataclassFieldSettings</code>
+        <code>SubprocessDataclassFieldSettings</code>
 
   
   <span class="doc doc-labels">
@@ -1803,8 +1740,8 @@
 
 
   <div class="doc doc-contents ">
-          <p class="doc doc-class-bases">
-            Bases: <code><a class="autorefs autorefs-internal" title="fancy_dataclass.mixin.FieldSettings" href="mixin.html#fancy_dataclass.mixin.FieldSettings">FieldSettings</a></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><a class="autorefs autorefs-internal" title="fancy_dataclass.mixin.FieldSettings" href="mixin.html#fancy_dataclass.mixin.FieldSettings">FieldSettings</a></code></p>
 
   
       <p>Settings for <a class="autorefs autorefs-internal" href="#fancy_dataclass.subprocess.SubprocessDataclass"><code>SubprocessDataclass</code></a> fields.</p>
@@ -1820,9 +1757,10 @@
 </li>
 </ul>
 
-            <details class="quote">
-              <summary>Source code in <code>fancy_dataclass/subprocess.py</code></summary>
-              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-19">19</a></span>
+
+        <details class="quote">
+          <summary>Source code in <code>fancy_dataclass/subprocess.py</code></summary>
+          <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-19">19</a></span>
 <span class="normal"><a href="#__codelineno-0-20">20</a></span>
 <span class="normal"><a href="#__codelineno-0-21">21</a></span>
 <span class="normal"><a href="#__codelineno-0-22">22</a></span>
@@ -1850,7 +1788,7 @@
 </span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31"></a>    <span class="n">exec</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 </span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32"></a>    <span class="n">args</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span>
 </span></code></pre></div></td></tr></table></div>
-            </details>
+        </details>
 
   
 
@@ -1870,7 +1808,6 @@
 
   </div>
 
-
 </div>
 
 <div class="doc doc-object doc-class">
@@ -1878,7 +1815,7 @@
 
 
 <h2 id="fancy_dataclass.subprocess.SubprocessDataclassSettings" class="doc doc-heading">
-          <code>SubprocessDataclassSettings</code>
+        <code>SubprocessDataclassSettings</code>
 
   
   <span class="doc doc-labels">
@@ -1889,8 +1826,8 @@
 
 
   <div class="doc doc-contents ">
-          <p class="doc doc-class-bases">
-            Bases: <code><a class="autorefs autorefs-internal" title="fancy_dataclass.mixin.DataclassMixinSettings" href="mixin.html#fancy_dataclass.mixin.DataclassMixinSettings">DataclassMixinSettings</a></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><a class="autorefs autorefs-internal" title="fancy_dataclass.mixin.DataclassMixinSettings" href="mixin.html#fancy_dataclass.mixin.DataclassMixinSettings">DataclassMixinSettings</a></code></p>
 
   
       <p>Class-level settings for the <a class="autorefs autorefs-internal" href="#fancy_dataclass.subprocess.SubprocessDataclass"><code>SubprocessDataclass</code></a> mixin.</p>
@@ -1899,9 +1836,10 @@
 <li><code>exec</code>: name of command-line executable to call</li>
 </ul>
 
-            <details class="quote">
-              <summary>Source code in <code>fancy_dataclass/subprocess.py</code></summary>
-              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-9"> 9</a></span>
+
+        <details class="quote">
+          <summary>Source code in <code>fancy_dataclass/subprocess.py</code></summary>
+          <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-9"> 9</a></span>
 <span class="normal"><a href="#__codelineno-0-10">10</a></span>
 <span class="normal"><a href="#__codelineno-0-11">11</a></span>
 <span class="normal"><a href="#__codelineno-0-12">12</a></span>
@@ -1917,7 +1855,7 @@
 </span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15"></a><span class="sd">    - `exec`: name of command-line executable to call&quot;&quot;&quot;</span>
 </span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16"></a>    <span class="n">exec</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 </span></code></pre></div></td></tr></table></div>
-            </details>
+        </details>
 
   
 
@@ -1936,7 +1874,6 @@
   </div>
 
   </div>
-
 
 </div>
 

@@ -504,7 +504,7 @@
         <li class="md-nav__item">
   <a href="#fancy_dataclass.func" class="md-nav__link">
     <span class="md-ellipsis">
-      func
+      fancy_dataclass.func
     </span>
   </a>
   
@@ -513,7 +513,7 @@
         <li class="md-nav__item">
   <a href="#fancy_dataclass.func.func_dataclass" class="md-nav__link">
     <span class="md-ellipsis">
-      func_dataclass
+      func_dataclass()
     </span>
   </a>
   
@@ -522,7 +522,7 @@
         <li class="md-nav__item">
   <a href="#fancy_dataclass.func.snake_case_to_camel_case" class="md-nav__link">
     <span class="md-ellipsis">
-      snake_case_to_camel_case
+      snake_case_to_camel_case()
     </span>
   </a>
   
@@ -739,7 +739,7 @@
         <li class="md-nav__item">
   <a href="#fancy_dataclass.func" class="md-nav__link">
     <span class="md-ellipsis">
-      func
+      fancy_dataclass.func
     </span>
   </a>
   
@@ -748,7 +748,7 @@
         <li class="md-nav__item">
   <a href="#fancy_dataclass.func.func_dataclass" class="md-nav__link">
     <span class="md-ellipsis">
-      func_dataclass
+      func_dataclass()
     </span>
   </a>
   
@@ -757,7 +757,7 @@
         <li class="md-nav__item">
   <a href="#fancy_dataclass.func.snake_case_to_camel_case" class="md-nav__link">
     <span class="md-ellipsis">
-      snake_case_to_camel_case
+      snake_case_to_camel_case()
     </span>
   </a>
   
@@ -786,7 +786,6 @@
 <div class="doc doc-object doc-module">
 
 
-
 <a id="fancy_dataclass.func"></a>
   <div class="doc doc-contents first">
 
@@ -802,13 +801,12 @@
 
 
 
-
 <div class="doc doc-object doc-function">
 
 
 
 <h2 id="fancy_dataclass.func.func_dataclass" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">func_dataclass</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">method_name</span><span class="o">=</span><span class="s1">&#39;__call__&#39;</span><span class="p">,</span> <span class="n">cls_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bases</span><span class="o">=</span><span class="p">())</span></code>
+<code class="highlight language-python"><span class="n">func_dataclass</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">method_name</span><span class="o">=</span><span class="s1">&#39;__call__&#39;</span><span class="p">,</span> <span class="n">cls_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bases</span><span class="o">=</span><span class="p">())</span></code>
 
 </h2>
 
@@ -816,8 +814,6 @@
   <div class="doc doc-contents ">
   
       <p>Wraps a function into a new dataclass type with a single method whose positional arguments (other than self) are equivalent to that of the given function, and whose kwargs are dataclass parameters.</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -835,11 +831,7 @@
           <td>
                 <code><span title="typing.Callable">Callable</span>[[<span title="typing.Any">Any</span>], <span title="typing.Any">Any</span>]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Function to convert to a dataclass</p>
-            </div>
-          </td>
+          <td><p>Function to convert to a dataclass</p></td>
           <td>
               <em>required</em>
           </td>
@@ -849,11 +841,7 @@
           <td>
                 <code>str</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Name of method that will call the function</p>
-            </div>
-          </td>
+          <td><p>Name of method that will call the function</p></td>
           <td>
                 <code>&#39;__call__&#39;</code>
           </td>
@@ -863,11 +851,7 @@
           <td>
                 <code><span title="typing.Optional">Optional</span>[str]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Name of the new type (if <code>None</code>, converts the function's name from snake case to camel case)</p>
-            </div>
-          </td>
+          <td><p>Name of the new type (if <code>None</code>, converts the function's name from snake case to camel case)</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -877,19 +861,13 @@
           <td>
                 <code><span title="fancy_dataclass.func.Bases">Bases</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Base classes for the new type</p>
-            </div>
-          </td>
+          <td><p>Base classes for the new type</p></td>
           <td>
                 <code>()</code>
           </td>
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -904,18 +882,14 @@
           <td>
                 <code>type</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>A new type inheriting from <code>bases</code> with the name <code>cls_name</code> and a single method <code>method_name</code></p>
-            </div>
-          </td>
+          <td><p>A new type inheriting from <code>bases</code> with the name <code>cls_name</code> and a single method <code>method_name</code></p></td>
         </tr>
     </tbody>
   </table>
 
-          <details class="quote">
-            <summary>Source code in <code>fancy_dataclass/func.py</code></summary>
-            <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-77">77</a></span>
+      <details class="quote">
+        <summary>Source code in <code>fancy_dataclass/func.py</code></summary>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-77">77</a></span>
 <span class="normal"><a href="#__codelineno-0-78">78</a></span>
 <span class="normal"><a href="#__codelineno-0-79">79</a></span>
 <span class="normal"><a href="#__codelineno-0-80">80</a></span>
@@ -941,18 +915,17 @@
 </span><span id="__span-0-88"><a id="__codelineno-0-88" name="__codelineno-0-88"></a>    <span class="n">bases</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">bases</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">bases</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">)</span> <span class="k">else</span> <span class="p">(</span><span class="n">bases</span><span class="p">,)</span>
 </span><span id="__span-0-89"><a id="__codelineno-0-89" name="__codelineno-0-89"></a>    <span class="k">return</span> <span class="n">_func_dataclass</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">method_name</span><span class="o">=</span><span class="n">method_name</span><span class="p">,</span> <span class="n">cls_name</span><span class="o">=</span><span class="n">cls_name</span><span class="p">,</span> <span class="n">bases</span><span class="o">=</span><span class="n">bases</span><span class="p">)</span>
 </span></code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
 
 <h2 id="fancy_dataclass.func.snake_case_to_camel_case" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">snake_case_to_camel_case</span><span class="p">(</span><span class="n">name</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">snake_case_to_camel_case</span><span class="p">(</span><span class="n">name</span><span class="p">)</span></code>
 
 </h2>
 
@@ -960,8 +933,6 @@
   <div class="doc doc-contents ">
   
       <p>Converts a string from snake case to camel case.</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -979,19 +950,13 @@
           <td>
                 <code>str</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>String to convert</p>
-            </div>
-          </td>
+          <td><p>String to convert</p></td>
           <td>
               <em>required</em>
           </td>
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1006,18 +971,14 @@
           <td>
                 <code>str</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Camel-case version of the string</p>
-            </div>
-          </td>
+          <td><p>Camel-case version of the string</p></td>
         </tr>
     </tbody>
   </table>
 
-          <details class="quote">
-            <summary>Source code in <code>fancy_dataclass/func.py</code></summary>
-            <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-14">14</a></span>
+      <details class="quote">
+        <summary>Source code in <code>fancy_dataclass/func.py</code></summary>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-14">14</a></span>
 <span class="normal"><a href="#__codelineno-0-15">15</a></span>
 <span class="normal"><a href="#__codelineno-0-16">16</a></span>
 <span class="normal"><a href="#__codelineno-0-17">17</a></span>
@@ -1037,7 +998,7 @@
 </span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22"></a>    <span class="n">capitalize</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">+</span> <span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span> <span class="k">if</span> <span class="n">s</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
 </span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23"></a>    <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">capitalize</span><span class="p">,</span> <span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)))</span>
 </span></code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>

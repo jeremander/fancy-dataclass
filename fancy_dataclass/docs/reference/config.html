@@ -483,7 +483,7 @@
         <li class="md-nav__item">
   <a href="#fancy_dataclass.config" class="md-nav__link">
     <span class="md-ellipsis">
-      config
+      fancy_dataclass.config
     </span>
   </a>
   
@@ -502,7 +502,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.config.Config.as_config" class="md-nav__link">
     <span class="md-ellipsis">
-      as_config
+      as_config()
     </span>
   </a>
   
@@ -511,7 +511,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.config.Config.clear_config" class="md-nav__link">
     <span class="md-ellipsis">
-      clear_config
+      clear_config()
     </span>
   </a>
   
@@ -520,7 +520,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.config.Config.get_config" class="md-nav__link">
     <span class="md-ellipsis">
-      get_config
+      get_config()
     </span>
   </a>
   
@@ -529,7 +529,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.config.Config.update_config" class="md-nav__link">
     <span class="md-ellipsis">
-      update_config
+      update_config()
     </span>
   </a>
   
@@ -571,7 +571,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.config.FileConfig.load_config" class="md-nav__link">
     <span class="md-ellipsis">
-      load_config
+      load_config()
     </span>
   </a>
   
@@ -814,7 +814,7 @@
         <li class="md-nav__item">
   <a href="#fancy_dataclass.config" class="md-nav__link">
     <span class="md-ellipsis">
-      config
+      fancy_dataclass.config
     </span>
   </a>
   
@@ -833,7 +833,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.config.Config.as_config" class="md-nav__link">
     <span class="md-ellipsis">
-      as_config
+      as_config()
     </span>
   </a>
   
@@ -842,7 +842,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.config.Config.clear_config" class="md-nav__link">
     <span class="md-ellipsis">
-      clear_config
+      clear_config()
     </span>
   </a>
   
@@ -851,7 +851,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.config.Config.get_config" class="md-nav__link">
     <span class="md-ellipsis">
-      get_config
+      get_config()
     </span>
   </a>
   
@@ -860,7 +860,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.config.Config.update_config" class="md-nav__link">
     <span class="md-ellipsis">
-      update_config
+      update_config()
     </span>
   </a>
   
@@ -902,7 +902,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.config.FileConfig.load_config" class="md-nav__link">
     <span class="md-ellipsis">
-      load_config
+      load_config()
     </span>
   </a>
   
@@ -936,7 +936,6 @@
 <div class="doc doc-object doc-module">
 
 
-
 <a id="fancy_dataclass.config"></a>
   <div class="doc doc-contents first">
 
@@ -956,7 +955,7 @@
 
 
 <h2 id="fancy_dataclass.config.Config" class="doc doc-heading">
-          <code>Config</code>
+        <code>Config</code>
 
 
 </h2>
@@ -968,9 +967,10 @@
       <p>Base class for storing a collection of configurations.</p>
 <p>Subclasses may store a class attribute, <code>_config</code>, with the current global configurations, which can be retrieved or updated by the user.</p>
 
-            <details class="quote">
-              <summary>Source code in <code>fancy_dataclass/config.py</code></summary>
-              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-15">15</a></span>
+
+        <details class="quote">
+          <summary>Source code in <code>fancy_dataclass/config.py</code></summary>
+          <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-15">15</a></span>
 <span class="normal"><a href="#__codelineno-0-16">16</a></span>
 <span class="normal"><a href="#__codelineno-0-17">17</a></span>
 <span class="normal"><a href="#__codelineno-0-18">18</a></span>
@@ -1050,12 +1050,11 @@
 </span><span id="__span-0-53"><a id="__codelineno-0-53" name="__codelineno-0-53"></a>        <span class="k">finally</span><span class="p">:</span>
 </span><span id="__span-0-54"><a id="__codelineno-0-54" name="__codelineno-0-54"></a>            <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_set_config</span><span class="p">(</span><span class="n">orig_config</span><span class="p">)</span>
 </span></code></pre></div></td></tr></table></div>
-            </details>
+        </details>
 
   
 
   <div class="doc doc-children">
-
 
 
 
@@ -1070,7 +1069,7 @@
 
 
 <h3 id="fancy_dataclass.config.Config.as_config" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">as_config</span><span class="p">()</span></code>
+<code class="highlight language-python"><span class="n">as_config</span><span class="p">()</span></code>
 
 </h3>
 
@@ -1079,9 +1078,9 @@
   
       <p>Context manager which temporarily updates the global configuration with this object.</p>
 
-          <details class="quote">
-            <summary>Source code in <code>fancy_dataclass/config.py</code></summary>
-            <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-46">46</a></span>
+      <details class="quote">
+        <summary>Source code in <code>fancy_dataclass/config.py</code></summary>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-46">46</a></span>
 <span class="normal"><a href="#__codelineno-0-47">47</a></span>
 <span class="normal"><a href="#__codelineno-0-48">48</a></span>
 <span class="normal"><a href="#__codelineno-0-49">49</a></span>
@@ -1099,18 +1098,17 @@
 </span><span id="__span-0-53"><a id="__codelineno-0-53" name="__codelineno-0-53"></a>    <span class="k">finally</span><span class="p">:</span>
 </span><span id="__span-0-54"><a id="__codelineno-0-54" name="__codelineno-0-54"></a>        <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_set_config</span><span class="p">(</span><span class="n">orig_config</span><span class="p">)</span>
 </span></code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="fancy_dataclass.config.Config.clear_config" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">clear_config</span><span class="p">()</span></code>
+<code class="highlight language-python"><span class="n">clear_config</span><span class="p">()</span></code>
   
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
@@ -1123,9 +1121,9 @@
   
       <p>Clears the global configuration by setting it to <code>None</code>.</p>
 
-          <details class="quote">
-            <summary>Source code in <code>fancy_dataclass/config.py</code></summary>
-            <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-37">37</a></span>
+      <details class="quote">
+        <summary>Source code in <code>fancy_dataclass/config.py</code></summary>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-37">37</a></span>
 <span class="normal"><a href="#__codelineno-0-38">38</a></span>
 <span class="normal"><a href="#__codelineno-0-39">39</a></span>
 <span class="normal"><a href="#__codelineno-0-40">40</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-37"><a id="__codelineno-0-37" name="__codelineno-0-37"></a><span class="nd">@classmethod</span>
@@ -1133,18 +1131,17 @@
 </span><span id="__span-0-39"><a id="__codelineno-0-39" name="__codelineno-0-39"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Clears the global configuration by setting it to `None`.&quot;&quot;&quot;</span>
 </span><span id="__span-0-40"><a id="__codelineno-0-40" name="__codelineno-0-40"></a>    <span class="bp">cls</span><span class="o">.</span><span class="n">_set_config</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
 </span></code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="fancy_dataclass.config.Config.get_config" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">get_config</span><span class="p">()</span></code>
+<code class="highlight language-python"><span class="n">get_config</span><span class="p">()</span></code>
   
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
@@ -1156,8 +1153,6 @@
   <div class="doc doc-contents ">
   
       <p>Gets a copy of the current global configuration.</p>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1172,18 +1167,14 @@
           <td>
                 <code><span title="typing.Optional">Optional</span>[<span title="typing_extensions.Self">Self</span>]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Global configuration object (<code>None</code> if not set)</p>
-            </div>
-          </td>
+          <td><p>Global configuration object (<code>None</code> if not set)</p></td>
         </tr>
     </tbody>
   </table>
 
-          <details class="quote">
-            <summary>Source code in <code>fancy_dataclass/config.py</code></summary>
-            <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-22">22</a></span>
+      <details class="quote">
+        <summary>Source code in <code>fancy_dataclass/config.py</code></summary>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-22">22</a></span>
 <span class="normal"><a href="#__codelineno-0-23">23</a></span>
 <span class="normal"><a href="#__codelineno-0-24">24</a></span>
 <span class="normal"><a href="#__codelineno-0-25">25</a></span>
@@ -1199,18 +1190,17 @@
 </span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28"></a>    <span class="c1"># return deepcopy(cls._config)  # type: ignore[return-value]</span>
 </span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29"></a>    <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_config</span>  <span class="c1"># type: ignore[return-value]</span>
 </span></code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="fancy_dataclass.config.Config.update_config" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">update_config</span><span class="p">()</span></code>
+<code class="highlight language-python"><span class="n">update_config</span><span class="p">()</span></code>
 
 </h3>
 
@@ -1219,15 +1209,15 @@
   
       <p>Updates the global configuration, setting it equal to this object.</p>
 
-          <details class="quote">
-            <summary>Source code in <code>fancy_dataclass/config.py</code></summary>
-            <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-42">42</a></span>
+      <details class="quote">
+        <summary>Source code in <code>fancy_dataclass/config.py</code></summary>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-42">42</a></span>
 <span class="normal"><a href="#__codelineno-0-43">43</a></span>
 <span class="normal"><a href="#__codelineno-0-44">44</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-42"><a id="__codelineno-0-42" name="__codelineno-0-42"></a><span class="k">def</span> <span class="nf">update_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 </span><span id="__span-0-43"><a id="__codelineno-0-43" name="__codelineno-0-43"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Updates the global configuration, setting it equal to this object.&quot;&quot;&quot;</span>
 </span><span id="__span-0-44"><a id="__codelineno-0-44" name="__codelineno-0-44"></a>    <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_set_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 </span></code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
@@ -1237,7 +1227,6 @@
   </div>
 
   </div>
-
 
 </div>
 
@@ -1246,15 +1235,15 @@
 
 
 <h2 id="fancy_dataclass.config.ConfigDataclass" class="doc doc-heading">
-          <code>ConfigDataclass</code>
+        <code>ConfigDataclass</code>
 
 
 </h2>
 
 
   <div class="doc doc-contents ">
-          <p class="doc doc-class-bases">
-            Bases: <code><a class="autorefs autorefs-internal" title="fancy_dataclass.dict.DictDataclass" href="dict.html#fancy_dataclass.dict.DictDataclass">DictDataclass</a></code>, <code><a class="autorefs autorefs-internal" title="fancy_dataclass.config.FileConfig" href="#fancy_dataclass.config.FileConfig">FileConfig</a></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><a class="autorefs autorefs-internal" title="fancy_dataclass.dict.DictDataclass" href="dict.html#fancy_dataclass.dict.DictDataclass">DictDataclass</a></code>, <code><a class="autorefs autorefs-internal" title="fancy_dataclass.config.FileConfig" href="#fancy_dataclass.config.FileConfig">FileConfig</a></code></p>
 
   
       <p>A dataclass representing a collection of configurations.</p>
@@ -1265,9 +1254,10 @@ Supported file types are:</p>
 <li>TOML</li>
 </ul>
 
-            <details class="quote">
-              <summary>Source code in <code>fancy_dataclass/config.py</code></summary>
-              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-72"> 72</a></span>
+
+        <details class="quote">
+          <summary>Source code in <code>fancy_dataclass/config.py</code></summary>
+          <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-72"> 72</a></span>
 <span class="normal"><a href="#__codelineno-0-73"> 73</a></span>
 <span class="normal"><a href="#__codelineno-0-74"> 74</a></span>
 <span class="normal"><a href="#__codelineno-0-75"> 75</a></span>
@@ -1355,7 +1345,7 @@ Supported file types are:</p>
 </span><span id="__span-0-114"><a id="__codelineno-0-114" name="__codelineno-0-114"></a>        <span class="n">cfg</span><span class="o">.</span><span class="n">update_config</span><span class="p">()</span>
 </span><span id="__span-0-115"><a id="__codelineno-0-115" name="__codelineno-0-115"></a>        <span class="k">return</span> <span class="n">cfg</span>
 </span></code></pre></div></td></tr></table></div>
-            </details>
+        </details>
 
   
 
@@ -1375,7 +1365,6 @@ Supported file types are:</p>
 
   </div>
 
-
 </div>
 
 <div class="doc doc-object doc-class">
@@ -1383,15 +1372,15 @@ Supported file types are:</p>
 
 
 <h2 id="fancy_dataclass.config.DictConfig" class="doc doc-heading">
-          <code>DictConfig</code>
+        <code>DictConfig</code>
 
 
 </h2>
 
 
   <div class="doc doc-contents ">
-          <p class="doc doc-class-bases">
-            Bases: <code><a class="autorefs autorefs-internal" title="fancy_dataclass.config.Config" href="#fancy_dataclass.config.Config">Config</a></code>, <code><span title="typing.Dict">Dict</span>[<span title="typing.Any">Any</span>, <span title="typing.Any">Any</span>]</code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><a class="autorefs autorefs-internal" title="fancy_dataclass.config.Config" href="#fancy_dataclass.config.Config">Config</a></code>, <code><span title="typing.Dict">Dict</span>[<span title="typing.Any">Any</span>, <span title="typing.Any">Any</span>]</code></p>
 
   
       <p>A collection of configurations, stored as a Python dict.</p>
@@ -1403,9 +1392,10 @@ Supported file types are:</p>
 <li>TOML</li>
 </ul>
 
-            <details class="quote">
-              <summary>Source code in <code>fancy_dataclass/config.py</code></summary>
-              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-118">118</a></span>
+
+        <details class="quote">
+          <summary>Source code in <code>fancy_dataclass/config.py</code></summary>
+          <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-118">118</a></span>
 <span class="normal"><a href="#__codelineno-0-119">119</a></span>
 <span class="normal"><a href="#__codelineno-0-120">120</a></span>
 <span class="normal"><a href="#__codelineno-0-121">121</a></span>
@@ -1443,7 +1433,7 @@ Supported file types are:</p>
 </span><span id="__span-0-135"><a id="__codelineno-0-135" name="__codelineno-0-135"></a>        <span class="n">cfg</span><span class="o">.</span><span class="n">update_config</span><span class="p">()</span>
 </span><span id="__span-0-136"><a id="__codelineno-0-136" name="__codelineno-0-136"></a>        <span class="k">return</span> <span class="n">cfg</span>
 </span></code></pre></div></td></tr></table></div>
-            </details>
+        </details>
 
   
 
@@ -1463,7 +1453,6 @@ Supported file types are:</p>
 
   </div>
 
-
 </div>
 
 <div class="doc doc-object doc-class">
@@ -1471,22 +1460,23 @@ Supported file types are:</p>
 
 
 <h2 id="fancy_dataclass.config.FileConfig" class="doc doc-heading">
-          <code>FileConfig</code>
+        <code>FileConfig</code>
 
 
 </h2>
 
 
   <div class="doc doc-contents ">
-          <p class="doc doc-class-bases">
-            Bases: <code><a class="autorefs autorefs-internal" title="fancy_dataclass.config.Config" href="#fancy_dataclass.config.Config">Config</a></code>, <code><span title="abc.ABC">ABC</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><a class="autorefs autorefs-internal" title="fancy_dataclass.config.Config" href="#fancy_dataclass.config.Config">Config</a></code>, <code><span title="abc.ABC">ABC</span></code></p>
 
   
       <p>A collection of configurations that can be loaded from a file.</p>
 
-            <details class="quote">
-              <summary>Source code in <code>fancy_dataclass/config.py</code></summary>
-              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-57">57</a></span>
+
+        <details class="quote">
+          <summary>Source code in <code>fancy_dataclass/config.py</code></summary>
+          <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-57">57</a></span>
 <span class="normal"><a href="#__codelineno-0-58">58</a></span>
 <span class="normal"><a href="#__codelineno-0-59">59</a></span>
 <span class="normal"><a href="#__codelineno-0-60">60</a></span>
@@ -1512,12 +1502,11 @@ Supported file types are:</p>
 </span><span id="__span-0-68"><a id="__codelineno-0-68" name="__codelineno-0-68"></a><span class="sd">        Returns:</span>
 </span><span id="__span-0-69"><a id="__codelineno-0-69" name="__codelineno-0-69"></a><span class="sd">            The newly loaded global configurations&quot;&quot;&quot;</span>
 </span></code></pre></div></td></tr></table></div>
-            </details>
+        </details>
 
   
 
   <div class="doc doc-children">
-
 
 
 
@@ -1532,11 +1521,11 @@ Supported file types are:</p>
 
 
 <h3 id="fancy_dataclass.config.FileConfig.load_config" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">load_config</span><span class="p">(</span><span class="n">path</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">load_config</span><span class="p">(</span><span class="n">path</span><span class="p">)</span></code>
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
       <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+      <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
   </span>
 
 </h3>
@@ -1545,8 +1534,6 @@ Supported file types are:</p>
   <div class="doc doc-contents ">
   
       <p>Loads configurations from a file and sets them to be the global configurations for this class.</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1564,19 +1551,13 @@ Supported file types are:</p>
           <td>
                 <code><span title="fancy_dataclass.utils.AnyPath">AnyPath</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>File from which to load configurations</p>
-            </div>
-          </td>
+          <td><p>File from which to load configurations</p></td>
           <td>
               <em>required</em>
           </td>
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1591,18 +1572,14 @@ Supported file types are:</p>
           <td>
                 <code><span title="typing_extensions.Self">Self</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>The newly loaded global configurations</p>
-            </div>
-          </td>
+          <td><p>The newly loaded global configurations</p></td>
         </tr>
     </tbody>
   </table>
 
-          <details class="quote">
-            <summary>Source code in <code>fancy_dataclass/config.py</code></summary>
-            <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-60">60</a></span>
+      <details class="quote">
+        <summary>Source code in <code>fancy_dataclass/config.py</code></summary>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-60">60</a></span>
 <span class="normal"><a href="#__codelineno-0-61">61</a></span>
 <span class="normal"><a href="#__codelineno-0-62">62</a></span>
 <span class="normal"><a href="#__codelineno-0-63">63</a></span>
@@ -1622,7 +1599,7 @@ Supported file types are:</p>
 </span><span id="__span-0-68"><a id="__codelineno-0-68" name="__codelineno-0-68"></a><span class="sd">    Returns:</span>
 </span><span id="__span-0-69"><a id="__codelineno-0-69" name="__codelineno-0-69"></a><span class="sd">        The newly loaded global configurations&quot;&quot;&quot;</span>
 </span></code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
@@ -1632,7 +1609,6 @@ Supported file types are:</p>
   </div>
 
   </div>
-
 
 </div>
 

@@ -546,7 +546,7 @@
         <li class="md-nav__item">
   <a href="#fancy_dataclass.json" class="md-nav__link">
     <span class="md-ellipsis">
-      json
+      fancy_dataclass.json
     </span>
   </a>
   
@@ -583,7 +583,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.json.JSONSerializable.from_json" class="md-nav__link">
     <span class="md-ellipsis">
-      from_json
+      from_json()
     </span>
   </a>
   
@@ -592,7 +592,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.json.JSONSerializable.from_json_string" class="md-nav__link">
     <span class="md-ellipsis">
-      from_json_string
+      from_json_string()
     </span>
   </a>
   
@@ -601,7 +601,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.json.JSONSerializable.to_json" class="md-nav__link">
     <span class="md-ellipsis">
-      to_json
+      to_json()
     </span>
   </a>
   
@@ -610,7 +610,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.json.JSONSerializable.to_json_string" class="md-nav__link">
     <span class="md-ellipsis">
-      to_json_string
+      to_json_string()
     </span>
   </a>
   
@@ -790,7 +790,7 @@
         <li class="md-nav__item">
   <a href="#fancy_dataclass.json" class="md-nav__link">
     <span class="md-ellipsis">
-      json
+      fancy_dataclass.json
     </span>
   </a>
   
@@ -827,7 +827,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.json.JSONSerializable.from_json" class="md-nav__link">
     <span class="md-ellipsis">
-      from_json
+      from_json()
     </span>
   </a>
   
@@ -836,7 +836,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.json.JSONSerializable.from_json_string" class="md-nav__link">
     <span class="md-ellipsis">
-      from_json_string
+      from_json_string()
     </span>
   </a>
   
@@ -845,7 +845,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.json.JSONSerializable.to_json" class="md-nav__link">
     <span class="md-ellipsis">
-      to_json
+      to_json()
     </span>
   </a>
   
@@ -854,7 +854,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.json.JSONSerializable.to_json_string" class="md-nav__link">
     <span class="md-ellipsis">
-      to_json_string
+      to_json_string()
     </span>
   </a>
   
@@ -888,7 +888,6 @@
 <div class="doc doc-object doc-module">
 
 
-
 <a id="fancy_dataclass.json"></a>
   <div class="doc doc-contents first">
 
@@ -908,23 +907,24 @@
 
 
 <h2 id="fancy_dataclass.json.JSONBaseDataclass" class="doc doc-heading">
-          <code>JSONBaseDataclass</code>
+        <code>JSONBaseDataclass</code>
 
 
 </h2>
 
 
   <div class="doc doc-contents ">
-          <p class="doc doc-class-bases">
-            Bases: <code><a class="autorefs autorefs-internal" title="fancy_dataclass.json.JSONDataclass" href="#fancy_dataclass.json.JSONDataclass">JSONDataclass</a></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><a class="autorefs autorefs-internal" title="fancy_dataclass.json.JSONDataclass" href="#fancy_dataclass.json.JSONDataclass">JSONDataclass</a></code></p>
 
   
       <p>This class should be used in place of <a class="autorefs autorefs-internal" href="#fancy_dataclass.json.JSONDataclass"><code>JSONDataclass</code></a> when you intend to inherit from the class.</p>
 <p>When converting a subclass to a dict with <a class="autorefs autorefs-internal" href="dict.html#fancy_dataclass.dict.DictDataclass.to_dict"><code>to_dict</code></a>, it will store the subclass's type in the <code>type</code> field. It will also resolve this type when calling <a class="autorefs autorefs-internal" href="dict.html#fancy_dataclass.dict.DictDataclass.from_dict"><code>from_dict</code></a>.</p>
 
-            <details class="quote">
-              <summary>Source code in <code>fancy_dataclass/json.py</code></summary>
-              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-154">154</a></span>
+
+        <details class="quote">
+          <summary>Source code in <code>fancy_dataclass/json.py</code></summary>
+          <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-154">154</a></span>
 <span class="normal"><a href="#__codelineno-0-155">155</a></span>
 <span class="normal"><a href="#__codelineno-0-156">156</a></span>
 <span class="normal"><a href="#__codelineno-0-157">157</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-154"><a id="__codelineno-0-154" name="__codelineno-0-154"></a><span class="k">class</span> <span class="nc">JSONBaseDataclass</span><span class="p">(</span><span class="n">JSONDataclass</span><span class="p">,</span> <span class="n">qualified_type</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
@@ -932,10 +932,9 @@
 </span><span id="__span-0-156"><a id="__codelineno-0-156" name="__codelineno-0-156"></a>
 </span><span id="__span-0-157"><a id="__codelineno-0-157" name="__codelineno-0-157"></a><span class="sd">    When converting a subclass to a dict with [`to_dict`][fancy_dataclass.dict.DictDataclass.to_dict], it will store the subclass&#39;s type in the `type` field. It will also resolve this type when calling [`from_dict`][fancy_dataclass.dict.DictDataclass.from_dict].&quot;&quot;&quot;</span>
 </span></code></pre></div></td></tr></table></div>
-            </details>
+        </details>
 
   </div>
-
 
 </div>
 
@@ -944,22 +943,23 @@
 
 
 <h2 id="fancy_dataclass.json.JSONDataclass" class="doc doc-heading">
-          <code>JSONDataclass</code>
+        <code>JSONDataclass</code>
 
 
 </h2>
 
 
   <div class="doc doc-contents ">
-          <p class="doc doc-class-bases">
-            Bases: <code><a class="autorefs autorefs-internal" title="fancy_dataclass.serialize.DictFileSerializableDataclass" href="serialize.html#fancy_dataclass.serialize.DictFileSerializableDataclass">DictFileSerializableDataclass</a></code>, <code><a class="autorefs autorefs-internal" title="fancy_dataclass.json.JSONSerializable" href="#fancy_dataclass.json.JSONSerializable">JSONSerializable</a></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><a class="autorefs autorefs-internal" title="fancy_dataclass.serialize.DictFileSerializableDataclass" href="serialize.html#fancy_dataclass.serialize.DictFileSerializableDataclass">DictFileSerializableDataclass</a></code>, <code><a class="autorefs autorefs-internal" title="fancy_dataclass.json.JSONSerializable" href="#fancy_dataclass.json.JSONSerializable">JSONSerializable</a></code></p>
 
   
       <p>Dataclass mixin enabling default serialization of dataclass objects to and from JSON.</p>
 
-            <details class="quote">
-              <summary>Source code in <code>fancy_dataclass/json.py</code></summary>
-              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-89"> 89</a></span>
+
+        <details class="quote">
+          <summary>Source code in <code>fancy_dataclass/json.py</code></summary>
+          <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-89"> 89</a></span>
 <span class="normal"><a href="#__codelineno-0-90"> 90</a></span>
 <span class="normal"><a href="#__codelineno-0-91"> 91</a></span>
 <span class="normal"><a href="#__codelineno-0-92"> 92</a></span>
@@ -1085,7 +1085,7 @@
 </span><span id="__span-0-150"><a id="__codelineno-0-150" name="__codelineno-0-150"></a>            <span class="k">return</span> <span class="p">{</span><span class="bp">cls</span><span class="o">.</span><span class="n">_json_key_decoder</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_from_dict_value</span><span class="p">(</span><span class="n">keytype</span><span class="p">,</span> <span class="n">k</span><span class="p">))</span> <span class="p">:</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_from_dict_value</span><span class="p">(</span><span class="n">valtype</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="n">strict</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="n">val</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
 </span><span id="__span-0-151"><a id="__codelineno-0-151" name="__codelineno-0-151"></a>        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_from_dict_value</span><span class="p">(</span><span class="n">tp</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
 </span></code></pre></div></td></tr></table></div>
-            </details>
+        </details>
 
   
 
@@ -1105,7 +1105,6 @@
 
   </div>
 
-
 </div>
 
 <div class="doc doc-object doc-class">
@@ -1113,22 +1112,23 @@
 
 
 <h2 id="fancy_dataclass.json.JSONSerializable" class="doc doc-heading">
-          <code>JSONSerializable</code>
+        <code>JSONSerializable</code>
 
 
 </h2>
 
 
   <div class="doc doc-contents ">
-          <p class="doc doc-class-bases">
-            Bases: <code><a class="autorefs autorefs-internal" title="fancy_dataclass.serialize.TextFileSerializable" href="serialize.html#fancy_dataclass.serialize.TextFileSerializable">TextFileSerializable</a></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><a class="autorefs autorefs-internal" title="fancy_dataclass.serialize.TextFileSerializable" href="serialize.html#fancy_dataclass.serialize.TextFileSerializable">TextFileSerializable</a></code></p>
 
   
       <p>Mixin class enabling conversion of an object to/from JSON.</p>
 
-            <details class="quote">
-              <summary>Source code in <code>fancy_dataclass/json.py</code></summary>
-              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-14">14</a></span>
+
+        <details class="quote">
+          <summary>Source code in <code>fancy_dataclass/json.py</code></summary>
+          <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-14">14</a></span>
 <span class="normal"><a href="#__codelineno-0-15">15</a></span>
 <span class="normal"><a href="#__codelineno-0-16">16</a></span>
 <span class="normal"><a href="#__codelineno-0-17">17</a></span>
@@ -1274,12 +1274,11 @@
 </span><span id="__span-0-85"><a id="__codelineno-0-85" name="__codelineno-0-85"></a><span class="sd">            Converted object of this class&quot;&quot;&quot;</span>
 </span><span id="__span-0-86"><a id="__codelineno-0-86" name="__codelineno-0-86"></a>        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_from_string</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </span></code></pre></div></td></tr></table></div>
-            </details>
+        </details>
 
   
 
   <div class="doc doc-children">
-
 
 
 
@@ -1294,7 +1293,7 @@
 
 
 <h3 id="fancy_dataclass.json.JSONSerializable.from_json" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">from_json</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">from_json</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
   
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
@@ -1306,8 +1305,6 @@
   <div class="doc doc-contents ">
   
       <p>Constructs an object from a JSON file-like object (text or binary).</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1325,11 +1322,7 @@
           <td>
                 <code><span title="fancy_dataclass.utils.AnyIO">AnyIO</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>A readable file-like object</p>
-            </div>
-          </td>
+          <td><p>A readable file-like object</p></td>
           <td>
               <em>required</em>
           </td>
@@ -1339,19 +1332,13 @@
           <td>
                 <code><span title="typing.Any">Any</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Keyword arguments</p>
-            </div>
-          </td>
+          <td><p>Keyword arguments</p></td>
           <td>
                 <code>{}</code>
           </td>
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1366,18 +1353,14 @@
           <td>
                 <code><span title="typing_extensions.Self">Self</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Converted object of this class</p>
-            </div>
-          </td>
+          <td><p>Converted object of this class</p></td>
         </tr>
     </tbody>
   </table>
 
-          <details class="quote">
-            <summary>Source code in <code>fancy_dataclass/json.py</code></summary>
-            <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-64">64</a></span>
+      <details class="quote">
+        <summary>Source code in <code>fancy_dataclass/json.py</code></summary>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-64">64</a></span>
 <span class="normal"><a href="#__codelineno-0-65">65</a></span>
 <span class="normal"><a href="#__codelineno-0-66">66</a></span>
 <span class="normal"><a href="#__codelineno-0-67">67</a></span>
@@ -1399,18 +1382,17 @@
 </span><span id="__span-0-73"><a id="__codelineno-0-73" name="__codelineno-0-73"></a><span class="sd">        Converted object of this class&quot;&quot;&quot;</span>
 </span><span id="__span-0-74"><a id="__codelineno-0-74" name="__codelineno-0-74"></a>    <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_from_file</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </span></code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="fancy_dataclass.json.JSONSerializable.from_json_string" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">from_json_string</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">from_json_string</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
   
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
@@ -1422,8 +1404,6 @@
   <div class="doc doc-contents ">
   
       <p>Constructs an object from a JSON string.</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1441,11 +1421,7 @@
           <td>
                 <code>str</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>JSON string</p>
-            </div>
-          </td>
+          <td><p>JSON string</p></td>
           <td>
               <em>required</em>
           </td>
@@ -1455,19 +1431,13 @@
           <td>
                 <code><span title="typing.Any">Any</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Keyword arguments</p>
-            </div>
-          </td>
+          <td><p>Keyword arguments</p></td>
           <td>
                 <code>{}</code>
           </td>
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1482,18 +1452,14 @@
           <td>
                 <code><span title="typing_extensions.Self">Self</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Converted object of this class</p>
-            </div>
-          </td>
+          <td><p>Converted object of this class</p></td>
         </tr>
     </tbody>
   </table>
 
-          <details class="quote">
-            <summary>Source code in <code>fancy_dataclass/json.py</code></summary>
-            <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-76">76</a></span>
+      <details class="quote">
+        <summary>Source code in <code>fancy_dataclass/json.py</code></summary>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-76">76</a></span>
 <span class="normal"><a href="#__codelineno-0-77">77</a></span>
 <span class="normal"><a href="#__codelineno-0-78">78</a></span>
 <span class="normal"><a href="#__codelineno-0-79">79</a></span>
@@ -1515,18 +1481,17 @@
 </span><span id="__span-0-85"><a id="__codelineno-0-85" name="__codelineno-0-85"></a><span class="sd">        Converted object of this class&quot;&quot;&quot;</span>
 </span><span id="__span-0-86"><a id="__codelineno-0-86" name="__codelineno-0-86"></a>    <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_from_string</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </span></code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="fancy_dataclass.json.JSONSerializable.to_json" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">to_json</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">to_json</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h3>
 
@@ -1535,8 +1500,6 @@
   
       <p>Writes the object as JSON to a file-like object (text or binary).
 If binary, applies UTF-8 encoding.</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1554,11 +1517,7 @@ If binary, applies UTF-8 encoding.</p>
           <td>
                 <code><span title="io.IOBase">IOBase</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>A writable file-like object</p>
-            </div>
-          </td>
+          <td><p>A writable file-like object</p></td>
           <td>
               <em>required</em>
           </td>
@@ -1568,11 +1527,7 @@ If binary, applies UTF-8 encoding.</p>
           <td>
                 <code><span title="typing.Any">Any</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Keyword arguments</p>
-            </div>
-          </td>
+          <td><p>Keyword arguments</p></td>
           <td>
                 <code>{}</code>
           </td>
@@ -1580,9 +1535,9 @@ If binary, applies UTF-8 encoding.</p>
     </tbody>
   </table>
 
-          <details class="quote">
-            <summary>Source code in <code>fancy_dataclass/json.py</code></summary>
-            <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-40">40</a></span>
+      <details class="quote">
+        <summary>Source code in <code>fancy_dataclass/json.py</code></summary>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-40">40</a></span>
 <span class="normal"><a href="#__codelineno-0-41">41</a></span>
 <span class="normal"><a href="#__codelineno-0-42">42</a></span>
 <span class="normal"><a href="#__codelineno-0-43">43</a></span>
@@ -1598,18 +1553,17 @@ If binary, applies UTF-8 encoding.</p>
 </span><span id="__span-0-46"><a id="__codelineno-0-46" name="__codelineno-0-46"></a><span class="sd">        kwargs: Keyword arguments&quot;&quot;&quot;</span>
 </span><span id="__span-0-47"><a id="__codelineno-0-47" name="__codelineno-0-47"></a>    <span class="k">return</span> <span class="n">JSONDataclass</span><span class="o">.</span><span class="n">_to_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fp</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span>
 </span></code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="fancy_dataclass.json.JSONSerializable.to_json_string" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">to_json_string</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">to_json_string</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h3>
 
@@ -1617,8 +1571,6 @@ If binary, applies UTF-8 encoding.</p>
   <div class="doc doc-contents ">
   
       <p>Converts the object into a JSON string.</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1636,19 +1588,13 @@ If binary, applies UTF-8 encoding.</p>
           <td>
                 <code><span title="typing.Any">Any</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Keyword arguments</p>
-            </div>
-          </td>
+          <td><p>Keyword arguments</p></td>
           <td>
                 <code>{}</code>
           </td>
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1663,18 +1609,14 @@ If binary, applies UTF-8 encoding.</p>
           <td>
                 <code>str</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Object rendered as a JSON string</p>
-            </div>
-          </td>
+          <td><p>Object rendered as a JSON string</p></td>
         </tr>
     </tbody>
   </table>
 
-          <details class="quote">
-            <summary>Source code in <code>fancy_dataclass/json.py</code></summary>
-            <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-49">49</a></span>
+      <details class="quote">
+        <summary>Source code in <code>fancy_dataclass/json.py</code></summary>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-49">49</a></span>
 <span class="normal"><a href="#__codelineno-0-50">50</a></span>
 <span class="normal"><a href="#__codelineno-0-51">51</a></span>
 <span class="normal"><a href="#__codelineno-0-52">52</a></span>
@@ -1692,7 +1634,7 @@ If binary, applies UTF-8 encoding.</p>
 </span><span id="__span-0-56"><a id="__codelineno-0-56" name="__codelineno-0-56"></a><span class="sd">        Object rendered as a JSON string&quot;&quot;&quot;</span>
 </span><span id="__span-0-57"><a id="__codelineno-0-57" name="__codelineno-0-57"></a>    <span class="k">return</span> <span class="n">JSONDataclass</span><span class="o">.</span><span class="n">_to_string</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span>
 </span></code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
@@ -1702,7 +1644,6 @@ If binary, applies UTF-8 encoding.</p>
   </div>
 
   </div>
-
 
 </div>
 

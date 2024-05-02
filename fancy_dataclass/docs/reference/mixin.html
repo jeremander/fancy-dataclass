@@ -567,7 +567,7 @@
         <li class="md-nav__item">
   <a href="#fancy_dataclass.mixin" class="md-nav__link">
     <span class="md-ellipsis">
-      mixin
+      fancy_dataclass.mixin
     </span>
   </a>
   
@@ -586,7 +586,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.mixin.DataclassAdaptable.adapt_to" class="md-nav__link">
     <span class="md-ellipsis">
-      adapt_to
+      adapt_to()
     </span>
   </a>
   
@@ -595,7 +595,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.mixin.DataclassAdaptable.coerce" class="md-nav__link">
     <span class="md-ellipsis">
-      coerce
+      coerce()
     </span>
   </a>
   
@@ -619,7 +619,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.mixin.DataclassMixin.__init_subclass__" class="md-nav__link">
     <span class="md-ellipsis">
-      __init_subclass__
+      __init_subclass__()
     </span>
   </a>
   
@@ -628,7 +628,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.mixin.DataclassMixin.__post_dataclass_wrap__" class="md-nav__link">
     <span class="md-ellipsis">
-      __post_dataclass_wrap__
+      __post_dataclass_wrap__()
     </span>
   </a>
   
@@ -637,7 +637,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.mixin.DataclassMixin._replace" class="md-nav__link">
     <span class="md-ellipsis">
-      _replace
+      _replace()
     </span>
   </a>
   
@@ -646,7 +646,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.mixin.DataclassMixin.wrap_dataclass" class="md-nav__link">
     <span class="md-ellipsis">
-      wrap_dataclass
+      wrap_dataclass()
     </span>
   </a>
   
@@ -679,7 +679,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.mixin.FieldSettings.from_field" class="md-nav__link">
     <span class="md-ellipsis">
-      from_field
+      from_field()
     </span>
   </a>
   
@@ -688,7 +688,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.mixin.FieldSettings.type_check" class="md-nav__link">
     <span class="md-ellipsis">
-      type_check
+      type_check()
     </span>
   </a>
   
@@ -847,7 +847,7 @@
         <li class="md-nav__item">
   <a href="#fancy_dataclass.mixin" class="md-nav__link">
     <span class="md-ellipsis">
-      mixin
+      fancy_dataclass.mixin
     </span>
   </a>
   
@@ -866,7 +866,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.mixin.DataclassAdaptable.adapt_to" class="md-nav__link">
     <span class="md-ellipsis">
-      adapt_to
+      adapt_to()
     </span>
   </a>
   
@@ -875,7 +875,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.mixin.DataclassAdaptable.coerce" class="md-nav__link">
     <span class="md-ellipsis">
-      coerce
+      coerce()
     </span>
   </a>
   
@@ -899,7 +899,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.mixin.DataclassMixin.__init_subclass__" class="md-nav__link">
     <span class="md-ellipsis">
-      __init_subclass__
+      __init_subclass__()
     </span>
   </a>
   
@@ -908,7 +908,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.mixin.DataclassMixin.__post_dataclass_wrap__" class="md-nav__link">
     <span class="md-ellipsis">
-      __post_dataclass_wrap__
+      __post_dataclass_wrap__()
     </span>
   </a>
   
@@ -917,7 +917,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.mixin.DataclassMixin._replace" class="md-nav__link">
     <span class="md-ellipsis">
-      _replace
+      _replace()
     </span>
   </a>
   
@@ -926,7 +926,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.mixin.DataclassMixin.wrap_dataclass" class="md-nav__link">
     <span class="md-ellipsis">
-      wrap_dataclass
+      wrap_dataclass()
     </span>
   </a>
   
@@ -959,7 +959,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.mixin.FieldSettings.from_field" class="md-nav__link">
     <span class="md-ellipsis">
-      from_field
+      from_field()
     </span>
   </a>
   
@@ -968,7 +968,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.mixin.FieldSettings.type_check" class="md-nav__link">
     <span class="md-ellipsis">
-      type_check
+      type_check()
     </span>
   </a>
   
@@ -1002,7 +1002,6 @@
 <div class="doc doc-object doc-module">
 
 
-
 <a id="fancy_dataclass.mixin"></a>
   <div class="doc doc-contents first">
 
@@ -1022,7 +1021,7 @@
 
 
 <h2 id="fancy_dataclass.mixin.DataclassAdaptable" class="doc doc-heading">
-          <code>DataclassAdaptable</code>
+        <code>DataclassAdaptable</code>
 
 
 </h2>
@@ -1033,9 +1032,10 @@
   
       <p>Mixin class providing the ability to convert (adapt) one dataclass type to another.</p>
 
-            <details class="quote">
-              <summary>Source code in <code>fancy_dataclass/mixin.py</code></summary>
-              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-29">29</a></span>
+
+        <details class="quote">
+          <summary>Source code in <code>fancy_dataclass/mixin.py</code></summary>
+          <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-29">29</a></span>
 <span class="normal"><a href="#__codelineno-0-30">30</a></span>
 <span class="normal"><a href="#__codelineno-0-31">31</a></span>
 <span class="normal"><a href="#__codelineno-0-32">32</a></span>
@@ -1065,12 +1065,11 @@
 </span><span id="__span-0-42"><a id="__codelineno-0-42" name="__codelineno-0-42"></a><span class="sd">        By default this will attempt to coerce the fields from the original type to the new type, but subclasses may override the behavior, e.g. to allow field renaming.&quot;&quot;&quot;</span>
 </span><span id="__span-0-43"><a id="__codelineno-0-43" name="__codelineno-0-43"></a>        <span class="k">return</span> <span class="n">dest_type</span><span class="o">.</span><span class="n">coerce</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 </span></code></pre></div></td></tr></table></div>
-            </details>
+        </details>
 
   
 
   <div class="doc doc-children">
-
 
 
 
@@ -1085,7 +1084,7 @@
 
 
 <h3 id="fancy_dataclass.mixin.DataclassAdaptable.adapt_to" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">adapt_to</span><span class="p">(</span><span class="n">dest_type</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">adapt_to</span><span class="p">(</span><span class="n">dest_type</span><span class="p">)</span></code>
 
 </h3>
 
@@ -1095,9 +1094,9 @@
       <p>Converts a <code>DataclassAdaptable</code> object to another type, <code>dest_type</code>.</p>
 <p>By default this will attempt to coerce the fields from the original type to the new type, but subclasses may override the behavior, e.g. to allow field renaming.</p>
 
-          <details class="quote">
-            <summary>Source code in <code>fancy_dataclass/mixin.py</code></summary>
-            <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-39">39</a></span>
+      <details class="quote">
+        <summary>Source code in <code>fancy_dataclass/mixin.py</code></summary>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-39">39</a></span>
 <span class="normal"><a href="#__codelineno-0-40">40</a></span>
 <span class="normal"><a href="#__codelineno-0-41">41</a></span>
 <span class="normal"><a href="#__codelineno-0-42">42</a></span>
@@ -1107,18 +1106,17 @@
 </span><span id="__span-0-42"><a id="__codelineno-0-42" name="__codelineno-0-42"></a><span class="sd">    By default this will attempt to coerce the fields from the original type to the new type, but subclasses may override the behavior, e.g. to allow field renaming.&quot;&quot;&quot;</span>
 </span><span id="__span-0-43"><a id="__codelineno-0-43" name="__codelineno-0-43"></a>    <span class="k">return</span> <span class="n">dest_type</span><span class="o">.</span><span class="n">coerce</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 </span></code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="fancy_dataclass.mixin.DataclassAdaptable.coerce" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">coerce</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">coerce</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span></code>
   
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
@@ -1132,9 +1130,9 @@
       <p>Constructs a <code>DataclassAdaptable</code> object from the attributes of an arbitrary object.</p>
 <p>Any missing attributes will be set to their default values.</p>
 
-          <details class="quote">
-            <summary>Source code in <code>fancy_dataclass/mixin.py</code></summary>
-            <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-32">32</a></span>
+      <details class="quote">
+        <summary>Source code in <code>fancy_dataclass/mixin.py</code></summary>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-32">32</a></span>
 <span class="normal"><a href="#__codelineno-0-33">33</a></span>
 <span class="normal"><a href="#__codelineno-0-34">34</a></span>
 <span class="normal"><a href="#__codelineno-0-35">35</a></span>
@@ -1146,7 +1144,7 @@
 </span><span id="__span-0-36"><a id="__codelineno-0-36" name="__codelineno-0-36"></a><span class="sd">    Any missing attributes will be set to their default values.&quot;&quot;&quot;</span>
 </span><span id="__span-0-37"><a id="__codelineno-0-37" name="__codelineno-0-37"></a>    <span class="k">return</span> <span class="n">coerce_to_dataclass</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">)</span>
 </span></code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
@@ -1156,7 +1154,6 @@
   </div>
 
   </div>
-
 
 </div>
 
@@ -1165,7 +1162,7 @@
 
 
 <h2 id="fancy_dataclass.mixin.DataclassMixin" class="doc doc-heading">
-          <code>DataclassMixin</code>
+        <code>DataclassMixin</code>
 
 
 </h2>
@@ -1178,9 +1175,10 @@
 <p>For example, this could provide features for conversion to/from JSON (<a class="autorefs autorefs-internal" href="json.html#fancy_dataclass.json.JSONDataclass"><code>JSONDataclass</code></a>), the ability to construct CLI argument parsers (<a class="autorefs autorefs-internal" href="cli.html#fancy_dataclass.cli.ArgparseDataclass"><code>ArgparseDataclass</code></a>), etc.</p>
 <p>This mixin also provides a <a class="autorefs autorefs-internal" href="#fancy_dataclass.mixin.DataclassMixin.wrap_dataclass"><code>wrap_dataclass</code></a> decorator which can be used to wrap an existing dataclass type into one that provides the mixin's functionality.</p>
 
-            <details class="quote">
-              <summary>Source code in <code>fancy_dataclass/mixin.py</code></summary>
-              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-147">147</a></span>
+
+        <details class="quote">
+          <summary>Source code in <code>fancy_dataclass/mixin.py</code></summary>
+          <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-147">147</a></span>
 <span class="normal"><a href="#__codelineno-0-148">148</a></span>
 <span class="normal"><a href="#__codelineno-0-149">149</a></span>
 <span class="normal"><a href="#__codelineno-0-150">150</a></span>
@@ -1366,12 +1364,11 @@
 </span><span id="__span-0-238"><a id="__codelineno-0-238" name="__codelineno-0-238"></a><span class="sd">            TypeError: If no subclass with the given name exists&quot;&quot;&quot;</span>
 </span><span id="__span-0-239"><a id="__codelineno-0-239" name="__codelineno-0-239"></a>        <span class="k">return</span> <span class="n">get_subclass_with_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">typename</span><span class="p">)</span>
 </span></code></pre></div></td></tr></table></div>
-            </details>
+        </details>
 
   
 
   <div class="doc doc-children">
-
 
 
 
@@ -1386,7 +1383,7 @@
 
 
 <h3 id="fancy_dataclass.mixin.DataclassMixin.__init_subclass__" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">__init_subclass__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">__init_subclass__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
   
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
@@ -1401,9 +1398,9 @@
 <p>If the base class has a <code>__settings_type__</code> class attribute (subclass of <a class="autorefs autorefs-internal" href="#fancy_dataclass.mixin.DataclassMixinSettings"><code>DataclassMixinSettings</code></a>), that class will be instantiated with the provided arguments and stored as a <code>__settings__</code> attribute on the subclass. These settings can be used to customize the behavior of the subclass.</p>
 <p>Additionally, the mixin may set the <code>__field_settings_type__</code> class attribute to indicate the type (subclass of <a class="autorefs autorefs-internal" href="#fancy_dataclass.mixin.FieldSettings"><code>FieldSettings</code></a>) that should be used for field settings, which are extracted from each field's <code>metadata</code> dict.</p>
 
-          <details class="quote">
-            <summary>Source code in <code>fancy_dataclass/mixin.py</code></summary>
-            <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-158">158</a></span>
+      <details class="quote">
+        <summary>Source code in <code>fancy_dataclass/mixin.py</code></summary>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-158">158</a></span>
 <span class="normal"><a href="#__codelineno-0-159">159</a></span>
 <span class="normal"><a href="#__codelineno-0-160">160</a></span>
 <span class="normal"><a href="#__codelineno-0-161">161</a></span>
@@ -1423,18 +1420,17 @@
 </span><span id="__span-0-166"><a id="__codelineno-0-166" name="__codelineno-0-166"></a>    <span class="n">_configure_mixin_settings</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </span><span id="__span-0-167"><a id="__codelineno-0-167" name="__codelineno-0-167"></a>    <span class="n">_configure_field_settings_type</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
 </span></code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="fancy_dataclass.mixin.DataclassMixin.__post_dataclass_wrap__" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">__post_dataclass_wrap__</span><span class="p">()</span></code>
+<code class="highlight language-python"><span class="n">__post_dataclass_wrap__</span><span class="p">()</span></code>
   
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
@@ -1448,9 +1444,9 @@
       <p>A hook that is called after the <a href="https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass"><code>dataclasses.dataclass</code></a> decorator is applied to the mixin subclass.</p>
 <p>This can be used, for instance, to validate the dataclass fields at definition time.</p>
 
-          <details class="quote">
-            <summary>Source code in <code>fancy_dataclass/mixin.py</code></summary>
-            <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-169">169</a></span>
+      <details class="quote">
+        <summary>Source code in <code>fancy_dataclass/mixin.py</code></summary>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-169">169</a></span>
 <span class="normal"><a href="#__codelineno-0-170">170</a></span>
 <span class="normal"><a href="#__codelineno-0-171">171</a></span>
 <span class="normal"><a href="#__codelineno-0-172">172</a></span>
@@ -1462,18 +1458,17 @@
 </span><span id="__span-0-173"><a id="__codelineno-0-173" name="__codelineno-0-173"></a><span class="sd">    This can be used, for instance, to validate the dataclass fields at definition time.&quot;&quot;&quot;</span>
 </span><span id="__span-0-174"><a id="__codelineno-0-174" name="__codelineno-0-174"></a>    <span class="n">_check_field_settings</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
 </span></code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="fancy_dataclass.mixin.DataclassMixin._replace" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">_replace</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">_replace</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h3>
 
@@ -1481,8 +1476,6 @@
   <div class="doc doc-contents ">
   
       <p>Constructs a new object with the provided fields modified.</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1500,19 +1493,13 @@
           <td>
                 <code><span title="typing.Any">Any</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Dataclass fields to modify</p>
-            </div>
-          </td>
+          <td><p>Dataclass fields to modify</p></td>
           <td>
                 <code>{}</code>
           </td>
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1527,16 +1514,10 @@
           <td>
                 <code><span title="typing_extensions.Self">Self</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>New object with selected fields modified</p>
-            </div>
-          </td>
+          <td><p>New object with selected fields modified</p></td>
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Raises:</strong></p>
   <table>
@@ -1551,18 +1532,14 @@
           <td>
                 <code>TypeError</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>If an invalid dataclass field is provided</p>
-            </div>
-          </td>
+          <td><p>If an invalid dataclass field is provided</p></td>
         </tr>
     </tbody>
   </table>
 
-          <details class="quote">
-            <summary>Source code in <code>fancy_dataclass/mixin.py</code></summary>
-            <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-207">207</a></span>
+      <details class="quote">
+        <summary>Source code in <code>fancy_dataclass/mixin.py</code></summary>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-207">207</a></span>
 <span class="normal"><a href="#__codelineno-0-208">208</a></span>
 <span class="normal"><a href="#__codelineno-0-209">209</a></span>
 <span class="normal"><a href="#__codelineno-0-210">210</a></span>
@@ -1600,18 +1577,17 @@
 </span><span id="__span-0-224"><a id="__codelineno-0-224" name="__codelineno-0-224"></a>            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">key</span><span class="si">!r}</span><span class="s1"> is not a valid field for </span><span class="si">{</span><span class="n">obj_class_name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
 </span><span id="__span-0-225"><a id="__codelineno-0-225" name="__codelineno-0-225"></a>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="o">**</span><span class="n">d</span><span class="p">)</span>
 </span></code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="fancy_dataclass.mixin.DataclassMixin.wrap_dataclass" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">wrap_dataclass</span><span class="p">(</span><span class="n">tp</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">wrap_dataclass</span><span class="p">(</span><span class="n">tp</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
   
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
@@ -1623,8 +1599,6 @@
   <div class="doc doc-contents ">
   
       <p>Wraps a dataclass type into a new one which inherits from this mixin class and is otherwise the same.</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1642,11 +1616,7 @@
           <td>
                 <code><span title="typing.Type">Type</span>[<span title="fancy_dataclass.mixin.T">T</span>]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>A dataclass type</p>
-            </div>
-          </td>
+          <td><p>A dataclass type</p></td>
           <td>
               <em>required</em>
           </td>
@@ -1656,19 +1626,13 @@
           <td>
                 <code><span title="typing.Any">Any</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Keyword arguments to type constructor</p>
-            </div>
-          </td>
+          <td><p>Keyword arguments to type constructor</p></td>
           <td>
                 <code>{}</code>
           </td>
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1683,16 +1647,10 @@
           <td>
                 <code><span title="typing.Type">Type</span>[<span title="typing_extensions.Self">Self</span>]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>New dataclass type inheriting from the mixin</p>
-            </div>
-          </td>
+          <td><p>New dataclass type inheriting from the mixin</p></td>
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Raises:</strong></p>
   <table>
@@ -1707,18 +1665,14 @@
           <td>
                 <code>TypeError</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>If the given type is not a dataclass</p>
-            </div>
-          </td>
+          <td><p>If the given type is not a dataclass</p></td>
         </tr>
     </tbody>
   </table>
 
-          <details class="quote">
-            <summary>Source code in <code>fancy_dataclass/mixin.py</code></summary>
-            <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-182">182</a></span>
+      <details class="quote">
+        <summary>Source code in <code>fancy_dataclass/mixin.py</code></summary>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-182">182</a></span>
 <span class="normal"><a href="#__codelineno-0-183">183</a></span>
 <span class="normal"><a href="#__codelineno-0-184">184</a></span>
 <span class="normal"><a href="#__codelineno-0-185">185</a></span>
@@ -1766,7 +1720,7 @@
 </span><span id="__span-0-204"><a id="__codelineno-0-204" name="__codelineno-0-204"></a>            <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="n">tp</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">tp</span><span class="p">),</span> <span class="p">{},</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </span><span id="__span-0-205"><a id="__codelineno-0-205" name="__codelineno-0-205"></a>        <span class="k">raise</span>
 </span></code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
@@ -1776,7 +1730,6 @@
   </div>
 
   </div>
-
 
 </div>
 
@@ -1785,23 +1738,24 @@
 
 
 <h2 id="fancy_dataclass.mixin.DataclassMixinSettings" class="doc doc-heading">
-          <code>DataclassMixinSettings</code>
+        <code>DataclassMixinSettings</code>
 
 
 </h2>
 
 
   <div class="doc doc-contents ">
-          <p class="doc doc-class-bases">
-            Bases: <code><a class="autorefs autorefs-internal" title="fancy_dataclass.mixin.DataclassAdaptable" href="#fancy_dataclass.mixin.DataclassAdaptable">DataclassAdaptable</a></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><a class="autorefs autorefs-internal" title="fancy_dataclass.mixin.DataclassAdaptable" href="#fancy_dataclass.mixin.DataclassAdaptable">DataclassAdaptable</a></code></p>
 
   
       <p>Base class for settings to be associated with <code>fancy_dataclass</code> mixins.</p>
 <p>Each <a class="autorefs autorefs-internal" href="#fancy_dataclass.mixin.DataclassMixin"><code>DataclassMixin</code></a> class may store a <code>__settings_type__</code> attribute consisting of a subclass of this class. The settings object will be instantiated as a <code>__settings__</code> attribute on a mixin subclass when it is defined.</p>
 
-            <details class="quote">
-              <summary>Source code in <code>fancy_dataclass/mixin.py</code></summary>
-              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-46">46</a></span>
+
+        <details class="quote">
+          <summary>Source code in <code>fancy_dataclass/mixin.py</code></summary>
+          <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-46">46</a></span>
 <span class="normal"><a href="#__codelineno-0-47">47</a></span>
 <span class="normal"><a href="#__codelineno-0-48">48</a></span>
 <span class="normal"><a href="#__codelineno-0-49">49</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-46"><a id="__codelineno-0-46" name="__codelineno-0-46"></a><span class="k">class</span> <span class="nc">DataclassMixinSettings</span><span class="p">(</span><span class="n">DataclassAdaptable</span><span class="p">):</span>
@@ -1809,10 +1763,9 @@
 </span><span id="__span-0-48"><a id="__codelineno-0-48" name="__codelineno-0-48"></a>
 </span><span id="__span-0-49"><a id="__codelineno-0-49" name="__codelineno-0-49"></a><span class="sd">    Each [`DataclassMixin`][fancy_dataclass.mixin.DataclassMixin] class may store a `__settings_type__` attribute consisting of a subclass of this class. The settings object will be instantiated as a `__settings__` attribute on a mixin subclass when it is defined.&quot;&quot;&quot;</span>
 </span></code></pre></div></td></tr></table></div>
-            </details>
+        </details>
 
   </div>
-
 
 </div>
 
@@ -1821,23 +1774,24 @@
 
 
 <h2 id="fancy_dataclass.mixin.FieldSettings" class="doc doc-heading">
-          <code>FieldSettings</code>
+        <code>FieldSettings</code>
 
 
 </h2>
 
 
   <div class="doc doc-contents ">
-          <p class="doc doc-class-bases">
-            Bases: <code><a class="autorefs autorefs-internal" title="fancy_dataclass.mixin.DataclassAdaptable" href="#fancy_dataclass.mixin.DataclassAdaptable">DataclassAdaptable</a></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><a class="autorefs autorefs-internal" title="fancy_dataclass.mixin.DataclassAdaptable" href="#fancy_dataclass.mixin.DataclassAdaptable">DataclassAdaptable</a></code></p>
 
   
       <p>Class storing a bundle of parameters that will be extracted from dataclass field metadata.</p>
 <p>Each <a class="autorefs autorefs-internal" href="#fancy_dataclass.mixin.DataclassMixin"><code>DataclassMixin</code></a> class may store a <code>__field_settings_type__</code> attribute which is a <code>FieldSettings</code> subclass. This specifies which keys in the <code>field.metadata</code> dictionary are recognized by the mixin class. Other keys will be ignored (unless they are used by other mixin classes).</p>
 
-            <details class="quote">
-              <summary>Source code in <code>fancy_dataclass/mixin.py</code></summary>
-              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-52">52</a></span>
+
+        <details class="quote">
+          <summary>Source code in <code>fancy_dataclass/mixin.py</code></summary>
+          <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-52">52</a></span>
 <span class="normal"><a href="#__codelineno-0-53">53</a></span>
 <span class="normal"><a href="#__codelineno-0-54">54</a></span>
 <span class="normal"><a href="#__codelineno-0-55">55</a></span>
@@ -1889,12 +1843,11 @@
 </span><span id="__span-0-76"><a id="__codelineno-0-76" name="__codelineno-0-76"></a>        <span class="n">obj</span><span class="o">.</span><span class="n">type_check</span><span class="p">()</span>
 </span><span id="__span-0-77"><a id="__codelineno-0-77" name="__codelineno-0-77"></a>        <span class="k">return</span> <span class="n">obj</span>
 </span></code></pre></div></td></tr></table></div>
-            </details>
+        </details>
 
   
 
   <div class="doc doc-children">
-
 
 
 
@@ -1909,7 +1862,7 @@
 
 
 <h3 id="fancy_dataclass.mixin.FieldSettings.from_field" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">from_field</span><span class="p">(</span><span class="n">field</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">from_field</span><span class="p">(</span><span class="n">field</span><span class="p">)</span></code>
   
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
@@ -1921,8 +1874,6 @@
   <div class="doc doc-contents ">
   
       <p>Constructs a <code>FieldSettings</code> object from a <a href="https://docs.python.org/3/library/dataclasses.html#dataclasses.Field"><code>dataclasses.Field</code></a>'s metadata.</p>
-
-
 
   <p><strong>Raises:</strong></p>
   <table>
@@ -1937,18 +1888,14 @@
           <td>
                 <code>TypeError</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>If any field has the wrong type</p>
-            </div>
-          </td>
+          <td><p>If any field has the wrong type</p></td>
         </tr>
     </tbody>
   </table>
 
-          <details class="quote">
-            <summary>Source code in <code>fancy_dataclass/mixin.py</code></summary>
-            <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-68">68</a></span>
+      <details class="quote">
+        <summary>Source code in <code>fancy_dataclass/mixin.py</code></summary>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-68">68</a></span>
 <span class="normal"><a href="#__codelineno-0-69">69</a></span>
 <span class="normal"><a href="#__codelineno-0-70">70</a></span>
 <span class="normal"><a href="#__codelineno-0-71">71</a></span>
@@ -1968,18 +1915,17 @@
 </span><span id="__span-0-76"><a id="__codelineno-0-76" name="__codelineno-0-76"></a>    <span class="n">obj</span><span class="o">.</span><span class="n">type_check</span><span class="p">()</span>
 </span><span id="__span-0-77"><a id="__codelineno-0-77" name="__codelineno-0-77"></a>    <span class="k">return</span> <span class="n">obj</span>
 </span></code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="fancy_dataclass.mixin.FieldSettings.type_check" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">type_check</span><span class="p">()</span></code>
+<code class="highlight language-python"><span class="n">type_check</span><span class="p">()</span></code>
 
 </h3>
 
@@ -1987,8 +1933,6 @@
   <div class="doc doc-contents ">
   
       <p>Checks that every field on the <code>FieldSettings</code> object is the proper type.</p>
-
-
 
   <p><strong>Raises:</strong></p>
   <table>
@@ -2003,18 +1947,14 @@
           <td>
                 <code>TypeError</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>If a field is the wrong type</p>
-            </div>
-          </td>
+          <td><p>If a field is the wrong type</p></td>
         </tr>
     </tbody>
   </table>
 
-          <details class="quote">
-            <summary>Source code in <code>fancy_dataclass/mixin.py</code></summary>
-            <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-57">57</a></span>
+      <details class="quote">
+        <summary>Source code in <code>fancy_dataclass/mixin.py</code></summary>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-57">57</a></span>
 <span class="normal"><a href="#__codelineno-0-58">58</a></span>
 <span class="normal"><a href="#__codelineno-0-59">59</a></span>
 <span class="normal"><a href="#__codelineno-0-60">60</a></span>
@@ -2034,7 +1974,7 @@
 </span><span id="__span-0-65"><a id="__codelineno-0-65" name="__codelineno-0-65"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">_is_instance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">fld</span><span class="o">.</span><span class="n">type</span><span class="p">):</span>
 </span><span id="__span-0-66"><a id="__codelineno-0-66" name="__codelineno-0-66"></a>            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;expected type </span><span class="si">{</span><span class="n">fld</span><span class="o">.</span><span class="n">type</span><span class="si">}</span><span class="s1"> for field </span><span class="si">{</span><span class="n">fld</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s1">, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">val</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
 </span></code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
@@ -2044,7 +1984,6 @@
   </div>
 
   </div>
-
 
 </div>
 
