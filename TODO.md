@@ -6,9 +6,6 @@
 
 - `ArgparseDataclass`
   - Support subparsers and mutex groups
-  - Mutex groups
-    - Use `exclusive_group` kwarg instead of `group`
-    - Test group within mutex group and vice versa
   - Subparsers
     - Single nested field marked with `subcommand=True`
     - Field should be a `Union` type, all of whose variants are `ArgparseDataclass` subclasses
@@ -21,6 +18,22 @@
   - Test subparsers, groups, mutually exclusive groups
 
 ## v0.4.5
+
+- Versioning
+  - `version` class setting (int) and `version` read-only class property
+  - Should probably subclass `DictDataclass`, ensures that `version` property is stored in dict
+    - Or could make it implicit, setting `version` to a `ClassVar` with `suppress` field setting `False`
+  - Maybe subclass `DictDataclass`? With `suppress
+  , `suppress=False`)
+  - `VersionedDataclass`
+  - `@version` decorator (with required integer argument)
+    - Allows you to define multiple classes with the same name; stores distinct `version` `ClassVar` attributes and registers them with the same name
+    - Initialization looks up the version number in the registry; if only newer exists:
+      - If `strict=True`, raises an error; otherwise, attempts to coerce and issues a warning
+    - Error if duplicate versions are set
+  - `def migrate(self, version)` method from object of one version to another
+
+## v0.4.6
 
 - documentation
   - Dataclass mixins/settings
@@ -47,13 +60,6 @@
   - Convert to/from `pandas` `Series` and `DataFrame`?
     - If so, make `pandas` an optional dependency
     - Easy to implement conversion via `dict`, if we subclass `DictDataclass`
-- Versioning (`version` ClassVar, with suppress=False)
-  - `@version` decorator (with required integer argument)
-    - Allows you to define multiple classes with the same name; stores distinct `version` `ClassVar` attributes and registers them with the same name
-    - `from_dict` looks up the version number in the registry; if only newer exists:
-      - If `strict=True`, raises an error; otherwise, attempts to coerce and issues a warning
-    - Error if duplicate versions are set
-  - Migration
 - `TOMLDataclass`
   - Require subclass to set `qualified_type=True`, like `JSONDataclass`?
   - Preserve document structure via `tomlkit`

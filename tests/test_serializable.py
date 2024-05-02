@@ -191,6 +191,13 @@ class DCSuppress(JSONDataclass, suppress_defaults=False):
     z: int = field(default=3, metadata={'suppress': False})
 
 @dataclass
+class DCSuppress2(JSONDataclass, suppress_defaults=True):
+    cv1: ClassVar[int] = field(default=0)
+    x: int = field(default=1)
+    y: int = field(default=2, metadata={'suppress': True})
+    z: int = field(default=3, metadata={'suppress': False})
+
+@dataclass
 class DCList(JSONDataclass):
     vals: List[DCAny]
 
@@ -235,6 +242,7 @@ TEST_JSON = [
     DCAny({}),
     DCAny(None),
     DCSuppress(),
+    DCSuppress2(),
     DCList([DCAny(None), DCAny(1), DCAny([1]), DCAny(None), DCAny({})]),
 ]
 
@@ -547,6 +555,16 @@ class TestJSON(TestDict):
         assert obj.to_dict() == d
         assert obj.to_dict(full=True) == d
         assert DCSuppress.from_dict(d).y == 2
+        d2 = {'z': 3}
+        obj2 = DCSuppress2()
+        assert obj2.to_dict() == d2
+        assert obj2.to_dict(full=True) == d
+        assert DCSuppress2.from_dict(d2) == obj2
+        assert DCSuppress2.from_dict(d) == obj2
+        obj2 = DCSuppress2(y=100)
+        assert obj2.to_dict() == {'z': 3}
+        assert obj2.to_dict(full=True) == d
+        assert DCSuppress2.from_dict(d).y == 2
 
     def test_suppress_required_field(self):
         """Tests that a required field with suppress=True cannot create a valid dict."""
@@ -635,7 +653,7 @@ class TestJSON(TestDict):
         class MyDC4(JSONDataclass):
             x: ClassVar[int] = field(default=1, metadata={'suppress': False})
         obj = MyDC4()
-        assert obj.to_dict() == {}  # equals default, so suppress it
+        assert obj.to_dict() == {'x': 1}  # equals default, but suppress=False overrides it
         assert obj.to_dict(full=True) == {'x': 1}
         obj0 = MyDC4.from_dict({})
         assert obj0 == obj

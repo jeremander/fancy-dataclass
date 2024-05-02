@@ -74,7 +74,8 @@ class DictDataclassFieldSettings(FieldSettings):
 
     - `suppress`: suppress this field in the dict representation
         - Note: if the field is a class variable, it is excluded by default; you can set `suppress=False` to force the field's inclusion.
-    - `suppress_default`: suppress this field in the dict if it matches its default value (overrides class-level `suppress_defaults`)"""
+    - `suppress_default`: suppress this field in the dict if it matches its default value (overrides class-level `suppress_defaults`)
+        - Note: `suppress=False` will override this"""
     # suppress the field in the dict
     suppress: Optional[bool] = None
     # suppress the field in the dict if its value matches the default
@@ -146,8 +147,8 @@ class DictDataclass(DataclassMixin):
             if (is_class_var or (not fld.init)) if (settings.suppress is None) else settings.suppress:
                 continue
             val = getattr(self, name)
-            # suppress default (by default) if full=False and class-configured suppress_defaults=True
-            if (not full) and (class_suppress_defaults if (settings.suppress_default is None) else settings.suppress_default):
+            # suppress default (by default) if full=False, suppress!=False, and class-configured suppress_defaults=True
+            if (not full) and (settings.suppress is not False) and (class_suppress_defaults if (settings.suppress_default is None) else settings.suppress_default):
                 # suppress values that match the default
                 try:
                     if val == fld.default:
