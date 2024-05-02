@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser, Namespace, _ArgumentGroup, _MutuallyExclusiveGroup
 from contextlib import suppress
 from dataclasses import MISSING, dataclass, fields
 from enum import IntEnum
-from typing import Any, Callable, ClassVar, Dict, List, Literal, Optional, Sequence, Type, TypeVar, Union, get_args, get_origin
+from typing import Any, Callable, ClassVar, Dict, List, Literal, Optional, Sequence, Tuple, Type, TypeVar, Union, get_args, get_origin
 
 from typing_extensions import Self
 
@@ -14,6 +14,39 @@ from fancy_dataclass.utils import check_dataclass, issubclass_safe, type_is_opti
 T = TypeVar('T')
 
 
+####################
+# HELPER FUNCTIONS #
+####################
+
+def _get_parser_group_name(settings: 'ArgparseDataclassFieldSettings', name: str) -> Optional[Tuple[str, bool]]:
+    if settings.group:
+        if settings.exclusive_group:
+            raise ValueError(f'{name!r} specifies both group and exclusive_group: must choose only one')
+        return (settings.group, False)
+    else:
+        if settings.exclusive_group:
+            return (settings.exclusive_group, True)
+        return None
+
+def _get_parser_group(parser: ArgumentParser, name: str) -> Optional[_ArgumentGroup]:
+    for group in getattr(parser, '_action_groups', []):
+        if getattr(group, 'title', None) == name:
+            assert isinstance(group, _ArgumentGroup)
+            return group
+    return None
+
+def _get_parser_exclusive_group(parser: ArgumentParser, name: str) -> Optional[_MutuallyExclusiveGroup]:
+    for group in getattr(parser, '_mutually_exclusive_groups', []):
+        if getattr(group, 'title', None) == name:
+            assert isinstance(group, _MutuallyExclusiveGroup)
+            return group
+    return None
+
+
+##########
+# MIXINS #
+##########
+
 @dataclass
 class ArgparseDataclassFieldSettings(FieldSettings):
     """Settings for [`ArgparseDataclass`][fancy_dataclass.cli.ArgparseDataclass] fields.
@@ -23,19 +56,20 @@ class ArgparseDataclassFieldSettings(FieldSettings):
     - `type`: override the dataclass field type with a different type
     - `args`: lists the command-line arguments explicitly
     - `action`: type of action taken when the argument is encountered
-    - `nargs`: number of command-line arguments (use `*` for lists, `+` for non-empty lists
+    - `nargs`: number of command-line arguments (use `*` for lists, `+` for non-empty lists)
     - `const`: constant value required by some action/nargs combinations
     - `choices`: list of possible inputs allowed
     - `help`: help string
     - `metavar`: name for the argument in usage messages
     - `group`: name of the argument group in which to put the argument; the group will be created if it does not already exist in the parser
+    - `exclusive_group`: name of the mutually exclusive argument group in which to put the argument; the group will be created if it does not already exist in the parser
     - `parse_exclude`: boolean flag indicating that the field should not be included in the parser
 
     Note that these line up closely with the usual options that can be passed to [`ArgumentParser.add_argument`](https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser.add_argument).
 
     **Positional arguments vs. options**:
 
-    - If a field explicitly lists arguments in the `args` metadata field, the argument will be an option if the first listed argument starts with a dash, otherwise it will be a positional argument.
+    - If a field explicitly lists arguments in the `args` metadata field, the argument will be an option if the first listed argument starts with a dash; otherwise it will be a positional argument.
         - If it is an option but specifies no default value, it will be a required option.
     - If `args` are absent, the field will be an option if either (1) it specifies a default value, or (2) it is a boolean type; otherwise it is a positional argument.
     """
@@ -48,6 +82,7 @@ class ArgparseDataclassFieldSettings(FieldSettings):
     help: Optional[str] = None
     metavar: Optional[Union[str, Sequence[str]]] = None
     group: Optional[str] = None
+    exclusive_group: Optional[str] = None
     parse_exclude: bool = False
 
 
@@ -118,20 +153,7 @@ class ArgparseDataclass(DataclassMixin):
         settings = cls._field_settings(fld).adapt_to(ArgparseDataclassFieldSettings)
         if settings.parse_exclude:  # exclude the argument from the parser
             return
-        if (group_name := settings.group) is not None:  # add argument to a group instead of the main parser
-            for group in getattr(parser, '_action_groups', []):  # get argument group with the given name
-                if getattr(group, 'title', None) == group_name:
-                    break
-            else:  # group not found, so create it
-                group_kwargs = {}
-                if issubclass_safe(fld.type, ArgparseDataclass):  # get kwargs from nested ArgparseDataclass
-                    group_kwargs = fld.type.parser_kwargs()
-                group = parser.add_argument_group(group_name, **group_kwargs)
-            parser = group
-        if issubclass_safe(fld.type, ArgparseDataclass):
-            # recursively configure a nested ArgparseDataclass field
-            fld.type.configure_parser(parser)
-            return
+        is_nested = issubclass_safe(fld.type, ArgparseDataclass)
         # determine the type of the parser argument for the field
         tp = settings.type or fld.type
         action = settings.action or 'store'
@@ -194,7 +216,33 @@ class ArgparseDataclass(DataclassMixin):
                 kwargs[key] = fld.metadata[key]
         if (kwargs.get('action') == 'store_const'):
             del kwargs['type']
-        parser.add_argument(*args, **kwargs)
+        if (result := _get_parser_group_name(settings, fld.name)) is not None:
+            # add argument to the group instead of the main parser
+            (group_name, is_exclusive) = result
+            if is_exclusive:
+                group: Optional[Union[_ArgumentGroup, _MutuallyExclusiveGroup]] = _get_parser_exclusive_group(parser, group_name)
+            else:
+                group = _get_parser_group(parser, group_name)
+            if not group:  # group not found, so create it
+                if is_exclusive:
+                    if is_nested:
+                        raise ValueError(f'mutually exclusive argument group not supported with nested {fld.type.__name__}')
+                    # get required
+                    group = parser.add_mutually_exclusive_group()
+                    # set the title attribute so the group can be retrieved later
+                    group.title = group_name
+                    group.required = kwargs.get('required', False)
+                else:
+                    # get kwargs from nested ArgparseDataclass
+                    group_kwargs: Dict[str, Any] = fld.type.parser_kwargs() if is_nested else {}
+                    if isinstance(parser, _ArgumentGroup):
+                        raise ValueError('nested argument groups are not allowed')
+                    group = parser.add_argument_group(group_name, **group_kwargs)
+            parser = group  # type: ignore[assignment]
+        if is_nested:  # recursively configure a nested ArgparseDataclass field
+            fld.type.configure_parser(parser)
+        else:
+            parser.add_argument(*args, **kwargs)
 
     @classmethod
     def configure_parser(cls, parser: ArgumentParser) -> None:
@@ -256,13 +304,19 @@ class ArgparseDataclass(DataclassMixin):
 
         Returns:
             An instance of this class derived from the parsed arguments"""
-        # do some basic type coercion if necessary
         d = cls.args_to_dict(args)
+        kwargs = {}
         for fld in fields(cls):  # type: ignore[arg-type]
-            origin = get_origin(fld.type)
-            if (origin is tuple) and isinstance(d.get(fld.name), list):
-                d[fld.name] = tuple(d[fld.name])
-        return cls(**d)
+            name = fld.name
+            if issubclass_safe(fld.type, ArgparseDataclass):
+                # handle nested ArgparseDataclass
+                kwargs[name] = fld.type.from_args(args)
+            elif name in d:
+                if (get_origin(fld.type) is tuple) and isinstance(d.get(name), list):
+                    kwargs[name] = tuple(d[name])
+                else:
+                    kwargs[name] = d[name]
+        return cls(**kwargs)
 
     @classmethod
     def process_args(cls, parser: ArgumentParser, args: Namespace) -> None:

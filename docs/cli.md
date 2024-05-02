@@ -101,6 +101,12 @@ python calculator.py div 8 3 --round
 - Can modify parser manually, or customize handling a specific arg
 -->
 
+<!-- ### Groups and Exclusive Groups
+
+- Use `group` or `exclusive_group` metadata to mark them
+- Can nest `CLIDataclass` to provide group help string (as docstring by default)
+- Cannot doubly nest groups or exclusive groups -->
+
 <style>
 .md-sidebar--secondary {
     display: none !important;

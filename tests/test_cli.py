@@ -1,5 +1,6 @@
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
 from dataclasses import dataclass, field
+import re
 import sys
 from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 
@@ -254,3 +255,54 @@ def test_argparse_options():
     class DC25(ArgparseDataclass):
         x: int = field(metadata={'type': lambda x: int(x) + 1})
     assert DC25.from_cli_args(['1']).x == 2
+
+def test_groups():
+    """Tests the behavior of groups and nested groups."""
+    # basic group
+    @dataclass
+    class DCGroup1(ArgparseDataclass):
+        """Docstring for DCGroup1."""
+        x: int = field(metadata={'group': 'xy group'})
+        y: int = field(default=2, metadata={'help': 'y value', 'group': 'xy group'})
+    help_str = DCGroup1.make_parser().format_help()
+    assert DCGroup1.__doc__ in help_str
+    assert re.search(r'xy group:\s+x\s+-y Y\s+y value', help_str)
+    obj = DCGroup1.from_cli_args(['1'])
+    assert obj.x == 1
+    assert obj.y == 2
+    # # basic group with nested ArgparseDataclass
+    @dataclass
+    class DCGroupXY(ArgparseDataclass):
+        """Docstring for DCGroupXY."""
+        x: int
+        y: int = field(default=2, metadata={'help': 'y value'})
+    @dataclass
+    class DCGroup2(ArgparseDataclass):
+        """Docstring for DCGroup2."""
+        xy: DCGroupXY = field(metadata={'help': 'group for x and y', 'group': 'xy group'})
+    help_str = DCGroup2.make_parser().format_help()
+    assert DCGroup2.__doc__ in help_str
+    assert re.search(r'xy group:\s+Docstring for DCGroupXY\.\s+x\s+-y Y\s+y value', help_str)
+    obj = DCGroup2.from_cli_args(['1'])
+    assert obj.xy == DCGroupXY(1, 2)
+    # doubly nested group (not allowed)
+    @dataclass
+    class DCGroupWXY1(ArgparseDataclass):
+        w: str
+        xy: DCGroupXY = field(metadata={'group': 'xy group'})
+    @dataclass
+    class DCGroup3(ArgparseDataclass):
+        wxy: DCGroupWXY1 = field(metadata={'group': 'wxy group'})
+    with pytest.raises(ValueError, match='nested argument groups are not allowed'):
+        _ = DCGroup3.make_parser()
+    # group with nested ArgparseDataclass is OK
+    @dataclass
+    class DCGroupWXY2(ArgparseDataclass):
+        w: str = field(metadata={'help': 'w value'})
+        xy: DCGroupXY
+    @dataclass
+    class DCGroup4(ArgparseDataclass):
+        wxy: DCGroupWXY2 = field(metadata={'group': 'wxy group'})
+    help_str = DCGroup4.make_parser().format_help()
+    assert re.search('wxy group', help_str)
+    assert re.search(r'w\s+w value\s+x\s+-y Y\s+y value', help_str)

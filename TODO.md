@@ -4,6 +4,24 @@
 
 ## v0.4.4
 
+- `ArgparseDataclass`
+  - Support subparsers and mutex groups
+  - Mutex groups
+    - Use `exclusive_group` kwarg instead of `group`
+    - Test group within mutex group and vice versa
+  - Subparsers
+    - Single nested field marked with `subcommand=True`
+    - Field should be a `Union` type, all of whose variants are `ArgparseDataclass` subclasses
+    - Each variant must have a name
+      - By default, this will be the kebab-case version of the class name
+      - A `subcommand` class setting can override this
+    - Parsed args get stored in appropriate object type
+    - `_subcommand` private field (read-only property?) stores the string name of the subcommand
+    - For `CLIDataclass`, `run` can be created automatically by delegating to the subcommand field, provided each variant is a `CLIDataclass`
+  - Test subparsers, groups, mutually exclusive groups
+
+## v0.4.5
+
 - documentation
   - Dataclass mixins/settings
     - For now, `dataclass` decorator is required
@@ -29,9 +47,6 @@
   - Convert to/from `pandas` `Series` and `DataFrame`?
     - If so, make `pandas` an optional dependency
     - Easy to implement conversion via `dict`, if we subclass `DictDataclass`
-- `ArgparseDataclass`
-  - Support subparsers
-  - Test subparsers, groups, mutually exclusive groups
 - Versioning (`version` ClassVar, with suppress=False)
   - `@version` decorator (with required integer argument)
     - Allows you to define multiple classes with the same name; stores distinct `version` `ClassVar` attributes and registers them with the same name

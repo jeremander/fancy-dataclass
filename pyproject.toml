@@ -132,7 +132,7 @@ disable_error_code = ["arg-type", "attr-defined", "call-arg", "comparison-overla
 
 [[tool.mypy.overrides]]
 module = "tests.test_cli"
-disable_error_code = ["assignment"]
+disable_error_code = ["assignment", "operator"]
 
 [[tool.mypy.overrides]]
 module = "tests.test_config"
