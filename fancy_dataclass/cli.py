@@ -225,9 +225,8 @@ class ArgparseDataclass(DataclassMixin):
                 group = _get_parser_group(parser, group_name)
             if not group:  # group not found, so create it
                 if is_exclusive:
-                    if is_nested:
-                        raise ValueError(f'mutually exclusive argument group not supported with nested {fld.type.__name__}')
-                    # get required
+                    if isinstance(parser, _MutuallyExclusiveGroup):
+                        raise ValueError('nested exclusive groups are not allowed')
                     group = parser.add_mutually_exclusive_group()
                     # set the title attribute so the group can be retrieved later
                     group.title = group_name
@@ -339,7 +338,7 @@ class ArgparseDataclass(DataclassMixin):
         Returns:
             An instance of this class derived from the parsed arguments"""
         parser = cls.make_parser()  # create and configure parser
-        args = parser.parse_args(args = arg_list)  # parse arguments (uses sys.argv if None)
+        args = parser.parse_args(args=arg_list)  # parse arguments (uses sys.argv if None)
         cls.process_args(parser, args)  # process arguments
         return cls.from_args(args)
 
