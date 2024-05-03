@@ -49,6 +49,7 @@ dependencies = [
 build = "mkdocs build --clean --strict --no-directory-urls {args}"
 # build docs within the package, if not already up-to-date
 build-pkg = "gadzooks build-docs --src-docs docs {args} -- mkdocs build --strict --no-directory-urls -d fancy_dataclass/docs"
+check = "gadzooks build-docs --src-docs docs --check-only {args}"
 serve = "mkdocs serve"
 deploy = "mkdocs build --site-dir $READTHEDOCS_OUTPUT/html"
 
