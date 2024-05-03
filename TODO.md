@@ -19,19 +19,20 @@
 
 ## v0.4.5
 
-- Versioning
+- `VersionedDataclass`
   - `version` class setting (int) and `version` read-only class property
   - Should probably subclass `DictDataclass`, ensures that `version` property is stored in dict
     - Or could make it implicit, setting `version` to a `ClassVar` with `suppress` field setting `False`
-  - Maybe subclass `DictDataclass`? With `suppress
-  , `suppress=False`)
-  - `VersionedDataclass`
   - `@version` decorator (with required integer argument)
+    - Augments base type with `VersionedDataclass`
     - Allows you to define multiple classes with the same name; stores distinct `version` `ClassVar` attributes and registers them with the same name
     - Initialization looks up the version number in the registry; if only newer exists:
       - If `strict=True`, raises an error; otherwise, attempts to coerce and issues a warning
     - Error if duplicate versions are set
   - `def migrate(self, version)` method from object of one version to another
+  - Helper methods like `get_version`, `has_version`
+  - Deal with namespace collision? E.g. use `globals()` to ensure the latest version is the only one accessible within module's namespace, even if it is defined earlier than the others.
+
 
 ## v0.4.6
 

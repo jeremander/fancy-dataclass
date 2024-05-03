@@ -5,7 +5,7 @@ from dataclasses import MISSING, dataclass, fields
 from enum import IntEnum
 from typing import Any, Callable, ClassVar, Dict, List, Literal, Optional, Sequence, Tuple, Type, TypeVar, Union, get_args, get_origin
 
-from typing_extensions import Self
+from typing_extensions import Self, TypeGuard
 
 from fancy_dataclass.mixin import DataclassMixin, FieldSettings
 from fancy_dataclass.utils import check_dataclass, issubclass_safe, type_is_optional
@@ -148,14 +148,15 @@ class ArgparseDataclass(DataclassMixin):
         Args:
             parser: parser object to update with a new argument
             name: Name of the argument to configure"""
+        def is_nested(tp: type) -> TypeGuard[ArgparseDataclass]:
+            return issubclass_safe(tp, ArgparseDataclass)
         kwargs: Dict[str, Any] = {}
         fld = cls.__dataclass_fields__[name]  # type: ignore[attr-defined]
         settings = cls._field_settings(fld).adapt_to(ArgparseDataclassFieldSettings)
         if settings.parse_exclude:  # exclude the argument from the parser
             return
-        is_nested = issubclass_safe(fld.type, ArgparseDataclass)
         # determine the type of the parser argument for the field
-        tp = settings.type or fld.type
+        tp: type = settings.type or fld.type  # type: ignore[assignment]
         action = settings.action or 'store'
         origin_type = get_origin(tp)
         if origin_type is not None:  # compound type
@@ -164,7 +165,16 @@ class ArgparseDataclass(DataclassMixin):
             if origin_type == ClassVar:  # by default, exclude ClassVars from the parser
                 return
             tp_args = get_args(tp)
-            if tp_args:  # extract the first wrapped type (should handle List/Optional/Union)
+            if tp_args:  # Union/List/Optional
+                if origin_type == Union:
+                    tp_args = tuple(arg for arg in tp_args if (arg is not type(None)))
+                    if len(tp_args) > 1:
+                        raise ValueError(f'union type {tp} not allowed in ArgparseDataclass parser')
+                elif issubclass_safe(origin_type, list) or issubclass_safe(origin_type, tuple):
+                    for arg in tp_args:
+                        if is_nested(arg):
+                            name = f'list of {arg.__name__}' if issubclass_safe(origin_type, list) else f'tuple with {arg}'  # type: ignore[attr-defined]
+                            raise ValueError(f'{name} not allowed in ArgparseDataclass parser')
                 tp = tp_args[0]
                 if origin_type == Literal:  # literal options will become choices
                     tp = type(tp)
@@ -233,14 +243,22 @@ class ArgparseDataclass(DataclassMixin):
                     group.required = kwargs.get('required', False)
                 else:
                     # get kwargs from nested ArgparseDataclass
-                    group_kwargs: Dict[str, Any] = fld.type.parser_kwargs() if is_nested else {}
+                    group_kwargs: Dict[str, Any] = tp.parser_kwargs() if is_nested(tp) else {}
                     if isinstance(parser, _ArgumentGroup):
                         raise ValueError('nested argument groups are not allowed')
                     group = parser.add_argument_group(group_name, **group_kwargs)
             parser = group  # type: ignore[assignment]
-        if is_nested:  # recursively configure a nested ArgparseDataclass field
-            fld.type.configure_parser(parser)
+        if is_nested(tp):  # recursively configure a nested ArgparseDataclass field
+            tp.configure_parser(parser)
         else:
+            # prevent duplicate positional args
+            if not hasattr(parser, '_pos_args'):
+                parser._pos_args = set()  # type: ignore[attr-defined]
+            if positional:
+                pos_args = parser._pos_args  # type: ignore[attr-defined]
+                if args[0] in pos_args:
+                    raise ValueError(f'duplicate positional argument {args[0]!r}')
+                pos_args.add(args[0])
             parser.add_argument(*args, **kwargs)
 
     @classmethod
@@ -307,9 +325,12 @@ class ArgparseDataclass(DataclassMixin):
         kwargs = {}
         for fld in fields(cls):  # type: ignore[arg-type]
             name = fld.name
-            if issubclass_safe(fld.type, ArgparseDataclass):
+            tp = fld.type
+            if type_is_optional(fld.type):
+                tp = next(arg for arg in get_args(fld.type) if (arg is not type(None)))
+            if issubclass_safe(tp, ArgparseDataclass):
                 # handle nested ArgparseDataclass
-                kwargs[name] = fld.type.from_args(args)
+                kwargs[name] = tp.from_args(args)
             elif name in d:
                 if (get_origin(fld.type) is tuple) and isinstance(d.get(name), list):
                     kwargs[name] = tuple(d[name])

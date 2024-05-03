@@ -214,13 +214,12 @@ def test_argparse_options():
         check_invalid_args(cls, ['--vals', '1', 'a'], "invalid int value: 'a'")
     assert DC17.from_cli_args(['--vals']).vals == []
     check_invalid_args(DC18, ['--vals'], 'at least one argument')
-    # argparse not flexible enough to handle union types
+    # nontrivial union types not permitted
     @dataclass
     class DC19(ArgparseDataclass):
         pos: Union[int, str]
-    assert DC19.from_cli_args(['7']).pos == 7
-    check_invalid_args(DC19, ['a'], "invalid int value: 'a'")
-    check_invalid_args(DC19, [], 'required: pos')
+    with pytest.raises(ValueError, match='union type .+ not allowed'):
+        _ = DC19.make_parser()
     # append action
     @dataclass
     class DC20(ArgparseDataclass):
@@ -396,3 +395,64 @@ def test_exclusive_groups():
     # an exclusive group is a group, so cannot have a nested group within it
     with pytest.raises(ValueError, match='nested argument groups are not allowed'):
         _ = DCExcGroup8.make_parser()
+
+def test_nested():
+    """Tests the behavior of nested ArgparseDataclasses."""
+    @dataclass
+    class X(ArgparseDataclass):
+        x: int
+    @dataclass
+    class A(ArgparseDataclass):
+        vals: List[X]
+    # list of nested ArgparseDataclass not allowed
+    with pytest.raises(ValueError, match='list of X not allowed'):
+        _ = A.make_parser()
+    @dataclass
+    class XY(ArgparseDataclass):
+        x: int
+        y: int
+    @dataclass
+    class B(ArgparseDataclass):
+        val: XY
+    # nested fields get added to parser
+    assert B.from_cli_args(['1', '2']) == B(XY(1, 2))
+    @dataclass
+    class C(ArgparseDataclass):
+        vals: List[XY]
+    with pytest.raises(ValueError, match='list of XY not allowed'):
+        _ = C.make_parser()
+    # optional type OK
+    @dataclass
+    class D(ArgparseDataclass):
+        val: Optional[X]
+    help_str = D.make_parser().format_help()
+    # x is a positional arg even though it is optional, because the inner class makes it positional
+    # TODO: should this be changed?
+    assert re.search(r'positional arguments:\s+x\s+', help_str)
+    assert D.from_cli_args(['1']) == D(X(1))
+    check_invalid_args(D, [], 'arguments are required: x')
+    @dataclass
+    class E(ArgparseDataclass):
+        val: Union[None, X]
+    help_str = E.make_parser().format_help()
+    assert re.search(r'positional arguments:\s+x\s+', help_str)
+    assert E.from_cli_args(['1']) == E(X(1))
+    check_invalid_args(E, [], 'arguments are required: x')
+    # duplicate positional args
+    @dataclass
+    class F(ArgparseDataclass):
+        val1: Optional[X]
+        val2: Union[None, X]
+    with pytest.raises(ValueError, match="duplicate positional argument 'x'"):
+        _ = F.make_parser()
+    # nontrivial union not permitted
+    @dataclass
+    class G(ArgparseDataclass):
+        val: Union[str, X]
+    with pytest.raises(ValueError, match='union type .+ not allowed'):
+        _ = G.make_parser()
+    @dataclass
+    class H(ArgparseDataclass):
+        val: Union[X, XY]
+    with pytest.raises(ValueError, match='union type .+ not allowed'):
+        _ = H.make_parser()
