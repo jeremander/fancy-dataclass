@@ -63,6 +63,7 @@ class ArgparseDataclassFieldSettings(FieldSettings):
     - `metavar`: name for the argument in usage messages
     - `group`: name of the argument group in which to put the argument; the group will be created if it does not already exist in the parser
     - `exclusive_group`: name of the mutually exclusive argument group in which to put the argument; the group will be created if it does not already exist in the parser
+    - `subcommand`: boolean flag marking this field as a _subcommand_
     - `parse_exclude`: boolean flag indicating that the field should not be included in the parser
 
     Note that these line up closely with the usual options that can be passed to [`ArgumentParser.add_argument`](https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser.add_argument).
@@ -83,6 +84,7 @@ class ArgparseDataclassFieldSettings(FieldSettings):
     metavar: Optional[Union[str, Sequence[str]]] = None
     group: Optional[str] = None
     exclusive_group: Optional[str] = None
+    subcommand: bool = False
     parse_exclude: bool = False
 
 
@@ -94,6 +96,29 @@ class ArgparseDataclass(DataclassMixin):
     Per-field settings can be passed into the `metadata` argument of each `dataclasses.field`. See [`ArgparseDataclassFieldSettings`][fancy_dataclass.cli.ArgparseDataclassFieldSettings] for the full list of settings."""
 
     __field_settings_type__ = ArgparseDataclassFieldSettings
+
+    @classmethod
+    def __post_dataclass_wrap__(cls) -> None:
+        super().__post_dataclass_wrap__()
+        subcommand = None
+        for fld in fields(cls):  # type: ignore[arg-type]
+            if not fld.metadata.get('subcommand', False):
+                continue
+            if subcommand is None:
+                # check field type is ArgparseDataclass or Union thereof
+                subcommand = fld.name
+                tp = fld.type
+                if issubclass_safe(tp, ArgparseDataclass):
+                    continue
+                err = TypeError(f'invalid subcommand field {fld.name!r}, type must be an ArgparseDataclass or Union thereof')
+                if get_origin(tp) == Union:
+                    tp_args = [arg for arg in get_args(tp) if (arg is not type(None))]
+                    for arg in tp_args:
+                        if not issubclass_safe(arg, ArgparseDataclass):
+                            raise err
+                    continue
+                raise err
+            raise TypeError(f'multiple fields ({subcommand} and {fld.name}) are registered as subcommands, at most one is allowed')
 
     @classmethod
     def parser_class(cls) -> Type[ArgumentParser]:
@@ -270,7 +295,15 @@ class ArgparseDataclass(DataclassMixin):
         Args:
             parser: `ArgumentParser` to configure"""
         check_dataclass(cls)
+        subcommand = None
         for fld in fields(cls):  # type: ignore[arg-type]
+            if fld.metadata.get('subcommand', False):
+                # TODO: check field type is ArgparseDataclass or Union thereof
+                # TODO: move this to __init_dataclass__
+                if subcommand is None:
+                    subcommand = fld.name
+                else:
+                    raise ValueError(f'multiple fields ({subcommand!r} and {fld.name!r}) registered as subcommands, at most one is allowed')
             cls.configure_argument(parser, fld.name)
 
     @classmethod

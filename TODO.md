@@ -4,14 +4,14 @@
 
 ## v0.4.4
 
+- Ensure `__post_dataclass_wrap__` of all base classes get called in multiple inheritance scenario
 - `ArgparseDataclass`
-  - Support subparsers and mutex groups
   - Subparsers
     - Single nested field marked with `subcommand=True`
     - Field should be a `Union` type, all of whose variants are `ArgparseDataclass` subclasses
     - Each variant must have a name
       - By default, this will be the kebab-case version of the class name
-      - A `subcommand` class setting can override this
+      - A `command_name` class setting can override this
     - Parsed args get stored in appropriate object type
     - `_subcommand` private field (read-only property?) stores the string name of the subcommand
     - For `CLIDataclass`, `run` can be created automatically by delegating to the subcommand field, provided each variant is a `CLIDataclass`

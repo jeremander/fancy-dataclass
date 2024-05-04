@@ -456,3 +456,29 @@ def test_nested():
         val: Union[X, XY]
     with pytest.raises(ValueError, match='union type .+ not allowed'):
         _ = H.make_parser()
+
+def test_subcommand():
+    """Tests the behavior of subcommands."""
+    @dataclass
+    class Sub1(ArgparseDataclass):
+        x1: int
+        y1: int
+    @dataclass
+    class Sub2(ArgparseDataclass):
+        x2: int
+        y2: str
+    # multiple subcommands not allowed
+    with pytest.raises(TypeError, match='multiple fields .* registered as subcommands'):
+        @dataclass
+        class DCSub1(ArgparseDataclass):
+            sub1: Sub1 = field(metadata={'subcommand': True})
+            sub2: Sub2 = field(metadata={'subcommand': True})
+    # subcommand must be ArgparseDataclass or union thereof
+    with pytest.raises(TypeError, match='type must be an ArgparseDataclass or Union thereof'):
+        @dataclass
+        class DCSub2(ArgparseDataclass):
+            x: int = field(metadata={'subcommand': True})
+    with pytest.raises(TypeError, match='type must be an ArgparseDataclass or Union thereof'):
+        @dataclass
+        class DCSub3(ArgparseDataclass):
+            x: Union[Sub1, int] = field(metadata={'subcommand': True})
