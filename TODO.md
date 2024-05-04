@@ -4,7 +4,6 @@
 
 ## v0.4.4
 
-- Ensure `__post_dataclass_wrap__` of all base classes get called in multiple inheritance scenario
 - `ArgparseDataclass`
   - Subparsers
     - Single nested field marked with `subcommand=True`

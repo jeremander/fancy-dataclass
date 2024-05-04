@@ -115,11 +115,10 @@ python calculator.py div 8 3 --round
 - Field should be a `Union` type, all of whose variants are `ArgparseDataclass` subclasses
 - Each variant must have a name
     - By default, this will be the kebab-case version of the class name
-    - A `subcommand` class setting can override this
+    - A `command_name` class setting can override this
 - Parsed args get stored in appropriate object type
-- `_subcommand` private field (read-only property?) stores the string name of the subcommand
+- `subcommand` property returns the string name of the chosen subcommand
 - For `CLIDataclass`, `run` can be created automatically by delegating to the subcommand field, provided each variant is a `CLIDataclass`
-
 -->
 
 <style>

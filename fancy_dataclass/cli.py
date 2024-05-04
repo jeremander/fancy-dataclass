@@ -42,6 +42,20 @@ def _get_parser_exclusive_group(parser: ArgumentParser, name: str) -> Optional[_
             return group
     return None
 
+def _add_exclusive_group(parser: ArgumentParser, group_name: str, required: bool) -> _MutuallyExclusiveGroup:
+    if isinstance(parser, _MutuallyExclusiveGroup):
+        raise ValueError('nested exclusive groups are not allowed')
+    group = parser.add_mutually_exclusive_group()
+    # set the title attribute so the group can be retrieved later
+    group.title = group_name
+    group.required = required
+    return group
+
+def _add_group(parser: ArgumentParser, group_name: str, **group_kwargs: Any) -> _ArgumentGroup:
+    if isinstance(parser, _ArgumentGroup):
+        raise ValueError('nested argument groups are not allowed')
+    return parser.add_argument_group(group_name, **group_kwargs)
+
 
 ##########
 # MIXINS #
@@ -293,18 +307,11 @@ class ArgparseDataclass(DataclassMixin):
                 group = _get_parser_group(parser, group_name)
             if not group:  # group not found, so create it
                 if is_exclusive:
-                    if isinstance(parser, _MutuallyExclusiveGroup):
-                        raise ValueError('nested exclusive groups are not allowed')
-                    group = parser.add_mutually_exclusive_group()
-                    # set the title attribute so the group can be retrieved later
-                    group.title = group_name
-                    group.required = kwargs.get('required', False)
+                    group = _add_exclusive_group(parser, group_name, kwargs.get('required', False))
                 else:
                     # get kwargs from nested ArgparseDataclass
                     group_kwargs: Dict[str, Any] = tp.parser_kwargs() if is_nested(tp) else {}
-                    if isinstance(parser, _ArgumentGroup):
-                        raise ValueError('nested argument groups are not allowed')
-                    group = parser.add_argument_group(group_name, **group_kwargs)
+                    group = _add_group(parser, group_name, **group_kwargs)
             parser = group  # type: ignore[assignment]
         if is_nested(tp):  # recursively configure a nested ArgparseDataclass field
             tp.configure_parser(parser)
