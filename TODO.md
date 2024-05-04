@@ -6,13 +6,14 @@
 
 - `ArgparseDataclass`
   - Subparsers
-    - Single nested field marked with `subcommand=True`
+    <!-- - Single nested field marked with `subcommand=True`
     - Field should be a `Union` type, all of whose variants are `ArgparseDataclass` subclasses
     - Each variant must have a name
       - By default, this will be the kebab-case version of the class name
       - A `command_name` class setting can override this
     - Parsed args get stored in appropriate object type
-    - `_subcommand` private field (read-only property?) stores the string name of the subcommand
+    - `subcommand` (read-only property) stores the string name of the subcommand -->
+    - Subparser title/description
     - For `CLIDataclass`, `run` can be created automatically by delegating to the subcommand field, provided each variant is a `CLIDataclass`
   - Test subparsers, groups, mutually exclusive groups
   - Review reference docs
@@ -32,7 +33,6 @@
   - `def migrate(self, version)` method from object of one version to another
   - Helper methods like `get_version`, `has_version`
   - Deal with namespace collision? E.g. use `globals()` to ensure the latest version is the only one accessible within module's namespace, even if it is defined earlier than the others.
-
 
 ## v0.4.6
 

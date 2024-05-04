@@ -135,6 +135,7 @@ class ArgparseDataclass(DataclassMixin):
     @classmethod
     def __post_dataclass_wrap__(cls, wrapped_cls: Type[Self]) -> None:
         subcommand = None
+        names = set()
         for fld in fields(wrapped_cls):  # type: ignore[arg-type]
             if not fld.metadata.get('subcommand', False):
                 continue
@@ -150,6 +151,10 @@ class ArgparseDataclass(DataclassMixin):
                     for arg in tp_args:
                         if not issubclass_safe(arg, ArgparseDataclass):
                             raise err
+                        name = arg.__settings__.command_name
+                        if name in names:
+                            raise TypeError(f'duplicate command name {name!r} in subcommand field {subcommand!r}')
+                        names.add(name)
                     continue
                 raise err
             raise TypeError(f'multiple fields ({subcommand} and {fld.name}) are registered as subcommands, at most one is allowed')
@@ -232,7 +237,7 @@ class ArgparseDataclass(DataclassMixin):
         action = settings.action or 'store'
         origin_type = get_origin(tp)
         if origin_type is not None:  # compound type
-            if type_is_optional(tp):  # type: ignore[arg-type]
+            if type_is_optional(tp):
                 kwargs['default'] = None
             if origin_type == ClassVar:  # by default, exclude ClassVars from the parser
                 return
@@ -240,8 +245,8 @@ class ArgparseDataclass(DataclassMixin):
             if tp_args:  # Union/List/Optional
                 if origin_type == Union:
                     tp_args = tuple(arg for arg in tp_args if (arg is not type(None)))
-                    if len(tp_args) > 1:
-                        raise ValueError(f'union type {tp} not allowed in ArgparseDataclass parser')
+                    if (len(tp_args) > 1) and (not settings.subcommand):
+                        raise ValueError(f'union type {tp} not allowed as ArgparseDataclass field except as subcommand')
                 elif issubclass_safe(origin_type, list) or issubclass_safe(origin_type, tuple):
                     for arg in tp_args:
                         if is_nested(arg):
@@ -255,7 +260,7 @@ class ArgparseDataclass(DataclassMixin):
                 raise ValueError(f'cannot infer type of items in field {name!r}')
             if issubclass_safe(origin_type, list) and (action == 'store'):
                 kwargs['nargs'] = '*'  # allow multiple arguments by default
-        if issubclass_safe(tp, IntEnum):  # type: ignore[arg-type]
+        if issubclass_safe(tp, IntEnum):
             # use a bare int type
             tp = int
         kwargs['type'] = tp
@@ -313,6 +318,16 @@ class ArgparseDataclass(DataclassMixin):
                     group_kwargs: Dict[str, Any] = tp.parser_kwargs() if is_nested(tp) else {}
                     group = _add_group(parser, group_name, **group_kwargs)
             parser = group  # type: ignore[assignment]
+        if settings.subcommand:
+            # create subparsers for each variant
+            # TODO: title/description?
+            subparsers = parser.add_subparsers(dest='_subcommand', required=True, help=settings.help, metavar='subcommand')
+            tp_args = (tp,) if (origin_type is None) else tp_args
+            for arg in tp_args:
+                assert issubclass_safe(arg, ArgparseDataclass)
+                subparser = subparsers.add_parser(arg.__settings__.command_name, help=arg.parser_description())
+                arg.configure_parser(subparser)
+            return
         if is_nested(tp):  # recursively configure a nested ArgparseDataclass field
             tp.configure_parser(parser)
         else:
@@ -399,13 +414,19 @@ class ArgparseDataclass(DataclassMixin):
         for fld in fields(cls):  # type: ignore[arg-type]
             name = fld.name
             tp = fld.type
-            if type_is_optional(fld.type):
+            if type_is_optional(tp):
                 tp = next(arg for arg in get_args(fld.type) if (arg is not type(None)))
+            origin_type = get_origin(tp)
+            if origin_type == Union:
+                tp_args = [arg for arg in get_args(tp) if (arg.__settings__.command_name == args._subcommand)]
+                assert len(tp_args) == 1, f'exactly one type within {tp} should have command name {args._subcommand}'
+                tp = tp_args[0]
+                assert issubclass_safe(tp, ArgparseDataclass)
             if issubclass_safe(tp, ArgparseDataclass):
                 # handle nested ArgparseDataclass
                 kwargs[name] = tp.from_args(args)
             elif name in d:
-                if (get_origin(fld.type) is tuple) and isinstance(d.get(name), list):
+                if (origin_type is tuple) and isinstance(d.get(name), list):
                     kwargs[name] = tuple(d[name])
                 else:
                     kwargs[name] = d[name]

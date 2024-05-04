@@ -1,4 +1,4 @@
-from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
+from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, _SubParsersAction
 from dataclasses import dataclass, field
 import re
 import sys
@@ -9,13 +9,26 @@ import pytest
 from fancy_dataclass.cli import ArgparseDataclass, CLIDataclass
 
 
-def check_invalid_args(cls, args, match=None):
-    assert match, 'must provide an error pattern'
-    parser = cls.make_parser()
+def _fix_parser(parser):
+    """Prevent parser from issuing SystemExit, and instead have it issue ValueError."""
     def _error(msg):
         raise ValueError(msg)
+    def _print_help(parser):
+        def _raise_help():
+            raise ValueError(parser.format_help())
+        return _raise_help
     parser.error = _error
-    with pytest.raises(ValueError, match=match):
+    parser.print_help = _print_help(parser)
+    for action in getattr(parser._subparsers, '_actions', []):
+        if isinstance(action, _SubParsersAction):
+            for subparser in action.choices.values():
+                _fix_parser(subparser)
+    return parser
+
+def check_invalid_args(cls, args, match=None):
+    assert match, 'must provide an error pattern'
+    parser = _fix_parser(cls.make_parser())
+    with pytest.raises(ValueError, match=re.compile(match, re.DOTALL)):
         parser.parse_args(args=args)
 
 
@@ -461,6 +474,7 @@ def test_subcommand():
     """Tests the behavior of subcommands."""
     @dataclass
     class Sub1(ArgparseDataclass):
+        """First subcommand"""
         x1: int
         y1: int
     assert Sub1.__settings__.command_name == 'sub1'
@@ -468,8 +482,9 @@ def test_subcommand():
     assert Sub1(1, 2).subcommand is None
     @dataclass
     class Sub2(ArgparseDataclass, command_name='my-subcommand'):
+        """Second subcommand"""
         x2: int
-        y2: str
+        y2: str = 'abc'
     assert Sub2.__settings__.command_name == 'my-subcommand'
     assert Sub2._subcommand_field_name is None
     assert Sub2(1, 2).subcommand is None
@@ -492,11 +507,20 @@ def test_subcommand():
     @dataclass
     class DCSub4(ArgparseDataclass):
         sub1: Sub1 = field(metadata={'subcommand': True})
-        x: int  # TODO: can't have positional arg and subcommand
+        x: int = field(metadata={'help': 'x value'})  # positional arg in addition to subparser is allowed, though it's weird
         y: int = 2
     assert DCSub4.__settings__.command_name == 'dc-sub4'
     assert DCSub4._subcommand_field_name == 'sub1'
     assert DCSub4(Sub1(1, 2), 1).subcommand == 'sub1'
+    help_str = DCSub4.make_parser().format_help()
+    assert re.search(r'positional arguments:.+sub1\s+First subcommand\s+x\s+x value\s+options:.+-y Y', help_str, re.DOTALL)
+    check_invalid_args(DCSub4, [], 'the following arguments are required: subcommand, x')
+    check_invalid_args(DCSub4, ['5'], "invalid choice: '5'")
+    for args in [['sub1'], ['sub1', '1']]:
+        check_invalid_args(DCSub4, args, 'the following arguments are required: x1, y1')
+    check_invalid_args(DCSub4, ['sub1', '1', '2'], 'the following arguments are required: y1')
+    check_invalid_args(DCSub4, ['sub1', '1', '2', 'a'], "argument x: invalid int value: 'a'")
+    assert DCSub4.from_cli_args(['sub1', '1', '2', '5']) == DCSub4(Sub1(1, 2), 5)
     # union subcommand
     @dataclass
     class DCSub5(ArgparseDataclass):
@@ -506,3 +530,44 @@ def test_subcommand():
     assert DCSub5._subcommand_field_name == 'sub'
     assert DCSub5(Sub1(1, 2)).subcommand == 'sub1'
     assert DCSub5(Sub2(1, 2)).subcommand == 'my-subcommand'
+    help_str = DCSub5.make_parser().format_help()
+    assert re.search(r'positional arguments:.+choose a subcommand\s+sub1\s+First subcommand\s+my-subcommand\s+Second subcommand.+-x X', help_str, re.DOTALL)
+    for args in [[], ['-x', '5']]:
+        check_invalid_args(DCSub5, args, 'the following arguments are required: subcommand')
+    check_invalid_args(DCSub5, ['sub1'], 'required: x1, y1')
+    check_invalid_args(DCSub5, ['sub1', '1'], 'required: y1')
+    check_invalid_args(DCSub5, ['sub1', '1', '2', '3'], 'unrecognized arguments: 3')
+    check_invalid_args(DCSub5, ['sub2'], "invalid choice: 'sub2'")
+    check_invalid_args(DCSub5, ['my-subcommand'], 'required: x2')
+    assert DCSub5.from_cli_args(['sub1', '1', '2']) == DCSub5(Sub1(1, 2))
+    # parent parser's options must come before subparser invocation
+    assert DCSub5.from_cli_args(['-x', '5', 'sub1', '1', '2']) == DCSub5(Sub1(1, 2), 5)
+    check_invalid_args(DCSub5, ['sub1', '1', '2', '-x', '5'], 'unrecognized arguments: -x 5')
+    assert DCSub5.from_cli_args(['my-subcommand', '1']) == DCSub5(Sub2(1, 'abc'))
+    assert DCSub5.from_cli_args(['-x', '5', 'my-subcommand', '1', '--y2', 'def']) == DCSub5(Sub2(1, 'def'), 5)
+    # duplicate subcommand name
+    @dataclass
+    class Sub3(ArgparseDataclass, command_name='sub1'):
+        ...
+    with pytest.raises(TypeError, match="duplicate command name 'sub1' in subcommand field 'sub'"):
+        @dataclass
+        class DCSub6(ArgparseDataclass):
+            sub: Union[Sub1, Sub3] = field(metadata={'subcommand': True})
+    # empty argument set is OK
+    @dataclass
+    class DCSub7(ArgparseDataclass):
+        sub: Sub3 = field(metadata={'subcommand': True})
+    check_invalid_args(DCSub7, [], 'the following arguments are required: subcommand')
+    check_invalid_args(DCSub7, ['sub'], 'invalid choice')
+    assert DCSub7.from_cli_args(['sub1']) == DCSub7(Sub3())
+    # subparser with group
+    @dataclass
+    class Sub4(ArgparseDataclass):
+        """Fourth subcommand"""
+        x: int = field(metadata={'group': 'number group'})
+        y: int = field(metadata={'group': 'number group'})
+    @dataclass
+    class DCSub8(ArgparseDataclass):
+        sub: Sub4 = field(metadata={'subcommand': True})
+    # check the subparser's help string
+    check_invalid_args(DCSub8, ['sub4', '-h'], '-h, --help.*number group:\s+x\s+y')
