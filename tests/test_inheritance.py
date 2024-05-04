@@ -81,6 +81,29 @@ def test_invalid_inheritance():
     assert issubclass(MyDC2, MyDC1)
     assert MyDC2 is not MyDC1
 
+def test_post_dataclass_wrap():
+    """Tests behavior of `__post_dataclass_wrap__` with multiple inheritance."""
+    class Mixin1(DataclassMixin):
+        @classmethod
+        def __post_dataclass_wrap__(cls, wrapped_cls):
+            wrapped_cls.val = 1
+            wrapped_cls.val1 = 1
+    class Mixin2(DataclassMixin):
+        @classmethod
+        def __post_dataclass_wrap__(cls, wrapped_cls):
+            wrapped_cls.val = 2
+            wrapped_cls.val2 = 2
+    @dataclass
+    class DC1(Mixin1):
+        ...
+    assert DC1.val == 1
+    @dataclass
+    class DC12(Mixin1, Mixin2):
+        ...
+    assert DC12.val == 1  # first base takes priority
+    assert DC12.val1 == 1
+    assert DC12.val2 == 2
+
 def test_settings_field_collision():
     """Tests multiple inheritance from `DataclassMixinSettings` classes with overlapping field names."""
     @dataclass

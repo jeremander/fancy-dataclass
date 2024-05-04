@@ -14,8 +14,10 @@ _orig_process_class = dataclasses._process_class  # type: ignore[attr-defined]
 def _process_class(cls: type, *args: Any) -> type:
     """Overrides `dataclasses._process_class` to activate a special `__post_dataclass_wrap__` classmethod after the `dataclasses.dataclass` decorator wraps a class."""
     cls = _orig_process_class(cls, *args)
-    if hasattr(cls, '__post_dataclass_wrap__'):
-        cls.__post_dataclass_wrap__()
+    for tp in cls.mro()[::-1]:
+        # call __post_dataclass_wrap__ on all base classes to deal with multiple inheritance
+        if hasattr(tp, '__post_dataclass_wrap__'):
+            tp.__post_dataclass_wrap__(cls)
     return cls
 
 # monkey-patch dataclasses._process_class with this function so that any DataclassMixin will be able to activate its post-wrap hook
@@ -167,11 +169,16 @@ class DataclassMixin:
         _configure_field_settings_type(cls)
 
     @classmethod
-    def __post_dataclass_wrap__(cls) -> None:
+    def __post_dataclass_wrap__(cls, wrapped_cls: Type[Self]) -> None:
         """A hook that is called after the [`dataclasses.dataclass`](https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass) decorator is applied to the mixin subclass.
 
-        This can be used, for instance, to validate the dataclass fields at definition time."""
-        _check_field_settings(cls)
+        This can be used, for instance, to validate the dataclass fields at definition time.
+
+        NOTE: this function should be _idempotent_, meaning it can be called multiple times with the same effect. This is because it will be called for every base class of the `dataclass`-wrapped class, which may result in duplicate calls.
+
+        Args:
+            wrapped_cls: Class wrapped by the `dataclass` decorator"""
+        _check_field_settings(wrapped_cls)
 
     @classmethod
     def _field_settings(cls, field: dataclasses.Field) -> FieldSettings:  # type: ignore[type-arg]

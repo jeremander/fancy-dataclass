@@ -94,11 +94,10 @@ class DictDataclass(DataclassMixin):
     __field_settings_type__ = DictDataclassFieldSettings
 
     @classmethod
-    def __post_dataclass_wrap__(cls) -> None:
-        super().__post_dataclass_wrap__()
-        store_type = cls.__settings__.store_type or cls.__settings__.qualified_type
+    def __post_dataclass_wrap__(cls, wrapped_cls: Type[Self]) -> None:
+        store_type = wrapped_cls.__settings__.store_type or wrapped_cls.__settings__.qualified_type
         if store_type:
-            for fld in dataclasses.fields(cls):  # type: ignore[arg-type]
+            for fld in dataclasses.fields(wrapped_cls):  # type: ignore[arg-type]
                 if fld.name == 'type':
                     raise TypeError(f"'type' is a reserved dict field for {cls.__name__}, cannot be used as dataclass field")
 

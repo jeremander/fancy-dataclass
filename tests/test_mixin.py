@@ -50,8 +50,8 @@ class TestDataclassMixin:
         """Tests the __post_dataclass_wrap__ hook."""
         class MyMixin(DataclassMixin):
             @classmethod
-            def __post_dataclass_wrap__(cls) -> None:
-                cls._my_value = 123
+            def __post_dataclass_wrap__(cls, wrapped_cls) -> None:
+                wrapped_cls._my_value = 123
         assert not hasattr(MyMixin, '_my_value')
         # method triggers when wrapped into a dataclass
         MyMixin2 = dataclass(MyMixin)

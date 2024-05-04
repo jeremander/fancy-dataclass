@@ -119,10 +119,9 @@ class ArgparseDataclass(DataclassMixin):
             cls.__settings__.command_name = camel_case_to_kebab_case(cls.__name__)
 
     @classmethod
-    def __post_dataclass_wrap__(cls) -> None:
-        super().__post_dataclass_wrap__()
+    def __post_dataclass_wrap__(cls, wrapped_cls: Type[Self]) -> None:
         subcommand = None
-        for fld in fields(cls):  # type: ignore[arg-type]
+        for fld in fields(wrapped_cls):  # type: ignore[arg-type]
             if not fld.metadata.get('subcommand', False):
                 continue
             if subcommand is None:

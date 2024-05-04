@@ -1,6 +1,8 @@
 from dataclasses import MISSING, dataclass, fields
 import subprocess
-from typing import Any, ClassVar, List, Optional, Sequence, Union, get_origin
+from typing import Any, ClassVar, List, Optional, Sequence, Type, Union, get_origin
+
+from typing_extensions import Self
 
 from fancy_dataclass.mixin import DataclassMixin, DataclassMixinSettings, FieldSettings
 from fancy_dataclass.utils import get_dataclass_fields, obj_class_name
@@ -42,12 +44,11 @@ class SubprocessDataclass(DataclassMixin):
     __field_settings_type__ = SubprocessDataclassFieldSettings
 
     @classmethod
-    def __post_dataclass_wrap__(cls) -> None:
-        super().__post_dataclass_wrap__()
-        cls_exec_field = cls.__settings__.exec
+    def __post_dataclass_wrap__(cls, wrapped_cls: Type[Self]) -> None:
+        cls_exec_field = wrapped_cls.__settings__.exec
         # make sure there is at most one exec field
         exec_field = None
-        for fld in get_dataclass_fields(cls, include_classvars=True):
+        for fld in get_dataclass_fields(wrapped_cls, include_classvars=True):
             fld_settings = cls._field_settings(fld).adapt_to(SubprocessDataclassFieldSettings)
             if fld_settings.exec:
                 if cls_exec_field is not None:
