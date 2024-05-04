@@ -463,10 +463,16 @@ def test_subcommand():
     class Sub1(ArgparseDataclass):
         x1: int
         y1: int
+    assert Sub1.__settings__.command_name == 'sub1'
+    assert Sub1._subcommand_field_name is None
+    assert Sub1(1, 2).subcommand is None
     @dataclass
-    class Sub2(ArgparseDataclass):
+    class Sub2(ArgparseDataclass, command_name='my-subcommand'):
         x2: int
         y2: str
+    assert Sub2.__settings__.command_name == 'my-subcommand'
+    assert Sub2._subcommand_field_name is None
+    assert Sub2(1, 2).subcommand is None
     # multiple subcommands not allowed
     with pytest.raises(TypeError, match='multiple fields .* registered as subcommands'):
         @dataclass
@@ -482,3 +488,21 @@ def test_subcommand():
         @dataclass
         class DCSub3(ArgparseDataclass):
             x: Union[Sub1, int] = field(metadata={'subcommand': True})
+    # simple subcommand
+    @dataclass
+    class DCSub4(ArgparseDataclass):
+        sub1: Sub1 = field(metadata={'subcommand': True})
+        x: int  # TODO: can't have positional arg and subcommand
+        y: int = 2
+    assert DCSub4.__settings__.command_name == 'dc-sub4'
+    assert DCSub4._subcommand_field_name == 'sub1'
+    assert DCSub4(Sub1(1, 2), 1).subcommand == 'sub1'
+    # union subcommand
+    @dataclass
+    class DCSub5(ArgparseDataclass):
+        sub: Union[Sub1, Sub2] = field(metadata={'subcommand': True, 'help': 'choose a subcommand'})
+        x: int = 1
+    assert DCSub5.__settings__.command_name == 'dc-sub5'
+    assert DCSub5._subcommand_field_name == 'sub'
+    assert DCSub5(Sub1(1, 2)).subcommand == 'sub1'
+    assert DCSub5(Sub2(1, 2)).subcommand == 'my-subcommand'

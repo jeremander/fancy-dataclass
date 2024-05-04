@@ -16,6 +16,7 @@
     - `_subcommand` private field (read-only property?) stores the string name of the subcommand
     - For `CLIDataclass`, `run` can be created automatically by delegating to the subcommand field, provided each variant is a `CLIDataclass`
   - Test subparsers, groups, mutually exclusive groups
+  - Review reference docs
 
 ## v0.4.5
 

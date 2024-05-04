@@ -6,7 +6,7 @@ from typing import Optional, Sequence
 import pytest
 
 from fancy_dataclass import ArgparseDataclass, ConfigDataclass, DictDataclass, JSONBaseDataclass, JSONDataclass, SQLDataclass, SubprocessDataclass, TOMLDataclass
-from fancy_dataclass.cli import ArgparseDataclassFieldSettings
+from fancy_dataclass.cli import ArgparseDataclassFieldSettings, ArgparseDataclassSettings
 from fancy_dataclass.dict import DictDataclassSettings
 from fancy_dataclass.mixin import DataclassMixin, DataclassMixinSettings, FieldSettings
 from fancy_dataclass.subprocess import SubprocessDataclassFieldSettings
@@ -21,7 +21,10 @@ def test_multiple_inheritance():
     @dataclass
     class MyDC1(ArgparseDataclass, JSONDataclass):
         x: int
-    assert all(cls.__settings_type__ is DictDataclassSettings for cls in [JSONDataclass, MyDC1])
+    assert JSONDataclass.__settings_type__ is DictDataclassSettings
+    assert issubclass(MyDC1.__settings_type__, DictDataclassSettings)
+    assert issubclass(MyDC1.__settings_type__, ArgparseDataclassSettings)
+    # assert all(cls.__settings_type__ is DictDataclassSettings for cls in [JSONDataclass, MyDC1])
     # alternatively, add in mixins dynamically with wrap_dataclass
     @dataclass
     class MyDC2:

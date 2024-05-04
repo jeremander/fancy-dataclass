@@ -4,23 +4,14 @@ from typing import Any, Callable, Literal, Optional, Protocol, Sequence, Tuple, 
 
 from typing_extensions import ParamSpec
 
+from fancy_dataclass.utils import snake_case_to_camel_case
+
 
 P = ParamSpec('P')
 R = TypeVar('R', covariant=True)
 
 Bases = Union[type, Tuple[type, ...]]
 
-
-def snake_case_to_camel_case(name: str) -> str:
-    """Converts a string from snake case to camel case.
-
-    Args:
-        name: String to convert
-
-    Returns:
-        Camel-case version of the string"""
-    capitalize = lambda s: (s[0].upper() + s[1:]) if s else ''
-    return ''.join(map(capitalize, name.split('_')))
 
 def _func_dataclass(func: Callable[[Any], Any], method_name: str = '__call__', cls_name: Optional[str] = None, bases: Tuple[type, ...] = ()) -> type:
     """Wraps a function into a new dataclass type with a single method whose positional arguments (other than self) are equivalent to that of the given function, and whose kwargs are dataclass parameters.

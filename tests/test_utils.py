@@ -5,8 +5,52 @@ from typing import Any, ClassVar, Dict, List, Optional, Sequence, Union
 import pytest
 from pytest import param
 
-from fancy_dataclass.utils import _flatten_dataclass, _is_instance, coerce_to_dataclass, get_dataclass_fields, merge_dataclasses, traverse_dataclass, type_is_optional
+from fancy_dataclass.utils import _flatten_dataclass, _is_instance, camel_case_to_kebab_case, coerce_to_dataclass, get_dataclass_fields, merge_dataclasses, snake_case_to_camel_case, traverse_dataclass, type_is_optional
 
+
+@pytest.mark.parametrize(['snake', 'camel'], [
+    ('', ''),
+    ('a', 'A'),
+    ('abc', 'Abc'),
+    ('ABC', 'ABC'),
+    ('a_b', 'AB'),
+    ('a_bc', 'ABc'),
+    ('AB_CD', 'ABCD'),
+    ('a_', 'A'),
+    ('_', ''),
+    ('__', ''),
+])
+def test_snake_case_to_camel_case(snake, camel):
+    """Tests conversion of snake case to camel case."""
+    assert snake_case_to_camel_case(snake) == camel
+
+@pytest.mark.parametrize(['camel', 'kebab'], [
+    ('', ''),
+    ('a', 'a'),
+    ('A', 'a'),
+    ('ab', 'ab'),
+    ('Ab', 'ab'),
+    ('AB', 'ab'),
+    ('aB', 'a-b'),
+    ('Abc', 'abc'),
+    ('AbC', 'ab-c'),
+    ('ABC', 'abc'),
+    ('AbCd', 'ab-cd'),
+    ('AbCD', 'ab-cd'),
+    ('ABCd', 'ab-cd'),
+    ('ab-cd', 'ab-cd'),
+    ('Ab-C', 'ab-c'),
+    ('A-bC', 'a-b-c'),
+    ('a--b', 'a--b'),
+    ('a_b', 'a-b'),
+    ('a__b', 'a--b'),
+    ('a1b', 'a1b'),
+    ('a1bc', 'a1bc'),
+    ('a1Bc', 'a1-bc'),
+])
+def test_camel_case_to_kebab_case(camel, kebab):
+    """Tests conversion of camel case to kebab case."""
+    assert camel_case_to_kebab_case(camel) == kebab
 
 @pytest.mark.parametrize(['tp', 'is_optional'], [
     (int, False),

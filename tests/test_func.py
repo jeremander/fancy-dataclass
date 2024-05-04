@@ -4,24 +4,8 @@ from typing import List
 
 import pytest
 
-from fancy_dataclass.func import func_dataclass, snake_case_to_camel_case
+from fancy_dataclass.func import func_dataclass
 
-
-@pytest.mark.parametrize(['snake', 'camel'], [
-    ('', ''),
-    ('a', 'A'),
-    ('abc', 'Abc'),
-    ('ABC', 'ABC'),
-    ('a_b', 'AB'),
-    ('a_bc', 'ABc'),
-    ('AB_CD', 'ABCD'),
-    ('a_', 'A'),
-    ('_', ''),
-    ('__', ''),
-])
-def test_snake_case_to_camel_case(snake, camel):
-    """Tests conversion of snake case to camel case."""
-    assert snake_case_to_camel_case(snake) == camel
 
 def test_func_dataclass():
     """Tests the func_dataclass decorator which constructs a new dataclass type from a function with default arguments."""

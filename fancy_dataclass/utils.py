@@ -46,20 +46,45 @@ class TypeConversionError(ValueError):
         super().__init__(f'could not convert {val!r} to type {tp_name!r}')
 
 
-def type_is_optional(tp: type) -> bool:
-    """Determines if a type is an Optional type.
+####################
+# HELPER FUNCTIONS #
+####################
+
+# STRING MANIPULATION
+
+def snake_case_to_camel_case(name: str) -> str:
+    """Converts a string from snake case to camel case.
 
     Args:
-        tp: Type to check
+        name: String to convert
 
     Returns:
-        True if the type is Optional"""
-    origin_type = get_origin(tp)
-    args = get_args(tp)
-    union_types: List[Any] = [Union]
-    if hasattr(types, 'UnionType'):  # Python >= 3.10
-        union_types.append(types.UnionType)  # novermin
-    return (origin_type in union_types) and (type(None) in args)
+        Camel case version of the string"""
+    capitalize = lambda s: (s[0].upper() + s[1:]) if s else ''
+    return ''.join(map(capitalize, name.split('_')))
+
+def camel_case_to_kebab_case(name: str) -> str:
+    """Converts a string from camel case to kebab case.
+
+    Args:
+        name: String to convert
+
+    Returns:
+        Kebab case version of the string"""
+    segs = []
+    n = len(name)
+    name = name.replace('_', '-')
+    for (i, c) in enumerate(name):
+        if c.isupper():
+            if ((i < n - 1) and name[i + 1].islower()) or ((i > 0) and (name[i - 1].islower())):
+                segs.append('-' + c.lower())
+            else:
+                segs.append(c.lower())
+        else:
+            segs.append(c)
+    return ''.join(segs).lstrip('-')
+
+# DICT MANIPULATION
 
 def safe_dict_insert(d: Dict[Any, Any], key: str, val: Any) -> None:
     """Inserts a (key, value) pair into a dict, if the key is not already present.
@@ -88,6 +113,23 @@ def safe_dict_update(d1: Dict[str, Any], d2: Dict[str, Any]) -> None:
         if key in d1:
             raise ValueError(f'duplicate key {key!r}')
         d1[key] = val
+
+# TYPE INSPECTION
+
+def type_is_optional(tp: type) -> bool:
+    """Determines if a type is an Optional type.
+
+    Args:
+        tp: Type to check
+
+    Returns:
+        True if the type is Optional"""
+    origin_type = get_origin(tp)
+    args = get_args(tp)
+    union_types: List[Any] = [Union]
+    if hasattr(types, 'UnionType'):  # Python >= 3.10
+        union_types.append(types.UnionType)  # novermin
+    return (origin_type in union_types) and (type(None) in args)
 
 def all_subclasses(cls: Type[T]) -> List[Type[T]]:
     """Gets all subclasses of a given class, including the class itself.
@@ -188,6 +230,8 @@ def get_subclass_with_name(cls: Type[T], name: str) -> Type[T]:
             return subcls
     else:
         raise ValueError(f'{name} is not a known subclass of {cls.__name__}')
+
+# DATACLASS
 
 def check_dataclass(cls: type) -> TypeGuard[Type['DataclassInstance']]:
     """Checks whether a given type is a dataclass, raising a `TypeError` otherwise.

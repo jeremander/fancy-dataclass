@@ -7,8 +7,8 @@ from typing import Any, Callable, ClassVar, Dict, List, Literal, Optional, Seque
 
 from typing_extensions import Self, TypeGuard
 
-from fancy_dataclass.mixin import DataclassMixin, FieldSettings
-from fancy_dataclass.utils import check_dataclass, issubclass_safe, type_is_optional
+from fancy_dataclass.mixin import DataclassMixin, DataclassMixinSettings, FieldSettings
+from fancy_dataclass.utils import camel_case_to_kebab_case, check_dataclass, issubclass_safe, type_is_optional
 
 
 T = TypeVar('T')
@@ -46,6 +46,16 @@ def _get_parser_exclusive_group(parser: ArgumentParser, name: str) -> Optional[_
 ##########
 # MIXINS #
 ##########
+
+@dataclass
+class ArgparseDataclassSettings(DataclassMixinSettings):
+    """Class-level settings for the [`ArgparseDataclass`][fancy_dataclass.cli.ArgparseDataclass] mixin.
+
+    Subclasses of `ArgparseDataclass` may set the following fields as keyword arguments during inheritance:
+
+    - `command_name`: when this class is used to define a subcommand, the name of that subcommand"""
+    command_name: Optional[str] = None
+
 
 @dataclass
 class ArgparseDataclassFieldSettings(FieldSettings):
@@ -95,7 +105,18 @@ class ArgparseDataclass(DataclassMixin):
 
     Per-field settings can be passed into the `metadata` argument of each `dataclasses.field`. See [`ArgparseDataclassFieldSettings`][fancy_dataclass.cli.ArgparseDataclassFieldSettings] for the full list of settings."""
 
+    __settings_type__ = ArgparseDataclassSettings
+    __settings__ = ArgparseDataclassSettings()
     __field_settings_type__ = ArgparseDataclassFieldSettings
+
+    _subcommand_field_name: ClassVar[Optional[str]] = None
+
+    @classmethod
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__(**kwargs)
+        # if command_name was not specified in the settings, use a default name
+        if cls.__settings__.command_name is None:
+            cls.__settings__.command_name = camel_case_to_kebab_case(cls.__name__)
 
     @classmethod
     def __post_dataclass_wrap__(cls) -> None:
@@ -119,6 +140,19 @@ class ArgparseDataclass(DataclassMixin):
                     continue
                 raise err
             raise TypeError(f'multiple fields ({subcommand} and {fld.name}) are registered as subcommands, at most one is allowed')
+        # store the name of the subcommand field as a private class attribute
+        cls._subcommand_field_name = subcommand
+
+    @property
+    def subcommand(self) -> Optional[str]:
+        """Gets the name of the chosen subcommand associated with the type of the object's subcommand field.
+
+        Returns:
+            Name of the subcommand, if a subcommand field exists, and `None` otherwise."""
+        if self._subcommand_field_name is not None:
+            tp: Type[ArgparseDataclass] = type(getattr(self, self._subcommand_field_name))
+            return tp.__settings__.command_name
+        return None
 
     @classmethod
     def parser_class(cls) -> Type[ArgumentParser]:
