@@ -517,7 +517,7 @@ def test_subcommand(capsys):
     assert DCSub4._subcommand_field_name == 'sub1'
     assert DCSub4(Sub1(1, 2), 1).subcommand == 'sub1'
     help_str = DCSub4.make_parser().format_help()
-    assert re.search(r'positional arguments:.+sub1\s+First subcommand\s+x\s+x value\s+options:.+-y Y', help_str, re.DOTALL)
+    assert re.search(r'positional arguments:.+sub1\s+First subcommand\s+x\s+x value\s+option.+-y Y', help_str, re.DOTALL)
     check_invalid_args(DCSub4, [], 'the following arguments are required: subcommand, x')
     check_invalid_args(DCSub4, ['5'], "invalid choice: '5'")
     for args in [['sub1'], ['sub1', '1']]:
@@ -579,7 +579,7 @@ def test_subcommand(capsys):
     class DCSub8(ArgparseDataclass):
         sub: Sub4 = field(metadata={'subcommand': True})
     # check the subparser's help string
-    check_invalid_args(DCSub8, ['sub4', '-h'], '-h, --help.*number group:\s+x\s+y')
+    check_invalid_args(DCSub8, ['sub4', '-h'], r'-h, --help.*number group:\s+x\s+y')
 
 def test_boolean_flag():
     """Tests the behavior of boolean fields in an ArgparseDataclass."""
