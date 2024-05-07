@@ -43,6 +43,7 @@ dependencies = [
   "mkdocs-gen-files",
   "mkdocstrings-python",
   "mkdocs-literate-nav",
+  "py-gadzooks >= 0.2.8",
 ]
 
 [tool.hatch.envs.doc.scripts]
@@ -52,6 +53,10 @@ build-pkg = "gadzooks build-docs --src-docs docs {args} -- mkdocs build --strict
 check = "gadzooks build-docs --src-docs docs --check-only {args}"
 serve = "mkdocs serve"
 deploy = "mkdocs build --site-dir $READTHEDOCS_OUTPUT/html"
+pre-publish = [
+  "build-pkg",
+  "cat docs/.changelog-version-regex.txt | xargs gadzooks check-version --check-tag --dist-dir dist --changelog docs/CHANGELOG.md --changelog-version-regex",
+]
 
 [tool.hatch.envs.lint]
 dependencies = [

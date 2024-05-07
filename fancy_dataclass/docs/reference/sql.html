@@ -609,7 +609,7 @@
         <li class="md-nav__item">
   <a href="#fancy_dataclass.sql" class="md-nav__link">
     <span class="md-ellipsis">
-      fancy_dataclass.sql
+      sql
     </span>
   </a>
   
@@ -628,7 +628,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.sql.SQLDataclass.get_columns" class="md-nav__link">
     <span class="md-ellipsis">
-      get_columns()
+      get_columns
     </span>
   </a>
   
@@ -651,7 +651,7 @@
         <li class="md-nav__item">
   <a href="#fancy_dataclass.sql.get_column_type" class="md-nav__link">
     <span class="md-ellipsis">
-      get_column_type()
+      get_column_type
     </span>
   </a>
   
@@ -660,7 +660,7 @@
         <li class="md-nav__item">
   <a href="#fancy_dataclass.sql.register" class="md-nav__link">
     <span class="md-ellipsis">
-      register()
+      register
     </span>
   </a>
   
@@ -772,7 +772,7 @@
         <li class="md-nav__item">
   <a href="#fancy_dataclass.sql" class="md-nav__link">
     <span class="md-ellipsis">
-      fancy_dataclass.sql
+      sql
     </span>
   </a>
   
@@ -791,7 +791,7 @@
           <li class="md-nav__item">
   <a href="#fancy_dataclass.sql.SQLDataclass.get_columns" class="md-nav__link">
     <span class="md-ellipsis">
-      get_columns()
+      get_columns
     </span>
   </a>
   
@@ -814,7 +814,7 @@
         <li class="md-nav__item">
   <a href="#fancy_dataclass.sql.get_column_type" class="md-nav__link">
     <span class="md-ellipsis">
-      get_column_type()
+      get_column_type
     </span>
   </a>
   
@@ -823,7 +823,7 @@
         <li class="md-nav__item">
   <a href="#fancy_dataclass.sql.register" class="md-nav__link">
     <span class="md-ellipsis">
-      register()
+      register
     </span>
   </a>
   
@@ -852,6 +852,7 @@
 <div class="doc doc-object doc-module">
 
 
+
 <a id="fancy_dataclass.sql"></a>
   <div class="doc doc-contents first">
 
@@ -871,15 +872,15 @@
 
 
 <h2 id="fancy_dataclass.sql.SQLDataclass" class="doc doc-heading">
-        <code>SQLDataclass</code>
+          <code>SQLDataclass</code>
 
 
 </h2>
 
 
   <div class="doc doc-contents ">
-      <p class="doc doc-class-bases">
-        Bases: <code><a class="autorefs autorefs-internal" title="fancy_dataclass.mixin.DataclassMixin" href="mixin.html#fancy_dataclass.mixin.DataclassMixin">DataclassMixin</a></code></p>
+          <p class="doc doc-class-bases">
+            Bases: <code><a class="autorefs autorefs-internal" title="fancy_dataclass.mixin.DataclassMixin" href="mixin.html#fancy_dataclass.mixin.DataclassMixin">DataclassMixin</a></code></p>
 
   
       <p>A dataclass backed by a SQL table using the <a href="https://www.sqlalchemy.org">sqlalchemy</a> ORM.</p>
@@ -888,10 +889,9 @@
 <p>Each field may also contain a <code>"column"</code> entry in its <code>metadata</code> dict. This will provide optional keyword arguments to be passed to sqlalchemy's <a href="https://docs.sqlalchemy.org/en/20/core/metadata.html#sqlalchemy.schema.Column"><code>Column</code></a> constructor.</p>
 <p>Some types are invalid for SQL columns; if such a type occurs, a <code>TypeError</code> will be raised.</p>
 
-
-        <details class="quote">
-          <summary>Source code in <code>fancy_dataclass/sql.py</code></summary>
-          <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-56"> 56</a></span>
+            <details class="quote">
+              <summary>Source code in <code>fancy_dataclass/sql.py</code></summary>
+              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-56"> 56</a></span>
 <span class="normal"><a href="#__codelineno-0-57"> 57</a></span>
 <span class="normal"><a href="#__codelineno-0-58"> 58</a></span>
 <span class="normal"><a href="#__codelineno-0-59"> 59</a></span>
@@ -991,11 +991,12 @@
 </span><span id="__span-0-104"><a id="__codelineno-0-104" name="__codelineno-0-104"></a>                <span class="n">cols</span><span class="p">[</span><span class="n">fld</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">fld</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">get_column_type</span><span class="p">(</span><span class="n">tp</span><span class="p">),</span> <span class="o">**</span><span class="n">column_kwargs</span><span class="p">)</span>
 </span><span id="__span-0-105"><a id="__codelineno-0-105" name="__codelineno-0-105"></a>        <span class="k">return</span> <span class="n">cols</span>
 </span></code></pre></div></td></tr></table></div>
-        </details>
+            </details>
 
   
 
   <div class="doc doc-children">
+
 
 
 
@@ -1010,7 +1011,7 @@
 
 
 <h3 id="fancy_dataclass.sql.SQLDataclass.get_columns" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">get_columns</span><span class="p">()</span></code>
+          <code class="highlight language-python"><span class="n">get_columns</span><span class="p">()</span></code>
   
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
@@ -1022,6 +1023,8 @@
   <div class="doc doc-contents ">
   
       <p>Gets a mapping from the class's field names to sqlalchemy <code>Column</code> objects.</p>
+
+
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1036,14 +1039,18 @@
           <td>
                 <code><span title="typing.Dict">Dict</span>[str, <span title="sqlalchemy.Column">Column</span>[<span title="typing.Any">Any</span>]]</code>
           </td>
-          <td><p>Dict from column names to <code>Column</code> objects</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Dict from column names to <code>Column</code> objects</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
 
-      <details class="quote">
-        <summary>Source code in <code>fancy_dataclass/sql.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-70"> 70</a></span>
+          <details class="quote">
+            <summary>Source code in <code>fancy_dataclass/sql.py</code></summary>
+            <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-70"> 70</a></span>
 <span class="normal"><a href="#__codelineno-0-71"> 71</a></span>
 <span class="normal"><a href="#__codelineno-0-72"> 72</a></span>
 <span class="normal"><a href="#__codelineno-0-73"> 73</a></span>
@@ -1115,7 +1122,7 @@
 </span><span id="__span-0-104"><a id="__codelineno-0-104" name="__codelineno-0-104"></a>            <span class="n">cols</span><span class="p">[</span><span class="n">fld</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">fld</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">get_column_type</span><span class="p">(</span><span class="n">tp</span><span class="p">),</span> <span class="o">**</span><span class="n">column_kwargs</span><span class="p">)</span>
 </span><span id="__span-0-105"><a id="__codelineno-0-105" name="__codelineno-0-105"></a>    <span class="k">return</span> <span class="n">cols</span>
 </span></code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
@@ -1125,6 +1132,7 @@
   </div>
 
   </div>
+
 
 </div>
 
@@ -1133,7 +1141,7 @@
 
 
 <h2 id="fancy_dataclass.sql.SQLDataclassFieldSettings" class="doc doc-heading">
-        <code>SQLDataclassFieldSettings</code>
+          <code>SQLDataclassFieldSettings</code>
 
   
   <span class="doc doc-labels">
@@ -1144,8 +1152,8 @@
 
 
   <div class="doc doc-contents ">
-      <p class="doc doc-class-bases">
-        Bases: <code><a class="autorefs autorefs-internal" title="fancy_dataclass.mixin.FieldSettings" href="mixin.html#fancy_dataclass.mixin.FieldSettings">FieldSettings</a></code></p>
+          <p class="doc doc-class-bases">
+            Bases: <code><a class="autorefs autorefs-internal" title="fancy_dataclass.mixin.FieldSettings" href="mixin.html#fancy_dataclass.mixin.FieldSettings">FieldSettings</a></code></p>
 
   
       <p>Settings for <a class="autorefs autorefs-internal" href="#fancy_dataclass.sql.SQLDataclass"><code>SQLDataclass</code></a> fields.</p>
@@ -1155,10 +1163,9 @@
 <li><code>column</code>: dict of keyword arguments passed to the <a href="https://docs.sqlalchemy.org/en/20/core/metadata.html#sqlalchemy.schema.Column"><code>Column</code></a> constructor</li>
 </ul>
 
-
-        <details class="quote">
-          <summary>Source code in <code>fancy_dataclass/sql.py</code></summary>
-          <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-44">44</a></span>
+            <details class="quote">
+              <summary>Source code in <code>fancy_dataclass/sql.py</code></summary>
+              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-44">44</a></span>
 <span class="normal"><a href="#__codelineno-0-45">45</a></span>
 <span class="normal"><a href="#__codelineno-0-46">46</a></span>
 <span class="normal"><a href="#__codelineno-0-47">47</a></span>
@@ -1178,7 +1185,7 @@
 </span><span id="__span-0-52"><a id="__codelineno-0-52" name="__codelineno-0-52"></a>    <span class="n">sql</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
 </span><span id="__span-0-53"><a id="__codelineno-0-53" name="__codelineno-0-53"></a>    <span class="n">column</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
 </span></code></pre></div></td></tr></table></div>
-        </details>
+            </details>
 
   
 
@@ -1198,7 +1205,9 @@
 
   </div>
 
+
 </div>
+
 
 
 <div class="doc doc-object doc-function">
@@ -1206,7 +1215,7 @@
 
 
 <h2 id="fancy_dataclass.sql.get_column_type" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">get_column_type</span><span class="p">(</span><span class="n">tp</span><span class="p">)</span></code>
+          <code class="highlight language-python"><span class="n">get_column_type</span><span class="p">(</span><span class="n">tp</span><span class="p">)</span></code>
 
 </h2>
 
@@ -1214,6 +1223,8 @@
   <div class="doc doc-contents ">
   
       <p>Converts from a Python type to a corresponding sqlalchemy column type.</p>
+
+
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1231,13 +1242,19 @@
           <td>
                 <code>type</code>
           </td>
-          <td><p>A Python type</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>A Python type</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
         </tr>
     </tbody>
   </table>
+
+
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1252,14 +1269,18 @@
           <td>
                 <code>type</code>
           </td>
-          <td><p>Corresponding sqlalchemy column type</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Corresponding sqlalchemy column type</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
 
-      <details class="quote">
-        <summary>Source code in <code>fancy_dataclass/sql.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-20">20</a></span>
+          <details class="quote">
+            <summary>Source code in <code>fancy_dataclass/sql.py</code></summary>
+            <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-20">20</a></span>
 <span class="normal"><a href="#__codelineno-0-21">21</a></span>
 <span class="normal"><a href="#__codelineno-0-22">22</a></span>
 <span class="normal"><a href="#__codelineno-0-23">23</a></span>
@@ -1303,17 +1324,18 @@
 </span><span id="__span-0-40"><a id="__codelineno-0-40" name="__codelineno-0-40"></a>    <span class="k">else</span><span class="p">:</span>
 </span><span id="__span-0-41"><a id="__codelineno-0-41" name="__codelineno-0-41"></a>        <span class="k">return</span> <span class="n">PickleType</span>
 </span></code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
+
 
 <div class="doc doc-object doc-function">
 
 
 
 <h2 id="fancy_dataclass.sql.register" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">register</span><span class="p">(</span><span class="n">reg</span><span class="o">=</span><span class="n">DEFAULT_REGISTRY</span><span class="p">,</span> <span class="n">extra_cols</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+          <code class="highlight language-python"><span class="n">register</span><span class="p">(</span><span class="n">reg</span><span class="o">=</span><span class="n">DEFAULT_REGISTRY</span><span class="p">,</span> <span class="n">extra_cols</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 </h2>
 
@@ -1321,6 +1343,8 @@
   <div class="doc doc-contents ">
   
       <p>Decorator that registers a sqlalchemy table for a <a class="autorefs autorefs-internal" href="#fancy_dataclass.sql.SQLDataclass"><code>SQLDataclass</code></a>.</p>
+
+
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1338,9 +1362,13 @@
           <td>
                 <code><span title="fancy_dataclass.sql.Reg">Reg</span></code>
           </td>
-          <td><p>sqlalchemy registry for mapping the class to a SQL table</p></td>
           <td>
-                <code>DEFAULT_REGISTRY</code>
+            <div class="doc-md-description">
+              <p>sqlalchemy registry for mapping the class to a SQL table</p>
+            </div>
+          </td>
+          <td>
+                <code><span title="fancy_dataclass.sql.DEFAULT_REGISTRY">DEFAULT_REGISTRY</span></code>
           </td>
         </tr>
         <tr>
@@ -1348,13 +1376,19 @@
           <td>
                 <code><span title="typing.Optional">Optional</span>[<span title="typing.Dict">Dict</span>[str, <span title="sqlalchemy.Column">Column</span>[<span title="typing.Any">Any</span>]]]</code>
           </td>
-          <td><p>Additional columns (beyond the dataclass fields) to be stored in the table</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Additional columns (beyond the dataclass fields) to be stored in the table</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
         </tr>
     </tbody>
   </table>
+
+
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1369,14 +1403,18 @@
           <td>
                 <code><span title="typing.Callable">Callable</span>[[<span title="typing.Type">Type</span>[<a class="autorefs autorefs-internal" title="fancy_dataclass.sql.SQLDataclass" href="#fancy_dataclass.sql.SQLDataclass">SQLDataclass</a>]], <span title="typing.Type">Type</span>[<a class="autorefs autorefs-internal" title="fancy_dataclass.sql.SQLDataclass" href="#fancy_dataclass.sql.SQLDataclass">SQLDataclass</a>]]</code>
           </td>
-          <td><p>A decorator mapping a <code>SQLDataclass</code> type to a registered sqlalchemy table</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>A decorator mapping a <code>SQLDataclass</code> type to a registered sqlalchemy table</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
 
-      <details class="quote">
-        <summary>Source code in <code>fancy_dataclass/sql.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-108">108</a></span>
+          <details class="quote">
+            <summary>Source code in <code>fancy_dataclass/sql.py</code></summary>
+            <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-108">108</a></span>
 <span class="normal"><a href="#__codelineno-0-109">109</a></span>
 <span class="normal"><a href="#__codelineno-0-110">110</a></span>
 <span class="normal"><a href="#__codelineno-0-111">111</a></span>
@@ -1430,7 +1468,7 @@
 </span><span id="__span-0-133"><a id="__codelineno-0-133" name="__codelineno-0-133"></a>        <span class="k">return</span> <span class="n">reg</span><span class="o">.</span><span class="n">mapped</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
 </span><span id="__span-0-134"><a id="__codelineno-0-134" name="__codelineno-0-134"></a>    <span class="k">return</span> <span class="n">_orm_table</span>
 </span></code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>

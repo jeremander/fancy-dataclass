@@ -16,6 +16,21 @@ Types of changes:
 
 ## [Unreleased]
 
+## [0.4.4]
+
+2024-05-06
+
+### Added
+
+- Groups, mutually exclusive groups, and subparsers for `ArgparseDataclass`
+    - Nested `ArgparseDataclass` can be used as subparser if `subcommand=True` is set in field metadata
+    - `CLIDataclass.run` will invoke subcommand if applicable
+
+### Fixed
+
+- `ArgparseDataclass` boolean flag field properly handles `action="store_false"` with field default `True`
+- Field `suppress=False` overrides `suppress_defaults=True`
+
 ## [0.4.3]
 
 2024-04-30
@@ -136,7 +151,8 @@ Types of changes:
     - `SQLDataclass`: SQL persistence via `sqlalchemy`
     - `SubprocessDataclass`: call out to another program via `subprocess`
 
-[unreleased]: https://github.com/jeremander/fancy-dataclass/compare/v0.4.3...HEAD
+[unreleased]: https://github.com/jeremander/fancy-dataclass/compare/v0.4.4...HEAD
+[0.4.4]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.4.4
 [0.4.3]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.4.3
 [0.4.2]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.4.2
 [0.4.1]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.4.1

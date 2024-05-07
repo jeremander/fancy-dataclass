@@ -44,8 +44,3 @@ repos:
       pass_filenames: false
       verbose: true
       stages: [commit]
-    - id: check-version
-      args: ['--check-tag', '--dist-dir', 'dist', '--changelog', 'docs/CHANGELOG.md', '--changelog-version-regex', '\[{version}\]:\s*\w+']
-      pass_filenames: false
-      verbose: true
-      stages: [push]
