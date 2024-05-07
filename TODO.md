@@ -2,22 +2,6 @@
 
 # TODO
 
-## v0.4.4
-
-- `ArgparseDataclass`
-  - Subparsers
-    <!-- - Single nested field marked with `subcommand=True`
-    - Field should be a `Union` type, all of whose variants are `ArgparseDataclass` subclasses
-    - Each variant must have a name
-      - By default, this will be the kebab-case version of the class name
-      - A `command_name` class setting can override this
-    - Parsed args get stored in appropriate object type
-    - `subcommand` (read-only property) stores the string name of the subcommand -->
-    - Subparser title/description
-    - For `CLIDataclass`, `run` can be created automatically by delegating to the subcommand field, provided each variant is a `CLIDataclass`
-  - Test subparsers, groups, mutually exclusive groups
-  - Review reference docs
-
 ## v0.4.5
 
 - `VersionedDataclass`

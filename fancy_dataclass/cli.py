@@ -1,4 +1,3 @@
-from abc import ABC, abstractmethod
 from argparse import ArgumentParser, Namespace, _ArgumentGroup, _MutuallyExclusiveGroup
 from contextlib import suppress
 from dataclasses import MISSING, dataclass, fields
@@ -85,9 +84,9 @@ class ArgparseDataclassFieldSettings(FieldSettings):
     - `choices`: list of possible inputs allowed
     - `help`: help string
     - `metavar`: name for the argument in usage messages
-    - `group`: name of the argument group in which to put the argument; the group will be created if it does not already exist in the parser
-    - `exclusive_group`: name of the mutually exclusive argument group in which to put the argument; the group will be created if it does not already exist in the parser
-    - `subcommand`: boolean flag marking this field as a _subcommand_
+    - `group`: name of the [argument group](https://docs.python.org/3/library/argparse.html#argument-groups) in which to put the argument; the group will be created if it does not already exist in the parser
+    - `exclusive_group`: name of the [mutually exclusive](https://docs.python.org/3/library/argparse.html#mutual-exclusion) argument group in which to put the argument; the group will be created if it does not already exist in the parser
+    - `subcommand`: boolean flag marking this field as a [subcommand](https://docs.python.org/3/library/argparse.html#sub-commands)
     - `parse_exclude`: boolean flag indicating that the field should not be included in the parser
 
     Note that these line up closely with the usual options that can be passed to [`ArgumentParser.add_argument`](https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser.add_argument).
@@ -96,8 +95,11 @@ class ArgparseDataclassFieldSettings(FieldSettings):
 
     - If a field explicitly lists arguments in the `args` metadata field, the argument will be an option if the first listed argument starts with a dash; otherwise it will be a positional argument.
         - If it is an option but specifies no default value, it will be a required option.
-    - If `args` are absent, the field will be an option if either (1) it specifies a default value, or (2) it is a boolean type; otherwise it is a positional argument.
-    """
+    - If `args` are absent, the field will be:
+        - A boolean flag if its type is `bool`
+            - Can set `action` in metadata as either `"store_true"` (default) or `"store_false"`
+        - An option if it specifies a default value
+        - Otherwise, a positional argument"""
     type: Optional[Union[type, Callable[[Any], Any]]] = None  # can be used to define custom constructor
     args: Optional[Union[str, Sequence[str]]] = None
     action: Optional[str] = None
@@ -166,7 +168,7 @@ class ArgparseDataclass(DataclassMixin):
         """Gets the name of the chosen subcommand associated with the type of the object's subcommand field.
 
         Returns:
-            Name of the subcommand, if a subcommand field exists, and `None` otherwise."""
+            Name of the subcommand, if a subcommand field exists, and `None` otherwise"""
         if self._subcommand_field_name is not None:
             tp: Type[ArgparseDataclass] = type(getattr(self, self._subcommand_field_name))
             return tp.__settings__.command_name
@@ -293,7 +295,13 @@ class ArgparseDataclass(DataclassMixin):
             # store the argument based on the name of the field, and not whatever flag name was provided
             kwargs['dest'] = fld.name
         if fld.type is bool:  # use boolean flag instead of an argument
-            kwargs['action'] = 'store_true'
+            action = settings.action or 'store_true'
+            kwargs['action'] = action
+            if action not in ['store_true', 'store_false']:
+                raise ValueError(f'invalid action {action!r} for boolean flag field {name!r}')
+            if (default := kwargs.get('default')) is not None:
+                if (action == 'store_true') == default:
+                    raise ValueError(f'cannot use default value of {default} for action {action!r} with boolean flag field {name!r}')
             for key in ('type', 'required'):
                 with suppress(KeyError):
                     kwargs.pop(key)
@@ -320,7 +328,6 @@ class ArgparseDataclass(DataclassMixin):
             parser = group  # type: ignore[assignment]
         if settings.subcommand:
             # create subparsers for each variant
-            # TODO: title/description?
             subparsers = parser.add_subparsers(dest='_subcommand', required=True, help=settings.help, metavar='subcommand')
             tp_args = (tp,) if (origin_type is None) else tp_args
             for arg in tp_args:
@@ -458,16 +465,23 @@ class ArgparseDataclass(DataclassMixin):
         return cls.from_args(args)
 
 
-class CLIDataclass(ABC, ArgparseDataclass):
+class CLIDataclass(ArgparseDataclass):
     """This subclass of [`ArgparseDataclass`][fancy_dataclass.cli.ArgparseDataclass] allows the user to execute arbitrary program logic using the parsed arguments as input.
 
     Subclasses should override the `run` method to implement custom behavior."""
 
-    @abstractmethod
     def run(self) -> None:
         """Runs the main body of the program.
 
-        Subclasses must implement this to provide custom behavior."""
+        Subclasses should implement this to provide custom behavior.
+
+        If the class has a subcommand defined, and it is an instance of `CLIDataclass`, the default implementation of `run` will be to call the subcommand's own implementation."""
+        # delegate to the subcommand's `run` method, if it exists
+        if self._subcommand_field_name:
+            val = getattr(self, self._subcommand_field_name)
+            if isinstance(val, CLIDataclass):
+                return val.run()
+        raise NotImplementedError
 
     @classmethod
     def main(cls, arg_list: Optional[List[str]] = None) -> None:

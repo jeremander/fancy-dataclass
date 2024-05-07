@@ -180,12 +180,14 @@ def test_argparse_options():
     @dataclass
     class DC11(ArgparseDataclass):
         flag: bool = False
+    for cls in [DC10, DC11]:
+        assert cls.from_cli_args(['--flag']).flag is True
+        assert cls.from_cli_args([]).flag is False
     @dataclass
     class DC12(ArgparseDataclass):
-        flag: bool = True
-    for cls in [DC10, DC11, DC12]:
-        assert cls.from_cli_args(['--flag']).flag is True
-        assert cls.from_cli_args([]).flag is (cls is DC12)
+        flag: bool = field(default=True, metadata={'action': 'store_false'})
+    assert DC12.from_cli_args(['--flag']).flag is False
+    assert DC12.from_cli_args([]).flag is True
     @dataclass
     class DC13(ArgparseDataclass):
         flag: bool = field(metadata={'action': 'store_false'})
@@ -470,13 +472,15 @@ def test_nested():
     with pytest.raises(ValueError, match='union type .+ not allowed'):
         _ = H.make_parser()
 
-def test_subcommand():
+def test_subcommand(capsys):
     """Tests the behavior of subcommands."""
     @dataclass
-    class Sub1(ArgparseDataclass):
+    class Sub1(CLIDataclass):
         """First subcommand"""
         x1: int
         y1: int
+        def run(self) -> None:
+            print(self.__class__.__name__)
     assert Sub1.__settings__.command_name == 'sub1'
     assert Sub1._subcommand_field_name is None
     assert Sub1(1, 2).subcommand is None
@@ -523,7 +527,7 @@ def test_subcommand():
     assert DCSub4.from_cli_args(['sub1', '1', '2', '5']) == DCSub4(Sub1(1, 2), 5)
     # union subcommand
     @dataclass
-    class DCSub5(ArgparseDataclass):
+    class DCSub5(CLIDataclass):
         sub: Union[Sub1, Sub2] = field(metadata={'subcommand': True, 'help': 'choose a subcommand'})
         x: int = 1
     assert DCSub5.__settings__.command_name == 'dc-sub5'
@@ -545,6 +549,11 @@ def test_subcommand():
     check_invalid_args(DCSub5, ['sub1', '1', '2', '-x', '5'], 'unrecognized arguments: -x 5')
     assert DCSub5.from_cli_args(['my-subcommand', '1']) == DCSub5(Sub2(1, 'abc'))
     assert DCSub5.from_cli_args(['-x', '5', 'my-subcommand', '1', '--y2', 'def']) == DCSub5(Sub2(1, 'def'), 5)
+    # default implementation of `CLIDataclass.run`
+    DCSub5.main(['sub1', '1', '2'])
+    assert capsys.readouterr().out == 'Sub1\n'
+    with pytest.raises(NotImplementedError):
+        DCSub5.main(['my-subcommand', '1'])
     # duplicate subcommand name
     @dataclass
     class Sub3(ArgparseDataclass, command_name='sub1'):
@@ -571,3 +580,42 @@ def test_subcommand():
         sub: Sub4 = field(metadata={'subcommand': True})
     # check the subparser's help string
     check_invalid_args(DCSub8, ['sub4', '-h'], '-h, --help.*number group:\s+x\s+y')
+
+def test_boolean_flag():
+    """Tests the behavior of boolean fields in an ArgparseDataclass."""
+    @dataclass
+    class DCFlagDefaultFalse(ArgparseDataclass):
+        flag: bool = False
+    @dataclass
+    class DCFlagNoDefault(ArgparseDataclass):
+        flag: bool
+    # required=True is ignored for boolean flag
+    @dataclass
+    class DCFlagRequired(ArgparseDataclass):
+        flag: bool = field(default=False, metadata={'required': True})
+    for cls in [DCFlagDefaultFalse, DCFlagNoDefault, DCFlagRequired]:
+        assert cls.from_cli_args([]).flag is False
+        assert cls.from_cli_args(['--flag']).flag is True
+    # default of True not permitted with action='store_true' (the default)
+    @dataclass
+    class DCFlagDefaultTrue(ArgparseDataclass):
+        flag: bool = True
+    with pytest.raises(ValueError, match='cannot use default value of True'):
+        _ = DCFlagDefaultTrue.make_parser()
+    @dataclass
+    class DCFlagDefaultTrueActionFalse(ArgparseDataclass):
+        flag: bool = field(default=True, metadata={'action': 'store_false'})
+    assert DCFlagDefaultTrueActionFalse.from_cli_args([]).flag is True
+    assert DCFlagDefaultTrueActionFalse.from_cli_args(['--flag']).flag is False
+    # default of False not permitted with action='store_false'
+    @dataclass
+    class DCFlagDefaultFalseActionFalse(ArgparseDataclass):
+        flag: bool = field(default=False, metadata={'action': 'store_false'})
+    with pytest.raises(ValueError, match='cannot use default value of False'):
+        _ = DCFlagDefaultFalseActionFalse.make_parser()
+    # action must be 'store_true' or 'store_false'
+    @dataclass
+    class DCFlagActionStore(ArgparseDataclass):
+        flag: bool = field(default=False, metadata={'action': 'store'})
+    with pytest.raises(ValueError, match="invalid action 'store'"):
+        _ = DCFlagActionStore.make_parser()

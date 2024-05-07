@@ -28,7 +28,7 @@ repos:
     - id: commitizen
       stages: [commit-msg]
 - repo: https://github.com/jeremander/gadzooks
-  rev: v0.2.7
+  rev: v0.2.8
   hooks:
     - id: build-docs
       # args: ['--src-docs', 'docs', '--', 'mkdocs', 'build', '--strict', '--no-directory-urls', '-d', 'fancy_dataclass/docs']
