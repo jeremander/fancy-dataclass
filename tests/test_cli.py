@@ -271,11 +271,6 @@ def test_argparse_options():
     check_invalid_args(DC24, ['1'], 'required: vals')
     check_invalid_args(DC24, ['1', 'a'], "invalid int value: 'a'")
     check_invalid_args(DC24, ['1', '2', '3'], 'unrecognized arguments: 3')
-    # custom type constructor
-    @dataclass
-    class DC25(ArgparseDataclass):
-        x: int = field(metadata={'type': lambda x: int(x) + 1})
-    assert DC25.from_cli_args(['1']).x == 2
 
 def test_groups():
     """Tests the behavior of groups and nested groups."""
@@ -619,3 +614,26 @@ def test_boolean_flag():
         flag: bool = field(default=False, metadata={'action': 'store'})
     with pytest.raises(ValueError, match="invalid action 'store'"):
         _ = DCFlagActionStore.make_parser()
+
+def test_type_metadata():
+    """Tests the behavior of using the "type" entry in the field metadata."""
+    @dataclass
+    class DCTypeMismatch(ArgparseDataclass):
+        x: int = field(default=1, metadata={'type': str})
+    assert DCTypeMismatch.from_cli_args([]).x == 1
+    assert DCTypeMismatch.from_cli_args(['-x', '1']).x == '1'
+    @dataclass
+    class DCTypeCallable(ArgparseDataclass):
+        x: int = field(metadata={'type': lambda x: int(x) + 1})
+    assert DCTypeCallable.from_cli_args(['1']).x == 2
+    def positive_int(s):
+        x = int(s)
+        if x < 0:
+            raise ValueError('negative number')
+        return x
+    @dataclass
+    class DCTypeCallable(ArgparseDataclass):
+        x: int = field(metadata={'type': positive_int})
+    assert DCTypeCallable.from_cli_args(['0']).x == 0
+    check_invalid_args(DCTypeCallable, ['a'], "invalid positive_int value: 'a'")
+    check_invalid_args(DCTypeCallable, ['-1'], "invalid positive_int value: '-1'")
