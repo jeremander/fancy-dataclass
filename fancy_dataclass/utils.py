@@ -260,7 +260,7 @@ def make_dataclass_with_constructors(cls_name: str, fields: Sequence[Union[str, 
         # take inputs and wrap them in the provided constructors
         for (fld, cons, arg) in zip(dataclasses.fields(self), constructors, args):
             setattr(self, fld.name, cons(arg))
-    tp = make_dataclass(cls_name, fields, init = False, **kwargs)
+    tp = make_dataclass(cls_name, fields, init=False, **kwargs)
     tp.__init__ = __init__  # type: ignore
     # store the field names in a tuple, to match the behavior of namedtuple
     tp._fields = tuple(fld.name for fld in dataclasses.fields(tp))  # type: ignore[attr-defined]

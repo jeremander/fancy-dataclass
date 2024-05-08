@@ -162,3 +162,15 @@ disable_error_code = ["assignment", "misc"]
 
 [tool.pytest.ini_options]
 addopts = "--verbose --cov=fancy_dataclass"
+
+[tool.yapf]
+# NOTE: we'd like to disable vertical whitespace adjustment,
+# but there appears to be no way to do that
+based_on_style = "pep8"
+blank_lines_between_top_level_imports_and_variables = 2
+coalesce_brackets = true
+column_limit = 10000
+dedent_closing_brackets = true
+space_between_ending_comma_and_closing_bracket = false
+spaces_around_power_operator = true
+split_all_top_level_comma_separated_values = true

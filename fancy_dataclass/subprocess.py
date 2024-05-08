@@ -156,7 +156,7 @@ class SubprocessDataclass(DataclassMixin):
             raise ValueError(f'no executable identified for use with {obj_class_name(self)} instance')
         args = [executable]
         for fld in fields(self):  # type: ignore[arg-type]
-            args += [arg for arg in self.get_arg(fld.name, suppress_defaults = suppress_defaults) if arg]
+            args += [arg for arg in self.get_arg(fld.name, suppress_defaults=suppress_defaults) if arg]
         return args
 
     def run_subprocess(self, **kwargs: Any) -> subprocess.CompletedProcess:  # type: ignore[type-arg]

@@ -198,7 +198,7 @@ class ArgparseDataclass(DataclassMixin):
 
         Returns:
             Keyword arguments passed upon construction of the `ArgumentParser`"""
-        return {'description' : cls.parser_description()}
+        return {'description': cls.parser_description()}
 
     @classmethod
     def parser_argument_kwarg_names(cls) -> List[str]:
