@@ -133,7 +133,7 @@ def test_flattened():
     class DC1Nested(DictDataclass):
         x1: DC2
         y1: int
-    obj_nested = DC1Nested(DC2(DC3(3),2),1)
+    obj_nested = DC1Nested(DC2(DC3(3), 2),1)
     assert obj_nested.to_dict() == {'x1': {'x2': {'y3': 3}, 'y2': 2}, 'y1': 1}
     @dataclass
     class DC1Flat(DictDataclass, flattened=True):

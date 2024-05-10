@@ -15,7 +15,9 @@
       - If `strict=True`, raises an error; otherwise, attempts to coerce and issues a warning
     - Error if duplicate versions are set
   - `def migrate(self, version)` method from object of one version to another
-  - Helper methods like `get_version`, `has_version`
+  - Singleton `VersionRegistry` object via `registry` property
+    - Helper methods like `get_version`, `get_available_versions`, `has_version`
+    - Avoid cyclic references (`weakref`?)
   - Deal with namespace collision? E.g. use `globals()` to ensure the latest version is the only one accessible within module's namespace, even if it is defined earlier than the others.
 
 ## v0.4.6

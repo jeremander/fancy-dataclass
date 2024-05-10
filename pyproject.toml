@@ -62,7 +62,7 @@ pre-publish = [
 dependencies = [
   "mypy>=1.0",
   "numpy",
-  "py-gadzooks>=0.2",
+  "py-gadzooks>=0.2.9",
   "pytest",
   "ruff>=0.3",
   "vermin>=1.5",
@@ -77,6 +77,8 @@ run-vermin = "vermin {args:.}"
 run-mypy = "mypy --install-types --non-interactive {args:fancy_dataclass tests}"
 # print info about lines of code
 run-loc-summarize = "gadzooks loc-summarize fancy_dataclass"
+# print out formatter diffs
+run-format = "gadzooks check-format fancy_dataclass --formatter yapf --ignore-patterns '\\s*'"
 all = ["run-ruff", "run-vermin", "run-mypy", "run-loc-summarize"]
 
 [tool.hatch.envs.test]
