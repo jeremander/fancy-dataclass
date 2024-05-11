@@ -334,7 +334,7 @@ class DictDataclass(DataclassMixin):
                 # call from_dict on the subclass in case it has its own custom implementation
                 # (remove the type name before passing to the constructor)
                 d2 = {key: val for (key, val) in d.items() if (key != 'type')}
-                return cls._get_subclass_with_name(typename).from_dict(d2, **kwargs)
+                return cls.get_subclass_with_name(typename).from_dict(d2, **kwargs)
         conv = None
         if cls.__settings__.flattened:
             # produce equivalent subfield-flattened type

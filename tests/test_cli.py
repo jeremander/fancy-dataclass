@@ -478,7 +478,7 @@ def test_subcommand(capsys):
             print(self.__class__.__name__)
     assert Sub1.__settings__.command_name == 'sub1'
     assert Sub1._subcommand_field_name is None
-    assert Sub1(1, 2).subcommand is None
+    assert Sub1(1, 2).subcommand_name is None
     @dataclass
     class Sub2(ArgparseDataclass, command_name='my-subcommand'):
         """Second subcommand"""
@@ -486,7 +486,7 @@ def test_subcommand(capsys):
         y2: str = 'abc'
     assert Sub2.__settings__.command_name == 'my-subcommand'
     assert Sub2._subcommand_field_name is None
-    assert Sub2(1, 2).subcommand is None
+    assert Sub2(1, 2).subcommand_name is None
     # multiple subcommands not allowed
     with pytest.raises(TypeError, match='multiple fields .* registered as subcommands'):
         @dataclass
@@ -510,7 +510,7 @@ def test_subcommand(capsys):
         y: int = 2
     assert DCSub4.__settings__.command_name == 'dc-sub4'
     assert DCSub4._subcommand_field_name == 'sub1'
-    assert DCSub4(Sub1(1, 2), 1).subcommand == 'sub1'
+    assert DCSub4(Sub1(1, 2), 1).subcommand_name == 'sub1'
     help_str = DCSub4.make_parser().format_help()
     assert re.search(r'positional arguments:.+sub1\s+First subcommand\s+x\s+x value\s+option.+-y Y', help_str, re.DOTALL)
     check_invalid_args(DCSub4, [], 'the following arguments are required: subcommand, x')
@@ -527,8 +527,8 @@ def test_subcommand(capsys):
         x: int = 1
     assert DCSub5.__settings__.command_name == 'dc-sub5'
     assert DCSub5._subcommand_field_name == 'sub'
-    assert DCSub5(Sub1(1, 2)).subcommand == 'sub1'
-    assert DCSub5(Sub2(1, 2)).subcommand == 'my-subcommand'
+    assert DCSub5(Sub1(1, 2)).subcommand_name == 'sub1'
+    assert DCSub5(Sub2(1, 2)).subcommand_name == 'my-subcommand'
     help_str = DCSub5.make_parser().format_help()
     assert re.search(r'positional arguments:.+choose a subcommand\s+sub1\s+First subcommand\s+my-subcommand\s+Second subcommand.+-x X', help_str, re.DOTALL)
     for args in [[], ['-x', '5']]:

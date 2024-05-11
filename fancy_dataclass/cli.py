@@ -164,7 +164,7 @@ class ArgparseDataclass(DataclassMixin):
         cls._subcommand_field_name = subcommand
 
     @property
-    def subcommand(self) -> Optional[str]:
+    def subcommand_name(self) -> Optional[str]:
         """Gets the name of the chosen subcommand associated with the type of the object's subcommand field.
 
         Returns:

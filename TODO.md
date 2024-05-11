@@ -42,6 +42,10 @@
 
 ## Future
 
+- `PromptDataclass` to prompt user for each value type
+  - Be able to supply validator functions
+  - Specify behavior on error (bail or loop)
+  - Ctrl-C to break out one level of loop
 - `TabularDataclass`? CSV/TSV/parquet/feather
   - Simplest if single class can save/load all these file types
   - Convert to/from `pandas` `Series` and `DataFrame`?
