@@ -272,7 +272,7 @@ class DictDataclass(DataclassMixin):
         raise ValueError(f'{fld.name!r} field is required')
 
     @classmethod
-    def _dataclass_args_from_dict(cls, d: AnyDict, strict: bool = False) -> AnyDict:
+    def dataclass_args_from_dict(cls, d: AnyDict, strict: bool = False) -> AnyDict:
         """Given a dict of arguments, performs type conversion and/or validity checking, then returns a new dict that can be passed to the class's constructor."""
         check_dataclass(cls)
         kwargs = {}
@@ -344,5 +344,5 @@ class DictDataclass(DataclassMixin):
             tp = conv.to_type  # type: ignore[assignment]
             tp.__settings__ = settings
         strict = kwargs.get('strict', False)
-        result: Self = tp(**tp._dataclass_args_from_dict(d, strict=strict))
+        result: Self = tp(**tp.dataclass_args_from_dict(d, strict=strict))
         return conv.backward(result) if cls.__settings__.flattened else result  # type: ignore
