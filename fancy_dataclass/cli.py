@@ -11,6 +11,7 @@ from fancy_dataclass.utils import camel_case_to_kebab_case, check_dataclass, iss
 
 
 T = TypeVar('T')
+ArgParser = Union[ArgumentParser, _ArgumentGroup]
 
 
 ####################
@@ -27,21 +28,21 @@ def _get_parser_group_name(settings: 'ArgparseDataclassFieldSettings', name: str
             return (settings.exclusive_group, True)
         return None
 
-def _get_parser_group(parser: ArgumentParser, name: str) -> Optional[_ArgumentGroup]:
+def _get_parser_group(parser: ArgParser, name: str) -> Optional[_ArgumentGroup]:
     for group in getattr(parser, '_action_groups', []):
         if getattr(group, 'title', None) == name:
             assert isinstance(group, _ArgumentGroup)
             return group
     return None
 
-def _get_parser_exclusive_group(parser: ArgumentParser, name: str) -> Optional[_MutuallyExclusiveGroup]:
+def _get_parser_exclusive_group(parser: ArgParser, name: str) -> Optional[_MutuallyExclusiveGroup]:
     for group in getattr(parser, '_mutually_exclusive_groups', []):
         if getattr(group, 'title', None) == name:
             assert isinstance(group, _MutuallyExclusiveGroup)
             return group
     return None
 
-def _add_exclusive_group(parser: ArgumentParser, group_name: str, required: bool) -> _MutuallyExclusiveGroup:
+def _add_exclusive_group(parser: ArgParser, group_name: str, required: bool) -> _MutuallyExclusiveGroup:
     if isinstance(parser, _MutuallyExclusiveGroup):
         raise ValueError('nested exclusive groups are not allowed')
     group = parser.add_mutually_exclusive_group()
@@ -50,7 +51,7 @@ def _add_exclusive_group(parser: ArgumentParser, group_name: str, required: bool
     group.required = required
     return group
 
-def _add_group(parser: ArgumentParser, group_name: str, **group_kwargs: Any) -> _ArgumentGroup:
+def _add_group(parser: ArgParser, group_name: str, **group_kwargs: Any) -> _ArgumentGroup:
     if isinstance(parser, _ArgumentGroup):
         raise ValueError('nested argument groups are not allowed')
     return parser.add_argument_group(group_name, **group_kwargs)
@@ -217,7 +218,7 @@ class ArgparseDataclass(DataclassMixin):
         return cls.parser_class()(**cls.parser_kwargs())
 
     @classmethod
-    def configure_argument(cls, parser: ArgumentParser, name: str) -> None:
+    def configure_argument(cls, parser: ArgParser, name: str) -> None:
         """Given an argument parser and a field name, configures the parser with an argument of that name.
 
         Attempts to provide reasonable default behavior based on the dataclass field name, type, default, and metadata.
@@ -325,9 +326,10 @@ class ArgparseDataclass(DataclassMixin):
                     # get kwargs from nested ArgparseDataclass
                     group_kwargs: Dict[str, Any] = tp.parser_kwargs() if is_nested(tp) else {}
                     group = _add_group(parser, group_name, **group_kwargs)
-            parser = group  # type: ignore[assignment]
+            parser = group
         if settings.subcommand:
             # create subparsers for each variant
+            assert isinstance(parser, ArgumentParser)
             subparsers = parser.add_subparsers(dest='_subcommand', required=True, help=settings.help, metavar='subcommand')
             tp_args = (tp,) if (origin_type is None) else tp_args
             for arg in tp_args:
@@ -340,16 +342,16 @@ class ArgparseDataclass(DataclassMixin):
         else:
             # prevent duplicate positional args
             if not hasattr(parser, '_pos_args'):
-                parser._pos_args = set()  # type: ignore[attr-defined]
+                parser._pos_args = set()  # type: ignore[union-attr]
             if positional:
-                pos_args = parser._pos_args  # type: ignore[attr-defined]
+                pos_args = parser._pos_args
                 if args[0] in pos_args:
                     raise ValueError(f'duplicate positional argument {args[0]!r}')
                 pos_args.add(args[0])
             parser.add_argument(*args, **kwargs)
 
     @classmethod
-    def configure_parser(cls, parser: ArgumentParser) -> None:
+    def configure_parser(cls, parser: Union[ArgumentParser, _ArgumentGroup]) -> None:
         """Configures an argument parser by adding the appropriate arguments.
 
         By default, this will simply call [`configure_argument`][fancy_dataclass.cli.ArgparseDataclass.configure_argument] for each dataclass field.
