@@ -272,6 +272,16 @@ def test_argparse_options():
     check_invalid_args(DC24, ['1', 'a'], "invalid int value: 'a'")
     check_invalid_args(DC24, ['1', '2', '3'], 'unrecognized arguments: 3')
 
+def test_positional():
+    """Tests positional argument."""
+    @dataclass
+    class DCPos(ArgparseDataclass):
+        pos_arg: str
+    help_str = DCPos.make_parser().format_help()
+    assert 'pos_arg' in help_str
+    assert DCPos.from_cli_args(['a']) == DCPos('a')
+    check_invalid_args(DCPos, ['--pos-arg', 'a'], 'unrecognized arguments: --pos-arg')
+
 def test_groups():
     """Tests the behavior of groups and nested groups."""
     # basic group

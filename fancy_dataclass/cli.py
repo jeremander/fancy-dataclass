@@ -283,13 +283,13 @@ class ArgparseDataclass(DataclassMixin):
                 # no default available, so make the field a required option
                 kwargs['required'] = True
         else:
-            argname = fld.name.replace('_', '-')
             positional = (tp is not bool) and ('default' not in kwargs)
             if positional:
-                args = [argname]
+                args = [fld.name]
             else:
                 # use a single dash for 1-letter names
                 prefix = '-' if (len(fld.name) == 1) else '--'
+                argname = fld.name.replace('_', '-')
                 args = [prefix + argname]
         if args and (not positional):
             # store the argument based on the name of the field, and not whatever flag name was provided
