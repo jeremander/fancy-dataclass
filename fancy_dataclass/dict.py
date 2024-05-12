@@ -124,11 +124,11 @@ class DictDataclass(DataclassMixin):
         This will recursively process values within containers (lists, dicts, etc.)."""
         if isinstance(val, DictDataclass):
             return val.to_dict(full=full)
-        elif isinstance(val, list):
+        if isinstance(val, list):
             return [cls._to_dict_value(elt, full) for elt in val]
-        elif isinstance(val, tuple):
+        if isinstance(val, tuple):
             return tuple(cls._to_dict_value(elt, full) for elt in val)
-        elif isinstance(val, dict):
+        if isinstance(val, dict):
             return {k: cls._to_dict_value(v, full) for (k, v) in val.items()}
         return cls._to_dict_value_basic(val)
 
@@ -233,38 +233,38 @@ class DictDataclass(DataclassMixin):
                         raise err()
                     return {key: convert_val(valtype, val[key]) for (key, valtype) in anns.items()}
                 return tp(val)
-            else:  # basic data type
-                return cls._from_dict_value_basic(tp, val)
-        else:  # compound data type
-            args = get_args(tp)
-            if origin_type == list:
-                subtype = args[0]
-                return [convert_val(subtype, elt) for elt in val]
-            elif origin_type == dict:
-                (keytype, valtype) = args
-                return {convert_val(keytype, k): convert_val(valtype, v) for (k, v) in val.items()}
-            elif origin_type == tuple:
-                subtypes = args
-                if subtypes[-1] == Ellipsis:  # treat it like a list
-                    subtype = subtypes[0]
-                    return tuple(convert_val(subtype, elt) for elt in val)
-                return tuple(convert_val(subtype, elt) for (subtype, elt) in zip(args, val))
-            elif origin_type == Union:
-                for subtype in args:
-                    try:
-                        # NB: will resolve to the first valid type in the Union
-                        return convert_val(subtype, val)
-                    except Exception:
-                        continue
-            elif origin_type == Literal:
-                if any((val == arg) for arg in args):
-                    # one of the Literal options is matched
-                    return val
-            elif hasattr(origin_type, 'from_dict'):
-                return cls._from_dict_value_convertible(origin_type, val, strict)
-            elif issubclass_safe(origin_type, Iterable):  # arbitrary iterable
-                subtype = args[0]
-                return type(val)(convert_val(subtype, elt) for elt in val)
+            # basic data type
+            return cls._from_dict_value_basic(tp, val)
+        # compound data type
+        args = get_args(tp)
+        if origin_type == list:
+            subtype = args[0]
+            return [convert_val(subtype, elt) for elt in val]
+        if origin_type == dict:
+            (keytype, valtype) = args
+            return {convert_val(keytype, k): convert_val(valtype, v) for (k, v) in val.items()}
+        if origin_type == tuple:
+            subtypes = args
+            if subtypes[-1] == Ellipsis:  # treat it like a list
+                subtype = subtypes[0]
+                return tuple(convert_val(subtype, elt) for elt in val)
+            return tuple(convert_val(subtype, elt) for (subtype, elt) in zip(args, val))
+        if origin_type == Union:
+            for subtype in args:
+                try:
+                    # NB: will resolve to the first valid type in the Union
+                    return convert_val(subtype, val)
+                except Exception:
+                    continue
+        elif origin_type == Literal:
+            if any((val == arg) for arg in args):
+                # one of the Literal options is matched
+                return val
+        elif hasattr(origin_type, 'from_dict'):
+            return cls._from_dict_value_convertible(origin_type, val, strict)
+        elif issubclass_safe(origin_type, Iterable):  # arbitrary iterable
+            subtype = args[0]
+            return type(val)(convert_val(subtype, elt) for elt in val)
         raise err()
 
     @classmethod

@@ -23,10 +23,9 @@ def _get_parser_group_name(settings: 'ArgparseDataclassFieldSettings', name: str
         if settings.exclusive_group:
             raise ValueError(f'{name!r} specifies both group and exclusive_group: must choose only one')
         return (settings.group, False)
-    else:
-        if settings.exclusive_group:
-            return (settings.exclusive_group, True)
-        return None
+    if settings.exclusive_group:
+        return (settings.exclusive_group, True)
+    return None
 
 def _get_parser_group(parser: ArgParser, name: str) -> Optional[_ArgumentGroup]:
     for group in getattr(parser, '_action_groups', []):

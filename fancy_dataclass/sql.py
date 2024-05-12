@@ -27,18 +27,17 @@ def get_column_type(tp: type) -> type:
         Corresponding sqlalchemy column type"""
     if issubclass(tp, str):
         return String
-    elif issubclass(tp, bool):
+    if issubclass(tp, bool):
         return Boolean
-    elif issubclass(tp, int):
+    if issubclass(tp, int):
         return Integer
-    elif issubclass(tp, float):
+    if issubclass(tp, float):
         return Numeric
-    elif issubclass(tp, bytes):
+    if issubclass(tp, bytes):
         return LargeBinary
-    elif issubclass(tp, datetime):
+    if issubclass(tp, datetime):
         return DateTime
-    else:
-        return PickleType
+    return PickleType
 
 
 @dataclass

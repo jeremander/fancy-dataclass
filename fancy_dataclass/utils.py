@@ -173,13 +173,13 @@ def _is_instance(obj: Any, tp: type) -> bool:
     origin = get_origin(tp)
     if origin is Union:
         return any(_is_instance(obj, arg) for arg in get_args(tp))
-    elif origin in [list, collections.abc.Sequence]:
+    if origin in [list, collections.abc.Sequence]:
         base_type = get_args(tp)[0]
         return isinstance(obj, origin) and all(_is_instance(val, base_type) for val in obj)
-    elif origin is dict:
+    if origin is dict:
         (key_type, val_type) = get_args(tp)
         return isinstance(obj, dict) and all(_is_instance(key, key_type) and _is_instance(val, val_type) for (key, val) in obj.items())
-    elif origin is collections.abc.Callable:
+    if origin is collections.abc.Callable:
         # TODO: try to check object's annotations
         return isinstance(obj, Callable)  # type: ignore[arg-type]
     return isinstance(obj, tp)

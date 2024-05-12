@@ -8,6 +8,7 @@ import re
 import sys
 from typing import Any, ClassVar, List, Literal, NamedTuple, Optional, TypedDict, Union
 
+import numpy as np
 import pytest
 from typing_extensions import Annotated, Doc
 
@@ -36,7 +37,9 @@ def _convert_json_dataclass(cls, new_cls):
         return tp
     tp = _convert(dataclass_type_map(cls, _convert))
     tp.__eq__ = cls.__eq__
+    tp.__settings__ = cls.__settings__
     return tp
+
 
 ################
 # TEST CLASSES #
@@ -206,6 +209,24 @@ class DCListOptional(JSONDataclass):
     vals: List[Optional[int]]
 
 
+@dataclass
+class DCNumpy(JSONDataclass, suppress_defaults=False):
+    num_int: np.int64 = np.int64(1)
+    num_float: np.float64 = np.float64(1)
+    arr_int: np.ndarray = field(default_factory=lambda: np.ones(3, dtype=np.int64))
+    arr_float: np.ndarray = field(default_factory=lambda: np.ones(3, dtype=np.float64))
+
+    def __eq__(self, other):
+        for name in self.__dataclass_fields__:
+            val1, val2 = getattr(self, name), getattr(other, name)
+            if isinstance(val1, np.ndarray):
+                if not np.array_equal(val1, val2):
+                    return False
+            elif val1 != val2:
+                return False
+        return True
+
+
 # DictDataclass versions
 DictDCDatetime = _convert_json_dataclass(DCDatetime, DictDataclass)
 DictDCEnum = _convert_json_dataclass(DCEnum, DictDataclass)
@@ -244,6 +265,7 @@ TEST_JSON = [
     DCSuppress(),
     DCSuppress2(),
     DCList([DCAny(None), DCAny(1), DCAny([1]), DCAny(None), DCAny({})]),
+    DCNumpy(),
 ]
 
 class TestDict:
@@ -277,13 +299,11 @@ class TestDict:
     def _get_conversion_contexts(self, err):
         if err is None:
             return (True, nullcontext(), nullcontext())
-        else:
-            (fwd_ok, errtype, match) = err
-            err_ctx = pytest.raises(errtype, match=match)
-            if fwd_ok:  # error occurs when converting back
-                return (True, nullcontext(), err_ctx)
-            else:
-                return (False, err_ctx, nullcontext())
+        (fwd_ok, errtype, match) = err
+        err_ctx = pytest.raises(errtype, match=match)
+        if fwd_ok:  # error occurs when converting back
+            return (True, nullcontext(), err_ctx)
+        return (False, err_ctx, nullcontext())
 
     def _test_dict_convert(self, obj, d, err):
         """Tests that an object gets converted to the expected dict and back."""

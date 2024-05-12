@@ -99,11 +99,10 @@ class ConfigDataclass(DictDataclass, FileConfig, suppress_defaults=False):
         if ext_lower == '.json':
             from fancy_dataclass.json import JSONDataclass
             return JSONDataclass
-        elif ext_lower == '.toml':
+        if ext_lower == '.toml':
             from fancy_dataclass.toml import TOMLDataclass
             return TOMLDataclass
-        else:
-            raise ValueError(f'unknown config file extension {p.suffix!r}')
+        raise ValueError(f'unknown config file extension {p.suffix!r}')
 
     @classmethod
     def load_config(cls, path: AnyPath) -> Self:  # noqa: D102

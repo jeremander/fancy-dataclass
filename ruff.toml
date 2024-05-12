@@ -50,7 +50,6 @@ lint.ignore = [
     "PT013",  # use simple import of pytest
     "PTH123",  # Path.open instead of regular open
     "RET501",  # return None
-    "RET505",  # unnecessary 'else' after 'return'
     "UP006",  # deprecated collection types in annotations
     "UP007",  # | instead of Union
     "UP035"  # import replacements (collections.abc)

@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from enum import Enum
 from io import BytesIO, StringIO, TextIOBase
+from numbers import Integral
 from pathlib import Path
 from typing import IO, Any, BinaryIO, Union, cast
 
@@ -20,13 +21,19 @@ def to_dict_value_basic(val: Any) -> Any:
         A version of that value suitable for serialization"""
     if isinstance(val, Enum):
         return val.value
-    elif isinstance(val, range):  # store the range bounds
+    if isinstance(val, range):  # store the range bounds
         bounds = [val.start, val.stop]
         if val.step != 1:
             bounds.append(val.step)
         return bounds
-    elif hasattr(val, 'dtype'):  # assume it's a numpy array of numbers
-        return [float(elt) for elt in val]
+    if hasattr(val, 'dtype'):
+        if hasattr(val, '__len__'):  # assume it's a numpy array of numbers
+            return [float(elt) for elt in val]
+        # numpy scalars have trouble serializing
+        if isinstance(val, Integral):
+            return int(val)
+        if isinstance(val, float):
+            return float(val)
     return val
 
 def from_dict_value_basic(tp: type, val: Any) -> Any:
@@ -40,6 +47,9 @@ def from_dict_value_basic(tp: type, val: Any) -> Any:
         Converted value"""
     if issubclass(tp, float):
         return tp(val)
+    if issubclass(tp, Integral) and isinstance(val, Integral):
+        # also handles numpy integer types
+        return tp(val)  # type: ignore[call-arg]
     if issubclass(tp, range):
         return tp(*val)
     if issubclass(tp, Enum):
@@ -47,6 +57,9 @@ def from_dict_value_basic(tp: type, val: Any) -> Any:
             return tp(val)
         except ValueError as e:
             raise TypeConversionError(tp, val) from e
+    if getattr(tp, '__name__', None) == 'ndarray':  # numpy array
+        import numpy as np
+        return np.array(val)
     return val
 
 
