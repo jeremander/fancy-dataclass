@@ -103,7 +103,7 @@ def test_type_field():
     @dataclass
     class DC3(DictDataclass, qualified_type=True):
         x: int
-    obj = DC3(1)
+    obj: object = DC3(1)
     d = obj.to_dict()
     assert d == {'type': 'tests.test_dict.test_type_field.<locals>.DC3', 'x': 1}
     assert DC3.from_dict(d) == obj
@@ -119,6 +119,41 @@ def test_type_field():
         @dataclass
         class DC5(DictDataclass, store_type=True):
             type: Optional[int] = None
+    # string-annotated dataclass fields
+    @dataclass
+    class DC6(DictDataclass):
+        x: 'int'
+    obj = DC6(1)
+    assert DC6.from_dict(obj.to_dict()) == obj
+    @dataclass
+    class DC7(DictDataclass):
+        x: 'numbers.Number'  # type: ignore[name-defined]  # noqa: F821
+    obj = DC7(1)
+    assert DC7.from_dict(obj.to_dict()) == obj
+    # globally-scoped class, as string
+    @dataclass
+    class DC8(DictDataclass):
+        a: 'NestedComponentA'
+    obj = DC8(NestedComponentA(1, 3.7))
+    d = obj.to_dict()
+    assert 'NestedComponentA' in globals()
+    # NOTE: inner function cannot access globals/locals of higher stack frame
+    with pytest.raises(NameError, match="name 'NestedComponentA' is not defined"):
+        _ = DC8.from_dict(obj.to_dict())
+    # fully qualified name OK
+    @dataclass
+    class DC9(DictDataclass):
+        a: 'tests.test_dict.NestedComponentA'  # type: ignore[name-defined]  # noqa: F821
+    obj = DC9(NestedComponentA(1, 3.7))
+    assert DC9.from_dict(obj.to_dict()) == obj
+    # locally-scoped class, as string (no way to fully qualify it)
+    @dataclass
+    class DC10(DictDataclass):
+        x: 'DC1'
+    obj = DC10(DC1(1))
+    d = obj.to_dict()
+    with pytest.raises(NameError, match="name 'DC1' is not defined"):
+        _ = DC10.from_dict(d)
 
 def test_flattened():
     """Tests the flattened=True option for DictDataclass."""

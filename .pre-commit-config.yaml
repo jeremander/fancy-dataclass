@@ -40,7 +40,7 @@ repos:
       pass_filenames: false
       verbose: true
     - id: check-version
-      args: []
+      args: ['--dist-dir', 'dist', '--changelog', 'docs/CHANGELOG.md']
       pass_filenames: false
       verbose: true
       stages: [commit]

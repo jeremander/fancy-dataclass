@@ -204,6 +204,24 @@ def fully_qualified_class_name(cls: type) -> str:
         Fully qualified name of the class"""
     return f'{cls.__module__}.{cls.__qualname__}'
 
+def get_object_from_fully_qualified_name(name: str) -> object:
+    """Given a fully-qualified name of some object, gets the object, importing the module as needed.
+
+    Args:
+        name: Fully qualified object name
+
+    Returns:
+        Object with the fully qualified name
+
+    Raises:
+        ValueError: If the name does not have a . character"""
+    if '.' not in name:
+        raise ValueError(f'{name!r} is not a fully qualified name')
+    toks = name.split('.')
+    mod_name, obj_name = '.'.join(toks[:-1]), toks[-1]
+    mod = importlib.import_module(mod_name)
+    return getattr(mod, obj_name)
+
 def get_subclass_with_name(cls: Type[T], name: str) -> Type[T]:
     """Gets the subclass of a class with the given name.
 
@@ -221,9 +239,7 @@ def get_subclass_with_name(cls: Type[T], name: str) -> Type[T]:
     if cls_name == name:
         return cls
     if fully_qualified:  # import the module
-        toks = name.split('.')
-        mod_name, cls_name = '.'.join(toks[:-1]), toks[-1]
-        importlib.import_module(mod_name)
+        _ = get_object_from_fully_qualified_name(name)
     for subcls in all_subclasses(cls):
         subcls_name = fully_qualified_class_name(subcls) if fully_qualified else subcls.__name__
         if subcls_name == name:

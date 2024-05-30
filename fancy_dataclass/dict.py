@@ -3,12 +3,12 @@ from copy import copy
 import dataclasses
 from dataclasses import Field, dataclass
 from functools import partial
-from typing import TYPE_CHECKING, Any, ClassVar, Dict, Iterable, Literal, Optional, Type, TypeVar, Union, _TypedDictMeta, get_args, get_origin  # type: ignore[attr-defined]
+from typing import TYPE_CHECKING, Any, ClassVar, Dict, Iterable, Literal, Optional, Type, TypeVar, Union, _TypedDictMeta, get_args, get_origin, get_type_hints  # type: ignore[attr-defined]
 
 from typing_extensions import Self, _AnnotatedAlias
 
 from fancy_dataclass.mixin import DataclassMixin, DataclassMixinSettings, FieldSettings
-from fancy_dataclass.utils import TypeConversionError, _flatten_dataclass, check_dataclass, fully_qualified_class_name, issubclass_safe, obj_class_name, safe_dict_insert
+from fancy_dataclass.utils import TypeConversionError, _flatten_dataclass, check_dataclass, fully_qualified_class_name, get_object_from_fully_qualified_name, issubclass_safe, obj_class_name, safe_dict_insert
 
 
 if TYPE_CHECKING:
@@ -291,6 +291,11 @@ class DictDataclass(DataclassMixin):
                 for base in bases:
                     try:
                         field_type = base.__annotations__[fld.name]
+                        if isinstance(field_type, str):  # resolve string annotation to a type (see PEP 563)
+                            if '.' in field_type:  # fully qualified: import module and retrieve the type
+                                field_type = get_object_from_fully_qualified_name(field_type)
+                            else:  # builtin or locally defined type
+                                field_type = get_type_hints(base, globalns=globals(), localns=locals())[fld.name]  # type: ignore[arg-type]
                         kwargs[fld.name] = cls._from_dict_value(field_type, d[fld.name], strict=strict)
                         break
                     except (AttributeError, KeyError):

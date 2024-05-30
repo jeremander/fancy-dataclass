@@ -16,6 +16,23 @@ Types of changes:
 
 ## [Unreleased]
 
+## [0.4.5]
+
+2024-05-30
+
+### Changed
+
+- `ArgparseDataclass` `subcommand` property to `subcommand_name`
+
+### Fixed
+
+- `ArgparseDataclass`
+    - Preserve snake case for positional arguments instead of replacing `_` with `-`
+
+- `DictDataclass`
+    - Support `numpy` scalars and arrays
+    - Handle string type annotations (see [PEP 563](https://peps.python.org/pep-0563/))
+
 ## [0.4.4]
 
 2024-05-06

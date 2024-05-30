@@ -2,7 +2,7 @@
 
 # TODO
 
-## v0.4.5
+## v0.5.0
 
 - `VersionedDataclass`
   - `version` class setting (int) and `version` read-only class property
@@ -20,7 +20,7 @@
     - Avoid cyclic references (`weakref`?)
   - Deal with namespace collision? E.g. use `globals()` to ensure the latest version is the only one accessible within module's namespace, even if it is defined earlier than the others.
 
-## v0.4.6
+## v0.5.1
 
 - documentation
   - Dataclass mixins/settings
