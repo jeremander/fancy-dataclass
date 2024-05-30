@@ -295,7 +295,7 @@ class DictDataclass(DataclassMixin):
                             if '.' in field_type:  # fully qualified: import module and retrieve the type
                                 field_type = get_object_from_fully_qualified_name(field_type)
                             else:  # builtin or locally defined type
-                                field_type = get_type_hints(base, globalns=globals(), localns=locals())[fld.name]  # type: ignore[arg-type]
+                                field_type = get_type_hints(base, globalns=globals(), localns=locals())[fld.name]
                         kwargs[fld.name] = cls._from_dict_value(field_type, d[fld.name], strict=strict)
                         break
                     except (AttributeError, KeyError):
