@@ -123,37 +123,33 @@ def test_type_field():
     @dataclass
     class DC6(DictDataclass):
         x: 'int'
-    obj = DC6(1)
+        y: 'numbers.Number'  # type: ignore[name-defined]  # noqa: F821
+    obj = DC6(1, 2)
     assert DC6.from_dict(obj.to_dict()) == obj
-    @dataclass
-    class DC7(DictDataclass):
-        x: 'numbers.Number'  # type: ignore[name-defined]  # noqa: F821
-    obj = DC7(1)
-    assert DC7.from_dict(obj.to_dict()) == obj
     # globally-scoped class, as string
     @dataclass
-    class DC8(DictDataclass):
+    class DC7(DictDataclass):
         a: 'NestedComponentA'
-    obj = DC8(NestedComponentA(1, 3.7))
+    obj = DC7(NestedComponentA(1, 3.7))
     d = obj.to_dict()
     assert 'NestedComponentA' in globals()
     # NOTE: inner function cannot access globals/locals of higher stack frame
     with pytest.raises(NameError, match="name 'NestedComponentA' is not defined"):
-        _ = DC8.from_dict(obj.to_dict())
+        _ = DC7.from_dict(obj.to_dict())
     # fully qualified name OK
     @dataclass
-    class DC9(DictDataclass):
+    class DC8(DictDataclass):
         a: 'tests.test_dict.NestedComponentA'  # type: ignore[name-defined]  # noqa: F821
-    obj = DC9(NestedComponentA(1, 3.7))
-    assert DC9.from_dict(obj.to_dict()) == obj
+    obj = DC8(NestedComponentA(1, 3.7))
+    assert DC8.from_dict(obj.to_dict()) == obj
     # locally-scoped class, as string (no way to fully qualify it)
     @dataclass
-    class DC10(DictDataclass):
+    class DC9(DictDataclass):
         x: 'DC1'
-    obj = DC10(DC1(1))
+    obj = DC9(DC1(1))
     d = obj.to_dict()
     with pytest.raises(NameError, match="name 'DC1' is not defined"):
-        _ = DC10.from_dict(d)
+        _ = DC9.from_dict(d)
 
 def test_flattened():
     """Tests the flattened=True option for DictDataclass."""

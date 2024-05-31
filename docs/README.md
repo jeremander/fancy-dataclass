@@ -3,6 +3,7 @@
 ![Coverage Status](https://github.com/jeremander/fancy-dataclass/raw/coverage-badge/coverage-badge.svg)
 [![Read the Docs](https://img.shields.io/readthedocs/fancy-dataclass)](https://fancy-dataclass.readthedocs.io)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/jeremander/fancy-dataclass/raw/main/docs/LICENSE.txt)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
 
 # Basics
 

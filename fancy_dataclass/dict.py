@@ -3,7 +3,7 @@ from copy import copy
 import dataclasses
 from dataclasses import Field, dataclass
 from functools import partial
-from typing import TYPE_CHECKING, Any, ClassVar, Dict, Iterable, Literal, Optional, Type, TypeVar, Union, _TypedDictMeta, get_args, get_origin, get_type_hints  # type: ignore[attr-defined]
+from typing import TYPE_CHECKING, Any, ClassVar, Dict, Iterable, Literal, Optional, Type, TypeVar, Union, _TypedDictMeta, get_args, get_origin  # type: ignore[attr-defined]
 
 from typing_extensions import Self, _AnnotatedAlias
 
@@ -281,7 +281,7 @@ class DictDataclass(DataclassMixin):
         if strict:  # check there are no extraneous fields
             field_names = {field.name for field in fields}
             for key in d:
-                if (key not in field_names):
+                if key not in field_names:
                     raise ValueError(f'{key!r} is not a valid field for {cls.__name__}')
         for fld in fields:
             if not fld.init:  # suppress fields where init=False
@@ -295,7 +295,7 @@ class DictDataclass(DataclassMixin):
                             if '.' in field_type:  # fully qualified: import module and retrieve the type
                                 field_type = get_object_from_fully_qualified_name(field_type)
                             else:  # builtin or locally defined type
-                                field_type = get_type_hints(base, globalns=globals(), localns=locals())[fld.name]
+                                field_type = eval(field_type)
                         kwargs[fld.name] = cls._from_dict_value(field_type, d[fld.name], strict=strict)
                         break
                     except (AttributeError, KeyError):
