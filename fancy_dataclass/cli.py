@@ -84,6 +84,7 @@ class ArgparseDataclassFieldSettings(FieldSettings):
     - `choices`: list of possible inputs allowed
     - `help`: help string
     - `metavar`: name for the argument in usage messages
+    - `required`: whether the option is required
     - `group`: name of the [argument group](https://docs.python.org/3/library/argparse.html#argument-groups) in which to put the argument; the group will be created if it does not already exist in the parser
     - `exclusive_group`: name of the [mutually exclusive](https://docs.python.org/3/library/argparse.html#mutual-exclusion) argument group in which to put the argument; the group will be created if it does not already exist in the parser
     - `subcommand`: boolean flag marking this field as a [subcommand](https://docs.python.org/3/library/argparse.html#sub-commands)
@@ -99,7 +100,8 @@ class ArgparseDataclassFieldSettings(FieldSettings):
         - A boolean flag if its type is `bool`
             - Can set `action` in metadata as either `"store_true"` (default) or `"store_false"`
         - An option if it specifies a default value
-        - Otherwise, a positional argument"""
+        - Otherwise, a positional argument
+    - If `required` is specified in the metadata, this will take precedence over the default behavior above."""
     type: Optional[Union[type, Callable[[Any], Any]]] = None  # can be used to define custom constructor
     args: Optional[Union[str, Sequence[str]]] = None
     action: Optional[str] = None
@@ -108,6 +110,7 @@ class ArgparseDataclassFieldSettings(FieldSettings):
     choices: Optional[Sequence[Any]] = None
     help: Optional[str] = None
     metavar: Optional[Union[str, Sequence[str]]] = None
+    required: Optional[bool] = None
     group: Optional[str] = None
     exclusive_group: Optional[str] = None
     subcommand: bool = False
@@ -294,6 +297,8 @@ class ArgparseDataclass(DataclassMixin):
         if args and (not positional):
             # store the argument based on the name of the field, and not whatever flag name was provided
             kwargs['dest'] = fld.name
+        if settings.required is not None:
+            kwargs['required'] = settings.required
         if fld.type is bool:  # use boolean flag instead of an argument
             action = settings.action or 'store_true'
             kwargs['action'] = action
@@ -309,7 +314,7 @@ class ArgparseDataclass(DataclassMixin):
         for key in cls.parser_argument_kwarg_names():
             if key in fld.metadata:
                 kwargs[key] = fld.metadata[key]
-        if (kwargs.get('action') == 'store_const'):
+        if kwargs.get('action') == 'store_const':
             del kwargs['type']
         if (result := _get_parser_group_name(settings, fld.name)) is not None:
             # add argument to the group instead of the main parser

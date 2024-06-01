@@ -271,6 +271,20 @@ def test_argparse_options():
     check_invalid_args(DC24, ['1'], 'required: vals')
     check_invalid_args(DC24, ['1', 'a'], "invalid int value: 'a'")
     check_invalid_args(DC24, ['1', '2', '3'], 'unrecognized arguments: 3')
+    # explicit required flag (overrides default behavior)
+    @dataclass
+    class DC25(ArgparseDataclass):
+        x: int = field(metadata={'required': False})
+    with pytest.raises(TypeError, match="'required' is an invalid argument for positionals"):
+        _ = DC25.from_cli_args([])
+    @dataclass
+    class DC26(ArgparseDataclass):
+        x: int = field(metadata={'args': ['-x'], 'required': False})
+    assert DC26.from_cli_args([]).x is None
+    @dataclass
+    class DC27(ArgparseDataclass):
+        x: int = field(default=1, metadata={'args': ['-x'], 'required': True})
+    check_invalid_args(DC27, [], 'required: -x')
 
 def test_positional():
     """Tests positional argument."""
