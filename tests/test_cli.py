@@ -647,3 +647,36 @@ def test_type_metadata():
     assert DCTypeCallable.from_cli_args(['0']).x == 0
     check_invalid_args(DCTypeCallable, ['a'], "invalid positive_int value: 'a'")
     check_invalid_args(DCTypeCallable, ['-1'], "invalid positive_int value: '-1'")
+
+def test_doubly_nested_subcommand():
+    """Tests behavior of a doubly nested subcommand."""
+    @dataclass
+    class DC00(ArgparseDataclass, command_name='cmd00'):
+        pass
+    @dataclass
+    class DC01(ArgparseDataclass, command_name='cmd01'):
+        pass
+    @dataclass
+    class DC0(ArgparseDataclass, command_name='cmd0'):
+        subcommand: Union[DC00, DC01] = field(metadata={'subcommand': True})
+    @dataclass
+    class DC10(ArgparseDataclass, command_name='cmd10'):
+        pass
+    @dataclass
+    class DC11(ArgparseDataclass, command_name='cmd11'):
+        pass
+    @dataclass
+    class DC1(ArgparseDataclass, command_name='cmd1'):
+        subcommand: Union[DC10, DC11] = field(metadata={'subcommand': True})
+    @dataclass
+    class DCSingle(ArgparseDataclass):
+        subcommand: DC0 = field(metadata={'subcommand': True})
+    @dataclass
+    class DCDouble(ArgparseDataclass):
+        subcommand: Union[DC0, DC1] = field(metadata={'subcommand': True})
+    check_invalid_args(DCSingle, ['cmd0'], 'arguments are required: subcommand')
+    assert DCSingle.from_cli_args(['cmd0', 'cmd00']) == DCSingle(DC0(DC00()))
+    assert DCSingle.from_cli_args(['cmd0', 'cmd01']) == DCSingle(DC0(DC01()))
+    check_invalid_args(DCDouble, ['cmd0'], 'arguments are required: subcommand')
+    assert DCDouble.from_cli_args(['cmd0', 'cmd00']) == DCDouble(DC0(DC00()))
+    assert DCDouble.from_cli_args(['cmd1', 'cmd10']) == DCDouble(DC1(DC10()))

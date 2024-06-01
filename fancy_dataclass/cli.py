@@ -329,7 +329,8 @@ class ArgparseDataclass(DataclassMixin):
         if settings.subcommand:
             # create subparsers for each variant
             assert isinstance(parser, ArgumentParser)
-            subparsers = parser.add_subparsers(dest='_subcommand', required=True, help=settings.help, metavar='subcommand')
+            dest = f'_subcommand_{cls.__name__}'
+            subparsers = parser.add_subparsers(dest=dest, required=True, help=settings.help, metavar='subcommand')
             tp_args = (tp,) if (origin_type is None) else tp_args
             for arg in tp_args:
                 assert issubclass_safe(arg, ArgparseDataclass)
@@ -426,8 +427,9 @@ class ArgparseDataclass(DataclassMixin):
                 tp = next(arg for arg in get_args(fld.type) if (arg is not type(None)))
             origin_type = get_origin(tp)
             if origin_type == Union:
-                tp_args = [arg for arg in get_args(tp) if (arg.__settings__.command_name == args._subcommand)]
-                assert len(tp_args) == 1, f'exactly one type within {tp} should have command name {args._subcommand}'
+                subcommand = getattr(args, f'_subcommand_{cls.__name__}')
+                tp_args = [arg for arg in get_args(tp) if (arg.__settings__.command_name == subcommand)]
+                assert len(tp_args) == 1, f'exactly one type within {tp} should have command name {subcommand}'
                 tp = tp_args[0]
                 assert issubclass_safe(tp, ArgparseDataclass)
             if issubclass_safe(tp, ArgparseDataclass):
