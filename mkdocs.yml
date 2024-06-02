@@ -29,6 +29,7 @@ plugins:
       nav_file: SUMMARY.md
 
 markdown_extensions:
+  - admonition
   - pymdownx.highlight:
       anchor_linenums: true
       line_spans: __span
@@ -39,6 +40,7 @@ markdown_extensions:
 
 nav:
   - README.md
+  - Dataclass mixins: mixin.md
   - JSON conversion: json.md
   - TOML conversion: toml.md
   - Config management: config.md

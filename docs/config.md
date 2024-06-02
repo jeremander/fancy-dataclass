@@ -119,12 +119,19 @@ test2
 
 ## Details
 
-🚧 **Under construction** 🚧
+For configurations with a specified schema, create a subclass of [`ConfigDataclass`][fancy_dataclass.config.ConfigDataclass] instantiating your schema.
 
-<!--
-- By default ConfigDataclass cannot write config files, only read them. To write, subclass JSONDataclass or TOMLDataclass.
-- Structured vs. unstructured configs
- -->
+The following methods can then be used:
+
+- [`load_config`][fancy_dataclass.config.FileConfig.load_config]: load configs from a JSON or TOML file
+- [`get_config`][fancy_dataclass.config.Config.get_config]: get the global config object
+- [`clear_config`][fancy_dataclass.config.Config.clear_config]: set the global config to `None`
+- [`update_config`][fancy_dataclass.config.Config.update_config]: set the global config to a particular object
+- [`as_config`][fancy_dataclass.config.Config.as_config]: context manager to temporarily change the global config to a particular object
+
+For configurations _without_ a specified schema, you can use [`DictConfig`][fancy_dataclass.config.DictConfig] instead. This has the same interface as `ConfigDataclass`, except you do not need to subclass it or specify a dataclass schema. Instead, it can load the contents of a JSON or TOML file into a regular Python dict, which you can access with `get_config`.
+
+By default, `ConfigDataclass` and `DictConfig` cannot write config files, only read them. To write, you can subclass [`JSONDataclass`](json.md) or [`TOMLDataclass`](toml.md).
 
 <style>
 .md-sidebar--secondary {
