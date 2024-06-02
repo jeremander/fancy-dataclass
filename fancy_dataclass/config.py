@@ -21,7 +21,7 @@ class Config:
 
     @classmethod
     def get_config(cls) -> Optional[Self]:
-        """Gets a copy of the current global configuration.
+        """Gets the current global configuration.
 
         Returns:
             Global configuration object (`None` if not set)"""
@@ -69,6 +69,20 @@ class FileConfig(Config, ABC):
             The newly loaded global configurations"""
 
 
+def _get_dataclass_type_for_path(path: AnyPath) -> Type[FileSerializable]:
+    p = Path(path)
+    if not p.suffix:
+        raise ValueError(f'filename {p} has no extension')
+    ext_lower = p.suffix.lower()
+    if ext_lower == '.json':
+        from fancy_dataclass.json import JSONDataclass
+        return JSONDataclass
+    if ext_lower == '.toml':
+        from fancy_dataclass.toml import TOMLDataclass
+        return TOMLDataclass
+    raise ValueError(f'unknown config file extension {p.suffix!r}')
+
+
 class ConfigDataclass(DictDataclass, FileConfig, suppress_defaults=False):
     """A dataclass representing a collection of configurations.
 
@@ -91,22 +105,8 @@ class ConfigDataclass(DictDataclass, FileConfig, suppress_defaults=False):
         return _wrap(dataclass_type_map(cls, _wrap))  # type: ignore[arg-type]
 
     @classmethod
-    def _get_dataclass_type_for_path(cls, path: AnyPath) -> Type[FileSerializable]:
-        p = Path(path)
-        if not p.suffix:
-            raise ValueError(f'filename {p} has no extension')
-        ext_lower = p.suffix.lower()
-        if ext_lower == '.json':
-            from fancy_dataclass.json import JSONDataclass
-            return JSONDataclass
-        if ext_lower == '.toml':
-            from fancy_dataclass.toml import TOMLDataclass
-            return TOMLDataclass
-        raise ValueError(f'unknown config file extension {p.suffix!r}')
-
-    @classmethod
     def load_config(cls, path: AnyPath) -> Self:  # noqa: D102
-        tp = cls._get_dataclass_type_for_path(path)
+        tp = _get_dataclass_type_for_path(path)
         new_cls: Type[FileSerializable] = ConfigDataclass._wrap_config_dataclass(tp, cls)  # type: ignore
         with open(path) as fp:
             cfg: Self = coerce_to_dataclass(cls, new_cls._from_file(fp))
@@ -114,7 +114,7 @@ class ConfigDataclass(DictDataclass, FileConfig, suppress_defaults=False):
         return cfg
 
 
-class DictConfig(Config, Dict[Any, Any]):
+class DictConfig(FileConfig, Dict[Any, Any]):
     """A collection of configurations, stored as a Python dict.
 
     To impose a type schema on the configurations, use [`ConfigDataclass`][fancy_dataclass.config.ConfigDataclass] instead.
@@ -128,7 +128,7 @@ class DictConfig(Config, Dict[Any, Any]):
 
     @classmethod
     def load_config(cls, path: AnyPath) -> Self:  # noqa: D102
-        tp = ConfigDataclass._get_dataclass_type_for_path(path)
+        tp = _get_dataclass_type_for_path(path)
         with open(path) as fp:
             cfg = cls(tp._text_file_to_dict(fp))  # type: ignore[attr-defined]
         cfg.update_config()

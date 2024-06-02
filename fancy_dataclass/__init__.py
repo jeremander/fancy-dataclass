@@ -1,6 +1,6 @@
 # top-level class exports
 from .cli import ArgparseDataclass, CLIDataclass
-from .config import Config, ConfigDataclass
+from .config import Config, ConfigDataclass, DictConfig
 from .dict import DictDataclass
 from .func import func_dataclass
 from .json import JSONBaseDataclass, JSONDataclass, JSONSerializable
@@ -18,6 +18,7 @@ __all__ = [
     'Config',
     'ConfigDataclass',
     'DataclassMixin',
+    'DictConfig',
     'DictDataclass',
     'JSONBaseDataclass',
     'JSONDataclass',

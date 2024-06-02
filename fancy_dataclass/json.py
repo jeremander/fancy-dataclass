@@ -15,7 +15,7 @@ class JSONSerializable(TextFileSerializable):
     """Mixin class enabling conversion of an object to/from JSON."""
 
     @classmethod
-    def _json_encoder(cls) -> Type[JSONEncoder]:
+    def json_encoder(cls) -> Type[JSONEncoder]:
         """Override this method to create a custom `JSONEncoder` to handle specific data types.
         A skeleton for this looks like:
 
@@ -33,7 +33,7 @@ class JSONSerializable(TextFileSerializable):
         return Encoder
 
     @classmethod
-    def _json_key_decoder(cls, key: Any) -> Any:
+    def json_key_decoder(cls, key: Any) -> Any:
         """Override this method to decode a JSON key, for use with `from_dict`."""
         return key
 
@@ -104,7 +104,7 @@ class JSONDataclass(DictFileSerializableDataclass, JSONSerializable):  # type: i
         indent = kwargs.get('indent')
         if (indent is not None) and (indent < 0):
             kwargs['indent'] = None
-        kwargs['cls'] = cls._json_encoder()
+        kwargs['cls'] = cls.json_encoder()
         json.dump(d, fp, **kwargs)
 
     @classmethod
@@ -147,7 +147,7 @@ class JSONDataclass(DictFileSerializableDataclass, JSONSerializable):  # type: i
                 raise TypeConversionError(tp, val) from e
         if origin_type == dict:  # decode keys to be valid JSON
             (keytype, valtype) = get_args(tp)
-            return {cls._json_key_decoder(cls._from_dict_value(keytype, k)): cls._from_dict_value(valtype, v, strict=strict) for (k, v) in val.items()}
+            return {cls.json_key_decoder(cls._from_dict_value(keytype, k)): cls._from_dict_value(valtype, v, strict=strict) for (k, v) in val.items()}
         return super()._from_dict_value(tp, val)
 
 
