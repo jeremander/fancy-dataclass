@@ -16,6 +16,23 @@ Types of changes:
 
 ## [Unreleased]
 
+## [0.5.0]
+
+2024-06-02
+
+### Added
+
+- Explicit `required` metadata flag in `ArgparseDataclass`
+- More details in web docs for `JSONDataclass`, `TOMLDataclass`
+
+### Changed
+
+- (_Breaking_) `JSONDataclass` methods `json_encoder` and `json_key_decoder` now public
+
+### Fixed
+
+- Bugs in `ArgparseDataclass`
+
 ## [0.4.5]
 
 2024-05-30
@@ -168,7 +185,9 @@ Types of changes:
     - `SQLDataclass`: SQL persistence via `sqlalchemy`
     - `SubprocessDataclass`: call out to another program via `subprocess`
 
-[unreleased]: https://github.com/jeremander/fancy-dataclass/compare/v0.4.4...HEAD
+[unreleased]: https://github.com/jeremander/fancy-dataclass/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.5.0
+[0.4.5]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.4.5
 [0.4.4]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.4.4
 [0.4.3]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.4.3
 [0.4.2]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.4.2

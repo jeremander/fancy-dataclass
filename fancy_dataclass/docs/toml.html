@@ -241,6 +241,26 @@
   
   
     <li class="md-nav__item">
+      <a href="mixin.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dataclass mixins
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="json.html" class="md-nav__link">
         
   
@@ -317,6 +337,21 @@
       Details
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Details">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#class-and-field-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      Class and Field Settings
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -442,10 +477,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
         
           
-          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
             
   
   <span class="md-ellipsis">
@@ -456,8 +491,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_9">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
             <span class="md-nav__icon md-icon"></span>
             Code reference
           </label>
@@ -741,6 +776,21 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Details">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#class-and-field-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      Class and Field Settings
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
     </ul>
@@ -804,12 +854,10 @@
 </span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">Database</span><span class="p">(</span><span class="n">server</span><span class="o">=</span><span class="s1">&#39;192.168.1.1&#39;</span><span class="p">,</span> <span class="n">ports</span><span class="o">=</span><span class="p">[</span><span class="mi">8001</span><span class="p">,</span> <span class="mi">8001</span><span class="p">,</span> <span class="mi">8002</span><span class="p">],</span> <span class="n">connection_max</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span> <span class="n">enabled</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </span></code></pre></div>
 <h2 id="details">Details</h2>
-<p>🚧 <strong>Under construction</strong> 🚧</p>
-<!--
-- TOML is more of a config format than a storage format
-- Unlike JSONDataclass, defaults are not suppressed by default, but can set `suppress_defaults=True`
- -->
-
+<p><code>TOMLDataclass</code> inherits from <a class="autorefs autorefs-internal" href="reference/dict.html#fancy_dataclass.dict.DictDataclass"><code>DictDataclass</code></a>, which can be used to convert dataclasses to/from Python dicts via <a class="autorefs autorefs-internal" href="reference/dict.html#fancy_dataclass.dict.DictDataclass.to_dict"><code>to_dict</code></a> and <a class="autorefs autorefs-internal" href="reference/dict.html#fancy_dataclass.dict.DictDataclass.from_dict"><code>from_dict</code></a>. You may use <code>DictDataclass</code> if you do not need to interact with TOML serialized data.</p>
+<h3 id="class-and-field-settings">Class and Field Settings</h3>
+<p>The class and field settings for <code>TOMLDataclass</code> are identical to those for <a href="json.html#class-and-field-settings"><code>JSONDataclass</code></a>. See <a class="autorefs autorefs-internal" href="reference/dict.html#fancy_dataclass.dict.DictDataclassSettings"><code>DictDataclassSettings</code></a> for the list of class settings, and <a class="autorefs autorefs-internal" href="reference/dict.html#fancy_dataclass.dict.DictDataclassFieldSettings"><code>DictDataclassFieldSettings</code></a> for the list of field-specific settings.</p>
+<p>TOML is intended as more of a configuration format than a data storage format. Consequently, unlike <code>JSONDataclass</code>, <code>TOMLDataclass</code> does not suppress default field values in its output by default. To opt into this behavior, you can set the class setting <code>suppress_defaults=True</code>.</p>
 <style>
 .md-sidebar--secondary {
     display: none !important;

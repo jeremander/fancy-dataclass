@@ -11,7 +11,7 @@
       
       
       
-        <link rel="prev" href="index.html">
+        <link rel="prev" href="mixin.html">
       
       
         <link rel="next" href="toml.html">
@@ -238,6 +238,26 @@
       
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="mixin.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dataclass mixins
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
     
   
   
@@ -302,9 +322,42 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#notes" class="md-nav__link">
+  <a href="#class-and-field-settings" class="md-nav__link">
     <span class="md-ellipsis">
-      Notes
+      Class and Field Settings
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Class and Field Settings">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#suppressing-defaults" class="md-nav__link">
+    <span class="md-ellipsis">
+      Suppressing Defaults
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#including-types-in-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      Including Types in Output
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#additional-customization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Additional Customization
     </span>
   </a>
   
@@ -457,10 +510,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
         
           
-          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
             
   
   <span class="md-ellipsis">
@@ -471,8 +524,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_9">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
             <span class="md-nav__icon md-icon"></span>
             Code reference
           </label>
@@ -760,9 +813,42 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#notes" class="md-nav__link">
+  <a href="#class-and-field-settings" class="md-nav__link">
     <span class="md-ellipsis">
-      Notes
+      Class and Field Settings
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Class and Field Settings">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#suppressing-defaults" class="md-nav__link">
+    <span class="md-ellipsis">
+      Suppressing Defaults
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#including-types-in-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      Including Types in Output
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#additional-customization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Additional Customization
     </span>
   </a>
   
@@ -793,7 +879,7 @@
 
   <h1>JSON conversion</h1>
 
-<!-- markdownlint-disable MD052 -->
+<!-- markdownlint-disable MD046 MD052 -->
 
 <p>The <a class="autorefs autorefs-internal" href="reference/json.html#fancy_dataclass.json.JSONDataclass"><code>JSONDataclass</code></a> mixin provides automatic conversion to and from <a href="https://en.wikipedia.org/wiki/JSON">JSON</a>.</p>
 <ul>
@@ -872,21 +958,96 @@
 </span><span id="__span-2-24"><a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a><span class="kc">True</span>
 </span></code></pre></div>
 <h2 id="details">Details</h2>
-<p>🚧 <strong>Under construction</strong> 🚧</p>
-<!--
-- Inherits from `DictDataclass`
-- Suppressing defaults
-- Other settings (`store_type`, `qualified_type`)
-- `JSONBaseDataclass` providing `qualified_type=True`
-- kwargs get passed to `json.dump`
-- `strict` argument in `from_dict`
-- Override `_json_encoder`, `_json_key_decoder`
--->
-
-<h3 id="notes">Notes</h3>
+<p><code>JSONDataclass</code> inherits from <a class="autorefs autorefs-internal" href="reference/dict.html#fancy_dataclass.dict.DictDataclass"><code>DictDataclass</code></a>, which can be used to convert dataclasses to/from Python dicts via <a class="autorefs autorefs-internal" href="reference/dict.html#fancy_dataclass.dict.DictDataclass.to_dict"><code>to_dict</code></a> and <a class="autorefs autorefs-internal" href="reference/dict.html#fancy_dataclass.dict.DictDataclass.from_dict"><code>from_dict</code></a>. You may use <code>DictDataclass</code> if you do not need to interact with JSON serialized data.</p>
+<h3 id="class-and-field-settings">Class and Field Settings</h3>
+<p>You may customize the behavior of a <code>JSONDataclass</code> subclass by passing keyword arguments upon inheritance (see <a href="mixin.html#class-settings">mixin class settings</a>). See <a class="autorefs autorefs-internal" href="reference/dict.html#fancy_dataclass.dict.DictDataclassSettings"><code>DictDataclassSettings</code></a> for the full list of settings. For field-specific settings, see <a class="autorefs autorefs-internal" href="reference/dict.html#fancy_dataclass.dict.DictDataclassFieldSettings"><code>DictDataclassFieldSettings</code></a>.</p>
+<h4 id="suppressing-defaults">Suppressing Defaults</h4>
+<p>One setting, <code>suppress_defaults</code>, is set to <code>True</code> by default. This will suppress fields in an output <code>dict</code> or JSON whose values match the class's default value. While this is often helpful to keep the output smaller in size, it is sometimes better to be explicit. To override this behavior, you can set <code>suppress_defaults=False</code>.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nd">@dataclass</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="k">class</span> <span class="nc">A</span><span class="p">(</span><span class="n">JSONDataclass</span><span class="p">):</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="n">x</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="nd">@dataclass</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="k">class</span> <span class="nc">B</span><span class="p">(</span><span class="n">JSONDataclass</span><span class="p">,</span> <span class="n">suppress_defaults</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    <span class="n">x</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="nb">print</span><span class="p">(</span><span class="n">A</span><span class="p">()</span><span class="o">.</span><span class="n">to_json_string</span><span class="p">())</span>
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="p">{}</span>
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>
+</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="nb">print</span><span class="p">(</span><span class="n">B</span><span class="p">()</span><span class="o">.</span><span class="n">to_json_string</span><span class="p">())</span>
+</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="p">{</span><span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">}</span>
+</span></code></pre></div>
+<p>You can be more fine-grained about handling the output behavior of specific fields by setting flags in their <a href="mixin.html#field-settings">field settings</a>:</p>
 <ul>
-<li><code>JSONDataclass</code> is configured to use the default JSON settings provided by Python's standard <a href="https://docs.python.org/3/library/json.html"><code>json</code></a> library. This allows out-of-range float values like <code>nan</code> and <code>inf</code> to be represented as <code>NaN</code> and <code>Infinity</code>, which are not strictly part of the JSON standard. To disallow these values, you can pass <code>allow_nan=False</code> when calling <code>to_json</code> or <code>to_json_string</code>, which will raise a <code>ValueError</code> if such values occur.</li>
+<li>Setting <code>suppress_default</code> to <code>False</code> or <code>True</code> will override the class setting at the field level.</li>
+<li>Setting <code>suppress</code> to <code>False</code> or <code>True</code> will force inclusion or exclusion of the field regardless of <code>suppress_defaults</code> setting.</li>
 </ul>
+<h4 id="including-types-in-output">Including Types in Output</h4>
+<p>Two other settings of note are <code>store_type</code> and <code>qualified_type</code>. These relate to type inference when loading an object from a <code>dict</code> or JSON blob. Suppose you have a class like:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nd">@dataclass</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">class</span> <span class="nc">Circle</span><span class="p">(</span><span class="n">JSONDataclass</span><span class="p">):</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="n">radius</span><span class="p">:</span> <span class="nb">float</span>
+</span></code></pre></div>
+<p>Converting a <code>Circle</code> object to a JSON string:</p>
+<div class="language-python3 highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">Circle</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">to_json_string</span><span class="p">())</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="p">{</span><span class="s2">&quot;radius&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">}</span>
+</span></code></pre></div>
+<p>This may be undesirable, since the output does not make it clear what type of thing it is. To include the type in the output, you may set <code>store_type=True</code>:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nd">@dataclass</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">class</span> <span class="nc">Circle</span><span class="p">(</span><span class="n">JSONDataclass</span><span class="p">,</span> <span class="n">store_type</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="n">radius</span><span class="p">:</span> <span class="nb">float</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="nb">print</span><span class="p">(</span><span class="n">Circle</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">to_json_string</span><span class="p">())</span>
+</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Circle&quot;</span><span class="p">,</span> <span class="s2">&quot;radius&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">}</span>
+</span></code></pre></div>
+<p><code>qualified_type</code> is like <code>store_type</code>, except it stores the fully qualified type name instead:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nd">@dataclass</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="k">class</span> <span class="nc">Circle</span><span class="p">(</span><span class="n">JSONDataclass</span><span class="p">,</span> <span class="n">qualified_type</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="n">radius</span><span class="p">:</span> <span class="nb">float</span>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="nb">print</span><span class="p">(</span><span class="n">Circle</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">to_json_string</span><span class="p">())</span>
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;my_module.Circle&quot;</span><span class="p">,</span> <span class="s2">&quot;radius&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">}</span>
+</span></code></pre></div>
+<p>(Here, <code>my_module</code> is the name of the module in which <code>Circle</code> is defined.)</p>
+<p>Setting <code>qualified_type=True</code> is particularly useful when dealing with inheritance hierarchies. For example, if you try:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nd">@dataclass</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="k">class</span> <span class="nc">Shape</span><span class="p">(</span><span class="n">JSONDataclass</span><span class="p">):</span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    <span class="o">...</span>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="nd">@dataclass</span>
+</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="k">class</span> <span class="nc">Circle</span><span class="p">(</span><span class="n">Shape</span><span class="p">):</span>
+</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>    <span class="n">radius</span><span class="p">:</span> <span class="nb">float</span>
+</span></code></pre></div>
+<p>This will raise the following error: <code>TypeError: when subclassing a JSONDataclass, you must set qualified_type=True or subclass JSONBaseDataclass instead</code>. This is saying that when you subclass <code>JSONDataclass</code>, you <em>must</em> explicitly ensure the types are included in the output, or else it will result in type ambiguity when converting back from JSON. An alternative to <code>qualified_type=True</code> is subclassing <code>JSONBaseDataclass</code> instead of <code>JSONDataclass</code>.</p>
+<p>Let's see why this is useful:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nd">@dataclass</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="k">class</span> <span class="nc">Shape</span><span class="p">(</span><span class="n">JSONBaseDataclass</span><span class="p">):</span>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>    <span class="o">...</span>
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>
+</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="nd">@dataclass</span>
+</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="k">class</span> <span class="nc">Circle</span><span class="p">(</span><span class="n">Shape</span><span class="p">):</span>
+</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>    <span class="n">radius</span><span class="p">:</span> <span class="nb">float</span>
+</span><span id="__span-9-8"><a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>
+</span><span id="__span-9-9"><a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="nd">@dataclass</span>
+</span><span id="__span-9-10"><a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="k">class</span> <span class="nc">Rectangle</span><span class="p">(</span><span class="n">Shape</span><span class="p">):</span>
+</span><span id="__span-9-11"><a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>    <span class="n">length</span><span class="p">:</span> <span class="nb">float</span>
+</span><span id="__span-9-12"><a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>    <span class="n">width</span><span class="p">:</span> <span class="nb">float</span>
+</span></code></pre></div>
+<p>Now you can use the base class, <code>Shape</code>, to convert from different subtypes:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">shape_dicts</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Circle&quot;</span><span class="p">,</span> <span class="s2">&quot;radius&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">},</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Rectangle&quot;</span><span class="p">,</span> <span class="s2">&quot;length&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;width&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">}]</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="n">shapes</span> <span class="o">=</span> <span class="p">[</span><span class="n">Shape</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">shape_dicts</span><span class="p">]</span>
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">shapes</span><span class="p">)</span>
+</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="p">[</span><span class="n">Circle</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="mf">3.0</span><span class="p">),</span> <span class="n">Rectangle</span><span class="p">(</span><span class="n">length</span><span class="o">=</span><span class="mf">3.0</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">5.0</span><span class="p">)]</span>
+</span></code></pre></div>
+<h3 id="additional-customization">Additional Customization</h3>
+<p>To customize the JSON output format, you may pass keyword arguments to <code>to_json</code> or <code>to_json_string</code>; these will get passed along to <code>json.dump</code>. For example, <code>ensure_ascii=False</code> will allow non-ASCII output, and <code>indent=4</code> will indent the JSON with 4 spaces.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code>JSONDataclass</code> is configured to use the default JSON settings provided by Python's standard <a href="https://docs.python.org/3/library/json.html"><code>json</code></a> library. This allows out-of-range float values like <code>nan</code> and <code>inf</code> to be represented as <code>NaN</code> and <code>Infinity</code>, which are not strictly part of the JSON standard. To disallow these values, you can pass <code>allow_nan=False</code> when calling <code>to_json</code> or <code>to_json_string</code>, which will raise a <code>ValueError</code> if such values occur.</p>
+</div>
+<p>To customize JSON encoding itself, a subclass of <code>JSONDataclass</code> may override the <a class="autorefs autorefs-internal" href="reference/json.html#fancy_dataclass.json.JSONSerializable.json_encoder"><code>json_encoder</code></a> method. This should return a <a href="https://docs.python.org/3/library/json.html#json.JSONEncoder"><code>json.JSONEncoder</code></a> subclass.</p>
+<p>You can also customize how JSON keys are decoded. For example, you may want to translate an integer key in a JSON file like <code>"1"</code> to the integer <code>1</code>. To accomplish this, override the <a class="autorefs autorefs-internal" href="reference/json.html#fancy_dataclass.json.JSONSerializable.json_key_decoder"><code>json_key_decoder</code></a> method.</p>
 <style>
 .md-sidebar--secondary {
     display: none !important;
@@ -925,7 +1086,7 @@
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="index.html" class="md-footer__link md-footer__link--prev" aria-label="Previous: Home">
+          <a href="mixin.html" class="md-footer__link md-footer__link--prev" aria-label="Previous: Dataclass mixins">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
@@ -935,7 +1096,7 @@
                 Previous
               </span>
               <div class="md-ellipsis">
-                Home
+                Dataclass mixins
               </div>
             </div>
           </a>

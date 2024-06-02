@@ -241,6 +241,26 @@
   
   
     <li class="md-nav__item">
+      <a href="mixin.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dataclass mixins
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="json.html" class="md-nav__link">
         
   
@@ -442,10 +462,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
         
           
-          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
             
   
   <span class="md-ellipsis">
@@ -456,8 +476,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_9">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
             <span class="md-nav__icon md-icon"></span>
             Code reference
           </label>
@@ -859,12 +879,17 @@
 </span><span id="__span-6-12"><a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="n">test2</span>
 </span></code></pre></div>
 <h2 id="details">Details</h2>
-<p>🚧 <strong>Under construction</strong> 🚧</p>
-<!--
-- By default ConfigDataclass cannot write config files, only read them. To write, subclass JSONDataclass or TOMLDataclass.
-- Structured vs. unstructured configs
- -->
-
+<p>For configurations with a specified schema, create a subclass of <a class="autorefs autorefs-internal" href="reference/config.html#fancy_dataclass.config.ConfigDataclass"><code>ConfigDataclass</code></a> instantiating your schema.</p>
+<p>The following methods can then be used:</p>
+<ul>
+<li><a class="autorefs autorefs-internal" href="reference/config.html#fancy_dataclass.config.FileConfig.load_config"><code>load_config</code></a>: load configs from a JSON or TOML file</li>
+<li><a class="autorefs autorefs-internal" href="reference/config.html#fancy_dataclass.config.Config.get_config"><code>get_config</code></a>: get the global config object</li>
+<li><a class="autorefs autorefs-internal" href="reference/config.html#fancy_dataclass.config.Config.clear_config"><code>clear_config</code></a>: set the global config to <code>None</code></li>
+<li><a class="autorefs autorefs-internal" href="reference/config.html#fancy_dataclass.config.Config.update_config"><code>update_config</code></a>: set the global config to a particular object</li>
+<li><a class="autorefs autorefs-internal" href="reference/config.html#fancy_dataclass.config.Config.as_config"><code>as_config</code></a>: context manager to temporarily change the global config to a particular object</li>
+</ul>
+<p>For configurations <em>without</em> a specified schema, you can use <a class="autorefs autorefs-internal" href="reference/config.html#fancy_dataclass.config.DictConfig"><code>DictConfig</code></a> instead. This has the same interface as <code>ConfigDataclass</code>, except you do not need to subclass it or specify a dataclass schema. Instead, it can load the contents of a JSON or TOML file into a regular Python dict, which you can access with <code>get_config</code>.</p>
+<p>By default, <code>ConfigDataclass</code> and <code>DictConfig</code> cannot write config files, only read them. To write, you can subclass <a href="json.html"><code>JSONDataclass</code></a> or <a href="toml.html"><code>TOMLDataclass</code></a>.</p>
 <style>
 .md-sidebar--secondary {
     display: none !important;
