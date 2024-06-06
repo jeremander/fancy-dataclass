@@ -536,7 +536,7 @@ def test_subcommand(capsys):
     assert DCSub4._subcommand_field_name == 'sub1'
     assert DCSub4(Sub1(1, 2), 1).subcommand_name == 'sub1'
     help_str = DCSub4.make_parser().format_help()
-    assert re.search(r'positional arguments:.+sub1\s+First subcommand\s+x\s+x value\s+option.+-y Y', help_str, re.DOTALL)
+    assert re.search(r'positional arguments:.+sub1\s+first subcommand\s+x\s+x value\s+option.+-y Y', help_str, re.DOTALL)
     check_invalid_args(DCSub4, [], 'the following arguments are required: subcommand, x')
     check_invalid_args(DCSub4, ['5'], "invalid choice: '5'")
     check_invalid_args(DCSub4, ['sub1', '-h'], r'usage:.*First subcommand.*x1\s+y1')
@@ -555,7 +555,7 @@ def test_subcommand(capsys):
     assert DCSub5(Sub1(1, 2)).subcommand_name == 'sub1'
     assert DCSub5(Sub2(1, 2)).subcommand_name == 'my-subcommand'
     help_str = DCSub5.make_parser().format_help()
-    assert re.search(r'positional arguments:.+choose a subcommand\s+sub1\s+First subcommand\s+my-subcommand\s+Second subcommand.+-x X', help_str, re.DOTALL)
+    assert re.search(r'positional arguments:.+choose a subcommand\s+sub1\s+first subcommand\s+my-subcommand\s+second subcommand.+-x X', help_str, re.DOTALL)
     for args in [[], ['-x', '5']]:
         check_invalid_args(DCSub5, args, 'the following arguments are required: subcommand')
     check_invalid_args(DCSub5, ['sub1'], 'required: x1, y1')

@@ -2,7 +2,7 @@
 
 # TODO
 
-## v0.5.0
+## v0.6.0
 
 - `VersionedDataclass`
   - `version` class setting (int) and `version` read-only class property

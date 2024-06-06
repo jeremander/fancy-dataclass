@@ -196,6 +196,21 @@ class ArgparseDataclass(DataclassMixin):
         return cls.__doc__
 
     @classmethod
+    def parser_description_brief(cls) -> Optional[str]:
+        """Gets a *brief* description string, only to be used when the class is used as a *subcommand* entry. This is the help that shows in the menu of subcommands, and is sometimes briefer than the description.
+
+        By default, uses the output of [`parser_description`][fancy_dataclass.cli.ArgparseDataclass.parser_description], lowercased with a final period stripped off.
+
+        Returns:
+            String to be used as the program's subcommand help"""
+        descr = cls.parser_description()
+        if descr:
+            descr = descr[0].lower() + descr[1:]
+            if descr.endswith('.'):
+                descr = descr[:-1]
+        return descr
+
+    @classmethod
     def parser_kwargs(cls) -> Dict[str, Any]:
         """Gets keyword arguments that will be passed to the top-level argument parser.
 
@@ -340,7 +355,8 @@ class ArgparseDataclass(DataclassMixin):
             for arg in tp_args:
                 assert issubclass_safe(arg, ArgparseDataclass)
                 descr = arg.parser_description()
-                subparser = subparsers.add_parser(arg.__settings__.command_name, help=descr, description=descr)
+                descr_brief = arg.parser_description_brief()
+                subparser = subparsers.add_parser(arg.__settings__.command_name, help=descr_brief, description=descr)
                 arg.configure_parser(subparser)
             return
         if is_nested(tp):  # recursively configure a nested ArgparseDataclass field
