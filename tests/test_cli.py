@@ -539,6 +539,7 @@ def test_subcommand(capsys):
     assert re.search(r'positional arguments:.+sub1\s+First subcommand\s+x\s+x value\s+option.+-y Y', help_str, re.DOTALL)
     check_invalid_args(DCSub4, [], 'the following arguments are required: subcommand, x')
     check_invalid_args(DCSub4, ['5'], "invalid choice: '5'")
+    check_invalid_args(DCSub4, ['sub1', '-h'], r'usage:.*First subcommand.*x1\s+y1')
     for args in [['sub1'], ['sub1', '1']]:
         check_invalid_args(DCSub4, args, 'the following arguments are required: x1, y1')
     check_invalid_args(DCSub4, ['sub1', '1', '2'], 'the following arguments are required: y1')

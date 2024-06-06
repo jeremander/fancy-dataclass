@@ -339,7 +339,8 @@ class ArgparseDataclass(DataclassMixin):
             tp_args = (tp,) if (origin_type is None) else tp_args
             for arg in tp_args:
                 assert issubclass_safe(arg, ArgparseDataclass)
-                subparser = subparsers.add_parser(arg.__settings__.command_name, help=arg.parser_description())
+                descr = arg.parser_description()
+                subparser = subparsers.add_parser(arg.__settings__.command_name, help=descr, description=descr)
                 arg.configure_parser(subparser)
             return
         if is_nested(tp):  # recursively configure a nested ArgparseDataclass field
