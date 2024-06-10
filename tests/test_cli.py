@@ -1,4 +1,4 @@
-from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, _SubParsersAction
+from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, HelpFormatter, _SubParsersAction
 from dataclasses import dataclass, field
 import re
 import sys
@@ -627,8 +627,23 @@ def test_subcommand(capsys):
     # NOTE: dataclass synthesizes a docstring automatically (this may be unexpected)
     check_invalid_args(DCSub11, ['sub7', '-h'], r'Sub7\(\)')
     check_invalid_args(DCSub11, ['-h'], r'sub7\(\)')
-
-
+    # customize help formatter
+    @dataclass
+    class DCSub12(ArgparseDataclass, formatter_class=ArgumentDefaultsHelpFormatter):
+        sub: Sub7 = field(metadata={'subcommand': True})
+    p = DCSub12.make_parser()
+    assert p.formatter_class is ArgumentDefaultsHelpFormatter
+    # subparser adopts parent's formatter_class by default
+    assert p._subparsers._actions[1].choices['sub7'].formatter_class is ArgumentDefaultsHelpFormatter
+    @dataclass
+    class Sub8(ArgparseDataclass, formatter_class=HelpFormatter):
+        ...
+    @dataclass
+    class DCSub13(ArgparseDataclass, formatter_class=ArgumentDefaultsHelpFormatter):
+        sub: Sub8 = field(metadata={'subcommand': True})
+    p = DCSub13.make_parser()
+    assert p.formatter_class is ArgumentDefaultsHelpFormatter
+    assert p._subparsers._actions[1].choices['sub8'].formatter_class is HelpFormatter
 
 def test_boolean_flag():
     """Tests the behavior of boolean fields in an ArgparseDataclass."""

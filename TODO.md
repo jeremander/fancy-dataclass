@@ -4,8 +4,6 @@
 
 ## v0.6.0
 
-- Add `formatter_cls` to `ArgparseDataclassSettings`
-- Disable ReadTheDocs ads
 - `VersionedDataclass`
   - `version` class setting (int) and `version` read-only class property
   - Should probably subclass `DictDataclass`, ensures that `version` property is stored in dict

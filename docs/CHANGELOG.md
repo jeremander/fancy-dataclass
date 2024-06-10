@@ -16,6 +16,21 @@ Types of changes:
 
 ## [Unreleased]
 
+## [0.6.0]
+
+2024-06-10
+
+### Added
+
+- New `ArgparseDataclassSettings` fields:
+    - `formatter_class`: controls help formatter class for parent parser and subcommands (can be overridden by subcommands)
+    - `help_descr_brief`: subcommand help format (brief), used in subcommand help menu
+        - By default, this will match the full subcommand help, but lowercased with trailing period removed.
+
+### Changed
+
+- (_Breaking_) `ArgparseDataclass`: `parser_class` and `parser_description` classmethods have become `ArgparseDataclassSettings` fields `parser_class` and `help_descr`.
+
 ## [0.5.0]
 
 2024-06-02
@@ -185,7 +200,8 @@ Types of changes:
     - `SQLDataclass`: SQL persistence via `sqlalchemy`
     - `SubprocessDataclass`: call out to another program via `subprocess`
 
-[unreleased]: https://github.com/jeremander/fancy-dataclass/compare/v0.5.0...HEAD
+[unreleased]: https://github.com/jeremander/fancy-dataclass/compare/v0.6.0...HEAD
+[0.5.0]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.6.0
 [0.5.0]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.5.0
 [0.4.5]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.4.5
 [0.4.4]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.4.4

@@ -1,4 +1,4 @@
-from argparse import ArgumentParser, Namespace, _ArgumentGroup, _MutuallyExclusiveGroup
+from argparse import ArgumentParser, HelpFormatter, Namespace, _ArgumentGroup, _MutuallyExclusiveGroup
 from contextlib import suppress
 from dataclasses import MISSING, dataclass, fields
 from enum import IntEnum
@@ -53,7 +53,8 @@ def _add_exclusive_group(parser: ArgParser, group_name: str, required: bool) -> 
 def _add_group(parser: ArgParser, group_name: str, **group_kwargs: Any) -> _ArgumentGroup:
     if isinstance(parser, _ArgumentGroup):
         raise ValueError('nested argument groups are not allowed')
-    return parser.add_argument_group(group_name, **group_kwargs)
+    kwargs = {key: val for (key, val) in group_kwargs.items() if (key in ['title', 'description'])}
+    return parser.add_argument_group(group_name, **kwargs)
 
 
 ##########
@@ -66,13 +67,15 @@ class ArgparseDataclassSettings(DataclassMixinSettings):
 
     Subclasses of `ArgparseDataclass` may set the following fields as keyword arguments during inheritance:
 
-    - `parser_class`: subclass of `argparse.ArgumentParser` to use for argument parsing
+    - `parser_class`: subclass of [`argparse.ArgumentParser`](https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser) to use for argument parsing
+    - `formatter_class`: subclass of [`argparse.HelpFormatter`](https://docs.python.org/3/library/argparse.html#formatter-class) to use for customizing the help output
     - `help_descr`: string to use for the help description, which is displayed when `--help` is passed to the parser
         - If `None`, the class's docstring will be used by default.
     - `help_descr_brief`: string to use for the *brief* help description, which is used when the class is used as a *subcommand* entry. This is the text that appears in the menu of subcommands, which is often briefer than the main description.
         - If `None`, the class's docstring will be used by default (lowercased).
     - `command_name`: when this class is used to define a subcommand, the name of that subcommand"""
     parser_class: Type[ArgumentParser] = ArgumentParser
+    formatter_class: Optional[Type[HelpFormatter]] = None
     help_descr: Optional[str] = None
     help_descr_brief: Optional[str] = None
     command_name: Optional[str] = None
@@ -207,10 +210,13 @@ class ArgparseDataclass(DataclassMixin):
 
         Returns:
             Keyword arguments passed upon construction of the `ArgumentParser`"""
-        return {'description': cls._parser_description()}
+        kwargs: Dict[str, Any] = {'description': cls._parser_description()}
+        if (fmt_cls := cls.__settings__.formatter_class) is not None:
+            kwargs['formatter_class'] = fmt_cls
+        return kwargs
 
     @classmethod
-    def parser_argument_kwarg_names(cls) -> List[str]:
+    def _parser_argument_kwarg_names(cls) -> List[str]:
         """Gets keyword argument names that will be passed when adding arguments to the argument parser.
 
         Returns:
@@ -317,7 +323,7 @@ class ArgparseDataclass(DataclassMixin):
                 with suppress(KeyError):
                     kwargs.pop(key)
         # extract additional items from metadata
-        for key in cls.parser_argument_kwarg_names():
+        for key in cls._parser_argument_kwarg_names():
             if key in fld.metadata:
                 kwargs[key] = fld.metadata[key]
         if kwargs.get('action') == 'store_const':
@@ -334,7 +340,7 @@ class ArgparseDataclass(DataclassMixin):
                     group = _add_exclusive_group(parser, group_name, kwargs.get('required', False))
                 else:
                     # get kwargs from nested ArgparseDataclass
-                    group_kwargs: Dict[str, Any] = tp.parser_kwargs() if is_nested(tp) else {}
+                    group_kwargs = tp.parser_kwargs() if is_nested(tp) else {}
                     group = _add_group(parser, group_name, **group_kwargs)
             parser = group
         if settings.subcommand:
@@ -345,9 +351,12 @@ class ArgparseDataclass(DataclassMixin):
             tp_args = (tp,) if (origin_type is None) else tp_args
             for arg in tp_args:
                 assert issubclass_safe(arg, ArgparseDataclass)
-                descr = arg._parser_description()
                 descr_brief = arg._parser_description_brief()
-                subparser = subparsers.add_parser(arg.__settings__.command_name, help=descr_brief, description=descr)
+                subparser_kwargs = arg.parser_kwargs()
+                if 'formatter_class' not in subparser_kwargs:
+                    # inherit formatter_class from the parent
+                    subparser_kwargs['formatter_class'] = parser.formatter_class
+                subparser = subparsers.add_parser(arg.__settings__.command_name, help=descr_brief, **subparser_kwargs)
                 arg.configure_parser(subparser)
             return
         if is_nested(tp):  # recursively configure a nested ArgparseDataclass field
