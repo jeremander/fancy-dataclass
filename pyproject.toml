@@ -65,7 +65,7 @@ dependencies = [
   "py-gadzooks>=0.2.9",
   "pytest",
   "ruff>=0.3",
-  "vermin>=1.5",
+  "vermin>=1.6",
 ]
 
 [tool.hatch.envs.lint.scripts]

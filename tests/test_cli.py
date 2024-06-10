@@ -600,6 +600,35 @@ def test_subcommand(capsys):
         sub: Sub4 = field(metadata={'subcommand': True})
     # check the subparser's help string
     check_invalid_args(DCSub8, ['sub4', '-h'], r'-h, --help.*number group:\s+x\s+y')
+    # override help strings
+    @dataclass
+    class Sub5(ArgparseDataclass, help_descr='Full help.'):
+        """Fifth subcommand"""
+    @dataclass
+    class DCSub9(ArgparseDataclass):
+        sub: Sub5 = field(metadata={'subcommand': True})
+    check_invalid_args(DCSub9, ['sub5', '-h'], r'Full help\.')
+    check_invalid_args(DCSub9, ['-h'], r'full help(?!\.)')  # trailing period stripped off
+    @dataclass
+    class Sub6(ArgparseDataclass, help_descr_brief='brief help'):
+        """Sixth subcommand"""
+    @dataclass
+    class DCSub10(ArgparseDataclass):
+        sub: Sub6 = field(metadata={'subcommand': True})
+    check_invalid_args(DCSub10, ['sub6', '-h'], 'Sixth subcommand')
+    check_invalid_args(DCSub10, ['-h'], 'brief help')
+    # null docstring and no overriding of help strings
+    @dataclass
+    class Sub7(ArgparseDataclass):
+        ...
+    @dataclass
+    class DCSub11(ArgparseDataclass):
+        sub: Sub7 = field(metadata={'subcommand': True})
+    # NOTE: dataclass synthesizes a docstring automatically (this may be unexpected)
+    check_invalid_args(DCSub11, ['sub7', '-h'], r'Sub7\(\)')
+    check_invalid_args(DCSub11, ['-h'], r'sub7\(\)')
+
+
 
 def test_boolean_flag():
     """Tests the behavior of boolean fields in an ArgparseDataclass."""

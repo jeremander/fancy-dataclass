@@ -66,7 +66,15 @@ class ArgparseDataclassSettings(DataclassMixinSettings):
 
     Subclasses of `ArgparseDataclass` may set the following fields as keyword arguments during inheritance:
 
+    - `parser_class`: subclass of `argparse.ArgumentParser` to use for argument parsing
+    - `help_descr`: string to use for the help description, which is displayed when `--help` is passed to the parser
+        - If `None`, the class's docstring will be used by default.
+    - `help_descr_brief`: string to use for the *brief* help description, which is used when the class is used as a *subcommand* entry. This is the text that appears in the menu of subcommands, which is often briefer than the main description.
+        - If `None`, the class's docstring will be used by default (lowercased).
     - `command_name`: when this class is used to define a subcommand, the name of that subcommand"""
+    parser_class: Type[ArgumentParser] = ArgumentParser
+    help_descr: Optional[str] = None
+    help_descr_brief: Optional[str] = None
     command_name: Optional[str] = None
 
 
@@ -178,37 +186,20 @@ class ArgparseDataclass(DataclassMixin):
         return None
 
     @classmethod
-    def parser_class(cls) -> Type[ArgumentParser]:
-        """Gets the type of the top-level argument parser.
-
-        Returns:
-            Type (subclass of `argparse.ArgumentParser`) to be constructed by this class"""
-        return ArgumentParser
-
-    @classmethod
-    def parser_description(cls) -> Optional[str]:
-        """Gets a description string for the top-level argument parser, which will be displayed by default when `--help` is passed to the parser.
-
-        By default, uses the class's own docstring.
-
-        Returns:
-            String to be used as the program's description"""
-        return cls.__doc__
-
-    @classmethod
-    def parser_description_brief(cls) -> Optional[str]:
-        """Gets a *brief* description string, only to be used when the class is used as a *subcommand* entry. This is the help that shows in the menu of subcommands, and is sometimes briefer than the description.
-
-        By default, uses the output of [`parser_description`][fancy_dataclass.cli.ArgparseDataclass.parser_description], lowercased with a final period stripped off.
-
-        Returns:
-            String to be used as the program's subcommand help"""
-        descr = cls.parser_description()
-        if descr:
-            descr = descr[0].lower() + descr[1:]
-            if descr.endswith('.'):
-                descr = descr[:-1]
+    def _parser_description(cls) -> Optional[str]:
+        if (descr := cls.__settings__.help_descr) is None:
+            return cls.__doc__
         return descr
+
+    @classmethod
+    def _parser_description_brief(cls) -> Optional[str]:
+        if (brief := cls.__settings__.help_descr_brief) is None:
+            brief = cls._parser_description()
+            if brief:
+                brief = brief[0].lower() + brief[1:]
+                if brief.endswith('.'):
+                    brief = brief[:-1]
+        return brief
 
     @classmethod
     def parser_kwargs(cls) -> Dict[str, Any]:
@@ -216,7 +207,7 @@ class ArgparseDataclass(DataclassMixin):
 
         Returns:
             Keyword arguments passed upon construction of the `ArgumentParser`"""
-        return {'description': cls.parser_description()}
+        return {'description': cls._parser_description()}
 
     @classmethod
     def parser_argument_kwarg_names(cls) -> List[str]:
@@ -232,7 +223,7 @@ class ArgparseDataclass(DataclassMixin):
 
         Returns:
             New top-level parser derived from the class's fields"""
-        return cls.parser_class()(**cls.parser_kwargs())
+        return cls.__settings__.parser_class(**cls.parser_kwargs())
 
     @classmethod
     def configure_argument(cls, parser: ArgParser, name: str) -> None:
@@ -354,8 +345,8 @@ class ArgparseDataclass(DataclassMixin):
             tp_args = (tp,) if (origin_type is None) else tp_args
             for arg in tp_args:
                 assert issubclass_safe(arg, ArgparseDataclass)
-                descr = arg.parser_description()
-                descr_brief = arg.parser_description_brief()
+                descr = arg._parser_description()
+                descr_brief = arg._parser_description_brief()
                 subparser = subparsers.add_parser(arg.__settings__.command_name, help=descr_brief, description=descr)
                 arg.configure_parser(subparser)
             return

@@ -4,6 +4,8 @@
 
 ## v0.6.0
 
+- Add `formatter_cls` to `ArgparseDataclassSettings`
+- Disable ReadTheDocs ads
 - `VersionedDataclass`
   - `version` class setting (int) and `version` read-only class property
   - Should probably subclass `DictDataclass`, ensures that `version` property is stored in dict
@@ -20,7 +22,7 @@
     - Avoid cyclic references (`weakref`?)
   - Deal with namespace collision? E.g. use `globals()` to ensure the latest version is the only one accessible within module's namespace, even if it is defined earlier than the others.
 
-## v0.5.1
+## v0.6.1
 
 - documentation
   - Dataclass mixins/settings
