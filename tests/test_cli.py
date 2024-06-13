@@ -501,7 +501,7 @@ def test_subcommand(capsys):
         def run(self) -> None:
             print(self.__class__.__name__)
     assert Sub1.__settings__.command_name == 'sub1'
-    assert Sub1._subcommand_field_name is None
+    assert Sub1.subcommand_field_name is None
     assert Sub1(1, 2).subcommand_name is None
     @dataclass
     class Sub2(ArgparseDataclass, command_name='my-subcommand'):
@@ -509,7 +509,7 @@ def test_subcommand(capsys):
         x2: int
         y2: str = 'abc'
     assert Sub2.__settings__.command_name == 'my-subcommand'
-    assert Sub2._subcommand_field_name is None
+    assert Sub2.subcommand_field_name is None
     assert Sub2(1, 2).subcommand_name is None
     # multiple subcommands not allowed
     with pytest.raises(TypeError, match='multiple fields .* registered as subcommands'):
@@ -533,7 +533,8 @@ def test_subcommand(capsys):
         x: int = field(metadata={'help': 'x value'})  # positional arg in addition to subparser is allowed, though it's weird
         y: int = 2
     assert DCSub4.__settings__.command_name == 'dc-sub4'
-    assert DCSub4._subcommand_field_name == 'sub1'
+    assert DCSub4.subcommand_field_name == 'sub1'
+    assert DCSub4.subcommand_dest_name == '_subcommand_DCSub4'
     assert DCSub4(Sub1(1, 2), 1).subcommand_name == 'sub1'
     help_str = DCSub4.make_parser().format_help()
     assert re.search(r'positional arguments:.+sub1\s+first subcommand\s+x\s+x value\s+option.+-y Y', help_str, re.DOTALL)
@@ -551,7 +552,7 @@ def test_subcommand(capsys):
         sub: Union[Sub1, Sub2] = field(metadata={'subcommand': True, 'help': 'choose a subcommand'})
         x: int = 1
     assert DCSub5.__settings__.command_name == 'dc-sub5'
-    assert DCSub5._subcommand_field_name == 'sub'
+    assert DCSub5.subcommand_field_name == 'sub'
     assert DCSub5(Sub1(1, 2)).subcommand_name == 'sub1'
     assert DCSub5(Sub2(1, 2)).subcommand_name == 'my-subcommand'
     help_str = DCSub5.make_parser().format_help()
@@ -790,26 +791,41 @@ def test_optional_subcommand():
     for D in [D1, D2]:
         check_invalid_args(D, [], 'arguments are required: subcommand')
         assert D.from_cli_args(['x']) == D(X())
-    # non-optional with default
+    # optional with additional optional field
     @dataclass
     class E1(ArgparseDataclass):
-        sub: X = field(default_factory=X, metadata={'subcommand': True})
+        sub: Optional[X] = field(default=None, metadata={'subcommand': True})
+        val: Optional[int] = field(default=None)
     @dataclass
     class E2(ArgparseDataclass):
-        sub: Union[X, Y] = field(default_factory=X, metadata={'subcommand': True})
+        sub: Optional[Union[X, Y]] = field(default=None, metadata={'subcommand': True})
+        val: Optional[int] = field(default=None)
     for E in [E1, E2]:
-        assert E.from_cli_args([]) == E(X())
-        assert E.from_cli_args(['x']) == E(X())
-    # non-optional with required=False
+        assert E.from_cli_args([]) == E(None, None)
+        assert E.from_cli_args(['x']) == E(X(), None)
+        assert E.from_cli_args(['--val', '1']) == E(None, 1)
+        assert E.from_cli_args(['--val', '1', 'x']) == E(X(), 1)
+        check_invalid_args(E, ['x', '--val', '1'], 'unrecognized arguments: --val 1')
+    # non-optional with default
     @dataclass
     class F1(ArgparseDataclass):
-        sub: X = field(metadata={'required': False, 'subcommand': True})
+        sub: X = field(default_factory=X, metadata={'subcommand': True})
     @dataclass
     class F2(ArgparseDataclass):
-        sub: Union[X, Y] = field(metadata={'required': False, 'subcommand': True})
+        sub: Union[X, Y] = field(default_factory=X, metadata={'subcommand': True})
     for F in [F1, F2]:
+        assert F.from_cli_args([]) == F(X())
+        assert F.from_cli_args(['x']) == F(X())
+    # non-optional with required=False
+    @dataclass
+    class G1(ArgparseDataclass):
+        sub: X = field(metadata={'required': False, 'subcommand': True})
+    @dataclass
+    class G2(ArgparseDataclass):
+        sub: Union[X, Y] = field(metadata={'required': False, 'subcommand': True})
+    for G in [G1, G2]:
         with pytest.raises(ValueError, match="'sub' field cannot set required=False"):
-            _ = F.make_parser()
+            _ = G.make_parser()
 
 def test_subcommand_run(capsys):
     class CLIDC(CLIDataclass):

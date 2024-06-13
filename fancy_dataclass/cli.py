@@ -139,11 +139,17 @@ class ArgparseDataclass(DataclassMixin):
     __settings__ = ArgparseDataclassSettings()
     __field_settings_type__ = ArgparseDataclassFieldSettings
 
-    _subcommand_field_name: ClassVar[Optional[str]] = None
+    # name of subcommand field, if present
+    subcommand_field_name: ClassVar[Optional[str]] = None
+    # name of the `argparse.Namespace` attribute associated with the subcommand
+    # The convention is for this name to contain both the subcommand name and the class name.
+    # This is because nested `ArgparseDataclass` fields may have the same subcommand name, causing conflicts.
+    subcommand_dest_name: ClassVar[str]
 
     @classmethod
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
+        cls.subcommand_dest_name = f'_subcommand_{cls.__name__}'
         # if command_name was not specified in the settings, use a default name
         if cls.__settings__.command_name is None:
             cls.__settings__.command_name = camel_case_to_kebab_case(cls.__name__)
@@ -174,8 +180,8 @@ class ArgparseDataclass(DataclassMixin):
                     continue
                 raise err
             raise TypeError(f'multiple fields ({subcommand} and {fld.name}) are registered as subcommands, at most one is allowed')
-        # store the name of the subcommand field as a private class attribute
-        cls._subcommand_field_name = subcommand
+        # store the name of the subcommand field as a class attribute
+        cls.subcommand_field_name = subcommand
 
     @property
     def subcommand_name(self) -> Optional[str]:
@@ -183,8 +189,8 @@ class ArgparseDataclass(DataclassMixin):
 
         Returns:
             Name of the subcommand, if a subcommand field exists, and `None` otherwise"""
-        if self._subcommand_field_name is not None:
-            tp: Type[ArgparseDataclass] = type(getattr(self, self._subcommand_field_name))
+        if self.subcommand_field_name is not None:
+            tp: Type[ArgparseDataclass] = type(getattr(self, self.subcommand_field_name))
             return tp.__settings__.command_name
         return None
 
@@ -346,7 +352,7 @@ class ArgparseDataclass(DataclassMixin):
         if settings.subcommand:
             # create subparsers for each variant
             assert isinstance(parser, ArgumentParser)
-            dest = f'_subcommand_{cls.__name__}'
+            dest = cls.subcommand_dest_name
             has_default = 'default' in kwargs
             required = kwargs.get('required', not has_default)
             if (not required) and (not has_default):
@@ -453,7 +459,8 @@ class ArgparseDataclass(DataclassMixin):
             origin_type = get_origin(tp)
             if origin_type == Union:
                 tp_args = [arg for arg in get_args(tp) if (arg is not type(None))]
-                if subcommand := getattr(args, f'_subcommand_{cls.__name__}', None):
+                subcommand = getattr(args, cls.subcommand_dest_name, None)
+                if is_subcommand and subcommand:
                     tp_args = [arg for arg in tp_args if (arg.__settings__.command_name == subcommand)]
                     assert len(tp_args) == 1, f'exactly one type within {tp} should have command name {subcommand}'
                     assert issubclass_safe(tp_args[0], ArgparseDataclass)
@@ -509,8 +516,8 @@ class CLIDataclass(ArgparseDataclass):
 
         If the class has a subcommand defined, and it is an instance of `CLIDataclass`, the default implementation of `run` will be to call the subcommand's own implementation."""
         # delegate to the subcommand's `run` method, if it exists
-        if self._subcommand_field_name:
-            val = getattr(self, self._subcommand_field_name)
+        if self.subcommand_field_name:
+            val = getattr(self, self.subcommand_field_name)
             if isinstance(val, CLIDataclass):
                 return val.run()
         raise NotImplementedError
