@@ -711,19 +711,19 @@ def test_doubly_nested_subcommand():
     """Tests behavior of a doubly nested subcommand."""
     @dataclass
     class DC00(ArgparseDataclass, command_name='cmd00'):
-        pass
+        ...
     @dataclass
     class DC01(ArgparseDataclass, command_name='cmd01'):
-        pass
+        ...
     @dataclass
     class DC0(ArgparseDataclass, command_name='cmd0'):
         subcommand: Union[DC00, DC01] = field(metadata={'subcommand': True})
     @dataclass
     class DC10(ArgparseDataclass, command_name='cmd10'):
-        pass
+        ...
     @dataclass
     class DC11(ArgparseDataclass, command_name='cmd11'):
-        pass
+        ...
     @dataclass
     class DC1(ArgparseDataclass, command_name='cmd1'):
         subcommand: Union[DC10, DC11] = field(metadata={'subcommand': True})
@@ -739,3 +739,93 @@ def test_doubly_nested_subcommand():
     check_invalid_args(DCDouble, ['cmd0'], 'arguments are required: subcommand')
     assert DCDouble.from_cli_args(['cmd0', 'cmd00']) == DCDouble(DC0(DC00()))
     assert DCDouble.from_cli_args(['cmd1', 'cmd10']) == DCDouble(DC1(DC10()))
+
+def test_optional_subcommand():
+    """Tests behavior of optional subcommands."""
+    @dataclass
+    class X(ArgparseDataclass):
+        ...
+    @dataclass
+    class Y(ArgparseDataclass):
+        ...
+    # optional with default of None
+    @dataclass
+    class A1(ArgparseDataclass):
+        sub: Optional[X] = field(default=None, metadata={'subcommand': True})
+    assert A1.from_cli_args([]) == A1(None)
+    assert A1.from_cli_args(['x']) == A1(X())
+    @dataclass
+    class A2(ArgparseDataclass):
+        sub: Optional[Union[X, Y]] = field(default=None, metadata={'subcommand': True})
+    for A in [A1, A2]:
+        assert A.from_cli_args([]) == A(None)
+        assert A.from_cli_args(['x']) == A(X())
+    # optional with subcommand default
+    @dataclass
+    class B1(ArgparseDataclass):
+        sub: Optional[X] = field(default_factory=X, metadata={'subcommand': True})
+    @dataclass
+    class B2(ArgparseDataclass):
+        sub: Optional[Union[X, Y]] = field(default_factory=X, metadata={'subcommand': True})
+    for B in [B1, B2]:
+        assert B.from_cli_args([]) == B(X())
+        assert B.from_cli_args(['x']) == B(X())
+    # optional with no default
+    @dataclass
+    class C1(ArgparseDataclass):
+        sub: Optional[X] = field(metadata={'subcommand': True})
+    @dataclass
+    class C2(ArgparseDataclass):
+        sub: Optional[Union[X, Y]] = field(metadata={'subcommand': True})
+    for C in [C1, C2]:
+        assert C.from_cli_args([]) == C(None)
+        assert C.from_cli_args(['x']) == C(X())
+    # optional with required=True
+    @dataclass
+    class D1(ArgparseDataclass):
+        sub: Optional[X] = field(metadata={'required': True, 'subcommand': True})
+    @dataclass
+    class D2(ArgparseDataclass):
+        sub: Optional[Union[X, Y]] = field(metadata={'required': True, 'subcommand': True})
+    for D in [D1, D2]:
+        check_invalid_args(D, [], 'arguments are required: subcommand')
+        assert D.from_cli_args(['x']) == D(X())
+    # non-optional with default
+    @dataclass
+    class E1(ArgparseDataclass):
+        sub: X = field(default_factory=X, metadata={'subcommand': True})
+    @dataclass
+    class E2(ArgparseDataclass):
+        sub: Union[X, Y] = field(default_factory=X, metadata={'subcommand': True})
+    for E in [E1, E2]:
+        assert E.from_cli_args([]) == E(X())
+        assert E.from_cli_args(['x']) == E(X())
+    # non-optional with required=False
+    @dataclass
+    class F1(ArgparseDataclass):
+        sub: X = field(metadata={'required': False, 'subcommand': True})
+    @dataclass
+    class F2(ArgparseDataclass):
+        sub: Union[X, Y] = field(metadata={'required': False, 'subcommand': True})
+    for F in [F1, F2]:
+        with pytest.raises(ValueError, match="'sub' field cannot set required=False"):
+            _ = F.make_parser()
+
+def test_subcommand_run(capsys):
+    class CLIDC(CLIDataclass):
+        def run(self):
+            print('abc')
+    @dataclass
+    class X(CLIDC):
+        ...
+    @dataclass
+    class A(CLIDataclass):
+        sub: Optional[X] = field(default=None, metadata={'subcommand': True})
+    obj = A.from_cli_args([])
+    assert obj == A(None)
+    X.main([])
+    assert capsys.readouterr().out.strip() == 'abc'
+    with pytest.raises(NotImplementedError):
+        A.main([])
+    A.main(['x'])
+    assert capsys.readouterr().out.strip() == 'abc'

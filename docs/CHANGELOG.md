@@ -16,6 +16,13 @@ Types of changes:
 
 ## [Unreleased]
 
+### Fixed
+
+- Behavior of optional subcommands
+    - By default, command-line subcommand optional if the field type is `Optional` (even without a default)
+    - `required` flag in field metadata overrides default behavior
+    - `required` must be `True` if field is non-`Optional` without a default
+
 ## [0.6.0]
 
 2024-06-10

@@ -347,7 +347,11 @@ class ArgparseDataclass(DataclassMixin):
             # create subparsers for each variant
             assert isinstance(parser, ArgumentParser)
             dest = f'_subcommand_{cls.__name__}'
-            subparsers = parser.add_subparsers(dest=dest, required=True, help=settings.help, metavar='subcommand')
+            has_default = 'default' in kwargs
+            required = kwargs.get('required', not has_default)
+            if (not required) and (not has_default):
+                raise ValueError(f'{name!r} field cannot set required=False with no default value')
+            subparsers = parser.add_subparsers(dest=dest, required=required, help=settings.help, metavar='subcommand')
             tp_args = (tp,) if (origin_type is None) else tp_args
             for arg in tp_args:
                 assert issubclass_safe(arg, ArgparseDataclass)
@@ -444,24 +448,27 @@ class ArgparseDataclass(DataclassMixin):
         kwargs = {}
         for fld in fields(cls):  # type: ignore[arg-type]
             name = fld.name
-            tp = fld.type
-            if type_is_optional(tp):
-                tp = next(arg for arg in get_args(fld.type) if (arg is not type(None)))
+            tp: Optional[type] = fld.type
+            is_subcommand = fld.metadata.get('subcommand', False)
             origin_type = get_origin(tp)
             if origin_type == Union:
-                subcommand = getattr(args, f'_subcommand_{cls.__name__}')
-                tp_args = [arg for arg in get_args(tp) if (arg.__settings__.command_name == subcommand)]
-                assert len(tp_args) == 1, f'exactly one type within {tp} should have command name {subcommand}'
-                tp = tp_args[0]
-                assert issubclass_safe(tp, ArgparseDataclass)
-            if issubclass_safe(tp, ArgparseDataclass):
+                tp_args = [arg for arg in get_args(tp) if (arg is not type(None))]
+                if subcommand := getattr(args, f'_subcommand_{cls.__name__}', None):
+                    tp_args = [arg for arg in tp_args if (arg.__settings__.command_name == subcommand)]
+                    assert len(tp_args) == 1, f'exactly one type within {tp} should have command name {subcommand}'
+                    assert issubclass_safe(tp_args[0], ArgparseDataclass)
+                tp = tp_args[0] if (subcommand or (not is_subcommand)) else None
+            if tp and issubclass_safe(tp, ArgparseDataclass):
                 # handle nested ArgparseDataclass
-                kwargs[name] = tp.from_args(args)
+                kwargs[name] = tp.from_args(args)  # type: ignore[attr-defined]
             elif name in d:
                 if (origin_type is tuple) and isinstance(d.get(name), list):
                     kwargs[name] = tuple(d[name])
                 else:
                     kwargs[name] = d[name]
+            elif type_is_optional(fld.type) and (fld.default == MISSING) and (fld.default_factory == MISSING):
+                # positional optional argument with no default: fill in None
+                kwargs[name] = None
         return cls(**kwargs)
 
     @classmethod
