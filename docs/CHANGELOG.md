@@ -16,9 +16,18 @@ Types of changes:
 
 ## [Unreleased]
 
+## [0.6.1]
+
+2024-06-14
+
+### Added
+
+- `ArgparseDataclass`: support for `--version` option (via `version` action)
+    - User may set the `version` attribute in `ArgparseDataclassSettings` during inheritance
+
 ### Fixed
 
-- Behavior of optional subcommands
+- `ArgparseDataclass`: Behavior of optional subcommands
     - By default, command-line subcommand optional if the field type is `Optional` (even without a default)
     - `required` flag in field metadata overrides default behavior
     - `required` must be `True` if field is non-`Optional` without a default
@@ -207,8 +216,9 @@ Types of changes:
     - `SQLDataclass`: SQL persistence via `sqlalchemy`
     - `SubprocessDataclass`: call out to another program via `subprocess`
 
-[unreleased]: https://github.com/jeremander/fancy-dataclass/compare/v0.6.0...HEAD
-[0.5.0]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.6.0
+[unreleased]: https://github.com/jeremander/fancy-dataclass/compare/v0.6.1...HEAD
+[0.6.1]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.6.1
+[0.6.0]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.6.0
 [0.5.0]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.5.0
 [0.4.5]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.4.5
 [0.4.4]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.4.4

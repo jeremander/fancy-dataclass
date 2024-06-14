@@ -17,8 +17,13 @@ def _fix_parser(parser):
         def _raise_help():
             raise ValueError(parser.format_help())
         return _raise_help
+    def _exit(status=0, message=None):
+        def _raise_exit(status=0, message=None):
+            raise ValueError(f'exit with status {status}: {message}')
+        return _raise_exit
     parser.error = _error
     parser.print_help = _print_help(parser)
+    parser.exit = _exit(parser)
     for action in getattr(parser._subparsers, '_actions', []):
         if isinstance(action, _SubParsersAction):
             for subparser in action.choices.values():
@@ -845,3 +850,21 @@ def test_subcommand_run(capsys):
         A.main([])
     A.main(['x'])
     assert capsys.readouterr().out.strip() == 'abc'
+
+def test_version(capsys):
+    # display version
+    @dataclass
+    class DCV1(ArgparseDataclass, version='1.0'):
+        ...
+    assert DCV1.from_cli_args([]) == DCV1()
+    check_invalid_args(DCV1, ['--version'], 'exit with status 0')
+    assert capsys.readouterr().out.strip() == '1.0'
+    # include required argument and 'prog' placeholder
+    @dataclass
+    class DCV2(ArgparseDataclass, version='%(prog)s 2.0'):
+        x: int
+    check_invalid_args(DCV2, [], 'required: x')
+    check_invalid_args(DCV2, ['--version'], 'exit with status 0')
+    toks = capsys.readouterr().out.strip().split()
+    assert len(toks) == 2
+    assert toks[1] == '2.0'
