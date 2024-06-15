@@ -92,12 +92,12 @@ class JSONDataclass(DictFileSerializableDataclass, JSONSerializable):  # type: i
     @classmethod
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
-        # if the class already inherits from JSONDataclass, raise an error if qualified_type=False
+        # if the class already inherits from JSONDataclass, raise an error if store_type="auto"
         # this is because resolving the type from a dict may be ambiguous
-        if not getattr(cls.__settings__, 'qualified_type', False):
+        if getattr(cls.__settings__, 'store_type', None) == 'auto':
             for base in cls.mro():
                 if (base not in [cls, JSONDataclass]) and issubclass(base, JSONDataclass):
-                    raise TypeError('when subclassing a JSONDataclass, you must set qualified_type=True or subclass JSONBaseDataclass instead')
+                    raise TypeError("when subclassing a JSONDataclass, you must set store_type to a value other than 'auto', or subclass JSONBaseDataclass instead")
 
     @classmethod
     def _dict_to_text_file(cls, d: AnyDict, fp: IO[str], **kwargs: Any) -> None:
@@ -151,7 +151,7 @@ class JSONDataclass(DictFileSerializableDataclass, JSONSerializable):  # type: i
         return super()._from_dict_value(tp, val)
 
 
-class JSONBaseDataclass(JSONDataclass, qualified_type=True):
+class JSONBaseDataclass(JSONDataclass, store_type='qualname'):
     """This class should be used in place of [`JSONDataclass`][fancy_dataclass.json.JSONDataclass] when you intend to inherit from the class.
 
-    When converting a subclass to a dict with [`to_dict`][fancy_dataclass.dict.DictDataclass.to_dict], it will store the subclass's type in the `type` field. It will also resolve this type when calling [`from_dict`][fancy_dataclass.dict.DictDataclass.from_dict]."""
+    When converting a subclass to a dict with [`to_dict`][fancy_dataclass.dict.DictDataclass.to_dict], it will store the subclass's fully qualified type in the `type` field. It will also resolve this type when calling [`from_dict`][fancy_dataclass.dict.DictDataclass.from_dict]."""

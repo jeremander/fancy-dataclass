@@ -98,11 +98,11 @@ def test_type_field():
         type: int
     assert DC1(1).to_dict() == {'type': 1}
     @dataclass
-    class DC2(DictDataclass, store_type=True):
+    class DC2(DictDataclass, store_type='name'):
         x: int
     assert DC2(1).to_dict() == {'type': 'DC2', 'x': 1}
     @dataclass
-    class DC3(DictDataclass, qualified_type=True):
+    class DC3(DictDataclass, store_type='qualname'):
         x: int
     obj: object = DC3(1)
     d = obj.to_dict()
@@ -114,11 +114,11 @@ def test_type_field():
     # 'type' dataclass field prohibited (this is caught at dataclass wrap time)
     with pytest.raises(TypeError, match="'type' is a reserved dict field"):
         @dataclass
-        class DC4(DictDataclass, store_type=True):
+        class DC4(DictDataclass, store_type='name'):
             type: int
     with pytest.raises(TypeError, match="'type' is a reserved dict field"):
         @dataclass
-        class DC5(DictDataclass, store_type=True):
+        class DC5(DictDataclass, store_type='name'):
             type: Optional[int] = None
     # string-annotated dataclass fields
     @dataclass
@@ -198,3 +198,69 @@ def test_from_dict_strict():
         _ = OuterDC.from_dict({'inner': {'y': 1}}, strict=True)
     with pytest.raises(ValueError, match="'extra' is not a valid field for OuterDC"):
         OuterDC.from_dict({'inner': {'x': 1}, 'extra': None}, strict=True)
+
+def test_store_type_setting():
+    """Tests behavior of the store_type setting."""
+    # invalid mode
+    with pytest.raises(ValueError, match="invalid value 'fake' for store_type mode"):
+        @dataclass
+        class DC1(DictDataclass, store_type='fake'):
+            ...
+    # 'auto' mode inherits from base class
+    @dataclass
+    class DC2(DictDataclass):
+        ...
+    @dataclass
+    class DC3(DC2):
+        ...
+    assert DC3.__settings__.store_type == 'auto'
+    assert DC3.__settings__._store_type == 'off'
+    assert DC3.__settings__.should_store_type() is False
+    @dataclass
+    class DC4(DC2, store_type='auto'):
+        ...
+    assert DC4.__settings__.store_type == 'auto'
+    assert DC4.__settings__._store_type == 'off'
+    @dataclass
+    class DC5(DC2, store_type='name'):
+        ...
+    assert DC5.__settings__.store_type == 'name'
+    assert DC5.__settings__.should_store_type() is True
+    @dataclass
+    class DC6(DC5):
+        ...
+    assert DC6.__settings__.store_type == 'name'
+    @dataclass
+    class DC7(DC5, store_type='off'):
+        ...
+    assert DC7.__settings__.store_type == 'off'
+    # other base class won't interfere
+    class OtherClass:
+        pass
+    @dataclass
+    class DC8(OtherClass, DC5):
+        ...
+    assert DC8.__settings__.store_type == 'name'
+    # multiple inheritance with conflicting settings (uses MRO)
+    class DC9(DictDataclass, store_type='qualname'):
+        ...
+    @dataclass
+    class DC10(DC5, DC9):
+        ...
+    assert DC10.__settings__.store_type == 'name'
+    @dataclass
+    class DC11(DC9, DC5):
+        ...
+    assert DC11.__settings__._store_type == 'qualname'
+    # multiple inheritance where one is 'auto'
+    # (inherits settings from first base class, but then iterates to find non-auto)
+    @dataclass
+    class DC11(DC2, DC9):
+        ...
+    assert DC11.__settings__.store_type == 'auto'
+    assert DC11.__settings__._store_type == 'qualname'
+    @dataclass
+    class DC12(DC9, DC2):
+        ...
+    assert DC12.__settings__.store_type == 'qualname'
+    assert DC12.__settings__._store_type == 'qualname'

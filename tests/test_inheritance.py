@@ -46,7 +46,7 @@ def test_all_inheritance():
         x: int
     cls = MyDC
     for mixin_cls in DEFAULT_MIXINS:
-        cls = mixin_cls.wrap_dataclass(cls, qualified_type=True)
+        cls = mixin_cls.wrap_dataclass(cls, store_type='qualname')
     mro = cls.mro()
     obj = cls(5)
     for mixin_cls in DEFAULT_MIXINS:

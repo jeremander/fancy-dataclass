@@ -16,9 +16,17 @@ Types of changes:
 
 ## [Unreleased]
 
+### Changed
+
+- `DictDataclassSettings`
+    - Removed `fully_qualified` flag
+    - Instead, `store_type` is now a string, one of `'auto'` (default), `'off'`, `'name'`, `'qualname'`
+        - `JSONDataclass` will raise `TypeError` if a subclass does not set it to a value other than `'auto'`
+        - `JSONBaseDataclass` sets it to `'qualname'`
+
 ### Fixed
 
-- Improved handling of unevaluated type annotations via [`typing.get_type_hints`](https://docs.python.org/3/library/typing.html#typing.get_type_hints), see [PEP 563](https://peps.python.org/pep-0563/).
+- Improved handling of unevaluated type annotations via [`typing.get_type_hints`](https://docs.python.org/3/library/typing.html#typing.get_type_hints), see [PEP 563](https://peps.python.org/pep-0563/)
 
 ## [0.6.1]
 

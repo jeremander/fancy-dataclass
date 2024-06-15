@@ -71,7 +71,6 @@ class TOMLSerializable(TextFileSerializable):
 class TOMLDataclass(DictFileSerializableDataclass, TOMLSerializable, suppress_defaults=False):  # type: ignore[misc]
     """Dataclass mixin enabling default serialization of dataclass objects to and from TOML."""
 
-    # TODO: require subclass to set qualified_type=True, like JSONDataclass?
     @classmethod
     def _dict_to_text_file(cls, d: AnyDict, fp: IO[str], **kwargs: Any) -> None:
         d = _remove_null_dict_values(d)

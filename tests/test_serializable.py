@@ -290,7 +290,7 @@ class TestDict:
     def _test_dict_round_trip(self, obj):
         """Tests round-trip conversion to/from a dict."""
         (tp, obj) = self._coerce_object(obj)
-        if obj.__settings__.qualified_type:
+        if obj.__settings__.should_store_type():
             assert 'type' in obj.to_dict()
         else:
             assert 'type' not in obj.to_dict()
@@ -511,12 +511,12 @@ class TestJSON(TestDict):
         class MyDC(JSONDataclass):
             pass
         assert MyDC().to_dict() == {}
-        with pytest.raises(TypeError, match='you must set qualified_type=True'):
+        with pytest.raises(TypeError, match='must set store_type'):
             @dataclass
             class MyDC1(MyDC):
                 pass
         @dataclass
-        class MyDC2(MyDC, qualified_type=True):
+        class MyDC2(MyDC, store_type='qualname'):
             pass
         # TODO: forbid local types?
         assert MyDC2().to_dict() == {'type': 'tests.test_serializable.TestJSON.test_subclass_json_dataclass.<locals>.MyDC2'}
@@ -527,11 +527,11 @@ class TestJSON(TestDict):
         class MyDC3(MyBaseDC):
             pass
         assert MyDC3().to_dict() == {'type': 'tests.test_serializable.TestJSON.test_subclass_json_dataclass.<locals>.MyDC3'}
-        with pytest.raises(TypeError, match='you must set qualified_type=True'):
+        with pytest.raises(TypeError, match='must set store_type'):
             @dataclass
-            class MyDC4(MyBaseDC, qualified_type=False):
+            class MyDC4(MyBaseDC, store_type='auto'):
                 pass
-        with pytest.raises(TypeError, match='you must set qualified_type=True'):
+        with pytest.raises(TypeError, match='must set store_type'):
             @dataclass
             class MyDC5(MyDC, JSONBaseDataclass):
                 pass
@@ -539,8 +539,13 @@ class TestJSON(TestDict):
         class MyDC6(JSONBaseDataclass, MyDC):
             pass
         @dataclass
-        class MyDC7(MyDC, JSONBaseDataclass, qualified_type=True):
+        class MyDC7(MyDC, JSONBaseDataclass, store_type='qualname'):
             pass
+        @dataclass
+        class MyDC8(MyDC, store_type='off'):
+            pass
+        assert MyDC8().to_dict() == {}
+        assert MyDC8.from_dict({}) == MyDC8()
 
     def test_subclass_json_base_dataclass(self):
         """Tests JSONBaseDataclass."""

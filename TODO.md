@@ -4,6 +4,11 @@
 
 ## v0.7.0
 
+- Support `suppress_none` in both `DictDataclassSettings` and `DictDataclassFieldSettings`
+- Comments in `TOMLDataclass` serialization
+
+## v0.8.0
+
 - `VersionedDataclass`
   - `version` class setting (int) and `version` read-only class property
   - Should probably subclass `DictDataclass`, ensures that `version` property is stored in dict
