@@ -16,6 +16,10 @@ Types of changes:
 
 ## [Unreleased]
 
+### Fixed
+
+- Improved handling of unevaluated type annotations via [`typing.get_type_hints`](https://docs.python.org/3/library/typing.html#typing.get_type_hints), see [PEP 563](https://peps.python.org/pep-0563/).
+
 ## [0.6.1]
 
 2024-06-14

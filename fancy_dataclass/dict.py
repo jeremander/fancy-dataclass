@@ -3,7 +3,7 @@ from copy import copy
 import dataclasses
 from dataclasses import Field, dataclass
 from functools import partial
-from typing import TYPE_CHECKING, Any, ClassVar, Dict, Iterable, Literal, Optional, Type, TypeVar, Union, _TypedDictMeta, get_args, get_origin  # type: ignore[attr-defined]
+from typing import TYPE_CHECKING, Any, ClassVar, Dict, Iterable, Literal, Optional, Type, TypeVar, Union, _TypedDictMeta, get_args, get_origin, get_type_hints  # type: ignore[attr-defined]
 
 from typing_extensions import Self, _AnnotatedAlias
 
@@ -290,12 +290,15 @@ class DictDataclass(DataclassMixin):
                 # field may be defined in the dataclass itself or one of its ancestor dataclasses
                 for base in bases:
                     try:
-                        field_type = base.__annotations__[fld.name]
-                        if isinstance(field_type, str):  # resolve string annotation to a type (see PEP 563)
-                            if '.' in field_type:  # fully qualified: import module and retrieve the type
-                                field_type = get_object_from_fully_qualified_name(field_type)
+                        try:
+                            field_type = get_type_hints(base)[fld.name]
+                        except NameError:  # try to resolve string annotation manually
+                            field_type_str = base.__annotations__[fld.name]
+                            assert isinstance(field_type_str, str)
+                            if '.' in field_type_str:  # fully qualified: import module and retrieve the type
+                                field_type = get_object_from_fully_qualified_name(field_type_str)
                             else:  # builtin or locally defined type
-                                field_type = eval(field_type)
+                                field_type = eval(field_type_str)
                         kwargs[fld.name] = cls._from_dict_value(field_type, d[fld.name], strict=strict)
                         break
                     except (AttributeError, KeyError):

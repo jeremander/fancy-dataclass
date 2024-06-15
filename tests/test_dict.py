@@ -2,6 +2,7 @@ from dataclasses import dataclass, make_dataclass
 from typing import List, Optional
 
 import pytest
+from typing_extensions import Annotated, Doc
 
 from fancy_dataclass.dict import DictDataclass, safe_dict_insert
 from fancy_dataclass.mixin import DataclassMixin
@@ -133,9 +134,8 @@ def test_type_field():
     obj = DC7(NestedComponentA(1, 3.7))
     d = obj.to_dict()
     assert 'NestedComponentA' in globals()
-    # NOTE: inner function cannot access globals/locals of higher stack frame
-    with pytest.raises(NameError, match="name 'NestedComponentA' is not defined"):
-        _ = DC7.from_dict(obj.to_dict())
+    # NOTE: type is in global scope, so it can be resolved from string annotation
+    assert DC7.from_dict(obj.to_dict()) == obj
     # fully qualified name OK
     @dataclass
     class DC8(DictDataclass):
@@ -150,6 +150,12 @@ def test_type_field():
     d = obj.to_dict()
     with pytest.raises(NameError, match="name 'DC1' is not defined"):
         _ = DC9.from_dict(d)
+    # Annotated, as a string
+    @dataclass
+    class DC10(DictDataclass):
+        x: 'Annotated[int, Doc("an int")]'
+    obj = DC10(1)
+    assert DC10.from_dict(obj.to_dict()) == obj
 
 def test_flattened():
     """Tests the flattened=True option for DictDataclass."""
