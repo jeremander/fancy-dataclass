@@ -1,10 +1,11 @@
-from dataclasses import astuple, dataclass, field
+from dataclasses import astuple, dataclass, field, fields
 from typing import ClassVar
 
 import pytest
+from typing_extensions import Annotated, Doc
 
 from fancy_dataclass.mixin import DataclassMixin
-from fancy_dataclass.settings import FieldSettings, MixinSettings
+from fancy_dataclass.settings import DocFieldSettings, FieldSettings, MixinSettings
 from fancy_dataclass.utils import get_dataclass_fields
 
 
@@ -277,3 +278,31 @@ class TestDataclassMixin:
         # replace a ClassVar field
         with pytest.raises(TypeError, match="'a' is not a valid field for DC12"):
             _ = obj._replace(a=3)
+
+    def test_doc_settings(self):
+        """Tests DocFieldSettings."""
+        @dataclass
+        class DocMixin(DataclassMixin):
+            __field_settings_type__ = DocFieldSettings
+        @dataclass
+        class DC(DocMixin):
+            a: int = 1  # no doc
+            b: int = field(default=2, metadata={'doc': 'b'})  # metadata doc field
+            c: Annotated[int, Doc('c')] = 3  # Annotated Doc field
+            d: Annotated[int, 'd'] = 4  # string not wrapped in a Doc
+            e: Annotated[int, Doc('bad'), Doc('e')] = 5  # multiple Docs (per PEP 727, use the last one)
+            f: Annotated[int, Doc(6)] = 6  # non-string Doc (currently permitted)
+            g: Annotated[int, Doc('g1')] = field(default=7, metadata={'doc': 'g2'})  # both Doc and metadata (latter takes precedence)
+            h: "Annotated[int, Doc('h')]" = 8  # stringized annotation
+            # stringized annotation, fully qualified
+            i: "typing.Annotated[int, typing_extensions.Doc('i')]" = 9  # type: ignore[name-defined]  # noqa: F821
+        docs = [DC._field_settings(fld).doc for fld in fields(DC)]
+        assert docs[0] is None
+        assert docs[1] == 'b'
+        assert docs[2] == 'c'
+        assert docs[3] is None
+        assert docs[4] == 'e'
+        assert docs[5] == 6
+        assert docs[6] == 'g2'
+        assert docs[7] == 'h'
+        assert docs[8] == 'i'

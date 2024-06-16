@@ -1,9 +1,9 @@
 from dataclasses import Field, fields
-from typing import Type, TypeVar
+from typing import Optional, Type, TypeVar, get_args
 
-from typing_extensions import Self
+from typing_extensions import Doc, Self, _AnnotatedAlias
 
-from fancy_dataclass.utils import _is_instance, check_dataclass, coerce_to_dataclass
+from fancy_dataclass.utils import _is_instance, check_dataclass, coerce_to_dataclass, dataclass_kw_only, eval_type_str
 
 
 DA = TypeVar('DA', bound='DataclassAdaptable')
@@ -58,3 +58,29 @@ class FieldSettings(DataclassAdaptable):
         obj: Self = cls(**{key: val for (key, val) in field.metadata.items() if key in cls.__dataclass_fields__})  # type: ignore[assignment]
         obj.type_check()
         return obj
+
+
+@dataclass_kw_only()
+class DocFieldSettings(FieldSettings):
+    """Settings to expose a "doc" attribute of a field.
+
+    By default the "doc" field will be extracted from the field metadata, but as a fallback it will look for a [PEP 727](https://peps.python.org/pep-0727/) `Doc`-annotated field type."""
+    doc: Optional[str] = None
+
+    @classmethod
+    def from_field(cls, field: Field) -> Self:  # type: ignore[type-arg]  # noqa: D102
+        settings = super().from_field(field)
+        if settings.doc is None:
+            if isinstance(field.type, str):
+                try:
+                    tp = eval_type_str(field.type)
+                except NameError:
+                    tp = None
+            else:
+                tp = field.type
+            if isinstance(tp, _AnnotatedAlias):
+                args = get_args(tp)
+                doc = next((arg for arg in args[::-1] if isinstance(arg, Doc)), None)  # type: ignore[call-overload]
+                if doc:
+                    settings.doc = doc.documentation
+        return settings

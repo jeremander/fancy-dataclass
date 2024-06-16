@@ -11,7 +11,7 @@ from pathlib import Path
 import re
 import sys
 import types
-from typing import IO, TYPE_CHECKING, Any, Callable, Dict, ForwardRef, Generic, Iterable, Iterator, List, Optional, Sequence, Set, Tuple, Type, TypeVar, Union, get_args, get_origin, get_type_hints
+from typing import IO, TYPE_CHECKING, Any, Callable, Dict, ForwardRef, Generic, Iterable, Iterator, List, Optional, Sequence, Set, Tuple, Type, TypeVar, Union, cast, get_args, get_origin, get_type_hints
 
 from typing_extensions import TypeGuard
 
@@ -305,6 +305,51 @@ def get_dataclass_fields(obj: Union[type, object], include_classvars: bool = Fal
         except AttributeError:
             raise TypeError('must be called with a dataclass type or instance') from None
     return dataclasses.fields(obj)  # type: ignore[arg-type]
+
+def eval_type_str(type_str: str) -> type:
+    """Gets the fully-evaluated type from a "stringized" type.
+
+    Args:
+        type_str: String representing a type
+
+    Returns:
+        Fully evaluated type"""
+    # TODO: this may become obsolete once PEP 649 becomes available
+    # see: https://peps.python.org/pep-0649
+    tp = None
+    if '.' in type_str:  # fully qualified: import module and retrieve the type
+        with suppress(ModuleNotFoundError):
+            tp = get_object_from_fully_qualified_name(type_str)
+    # otherwise, a builtin type, locally defined type, or type with complex annotations
+    if tp is None:
+        # NOTE: globals do not get carried from up the stack
+        # since names from typing/typing_extensions are common, we import all the names
+        globs = {}
+        for mod_name in ['typing_extensions', 'typing']:
+            mod = importlib.import_module(mod_name)
+            globs[mod_name] = mod
+            globs.update(mod.__dict__)
+        globs.update(globals())
+        tp = eval(type_str, globs)
+    return cast(type, tp)
+
+def dataclass_field_type(cls: Type['DataclassInstance'], name: str) -> type:
+    """Given a dataclass type and field name, gets the dataclass field's type annotation.
+
+    If the annotation is a string, resolves it to a type (see PEP 563, 649).
+
+    Args:
+        cls: Dataclass type
+        name: Name of field
+
+    Returns:
+        Fully evaluated type"""
+    try:
+        return cast(type, get_type_hints(cls)[name])
+    except NameError:  # try to resolve string annotation manually
+        field_type_str = cls.__annotations__[name]
+        assert isinstance(field_type_str, str)
+        return eval_type_str(field_type_str)
 
 def coerce_to_dataclass(cls: Type[T], obj: object) -> T:
     """Coerces the fields from an arbitrary object to an instance of a dataclass type.
