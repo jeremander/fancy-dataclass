@@ -1,14 +1,14 @@
-from dataclasses import MISSING, dataclass, fields
+from dataclasses import MISSING, fields
 import subprocess
 from typing import Any, ClassVar, List, Optional, Sequence, Type, Union, get_origin
 
 from typing_extensions import Self
 
 from fancy_dataclass.mixin import DataclassMixin, DataclassMixinSettings, FieldSettings
-from fancy_dataclass.utils import get_dataclass_fields, obj_class_name
+from fancy_dataclass.utils import dataclass_kw_only, get_dataclass_fields, obj_class_name
 
 
-@dataclass(kw_only=True)
+@dataclass_kw_only()
 class SubprocessDataclassSettings(DataclassMixinSettings):
     """Class-level settings for the [`SubprocessDataclass`][fancy_dataclass.subprocess.SubprocessDataclass] mixin.
 
@@ -18,7 +18,7 @@ class SubprocessDataclassSettings(DataclassMixinSettings):
     exec: Optional[str] = None
 
 
-@dataclass(kw_only=True)
+@dataclass_kw_only()
 class SubprocessDataclassFieldSettings(FieldSettings):
     """Settings for [`SubprocessDataclass`][fancy_dataclass.subprocess.SubprocessDataclass] fields.
 

@@ -7,7 +7,7 @@ import sqlalchemy.orm
 from typing_extensions import TypeAlias
 
 from fancy_dataclass.mixin import DataclassMixin, FieldSettings
-from fancy_dataclass.utils import safe_dict_update
+from fancy_dataclass.utils import dataclass_kw_only, safe_dict_update
 
 
 T = TypeVar('T')
@@ -40,7 +40,7 @@ def get_column_type(tp: type) -> type:
     return PickleType
 
 
-@dataclass(kw_only=True)
+@dataclass_kw_only()
 class SQLDataclassFieldSettings(FieldSettings):
     """Settings for [`SQLDataclass`][fancy_dataclass.sql.SQLDataclass] fields.
 

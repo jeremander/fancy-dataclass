@@ -1,13 +1,13 @@
 from argparse import ArgumentParser, HelpFormatter, Namespace, _ArgumentGroup, _MutuallyExclusiveGroup
 from contextlib import suppress
-from dataclasses import MISSING, dataclass, fields
+from dataclasses import MISSING, fields
 from enum import IntEnum
 from typing import Any, Callable, ClassVar, Dict, List, Literal, Optional, Sequence, Tuple, Type, TypeVar, Union, get_args, get_origin
 
 from typing_extensions import Self, TypeGuard
 
 from fancy_dataclass.mixin import DataclassMixin, DataclassMixinSettings, FieldSettings
-from fancy_dataclass.utils import camel_case_to_kebab_case, check_dataclass, issubclass_safe, type_is_optional
+from fancy_dataclass.utils import camel_case_to_kebab_case, check_dataclass, dataclass_kw_only, issubclass_safe, type_is_optional
 
 
 T = TypeVar('T')
@@ -61,7 +61,7 @@ def _add_group(parser: ArgParser, group_name: str, **group_kwargs: Any) -> _Argu
 # MIXINS #
 ##########
 
-@dataclass(kw_only=True)
+@dataclass_kw_only()
 class ArgparseDataclassSettings(DataclassMixinSettings):
     """Class-level settings for the [`ArgparseDataclass`][fancy_dataclass.cli.ArgparseDataclass] mixin.
 
@@ -83,7 +83,7 @@ class ArgparseDataclassSettings(DataclassMixinSettings):
     version: Optional[str] = None
 
 
-@dataclass(kw_only=True)
+@dataclass_kw_only()
 class ArgparseDataclassFieldSettings(FieldSettings):
     """Settings for [`ArgparseDataclass`][fancy_dataclass.cli.ArgparseDataclass] fields.
 

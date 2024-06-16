@@ -5,10 +5,11 @@ from contextlib import suppress
 from copy import copy
 import dataclasses
 from dataclasses import Field, dataclass, is_dataclass, make_dataclass
-from functools import lru_cache
+from functools import lru_cache, partial
 import importlib
 from pathlib import Path
 import re
+import sys
 import types
 from typing import IO, TYPE_CHECKING, Any, Callable, Dict, ForwardRef, Generic, Iterable, Iterator, List, Optional, Sequence, Set, Tuple, Type, TypeVar, Union, get_args, get_origin, get_type_hints
 
@@ -248,6 +249,13 @@ def get_subclass_with_name(cls: Type[T], name: str) -> Type[T]:
         raise ValueError(f'{name} is not a known subclass of {cls.__name__}')
 
 # DATACLASS
+
+def dataclass_kw_only(**kwargs: Any) -> Callable[[Type[T]], Type[T]]:
+    """Identical to the usual dataclass decorator, but adds kw_only=True (if Python version is >= 3.10)."""
+    # TODO: remove this once we no longer support < 3.10
+    if sys.version_info[:2] >= (3, 10):
+        return partial(dataclass, kw_only=True)  # type: ignore[return-value]
+    return dataclass
 
 def check_dataclass(cls: type) -> TypeGuard[Type['DataclassInstance']]:
     """Checks whether a given type is a dataclass, raising a `TypeError` otherwise.

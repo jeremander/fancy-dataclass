@@ -1,14 +1,14 @@
 from abc import ABC, abstractmethod
 from copy import copy
 import dataclasses
-from dataclasses import Field, dataclass
+from dataclasses import Field
 from functools import partial
 from typing import TYPE_CHECKING, Any, ClassVar, Dict, Iterable, Literal, Optional, Type, TypeVar, Union, _TypedDictMeta, get_args, get_origin, get_type_hints  # type: ignore[attr-defined]
 
 from typing_extensions import Self, _AnnotatedAlias
 
 from fancy_dataclass.mixin import DataclassMixin, DataclassMixinSettings, FieldSettings
-from fancy_dataclass.utils import TypeConversionError, _flatten_dataclass, check_dataclass, fully_qualified_class_name, get_object_from_fully_qualified_name, issubclass_safe, obj_class_name, safe_dict_insert
+from fancy_dataclass.utils import TypeConversionError, _flatten_dataclass, check_dataclass, dataclass_kw_only, fully_qualified_class_name, get_object_from_fully_qualified_name, issubclass_safe, obj_class_name, safe_dict_insert
 
 
 if TYPE_CHECKING:
@@ -50,7 +50,7 @@ class DictConvertible(ABC):
             Converted object of this class"""
 
 
-@dataclass(kw_only=True)
+@dataclass_kw_only()
 class DictDataclassSettings(DataclassMixinSettings):
     """Class-level settings for the [`DictDataclass`][fancy_dataclass.dict.DictDataclass] mixin.
 
@@ -82,7 +82,7 @@ class DictDataclassSettings(DataclassMixinSettings):
         return self._store_type in ['name', 'qualname']
 
 
-@dataclass(kw_only=True)
+@dataclass_kw_only()
 class DictDataclassFieldSettings(FieldSettings):
     """Settings for [`DictDataclass`][fancy_dataclass.dict.DictDataclass] fields.
 
