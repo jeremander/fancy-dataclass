@@ -8,7 +8,7 @@ import pytest
 from fancy_dataclass import ArgparseDataclass, ConfigDataclass, DictDataclass, JSONBaseDataclass, JSONDataclass, SQLDataclass, SubprocessDataclass, TOMLDataclass
 from fancy_dataclass.cli import ArgparseDataclassFieldSettings, ArgparseDataclassSettings
 from fancy_dataclass.dict import DictDataclassSettings
-from fancy_dataclass.mixin import DataclassMixin, DataclassMixinSettings, FieldSettings
+from fancy_dataclass.mixin import DataclassMixin, FieldSettings, MixinSettings
 from fancy_dataclass.subprocess import SubprocessDataclassFieldSettings
 from fancy_dataclass.utils import merge_dataclasses
 
@@ -105,12 +105,12 @@ def test_post_dataclass_wrap():
     assert DC12.val2 == 2
 
 def test_settings_field_collision():
-    """Tests multiple inheritance from `DataclassMixinSettings` classes with overlapping field names."""
+    """Tests multiple inheritance from `MixinSettings` classes with overlapping field names."""
     @dataclass
-    class Settings1(DataclassMixinSettings):
+    class Settings1(MixinSettings):
         a: int = 1
     @dataclass
-    class Settings2(DataclassMixinSettings):
+    class Settings2(MixinSettings):
         a: int = 2
         b: int = 3
     @dataclass

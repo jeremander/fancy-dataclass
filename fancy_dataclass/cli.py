@@ -6,7 +6,8 @@ from typing import Any, Callable, ClassVar, Dict, List, Literal, Optional, Seque
 
 from typing_extensions import Self, TypeGuard
 
-from fancy_dataclass.mixin import DataclassMixin, DataclassMixinSettings, FieldSettings
+from fancy_dataclass.mixin import DataclassMixin
+from fancy_dataclass.settings import FieldSettings, MixinSettings
 from fancy_dataclass.utils import camel_case_to_kebab_case, check_dataclass, dataclass_kw_only, issubclass_safe, type_is_optional
 
 
@@ -62,7 +63,7 @@ def _add_group(parser: ArgParser, group_name: str, **group_kwargs: Any) -> _Argu
 ##########
 
 @dataclass_kw_only()
-class ArgparseDataclassSettings(DataclassMixinSettings):
+class ArgparseDataclassSettings(MixinSettings):
     """Class-level settings for the [`ArgparseDataclass`][fancy_dataclass.cli.ArgparseDataclass] mixin.
 
     Subclasses of `ArgparseDataclass` may set the following fields as keyword arguments during inheritance:

@@ -3,7 +3,8 @@ from typing import ClassVar
 
 import pytest
 
-from fancy_dataclass.mixin import DataclassMixin, DataclassMixinSettings, FieldSettings
+from fancy_dataclass.mixin import DataclassMixin
+from fancy_dataclass.settings import FieldSettings, MixinSettings
 from fancy_dataclass.utils import get_dataclass_fields
 
 
@@ -35,11 +36,11 @@ def test_field_settings():
 
 
 @dataclass
-class MySettingsOpt(DataclassMixinSettings):
+class MySettingsOpt(MixinSettings):
     enhanced: bool = False
 
 @dataclass
-class MySettingsReq(DataclassMixinSettings):
+class MySettingsReq(MixinSettings):
     enhanced: bool
 
 
@@ -161,8 +162,8 @@ class TestDataclassMixin:
             @dataclass
             class MyDC5(MyMixin):
                 __settings_type__ = NonDCSettings
-        # set settings to a non-dataclass subclass of DataclassMixinSettings
-        class NonDCSettings(DataclassMixinSettings):
+        # set settings to a non-dataclass subclass of MixinSettings
+        class NonDCSettings(MixinSettings):
             pass
         with pytest.raises(TypeError, match='NonDCSettings is not a dataclass'):
             @dataclass
@@ -177,23 +178,23 @@ class TestDataclassMixin:
     def test_settings_merged(self):
         """Tests merging of settings when subclassing multiple DataclassMixins."""
         @dataclass
-        class Settings1(DataclassMixinSettings):
+        class Settings1(MixinSettings):
             a: int = 1
         class Mixin1(DataclassMixin):
             __settings_type__ = Settings1
         @dataclass
-        class Settings2(DataclassMixinSettings):
+        class Settings2(MixinSettings):
             b: int = 2
             c: int = 3
         class Mixin2(DataclassMixin):
             __settings_type__ = Settings2
         @dataclass
-        class Settings3(DataclassMixinSettings):
+        class Settings3(MixinSettings):
             pass
         class Mixin3(DataclassMixin):
             __settings_type__ = Settings3
         @dataclass
-        class Settings4(DataclassMixinSettings):
+        class Settings4(MixinSettings):
             c: int = 4
             d: int = 5
         class Mixin4(DataclassMixin):
@@ -238,7 +239,7 @@ class TestDataclassMixin:
         assert astuple(DC7.__settings__) == (100, 3)
         # custom settings type that accommodates all the base classes' fields
         @dataclass
-        class Settings5(DataclassMixinSettings):
+        class Settings5(MixinSettings):
             a: int = 1
             b: int = 2
             c: int = 3

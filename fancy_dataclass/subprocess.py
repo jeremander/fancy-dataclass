@@ -4,12 +4,13 @@ from typing import Any, ClassVar, List, Optional, Sequence, Type, Union, get_ori
 
 from typing_extensions import Self
 
-from fancy_dataclass.mixin import DataclassMixin, DataclassMixinSettings, FieldSettings
+from fancy_dataclass.mixin import DataclassMixin
+from fancy_dataclass.settings import FieldSettings, MixinSettings
 from fancy_dataclass.utils import dataclass_kw_only, get_dataclass_fields, obj_class_name
 
 
 @dataclass_kw_only()
-class SubprocessDataclassSettings(DataclassMixinSettings):
+class SubprocessDataclassSettings(MixinSettings):
     """Class-level settings for the [`SubprocessDataclass`][fancy_dataclass.subprocess.SubprocessDataclass] mixin.
 
     Subclasses of `SubprocessDataclass` may set the following fields as keyword arguments during inheritance:

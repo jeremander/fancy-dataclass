@@ -3,11 +3,11 @@ from typing import Any, ClassVar, Optional, Type, TypeVar
 
 from typing_extensions import Self
 
-from fancy_dataclass.utils import _is_instance, check_dataclass, coerce_to_dataclass, get_dataclass_fields, get_subclass_with_name, merge_dataclasses, obj_class_name
+from fancy_dataclass.settings import FieldSettings, MixinSettings
+from fancy_dataclass.utils import check_dataclass, get_dataclass_fields, get_subclass_with_name, merge_dataclasses, obj_class_name
 
 
 T = TypeVar('T')
-DA = TypeVar('DA', bound='DataclassAdaptable')
 
 _orig_process_class = dataclasses._process_class  # type: ignore[attr-defined]
 
@@ -28,57 +28,6 @@ dataclasses._process_class = _process_class  # type: ignore[attr-defined]
 # SETTINGS #
 ############
 
-class DataclassAdaptable:
-    """Mixin class providing the ability to convert (adapt) one dataclass type to another."""
-
-    @classmethod
-    def coerce(cls, obj: object) -> Self:
-        """Constructs a `DataclassAdaptable` object from the attributes of an arbitrary object.
-
-        Any missing attributes will be set to their default values."""
-        return coerce_to_dataclass(cls, obj)
-
-    def adapt_to(self, dest_type: Type[DA]) -> DA:
-        """Converts a `DataclassAdaptable` object to another type, `dest_type`.
-
-        By default this will attempt to coerce the fields from the original type to the new type, but subclasses may override the behavior, e.g. to allow field renaming."""
-        return dest_type.coerce(self)
-
-
-class DataclassMixinSettings(DataclassAdaptable):
-    """Base class for settings to be associated with `fancy_dataclass` mixins.
-
-    Each [`DataclassMixin`][fancy_dataclass.mixin.DataclassMixin] class may store a `__settings_type__` attribute consisting of a subclass of this class. The settings object will be instantiated as a `__settings__` attribute on a mixin subclass when it is defined."""
-
-
-class FieldSettings(DataclassAdaptable):
-    """Class storing a bundle of parameters that will be extracted from dataclass field metadata.
-
-    Each [`DataclassMixin`][fancy_dataclass.mixin.DataclassMixin] class may store a `__field_settings_type__` attribute which is a `FieldSettings` subclass. This specifies which keys in the `field.metadata` dictionary are recognized by the mixin class. Other keys will be ignored (unless they are used by other mixin classes)."""
-
-    def type_check(self) -> None:
-        """Checks that every field on the `FieldSettings` object is the proper type.
-
-        Raises:
-            TypeError: If a field is the wrong type"""
-        for fld in dataclasses.fields(self):  # type: ignore[arg-type]
-            val = getattr(self, fld.name)
-            # semi-robust type checking (could still be improved)
-            if not _is_instance(val, fld.type):
-                raise TypeError(f'expected type {fld.type} for field {fld.name!r}, got {type(val)}')
-
-    @classmethod
-    def from_field(cls, field: dataclasses.Field) -> Self:  # type: ignore[type-arg]
-        """Constructs a `FieldSettings` object from a [`dataclasses.Field`](https://docs.python.org/3/library/dataclasses.html#dataclasses.Field)'s metadata.
-
-        Raises:
-            TypeError: If any field has the wrong type"""
-        assert check_dataclass(cls)
-        obj: Self = cls(**{key: val for (key, val) in field.metadata.items() if key in cls.__dataclass_fields__})  # type: ignore[assignment]
-        obj.type_check()
-        return obj
-
-
 def _configure_mixin_settings(cls: Type['DataclassMixin'], **kwargs: Any) -> None:
     """Sets up a `DataclassMixin`'s settings (at definition time), given inheritance kwargs."""
     # get user-specified settings (need to use __dict__ here rather than direct access, which inherits parent class's value)
@@ -96,7 +45,7 @@ def _configure_mixin_settings(cls: Type['DataclassMixin'], **kwargs: Any) -> Non
                 raise TypeError(f'error merging base class settings for {cls.__name__}: {e}') from e
             cls.__settings_type__ = stype
     else:
-        if not issubclass(stype, DataclassMixinSettings):
+        if not issubclass(stype, MixinSettings):
             raise TypeError(f'invalid settings type {stype.__name__} for {cls.__name__}')
         assert check_dataclass(stype)
     field_names = set() if (stype is None) else {fld.name for fld in dataclasses.fields(stype)}
@@ -153,17 +102,17 @@ class DataclassMixin:
 
     This mixin also provides a [`wrap_dataclass`][fancy_dataclass.mixin.DataclassMixin.wrap_dataclass] decorator which can be used to wrap an existing dataclass type into one that provides the mixin's functionality."""
 
-    __settings_type__: ClassVar[Optional[Type[DataclassMixinSettings]]] = None
-    __settings__: ClassVar[Optional[DataclassMixinSettings]] = None
+    __settings_type__: ClassVar[Optional[Type[MixinSettings]]] = None
+    __settings__: ClassVar[Optional[MixinSettings]] = None
     __field_settings_type__: ClassVar[Optional[Type[FieldSettings]]] = None
 
     @classmethod
     def __init_subclass__(cls, **kwargs: Any) -> None:
         """When inheriting from this class, you may pass various keyword arguments after the list of base classes.
 
-        If the base class has a `__settings_type__` class attribute (subclass of [`DataclassMixinSettings`][fancy_dataclass.mixin.DataclassMixinSettings]), that class will be instantiated with the provided arguments and stored as a `__settings__` attribute on the subclass. These settings can be used to customize the behavior of the subclass.
+        If the base class has a `__settings_type__` class attribute (subclass of [`MixinSettings`][fancy_dataclass.settings.MixinSettings]), that class will be instantiated with the provided arguments and stored as a `__settings__` attribute on the subclass. These settings can be used to customize the behavior of the subclass.
 
-        Additionally, the mixin may set the `__field_settings_type__` class attribute to indicate the type (subclass of [`FieldSettings`][fancy_dataclass.mixin.FieldSettings]) that should be used for field settings, which are extracted from each field's `metadata` dict."""
+        Additionally, the mixin may set the `__field_settings_type__` class attribute to indicate the type (subclass of [`FieldSettings`][fancy_dataclass.settings.FieldSettings]) that should be used for field settings, which are extracted from each field's `metadata` dict."""
         super().__init_subclass__()
         _configure_mixin_settings(cls, **kwargs)
         _configure_field_settings_type(cls)

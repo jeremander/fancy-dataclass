@@ -6,7 +6,8 @@ from sqlalchemy import Boolean, Column, DateTime, Integer, LargeBinary, Numeric,
 import sqlalchemy.orm
 from typing_extensions import TypeAlias
 
-from fancy_dataclass.mixin import DataclassMixin, FieldSettings
+from fancy_dataclass.mixin import DataclassMixin
+from fancy_dataclass.settings import FieldSettings
 from fancy_dataclass.utils import dataclass_kw_only, safe_dict_update
 
 

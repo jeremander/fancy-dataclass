@@ -7,7 +7,8 @@ from typing import TYPE_CHECKING, Any, ClassVar, Dict, Iterable, Literal, Option
 
 from typing_extensions import Self, _AnnotatedAlias
 
-from fancy_dataclass.mixin import DataclassMixin, DataclassMixinSettings, FieldSettings
+from fancy_dataclass.mixin import DataclassMixin
+from fancy_dataclass.settings import FieldSettings, MixinSettings
 from fancy_dataclass.utils import TypeConversionError, _flatten_dataclass, check_dataclass, dataclass_kw_only, fully_qualified_class_name, get_object_from_fully_qualified_name, issubclass_safe, obj_class_name, safe_dict_insert
 
 
@@ -51,7 +52,7 @@ class DictConvertible(ABC):
 
 
 @dataclass_kw_only()
-class DictDataclassSettings(DataclassMixinSettings):
+class DictDataclassSettings(MixinSettings):
     """Class-level settings for the [`DictDataclass`][fancy_dataclass.dict.DictDataclass] mixin.
 
     Subclasses of `DictDataclass` may set the following boolean flags as keyword arguments during inheritance:
