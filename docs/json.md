@@ -114,10 +114,28 @@ print(B().to_json_string())
 {"x": 5}
 ```
 
+#### Suppressing Null Values
+
+You can suppress fields with null values by supplying `suppress_none=True`:
+
+```python
+@dataclass
+class C(JSONDataclass, suppress_none=True):
+    x: Optional[int]
+
+print(C(1).to_json_string()
+{"x": 1}
+
+print(C(None).to_json_string()
+{}
+
+```
+
 You can be more fine-grained about handling the output behavior of specific fields by setting flags in their [field settings](mixin.md#field-settings):
 
 - Setting `suppress_default` to `False` or `True` will override the class setting at the field level.
-- Setting `suppress` to `False` or `True` will force inclusion or exclusion of the field regardless of `suppress_defaults` setting.
+- Setting `suppress_none` to `False` or `True` will override the class setting at the field level.
+- Setting `suppress` to `False` or `True` will force inclusion or exclusion of the field, regardless of `suppress_defaults` or `suppress_none` settings.
 
 #### Including Types in Output
 

@@ -1,5 +1,5 @@
-from dataclasses import dataclass, make_dataclass
-from typing import List, Optional
+from dataclasses import dataclass, field, make_dataclass
+from typing import ClassVar, List, Optional
 
 import pytest
 from typing_extensions import Annotated, Doc
@@ -37,6 +37,20 @@ class FlattenedComponentB(DictDataclass):
 class FlattenedComposedAB(DictDataclass, flattened=True):
     comp_a: FlattenedComponentA
     comp_b: FlattenedComponentB
+
+@dataclass
+class DCSuppress(DictDataclass, suppress_defaults=False):
+    cv1: ClassVar[int] = field(default=0)
+    x: int = field(default=1)
+    y: int = field(default=2, metadata={'suppress': True})
+    z: int = field(default=3, metadata={'suppress': False})
+
+@dataclass
+class DCSuppress2(DictDataclass, suppress_defaults=True):
+    cv1: ClassVar[int] = field(default=0)
+    x: int = field(default=1)
+    y: int = field(default=2, metadata={'suppress': True})
+    z: int = field(default=3, metadata={'suppress': False})
 
 TEST_NESTED = NestedComposedAB(
     NestedComponentA(3, 4.5),
@@ -264,3 +278,177 @@ def test_store_type_setting():
         ...
     assert DC12.__settings__.store_type == 'qualname'
     assert DC12.__settings__._store_type == 'qualname'
+
+def test_suppress_field():
+    """Tests behavior of setting the 'suppress' option on a field."""
+    obj = DCSuppress()
+    d = {'x': 1, 'z': 3}
+    assert obj.to_dict() == d
+    assert obj.to_dict(full=True) == d
+    assert DCSuppress.from_dict(d) == obj
+    obj = DCSuppress(y=100)
+    assert obj.to_dict() == d
+    assert obj.to_dict(full=True) == d
+    assert DCSuppress.from_dict(d).y == 2
+    d2 = {'z': 3}
+    obj2 = DCSuppress2()
+    assert obj2.to_dict() == d2
+    assert obj2.to_dict(full=True) == d
+    assert DCSuppress2.from_dict(d2) == obj2
+    assert DCSuppress2.from_dict(d) == obj2
+    obj2 = DCSuppress2(y=100)
+    assert obj2.to_dict() == {'z': 3}
+    assert obj2.to_dict(full=True) == d
+    assert DCSuppress2.from_dict(d).y == 2
+
+def test_suppress_required_field():
+    """Tests that a required field with suppress=True cannot create a valid dict."""
+    @dataclass
+    class DCSuppressRequired(DictDataclass):
+        x: int = field(metadata={'suppress': True})
+    with pytest.raises(TypeError, match='missing 1 required positional argument'):
+        _ = DCSuppressRequired()
+    obj = DCSuppressRequired(1)
+    assert obj.to_dict() == {}
+    with pytest.raises(ValueError, match="'x' field is required"):
+        _ = DCSuppressRequired.from_dict({})
+    _ = DCSuppressRequired.from_dict({'x': 1})
+
+def test_suppress_defaults():
+    """Tests behavior of the suppress_defaults option, both at the class level and the field level."""
+    @dataclass
+    class DC(DictDataclass):
+        x: int = 1
+    assert DC.__settings__.suppress_defaults is True
+    obj = DC()
+    assert obj.to_dict() == {}
+    assert obj.to_dict(full=True) == {'x': 1}
+    obj = DC(2)
+    assert obj.to_dict() == {'x': 2}
+    assert obj.to_dict(full=True) == {'x': 2}
+    @dataclass
+    class DC(DictDataclass, suppress_defaults=False):
+        x: int = 1
+    obj = DC()
+    assert obj.to_dict() == {'x': 1}
+    assert obj.to_dict(full=True) == {'x': 1}
+    @dataclass
+    class DC(DictDataclass):
+        x: int = field(default=1, metadata={'suppress_default': False})
+    obj = DC()
+    assert obj.to_dict() == {'x': 1}
+    assert obj.to_dict(full=True) == {'x': 1}
+    @dataclass
+    class DC(DictDataclass, suppress_defaults=False):
+        x: int = field(default=1, metadata={'suppress_default': True})
+    obj = DC()
+    assert obj.to_dict() == {}
+    assert obj.to_dict(full=True) == {'x': 1}
+
+def test_suppress_none():
+    """Tests behavior of the suppress_none option, both at the class level and the field level."""
+    # class-level suppress_none
+    @dataclass
+    class DC(DictDataclass, suppress_none=True):
+        x: Optional[int] = 1
+    obj = DC(None)
+    assert obj.to_dict() == {}
+    assert obj.to_dict(full=True) == {'x': None}
+    assert DC.from_dict({}) == DC(1)
+    assert DC.from_dict({'x': None}) == obj
+    # field-level suppress_none
+    @dataclass
+    class DC(DictDataclass):
+        x: Optional[int] = 1
+        y: Optional[int] = field(default=2, metadata={'suppress_none': True})
+    obj = DC(None, None)
+    assert obj.to_dict() == {'x': None}
+    assert obj.to_dict(full=True) == {'x': None, 'y': None}
+    assert DC.from_dict({}) == DC(1, 2)
+    # field-level overrides class level
+    @dataclass
+    class DC(DictDataclass, suppress_none=True):
+        x: Optional[int] = field(default=1, metadata={'suppress_none': False})
+    assert DC(None).to_dict() == {'x': None}
+    # suppress overrides suppress_none at class level
+    @dataclass
+    class DC(DictDataclass, suppress_none=True):
+        x: Optional[int] = field(default=1, metadata={'suppress': False})
+    assert DC(None).to_dict() == {'x': None}
+    # suppress overrides suppress_none at field level
+    @dataclass
+    class DC(DictDataclass):
+        x: Optional[int] = field(default=1, metadata={'suppress_none': True, 'suppress': False})
+    assert DC(None).to_dict() == {'x': None}
+    @dataclass
+    class DC(DictDataclass):
+        x: Optional[int] = field(default=1, metadata={'suppress_none': False, 'suppress': True})
+    assert DC(None).to_dict() == {}
+    # non-default field is fine
+    @dataclass
+    class DC(DictDataclass, suppress_none=True):
+        x: Optional[int]
+    assert DC(None).to_dict() == {}
+    assert DC(1).to_dict() == {'x': 1}
+    with pytest.raises(ValueError, match="'x' field is required"):
+        _ = DC.from_dict({})
+    # suppress_none is based on the value, not the type
+    @dataclass
+    class DC(DictDataclass, suppress_none=True):
+        x: int
+    assert DC(None).to_dict() == {}
+
+def test_class_var():
+    """Tests the behavior of ClassVars."""
+    @dataclass
+    class MyDC1(DictDataclass):
+        x: ClassVar[int]
+    obj = MyDC1()
+    assert obj.to_dict() == {}
+    assert obj.to_dict(full=True) == {}
+    assert MyDC1.from_dict({}) == obj
+    with pytest.raises(AttributeError, match='object has no attribute'):
+        _ = obj.x
+    @dataclass
+    class MyDC2(DictDataclass):
+        x: ClassVar[int] = field(metadata={'suppress': False})
+    obj = MyDC2()
+    with pytest.raises(AttributeError, match='object has no attribute'):
+        _ = obj.to_dict()
+    assert MyDC2.from_dict({}) == obj
+    @dataclass
+    class MyDC3(DictDataclass):
+        x: ClassVar[int] = 1
+    obj = MyDC3()
+    assert obj.to_dict() == {}
+    assert obj.to_dict(full=True) == {}
+    obj0 = MyDC3.from_dict({})
+    assert obj0 == obj
+    assert obj0.x == 1
+    # ClassVar gets ignored when loading from dict
+    obj1 = MyDC3.from_dict({'x': 1})
+    assert obj1 == obj
+    assert obj1.x == 1
+    obj2 = MyDC3.from_dict({'x': 2})
+    assert obj2 == obj
+    assert obj2.x == 1
+    MyDC3.x = 2
+    obj = MyDC3()
+    assert obj.to_dict() == {}
+    # ClassVar field has to override with suppress=False to include it
+    assert obj.to_dict(full=True) == {}
+    @dataclass
+    class MyDC4(DictDataclass):
+        x: ClassVar[int] = field(default=1, metadata={'suppress': False})
+    obj = MyDC4()
+    assert obj.to_dict() == {'x': 1}  # equals default, but suppress=False overrides it
+    assert obj.to_dict(full=True) == {'x': 1}
+    obj0 = MyDC4.from_dict({})
+    assert obj0 == obj
+    obj2 = MyDC4.from_dict({'x': 2})
+    assert obj2 == obj
+    assert obj2.x == 1
+    MyDC4.x = 2
+    obj = MyDC4()
+    assert obj.to_dict() == {'x': 2}  # no longer equals default
+    assert obj.to_dict(full=True) == {'x': 2}

@@ -4,8 +4,9 @@
 
 ## v0.7.0
 
-- Support `suppress_none` in both `DictDataclassSettings` and `DictDataclassFieldSettings`
-  - Write tests/documentation
+- Support for `doc` in field
+  - Add `doc` as field in new `DocFieldSettings`, have `DictFileSerializableFieldSettings` inherit from it and `DictDataclassFieldSettings`
+  - Helper method in `DocFieldSettings` to get doc from `Field` object (first look for `doc` metadata, then annotated `Doc`)
 - Comments in `TOMLDataclass` serialization
 
 ## v0.8.0
@@ -58,7 +59,6 @@
     - If so, make `pandas` an optional dependency
     - Easy to implement conversion via `dict`, if we subclass `DictDataclass`
 - `TOMLDataclass`
-  - Require subclass to set `qualified_type=True`, like `JSONDataclass`?
   - Preserve document structure via `tomlkit`
     - NOTE: the parsed values themselves have a `_trivia` attribute storing various formatting info
     - Use field metadata (`help`?) as comment prior to the field

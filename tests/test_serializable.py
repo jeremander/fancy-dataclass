@@ -1,12 +1,12 @@
 from collections import namedtuple
 from contextlib import nullcontext
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, fields, make_dataclass
 from datetime import datetime
 from enum import Enum, Flag, auto
 import math
 import re
 import sys
-from typing import Any, ClassVar, List, Literal, NamedTuple, Optional, TypedDict, Union
+from typing import Any, List, Literal, NamedTuple, Optional, TypedDict, Union
 
 import numpy as np
 import pytest
@@ -17,9 +17,16 @@ from fancy_dataclass.json import JSONBaseDataclass, JSONDataclass
 from fancy_dataclass.toml import TOMLDataclass
 from fancy_dataclass.utils import coerce_to_dataclass, dataclass_type_map, issubclass_safe
 
+from .test_dict import DCSuppress, DCSuppress2
+
 
 NOW = datetime.now()
 
+
+def to_json_dataclass(cls):
+    """Converts a class to a JSONDataclass."""
+    flds = [(fld.name, fld.type, fld) for fld in fields(cls)]
+    return make_dataclass(cls.__name__, fields=flds, bases=(JSONDataclass,))
 
 def _convert_json_dataclass(cls, new_cls):
     """Converts JSONDataclass base classes with the given class, recursively within the input class's fields."""
@@ -187,20 +194,6 @@ class DCFloat(JSONDataclass):
         return (math.isnan(self.x) and math.isnan(other.x)) or (self.x == other.x)
 
 @dataclass
-class DCSuppress(JSONDataclass, suppress_defaults=False):
-    cv1: ClassVar[int] = field(default=0)
-    x: int = field(default=1)
-    y: int = field(default=2, metadata={'suppress': True})
-    z: int = field(default=3, metadata={'suppress': False})
-
-@dataclass
-class DCSuppress2(JSONDataclass, suppress_defaults=True):
-    cv1: ClassVar[int] = field(default=0)
-    x: int = field(default=1)
-    y: int = field(default=2, metadata={'suppress': True})
-    z: int = field(default=3, metadata={'suppress': False})
-
-@dataclass
 class DCList(JSONDataclass):
     vals: List[DCAny]
 
@@ -232,6 +225,9 @@ DictDCDatetime = _convert_json_dataclass(DCDatetime, DictDataclass)
 DictDCEnum = _convert_json_dataclass(DCEnum, DictDataclass)
 DictDCRange = _convert_json_dataclass(DCRange, DictDataclass)
 
+JSONDCSuppress = to_json_dataclass(DCSuppress)
+JSONDCSuppress2 = to_json_dataclass(DCSuppress2)
+
 
 TEST_JSON = [
     DCEmpty(),
@@ -262,8 +258,8 @@ TEST_JSON = [
     DCAny('a'),
     DCAny({}),
     DCAny(None),
-    DCSuppress(),
-    DCSuppress2(),
+    JSONDCSuppress(),
+    JSONDCSuppress2(),
     DCList([DCAny(None), DCAny(1), DCAny([1]), DCAny(None), DCAny({})]),
     DCNumpy(),
 ]
@@ -568,127 +564,6 @@ class TestJSON(TestDict):
         assert DCNonJSONSerializable.from_dict(d) == njs
         with pytest.raises(TypeError, match='Object of type MyObject is not JSON serializable'):
             _ = njs.to_json_string()
-
-    def test_suppress_field(self):
-        """Tests behavior of setting the 'suppress' option on a field."""
-        obj = DCSuppress()
-        d = {'x': 1, 'z': 3}
-        assert obj.to_dict() == d
-        assert obj.to_dict(full=True) == d
-        assert DCSuppress.from_dict(d) == obj
-        obj = DCSuppress(y=100)
-        assert obj.to_dict() == d
-        assert obj.to_dict(full=True) == d
-        assert DCSuppress.from_dict(d).y == 2
-        d2 = {'z': 3}
-        obj2 = DCSuppress2()
-        assert obj2.to_dict() == d2
-        assert obj2.to_dict(full=True) == d
-        assert DCSuppress2.from_dict(d2) == obj2
-        assert DCSuppress2.from_dict(d) == obj2
-        obj2 = DCSuppress2(y=100)
-        assert obj2.to_dict() == {'z': 3}
-        assert obj2.to_dict(full=True) == d
-        assert DCSuppress2.from_dict(d).y == 2
-
-    def test_suppress_required_field(self):
-        """Tests that a required field with suppress=True cannot create a valid dict."""
-        @dataclass
-        class DCSuppressRequired(JSONDataclass):
-            x: int = field(metadata={'suppress': True})
-        with pytest.raises(TypeError, match='missing 1 required positional argument'):
-            _ = DCSuppressRequired()
-        obj = DCSuppressRequired(1)
-        assert obj.to_dict() == {}
-        with pytest.raises(ValueError, match="'x' field is required"):
-            _ = DCSuppressRequired.from_dict({})
-        _ = DCSuppressRequired.from_dict({'x': 1})
-
-    def test_suppress_defaults(self):
-        """Tests behavior of the suppress_defaults option, both at the class level and the field level."""
-        @dataclass
-        class MyDC(JSONDataclass):
-            x: int = 1
-        assert MyDC.__settings__.suppress_defaults is True
-        obj = MyDC()
-        assert obj.to_dict() == {}
-        assert obj.to_dict(full=True) == {'x': 1}
-        obj = MyDC(2)
-        assert obj.to_dict() == {'x': 2}
-        assert obj.to_dict(full=True) == {'x': 2}
-        @dataclass
-        class MyDC(JSONDataclass, suppress_defaults=False):
-            x: int = 1
-        obj = MyDC()
-        assert obj.to_dict() == {'x': 1}
-        assert obj.to_dict(full=True) == {'x': 1}
-        @dataclass
-        class MyDC(JSONDataclass):
-            x: int = field(default=1, metadata={'suppress_default': False})
-        obj = MyDC()
-        assert obj.to_dict() == {'x': 1}
-        assert obj.to_dict(full=True) == {'x': 1}
-        @dataclass
-        class MyDC(JSONDataclass, suppress_defaults=False):
-            x: int = field(default=1, metadata={'suppress_default': True})
-        obj = MyDC()
-        assert obj.to_dict() == {}
-        assert obj.to_dict(full=True) == {'x': 1}
-
-    def test_class_var(self):
-        """Tests the behavior of ClassVars."""
-        @dataclass
-        class MyDC1(JSONDataclass):
-            x: ClassVar[int]
-        obj = MyDC1()
-        assert obj.to_dict() == {}
-        assert obj.to_dict(full=True) == {}
-        assert MyDC1.from_dict({}) == obj
-        with pytest.raises(AttributeError, match='object has no attribute'):
-            _ = obj.x
-        @dataclass
-        class MyDC2(JSONDataclass):
-            x: ClassVar[int] = field(metadata={'suppress': False})
-        obj = MyDC2()
-        with pytest.raises(AttributeError, match='object has no attribute'):
-            _ = obj.to_dict()
-        assert MyDC2.from_dict({}) == obj
-        @dataclass
-        class MyDC3(JSONDataclass):
-            x: ClassVar[int] = 1
-        obj = MyDC3()
-        assert obj.to_dict() == {}
-        assert obj.to_dict(full=True) == {}
-        obj0 = MyDC3.from_dict({})
-        assert obj0 == obj
-        assert obj0.x == 1
-        # ClassVar gets ignored when loading from dict
-        obj1 = MyDC3.from_dict({'x': 1})
-        assert obj1 == obj
-        assert obj1.x == 1
-        obj2 = MyDC3.from_dict({'x': 2})
-        assert obj2 == obj
-        assert obj2.x == 1
-        MyDC3.x = 2
-        obj = MyDC3()
-        assert obj.to_dict() == {}
-        # ClassVar field has to override with suppress=False to include it
-        assert obj.to_dict(full=True) == {}
-        @dataclass
-        class MyDC4(JSONDataclass):
-            x: ClassVar[int] = field(default=1, metadata={'suppress': False})
-        obj = MyDC4()
-        assert obj.to_dict() == {'x': 1}  # equals default, but suppress=False overrides it
-        assert obj.to_dict(full=True) == {'x': 1}
-        obj0 = MyDC4.from_dict({})
-        assert obj0 == obj
-        obj2 = MyDC4.from_dict({'x': 2})
-        assert obj2 == obj
-        assert obj2.x == 1
-        MyDC4.x = 2
-        obj = MyDC4()
-        assert obj.to_dict() == {'x': 2}  # no longer equals default
-        assert obj.to_dict(full=True) == {'x': 2}
 
     def test_from_dict_kwargs(self):
         """Tests behavior of from_json_string with respect to partitioning kwargs into from_dict and json.loads."""
