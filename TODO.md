@@ -5,6 +5,7 @@
 ## v0.7.0
 
 - Support `suppress_none` in both `DictDataclassSettings` and `DictDataclassFieldSettings`
+  - Write tests/documentation
 - Comments in `TOMLDataclass` serialization
 
 ## v0.8.0

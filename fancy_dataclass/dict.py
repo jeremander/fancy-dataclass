@@ -56,7 +56,8 @@ class DictDataclassSettings(DataclassMixinSettings):
 
     Subclasses of `DictDataclass` may set the following boolean flags as keyword arguments during inheritance:
 
-    - `suppress_defaults`: suppress default values in its dict
+    - `suppress_defaults`: suppress default values in the dict, by default
+    - `suppress_none`: suppress `None` values in the dict, by default
     - `store_type`: whether and how to store the object's type name in its dict, options are:
         - `auto`: base class determines how to store the type
         - `off`: do not store the type
@@ -65,6 +66,7 @@ class DictDataclassSettings(DataclassMixinSettings):
     - `flattened`: if `True`, [`DictDataclass`][fancy_dataclass.dict.DictDataclass] subfields fields will be merged together with the main fields (provided there are no name collisions); otherwise, they are nested
     - `validate`: if `True`, attempt to validate data when converting from a dict"""
     suppress_defaults: bool = True
+    suppress_none: bool = False
     store_type: StoreTypeMode = 'auto'
     flattened: bool = False
     validate: bool = True
@@ -86,14 +88,14 @@ class DictDataclassFieldSettings(FieldSettings):
 
     Each field may define a `metadata` dict containing any of the following entries:
 
-    - `suppress`: suppress this field in the dict representation
+    - `suppress`: flag to suppress this field in the dict representation, unconditionally
         - Note: if the field is a class variable, it is excluded by default; you can set `suppress=False` to force the field's inclusion.
-    - `suppress_default`: suppress this field in the dict if it matches its default value (overrides class-level `suppress_defaults`)
-        - Note: `suppress=False` will override this"""
-    # suppress the field in the dict
+        - Note: if set, this will override both `suppress_default` and `suppress_none` (see below)
+    - `suppress_default`: flag to suppress this field in the dict if it matches its default value (overrides class-level `suppress_defaults`)
+    - `suppress_none`: flag to suppress this field in the dict if its value is `None` (overrides class-level `suppress_none`)"""
     suppress: Optional[bool] = None
-    # suppress the field in the dict if its value matches the default
     suppress_default: Optional[bool] = None
+    suppress_none: Optional[bool] = None
 
 
 class DictDataclass(DataclassMixin):
@@ -163,6 +165,7 @@ class DictDataclass(DataclassMixin):
             flat_obj = _flatten_dataclass(cls)[1].forward(self)
             return flat_obj._to_dict(full)  # type: ignore
         d = self._dict_init()
+        class_suppress_none = self.__settings__.suppress_none
         class_suppress_defaults = self.__settings__.suppress_defaults
         for (name, fld) in self.__dataclass_fields__.items():  # type: ignore[attr-defined]
             is_class_var = get_origin(fld.type) is ClassVar
@@ -171,16 +174,20 @@ class DictDataclass(DataclassMixin):
             if (is_class_var or (not fld.init)) if (settings.suppress is None) else settings.suppress:
                 continue
             val = getattr(self, name)
-            # suppress default (by default) if full=False, suppress!=False, and class-configured suppress_defaults=True
-            if (not full) and (settings.suppress is not False) and (class_suppress_defaults if (settings.suppress_default is None) else settings.suppress_default):
-                # suppress values that match the default
-                try:
-                    if val == fld.default:
-                        continue
-                    if (fld.default_factory != dataclasses.MISSING) and (val == fld.default_factory()):
-                        continue
-                except ValueError:  # some types may fail to compare
-                    pass
+            if (not full) and (settings.suppress is None):
+                # suppress None if field specifies it (falling back on class setting)
+                if (val is None) and (class_suppress_none if (settings.suppress_none is None) else settings.suppress_none):
+                    continue
+                # suppress default if field specifies it (falling back on class setting)
+                if (class_suppress_defaults if (settings.suppress_default is None) else settings.suppress_default):
+                    # suppress values that match the default
+                    try:
+                        if val == fld.default:
+                            continue
+                        if (fld.default_factory != dataclasses.MISSING) and (val == fld.default_factory()):
+                            continue
+                    except ValueError:  # some types may fail to compare
+                        pass
             safe_dict_insert(d, name, self._to_dict_value(val, full))
         return d
 
@@ -188,7 +195,7 @@ class DictDataclass(DataclassMixin):
         """Converts the object to a Python dict which, by default, suppresses values matching their dataclass defaults.
 
         Args:
-            kwargs: Keyword arguments <ul><li>`full`: if `True` (or if the class has `suppress_defaults=False`), does not suppress default values</li></ul>
+            kwargs: Keyword arguments <ul><li>`full`: if `True`, does not suppress `None` or default values</li></ul>
 
         Returns:
             A dict whose keys match the dataclass's fields"""
