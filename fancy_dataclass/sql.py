@@ -40,7 +40,7 @@ def get_column_type(tp: type) -> type:
     return PickleType
 
 
-@dataclass
+@dataclass(kw_only=True)
 class SQLDataclassFieldSettings(FieldSettings):
     """Settings for [`SQLDataclass`][fancy_dataclass.sql.SQLDataclass] fields.
 

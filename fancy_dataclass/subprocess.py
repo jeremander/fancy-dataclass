@@ -8,7 +8,7 @@ from fancy_dataclass.mixin import DataclassMixin, DataclassMixinSettings, FieldS
 from fancy_dataclass.utils import get_dataclass_fields, obj_class_name
 
 
-@dataclass
+@dataclass(kw_only=True)
 class SubprocessDataclassSettings(DataclassMixinSettings):
     """Class-level settings for the [`SubprocessDataclass`][fancy_dataclass.subprocess.SubprocessDataclass] mixin.
 
@@ -18,7 +18,7 @@ class SubprocessDataclassSettings(DataclassMixinSettings):
     exec: Optional[str] = None
 
 
-@dataclass
+@dataclass(kw_only=True)
 class SubprocessDataclassFieldSettings(FieldSettings):
     """Settings for [`SubprocessDataclass`][fancy_dataclass.subprocess.SubprocessDataclass] fields.
 

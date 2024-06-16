@@ -50,7 +50,7 @@ class DictConvertible(ABC):
             Converted object of this class"""
 
 
-@dataclass
+@dataclass(kw_only=True)
 class DictDataclassSettings(DataclassMixinSettings):
     """Class-level settings for the [`DictDataclass`][fancy_dataclass.dict.DictDataclass] mixin.
 
@@ -82,7 +82,7 @@ class DictDataclassSettings(DataclassMixinSettings):
         return self._store_type in ['name', 'qualname']
 
 
-@dataclass
+@dataclass(kw_only=True)
 class DictDataclassFieldSettings(FieldSettings):
     """Settings for [`DictDataclass`][fancy_dataclass.dict.DictDataclass] fields.
 

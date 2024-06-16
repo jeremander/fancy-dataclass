@@ -61,7 +61,7 @@ def _add_group(parser: ArgParser, group_name: str, **group_kwargs: Any) -> _Argu
 # MIXINS #
 ##########
 
-@dataclass
+@dataclass(kw_only=True)
 class ArgparseDataclassSettings(DataclassMixinSettings):
     """Class-level settings for the [`ArgparseDataclass`][fancy_dataclass.cli.ArgparseDataclass] mixin.
 
@@ -83,7 +83,7 @@ class ArgparseDataclassSettings(DataclassMixinSettings):
     version: Optional[str] = None
 
 
-@dataclass
+@dataclass(kw_only=True)
 class ArgparseDataclassFieldSettings(FieldSettings):
     """Settings for [`ArgparseDataclass`][fancy_dataclass.cli.ArgparseDataclass] fields.
 
