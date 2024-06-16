@@ -4,10 +4,8 @@
 
 ## v0.7.0
 
-- Support for `doc` in field
-  - Add `doc` as field in new `DocFieldSettings`, have `DictFileSerializableFieldSettings` inherit from it and `DictDataclassFieldSettings`
-- More robust handling of string annotations (`from __future__ import annotations`)
 - Comments in `TOMLDataclass` serialization
+  - Document usage of `doc` field
 
 ## v0.8.0
 

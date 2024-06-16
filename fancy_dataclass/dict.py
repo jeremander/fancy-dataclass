@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, Dict, Iterable, Literal, Option
 from typing_extensions import Self, _AnnotatedAlias
 
 from fancy_dataclass.mixin import DataclassMixin
-from fancy_dataclass.settings import FieldSettings, MixinSettings
+from fancy_dataclass.settings import DocFieldSettings, MixinSettings
 from fancy_dataclass.utils import TypeConversionError, _flatten_dataclass, check_dataclass, dataclass_field_type, dataclass_kw_only, fully_qualified_class_name, issubclass_safe, obj_class_name, safe_dict_insert
 
 
@@ -84,7 +84,7 @@ class DictDataclassSettings(MixinSettings):
 
 
 @dataclass_kw_only()
-class DictDataclassFieldSettings(FieldSettings):
+class DictDataclassFieldSettings(DocFieldSettings):
     """Settings for [`DictDataclass`][fancy_dataclass.dict.DictDataclass] fields.
 
     Each field may define a `metadata` dict containing any of the following entries:
@@ -93,7 +93,8 @@ class DictDataclassFieldSettings(FieldSettings):
         - Note: if the field is a class variable, it is excluded by default; you can set `suppress=False` to force the field's inclusion.
         - Note: if set, this will override both `suppress_default` and `suppress_none` (see below)
     - `suppress_default`: flag to suppress this field in the dict if it matches its default value (overrides class-level `suppress_defaults`)
-    - `suppress_none`: flag to suppress this field in the dict if its value is `None` (overrides class-level `suppress_none`)"""
+    - `suppress_none`: flag to suppress this field in the dict if its value is `None` (overrides class-level `suppress_none`)
+    - `doc`: a text description of the field, which may be used when generating schemas or serializing the data"""
     suppress: Optional[bool] = None
     suppress_default: Optional[bool] = None
     suppress_none: Optional[bool] = None
