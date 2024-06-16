@@ -121,7 +121,7 @@ You can be more fine-grained about handling the output behavior of specific fiel
 
 #### Including Types in Output
 
-Two other settings of note are `store_type` and `qualified_type`. These relate to type inference when loading an object from a `dict` or JSON blob. Suppose you have a class like:
+Another setting of note is `store_type`. This relates to type inference when loading an object from a `dict` or JSON blob. Suppose you have a class like:
 
 ```python
 @dataclass
@@ -136,22 +136,22 @@ print(Circle(3).to_json_string())
 {"radius": 3}
 ```
 
-This may be undesirable, since the output does not make it clear what type of thing it is. To include the type in the output, you may set `store_type=True`:
+This may be undesirable, since the output does not make it clear what type of thing it is. To include the type in the output, you may set `store_type='name'`:
 
 ```python
 @dataclass
-class Circle(JSONDataclass, store_type=True):
+class Circle(JSONDataclass, store_type='name'):
     radius: float
 
 print(Circle(3).to_json_string())
 {"type": "Circle", "radius": 3}
 ```
 
-`qualified_type` is like `store_type`, except it stores the fully qualified type name instead:
+Sometimes it is better to store the fully qualified type name instead. You can do this by setting `store_type` to `'qualname'`:
 
 ```python
 @dataclass
-class Circle(JSONDataclass, qualified_type=True):
+class Circle(JSONDataclass, store_type='qualname'):
     radius: float
 
 print(Circle(3).to_json_string())
@@ -160,7 +160,7 @@ print(Circle(3).to_json_string())
 
 (Here, `my_module` is the name of the module in which `Circle` is defined.)
 
-Setting `qualified_type=True` is particularly useful when dealing with inheritance hierarchies. For example, if you try:
+Setting `store_type='qualname'` is particularly useful when dealing with inheritance hierarchies. For example, if you try:
 
 ```python
 
@@ -173,7 +173,7 @@ class Circle(Shape):
     radius: float
 ```
 
-This will raise the following error: `TypeError: when subclassing a JSONDataclass, you must set qualified_type=True or subclass JSONBaseDataclass instead`. This is saying that when you subclass `JSONDataclass`, you _must_ explicitly ensure the types are included in the output, or else it will result in type ambiguity when converting back from JSON. An alternative to `qualified_type=True` is subclassing `JSONBaseDataclass` instead of `JSONDataclass`.
+This will raise the following error: `TypeError: when subclassing a JSONDataclass, you must set store_type to a value other than 'auto', or subclass JSONBaseDataclass instead`. This is saying that when you subclass `JSONDataclass`, you _must_ explicitly override `store_type` (preferably with `'qualname'`, to prevent type ambiguity when converting back from JSON). An alternative to setting `store_type` is subclassing `JSONBaseDataclass` instead of `JSONDataclass`. This will set `store_type` to `'qualname'` automatically.
 
 Let's see why this is useful:
 
