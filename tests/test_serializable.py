@@ -616,7 +616,7 @@ class TestTOML(TestDict):
         self._test_serialize_convert(obj, s, None)
 
     @pytest.mark.parametrize(['obj', 's'], [
-        (DCAny(None), ''),
+        (DCAny(None), '# val = \n'),
         (DCAny(1), 'val = 1\n'),
         (DCAny([]), 'val = []\n'),
         (DCAny({}), '[val]\n'),
@@ -628,11 +628,11 @@ class TestTOML(TestDict):
 
     @pytest.mark.parametrize(['obj', 's', 'err'], [
         (DCOptional(1), 'x = 1\n', None),
-        (DCOptional(None), '', None),
+        (DCOptional(None), '# x = \n', None),
         (DCOptionalDefault(1), 'x = 1\n', None),
         (DCOptionalDefault(2), 'x = 2\n', None),
-        # round-trip is violated because null value is omitted and default is non-null
-        (DCOptionalDefault(None), '', (True, AssertionError, '==')),
+        # NOTE: round-trip is violated because null value is omitted and default is non-null
+        (DCOptionalDefault(None), '# x = \n', (True, AssertionError, '==')),
     ])
     def test_optional(self, obj, s, err):
         """Tests behavior of Optional types with TOML conversion."""
@@ -685,6 +685,12 @@ class TestTOML(TestDict):
         obj = DCList([1, 2, 3])
         self._test_serialize_round_trip(obj, tmp_path)
         assert obj.to_toml_string() == '# a list\nvals = [1, 2, 3]\n'
-        # test comment before value with a dict
-        # test comments in tables within tables, tables within arrays
-        # TODO: handle null values
+        @dataclass
+        class DCOptional(TOMLDataclass):
+            val: Annotated[Optional[int], Doc('nullable')] = None
+        obj = DCOptional()
+        self._test_serialize_round_trip(obj, tmp_path)
+        assert obj.to_toml_string() == '# nullable\n# val = \n'
+        obj = DCOptional(1)
+        self._test_serialize_round_trip(obj, tmp_path)
+        assert obj.to_toml_string() == '# nullable\nval = 1\n'

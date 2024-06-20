@@ -1,6 +1,6 @@
 from dataclasses import Field
 from io import IOBase
-from typing import IO, Any
+from typing import IO, Any, Union
 
 import tomlkit as tk
 from typing_extensions import Self
@@ -18,7 +18,7 @@ class NoneProxy(tk.items.Item):
         super().__init__(tk.items.Trivia())
 
     def __eq__(self, other: Any) -> bool:
-        return other is None
+        return (other is None) or isinstance(other, NoneProxy)
 
 
 class TOMLSerializable(TextFileSerializable):
@@ -77,11 +77,13 @@ class TOMLDataclass(DictFileSerializableDataclass, TOMLSerializable, suppress_de
             return obj.body if hasattr(obj, 'body') else obj.value.body
         def _fix_element(obj: Any) -> Any:
             if isinstance(obj, dict):
-                tbl = tk.document() if isinstance(obj, tk.toml_document.TOMLDocument) else tk.table()
+                tbl: Union[tk.toml_document.TOMLDocument, tk.items.Table] = tk.document() if isinstance(obj, tk.toml_document.TOMLDocument) else tk.table()
                 container = _get_body(obj)
                 for (i, (key, val)) in enumerate(container):
-                    if not isinstance(val, NoneProxy):  # suppress None
-                        tbl.add(key, _fix_element(val))  # type: ignore[attr-defined]
+                    if isinstance(val, NoneProxy):  # show key with empty value, commented
+                        tbl.add(tk.comment(f'{key} = '))
+                    else:
+                        tbl.add(key, _fix_element(val))
                         if (i > 0) and isinstance(val, dict) and isinstance(container[i - 1][1], tk.items.Comment):
                             # move newline above comment preceding a table
                             body = _get_body(tbl)
@@ -113,23 +115,13 @@ class TOMLDataclass(DictFileSerializableDataclass, TOMLSerializable, suppress_de
         # TODO: top-level string (from class settings)
         for (key, val) in d.items():
             if (fld := self.__dataclass_fields__.get(key)):  # type: ignore[attr-defined]
-            # if (val is not None) and (fld := self.__dataclass_fields__.get(key)):  # type: ignore[attr-defined]
                 # TODO: handle None values (comment with empty RHS)
                 settings = self._field_settings(fld).adapt_to(DictDataclassFieldSettings)
                 if settings.doc is not None:
                     comment = tk.comment(str(settings.doc))
                     doc.add(comment)
                 val = NoneProxy() if (val is None) else val
-                # val_is_none = val is None
-                # val = '' if val_is_none else val
                 doc.add(key, val)
-                # doc.append(key, val)
-                # elt = doc.body[-1][1]
-                # if has_doc and isinstance(tbl := doc.body[-1][1], dict):
-                #     comment.trivia.indent = tbl.trivia.indent
-                #     tbl.trivia.indent = ''
-                # if val_is_none:
-                #     elt._is_none = True  # type: ignore[attr-defined]
         return doc
 
     @classmethod
