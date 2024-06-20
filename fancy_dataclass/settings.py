@@ -80,7 +80,7 @@ class DocFieldSettings(FieldSettings):
                 tp = field.type
             if isinstance(tp, _AnnotatedAlias):
                 args = get_args(tp)
-                doc = next((arg for arg in args[::-1] if isinstance(arg, Doc)), None)  # type: ignore[call-overload]
+                doc = next((arg for arg in args[::-1] if isinstance(arg, Doc)), None)
                 if doc:
                     settings.doc = doc.documentation
         return settings
