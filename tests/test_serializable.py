@@ -591,6 +591,7 @@ class TestTOML(TestDict):
     def _convert_dataclass(self, tp):
         tp = _convert_json_dataclass(tp, self.base_cls)
         tp.__settings__.suppress_defaults = False
+        tp.__settings__.store_type = tp.__settings__._store_type = 'off'
         return tp
 
     @pytest.mark.parametrize('obj', TEST_JSON)
@@ -614,6 +615,17 @@ class TestTOML(TestDict):
         """Tests floating-point support."""
         self._test_serialize_convert(obj, s, None)
 
+    @pytest.mark.parametrize(['obj', 's'], [
+        (DCAny(None), ''),
+        (DCAny(1), 'val = 1\n'),
+        (DCAny([]), 'val = []\n'),
+        (DCAny({}), '[val]\n'),
+        (DCAny({'x': 5}), '[val]\nx = 5\n'),
+    ])
+    def test_any(self, obj, s):
+        """Tests Any type."""
+        self._test_serialize_convert(obj, s, None)
+
     @pytest.mark.parametrize(['obj', 's', 'err'], [
         (DCOptional(1), 'x = 1\n', None),
         (DCOptional(None), '', None),
@@ -634,6 +646,11 @@ class TestTOML(TestDict):
         self._test_serialize_convert(obj, s, None)
 
     @pytest.mark.parametrize(['obj', 's', 'err'], [
+        (DCList([]), 'vals = []\n', None),
+        (DCList([DCAny(1)]), '[[vals]]\nval = 1\n', None),
+        (DCList([DCAny('')]), '[[vals]]\nval = ""\n', None),
+        (DCList([DCAny([])]), '[[vals]]\nval = []\n', None),
+        (DCList([DCAny({})]), '[[vals]]\n[vals.val]\n', None),
         (DCListOptional([]), 'vals = []\n', None),
         (DCListOptional([1, 2, 3]), 'vals = [1, 2, 3]\n', None),
         (DCListOptional([1, None, 3]), 'vals = [1, None, 3]\n', (False, ValueError, "Invalid type <class 'NoneType'>")),
@@ -641,3 +658,33 @@ class TestTOML(TestDict):
     def test_list(self, obj, s, err):
         """Tests behavior of list types."""
         self._test_serialize_convert(obj, s, err)
+
+    def test_doc(self, tmp_path):
+        """Tests inclusion of documentation in TOML serialization."""
+        @dataclass
+        class DCDoc(TOMLDataclass):
+            a: int = 1
+            b: int = field(default=2, metadata={'doc': 'b value'})
+            c: Annotated[int, Doc('c value')] = 3
+            d: Annotated[int, Doc('fake')] = field(default=4, metadata={'doc': 'd value'})
+        obj = DCDoc()
+        self._test_serialize_round_trip(obj, tmp_path)
+        assert obj.to_toml_string() == 'a = 1\n# b value\nb = 2\n# c value\nc = 3\n# d value\nd = 4\n'
+        @dataclass
+        class DCDocOuter(TOMLDataclass):
+            string: Annotated[str, Doc('a string')] = 'abc'
+            nested: Annotated[DCDoc, Doc('nested object')] = field(default_factory=DCDoc)
+            flag: Annotated[bool, Doc('a flag')] = False
+        obj = DCDocOuter()
+        self._test_serialize_round_trip(obj, tmp_path)
+        # NOTE: nested gets moved to the end, to prevent parsing ambiguity
+        assert obj.to_toml_string() == '# a string\nstring = "abc"\n# a flag\nflag = false\n\n# nested object\n[nested]\na = 1\nb = 2\nc = 3\nd = 4\n'
+        @dataclass
+        class DCList(TOMLDataclass):
+            vals: Annotated[list[int], Doc('a list')]
+        obj = DCList([1, 2, 3])
+        self._test_serialize_round_trip(obj, tmp_path)
+        assert obj.to_toml_string() == '# a list\nvals = [1, 2, 3]\n'
+        # test comment before value with a dict
+        # test comments in tables within tables, tables within arrays
+        # TODO: handle null values

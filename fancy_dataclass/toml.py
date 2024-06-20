@@ -2,23 +2,12 @@ from dataclasses import Field
 from io import IOBase
 from typing import IO, Any
 
-import tomlkit
+import tomlkit as tk
 from typing_extensions import Self
 
-from fancy_dataclass.dict import AnyDict
+from fancy_dataclass.dict import AnyDict, DictDataclassFieldSettings
 from fancy_dataclass.serialize import DictFileSerializableDataclass, TextFileSerializable, from_dict_value_basic, to_dict_value_basic
 from fancy_dataclass.utils import AnyIO
-
-
-def _remove_null_dict_values(val: Any) -> Any:
-    """Removes all null (None) values from a dict.
-
-    Does this recursively to any nested dicts or lists."""
-    if isinstance(val, (list, tuple)):
-        return type(val)(_remove_null_dict_values(elt) for elt in val)
-    if isinstance(val, dict):
-        return type(val)({key: _remove_null_dict_values(elt) for (key, elt) in val.items() if (elt is not None)})
-    return val
 
 
 class TOMLSerializable(TextFileSerializable):
@@ -68,21 +57,50 @@ class TOMLSerializable(TextFileSerializable):
         return cls._from_string(s, **kwargs)
 
 
-class TOMLDataclass(DictFileSerializableDataclass, TOMLSerializable, suppress_defaults=False):  # type: ignore[misc]
+class TOMLDataclass(DictFileSerializableDataclass, TOMLSerializable, suppress_defaults=False, store_type='off'):  # type: ignore[misc]
     """Dataclass mixin enabling default serialization of dataclass objects to and from TOML."""
 
     @classmethod
     def _dict_to_text_file(cls, d: AnyDict, fp: IO[str], **kwargs: Any) -> None:
-        d = _remove_null_dict_values(d)
-        tomlkit.dump(d, fp, **kwargs)
+        tk.dump(d, fp, **kwargs)
 
     @classmethod
     def _text_file_to_dict(cls, fp: IO[str], **kwargs: Any) -> AnyDict:
-        return tomlkit.load(fp)
+        return tk.load(fp)
 
     @classmethod
     def _to_dict_value_basic(cls, val: Any) -> Any:
         return to_dict_value_basic(val)
+
+    def _to_dict(self, full: bool) -> AnyDict:
+        d = super()._to_dict(full)
+        def _is_nested(val: Any) -> bool:
+            return isinstance(val, (dict, list, tuple))
+        d = dict(sorted(d.items(), key=lambda pair: _is_nested(pair[1])))
+        def _fix_element(obj: Any) -> Any:
+            if isinstance(obj, dict):
+                tbl = tk.table()
+                for (key, val) in obj.items():
+                    if val is not None:
+                        tbl.add(key, _fix_element(val))
+                return tbl
+            if isinstance(obj, (tuple, list)):
+                return [_fix_element(elt) for elt in obj]
+            return obj
+        doc = tk.document()
+        # TODO: top-level string (from class settings)
+        for (key, val) in d.items():
+            if (val is not None) and (fld := self.__dataclass_fields__.get(key)):  # type: ignore[attr-defined]
+                # TODO: handle None values (comment with empty RHS)
+                settings = self._field_settings(fld).adapt_to(DictDataclassFieldSettings)
+                if (has_doc := settings.doc is not None):
+                    comment = tk.comment(str(settings.doc))
+                    doc.add(comment)
+                doc.add(key, _fix_element(val))
+                if has_doc and isinstance(tbl := doc.body[-1][1], dict):
+                    comment.trivia.indent = tbl.trivia.indent
+                    tbl.trivia.indent = ''
+        return doc
 
     @classmethod
     def _from_dict_value_basic(cls, tp: type, val: Any) -> Any:

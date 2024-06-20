@@ -6,6 +6,8 @@
 
 - Comments in `TOMLDataclass` serialization
   - Document usage of `doc` field
+  - Top-level doc (class setting)
+- Test `BooleanOptionalAction` in `ArgparseDataclass` (>= 3.9 only)
 
 ## v0.8.0
 
