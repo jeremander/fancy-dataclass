@@ -1,4 +1,4 @@
-<!-- markdownlint-disable MD052 -->
+<!-- markdownlint-disable MD046 MD052 -->
 
 The [`TOMLDataclass`][fancy_dataclass.toml.TOMLDataclass] mixin provides automatic conversion to and from [TOML](https://en.wikipedia.org/wiki/TOML). This uses the [`tomlkit`](https://tomlkit.readthedocs.io) library under the hood.
 
@@ -61,12 +61,28 @@ The class and field settings for `TOMLDataclass` are identical to those for [`JS
 
 TOML is intended as more of a configuration format than a data storage format. Consequently, unlike `JSONDataclass`, `TOMLDataclass` does not suppress default field values in its output by default. To opt into this behavior, you can set the class setting `suppress_defaults=True`.
 
-<style>
-.md-sidebar--secondary {
-    display: none !important;
-}
+#### Field Comments
 
-.md-main__inner .md-content {
-    max-width: 45rem;
-}
-</style>
+Unlike JSON, the TOML format supports comments, which are lines beginning with `#`. You can use the `doc` attribute of each `TOMLDataclass` field to prepend a comment in the TOML output. For example:
+
+```python
+from dataclasses import dataclass, field
+
+from fancy_dataclass import TOMLDataclass
+
+
+@dataclass
+class Rectangle(TOMLDataclass):
+    width: float = field(metadata={'doc': 'width (in cm)'})
+    height: float = field(metadata={'doc': 'height (in cm)'})
+
+>>> print(Rectangle(48.5, 30).to_toml_string())
+# width (in cm)
+width = 48.5
+# height (in cm)
+height = 30
+```
+
+!!! note
+
+    You can also use the `Annotated`/`Doc` syntax (PEP 727) to specify field comments. See [`DocFieldSettings`][fancy_dataclass.settings.DocFieldSettings].

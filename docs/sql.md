@@ -113,13 +113,3 @@ session.close() -->
 
 <!-- Add relationship after the fact -->
 <!-- Parent.children = relationship(Child, primaryjoin=Child.parent_id == Parent.id) -->
-
-<style>
-.md-sidebar--secondary {
-    display: none !important;
-}
-
-.md-main__inner .md-content {
-    max-width: 45rem;
-}
-</style>

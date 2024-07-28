@@ -41,3 +41,13 @@
 readthedocs-flyout {
   display: none;
 }
+
+/* Disable Table of Contents */
+
+.md-sidebar--secondary {
+  display: none !important;
+}
+
+.md-main__inner .md-content {
+  max-width: 45rem;
+}

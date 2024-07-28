@@ -95,13 +95,3 @@ Output:
 ```
 
 This makes it easy to define a single class that can both run your function logic and serialize its own parameters.
-
-<style>
-.md-sidebar--secondary {
-    display: none !important;
-}
-
-.md-main__inner .md-content {
-    max-width: 45rem;
-}
-</style>

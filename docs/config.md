@@ -132,13 +132,3 @@ The following methods can then be used:
 For configurations _without_ a specified schema, you can use [`DictConfig`][fancy_dataclass.config.DictConfig] instead. This has the same interface as `ConfigDataclass`, except you do not need to subclass it or specify a dataclass schema. Instead, it can load the contents of a JSON or TOML file into a regular Python dict, which you can access with `get_config`.
 
 By default, `ConfigDataclass` and `DictConfig` cannot write config files, only read them. To write, you can subclass [`JSONDataclass`](json.md) or [`TOMLDataclass`](toml.md).
-
-<style>
-.md-sidebar--secondary {
-    display: none !important;
-}
-
-.md-main__inner .md-content {
-    max-width: 45rem;
-}
-</style>

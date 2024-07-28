@@ -231,13 +231,3 @@ To customize the JSON output format, you may pass keyword arguments to `to_json`
 To customize JSON encoding itself, a subclass of `JSONDataclass` may override the [`json_encoder`][fancy_dataclass.json.JSONSerializable.json_encoder] method. This should return a [`json.JSONEncoder`](https://docs.python.org/3/library/json.html#json.JSONEncoder) subclass.
 
 You can also customize how JSON keys are decoded. For example, you may want to translate an integer key in a JSON file like `"1"` to the integer `1`. To accomplish this, override the [`json_key_decoder`][fancy_dataclass.json.JSONSerializable.json_key_decoder] method.
-
-<style>
-.md-sidebar--secondary {
-    display: none !important;
-}
-
-.md-main__inner .md-content {
-    max-width: 45rem;
-}
-</style>
