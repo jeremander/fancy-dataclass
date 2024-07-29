@@ -1,3 +1,4 @@
+import argparse
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, HelpFormatter, _SubParsersAction
 from dataclasses import dataclass, field
 import re
@@ -651,7 +652,7 @@ def test_subcommand(capsys):
     assert p.formatter_class is ArgumentDefaultsHelpFormatter
     assert p._subparsers._actions[1].choices['sub8'].formatter_class is HelpFormatter
 
-def test_boolean_flag():
+def test_boolean_flag():  # novermin
     """Tests the behavior of boolean fields in an ArgparseDataclass."""
     @dataclass
     class DCFlagDefaultFalse(ArgparseDataclass):
@@ -689,6 +690,18 @@ def test_boolean_flag():
         flag: bool = field(default=False, metadata={'action': 'store'})
     with pytest.raises(ValueError, match="invalid action 'store'"):
         _ = DCFlagActionStore.make_parser()
+    if hasattr(argparse, 'BooleanOptionalAction'):  # Python >= 3.9
+        @dataclass
+        class DCBooleanOptionalActionFalse(ArgparseDataclass):
+            flag: bool = field(default=False, metadata={'action': argparse.BooleanOptionalAction})
+        assert DCBooleanOptionalActionFalse.from_cli_args([]).flag is False
+        assert DCBooleanOptionalActionFalse.from_cli_args(['--flag']).flag is True
+        assert DCBooleanOptionalActionFalse.from_cli_args(['--no-flag']).flag is False
+        @dataclass
+        class DCBooleanOptionalActionTrue(ArgparseDataclass):
+            flag: bool = field(default=True, metadata={'action': argparse.BooleanOptionalAction})
+        with pytest.raises(ValueError, match='cannot use default value of True'):
+            _ = DCBooleanOptionalActionTrue.make_parser()
 
 def test_type_metadata():
     """Tests the behavior of using the "type" entry in the field metadata."""

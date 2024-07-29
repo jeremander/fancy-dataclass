@@ -1,5 +1,5 @@
 from dataclasses import Field, fields
-from typing import Optional, Type, TypeVar, get_args
+from typing import Optional, Type, TypeVar
 
 from typing_extensions import Doc, Self, _AnnotatedAlias
 
@@ -85,8 +85,7 @@ class DocFieldSettings(FieldSettings):
             else:
                 tp = field.type
             if isinstance(tp, _AnnotatedAlias):
-                args = get_args(tp)
-                doc = next((arg for arg in args[::-1] if isinstance(arg, Doc)), None)
+                doc = next((arg for arg in tp.__metadata__[::-1] if isinstance(arg, Doc)), None)
                 if doc:
                     settings.doc = doc.documentation
         return settings

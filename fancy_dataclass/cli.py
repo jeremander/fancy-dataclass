@@ -1,4 +1,4 @@
-from argparse import ArgumentParser, HelpFormatter, Namespace, _ArgumentGroup, _MutuallyExclusiveGroup
+from argparse import Action, ArgumentParser, HelpFormatter, Namespace, _ArgumentGroup, _MutuallyExclusiveGroup
 from contextlib import suppress
 from dataclasses import MISSING, fields
 from enum import IntEnum
@@ -118,7 +118,7 @@ class ArgparseDataclassFieldSettings(FieldSettings):
     - If `required` is specified in the metadata, this will take precedence over the default behavior above."""
     type: Optional[Union[type, Callable[[Any], Any]]] = None  # can be used to define custom constructor
     args: Optional[Union[str, Sequence[str]]] = None
-    action: Optional[str] = None
+    action: Optional[Union[str, Type[Action]]] = None
     nargs: Optional[Union[str, int]] = None
     const: Optional[Any] = None
     choices: Optional[Sequence[Any]] = None
@@ -324,10 +324,10 @@ class ArgparseDataclass(DataclassMixin):
         if fld.type is bool:  # use boolean flag instead of an argument
             action = settings.action or 'store_true'
             kwargs['action'] = action
-            if action not in ['store_true', 'store_false']:
+            if isinstance(action, str) and (action not in ['store_true', 'store_false']):
                 raise ValueError(f'invalid action {action!r} for boolean flag field {name!r}')
             if (default := kwargs.get('default')) is not None:
-                if (action == 'store_true') == default:
+                if (action != 'store_false') == default:
                     raise ValueError(f'cannot use default value of {default} for action {action!r} with boolean flag field {name!r}')
             for key in ('type', 'required'):
                 with suppress(KeyError):

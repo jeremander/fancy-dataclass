@@ -653,7 +653,7 @@ class TestTOML(TestDict):
         (DCList([DCAny({})]), '[[vals]]\n[vals.val]\n', None),
         (DCListOptional([]), 'vals = []\n', None),
         (DCListOptional([1, 2, 3]), 'vals = [1, 2, 3]\n', None),
-        (DCListOptional([1, None, 3]), 'vals = [1, None, 3]\n', (False, ValueError, "Invalid type <class 'NoneType'>")),
+        (DCListOptional([1, None, 3]), 'vals = [1, None, 3]\n', (False, ValueError, "<class 'NoneType'>")),
     ])
     def test_list(self, obj, s, err):
         """Tests behavior of list types."""
@@ -681,7 +681,7 @@ class TestTOML(TestDict):
         assert obj.to_toml_string() == '# a string\nstring = "abc"\n# a flag\nflag = false\n\n# nested object\n[nested]\na = 1\n# b value\nb = 2\n# c value\nc = 3\n# d value\nd = 4\n'
         @dataclass
         class DCList(TOMLDataclass):
-            vals: Annotated[list[int], Doc('a list')]
+            vals: Annotated[List[int], Doc('a list')]
         obj = DCList([1, 2, 3])
         self._test_serialize_round_trip(obj, tmp_path)
         assert obj.to_toml_string() == '# a list\nvals = [1, 2, 3]\n'

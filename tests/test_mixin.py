@@ -300,7 +300,7 @@ class TestDataclassMixin:
             g: Annotated[int, Doc('g1')] = field(default=7, metadata={'doc': 'g2'})  # both Doc and metadata (latter takes precedence)
             h: "Annotated[int, Doc('h')]" = 8  # stringized annotation
             # stringized annotation, fully qualified
-            i: "typing.Annotated[int, typing_extensions.Doc('i')]" = 9  # type: ignore[name-defined]  # noqa: F821
+            i: "typing_extensions.Annotated[int, typing_extensions.Doc('i')]" = 9  # type: ignore[name-defined]  # noqa: F821
         docs = [DC._field_settings(fld).doc for fld in fields(DC)]
         assert docs[0] is None
         assert docs[1] == 'b'

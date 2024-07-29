@@ -2,10 +2,6 @@
 
 # TODO
 
-## v0.7.0
-
-- Test `BooleanOptionalAction` in `ArgparseDataclass` (>= 3.9 only)
-
 ## v0.8.0
 
 - `VersionedDataclass`

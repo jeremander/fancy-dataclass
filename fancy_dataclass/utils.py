@@ -13,7 +13,7 @@ import sys
 import types
 from typing import IO, TYPE_CHECKING, Any, Callable, Dict, ForwardRef, Generic, Iterable, Iterator, List, Optional, Sequence, Set, Tuple, Type, TypeVar, Union, cast, get_args, get_origin, get_type_hints
 
-from typing_extensions import TypeGuard, dataclass_transform
+from typing_extensions import TypeGuard, _AnnotatedAlias, dataclass_transform
 
 
 if TYPE_CHECKING:
@@ -180,6 +180,8 @@ def _is_instance(obj: Any, tp: type) -> bool:
     if origin is dict:
         (key_type, val_type) = get_args(tp)
         return isinstance(obj, dict) and all(_is_instance(key, key_type) and _is_instance(val, val_type) for (key, val) in obj.items())
+    if origin is type:
+        return isinstance(obj, type) and issubclass_safe(obj, get_args(tp)[0])
     if origin is collections.abc.Callable:
         # TODO: try to check object's annotations
         return isinstance(obj, Callable)  # type: ignore[arg-type]
@@ -402,7 +404,7 @@ def dataclass_type_map(cls: Type['DataclassInstance'], func: Callable[[type], ty
     for fld in get_dataclass_fields(cls, include_classvars=True):
         new_fld = copy(fld)
         origin_type = get_origin(fld.type)
-        if origin_type and issubclass_safe(origin_type, Iterable):
+        if origin_type and (not _is_instance(fld.type, _AnnotatedAlias)) and issubclass_safe(origin_type, Iterable):
             otype = container_type_map.get(origin_type, origin_type)
             if issubclass(origin_type, dict):
                 (key_type, val_type) = get_args(origin_type)
