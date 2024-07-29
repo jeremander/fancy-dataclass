@@ -430,8 +430,7 @@ class TestMerge:
         with pytest.raises(TypeError, match='duplicate base class DC1'):
             _ = merge_dataclasses(DC1, DC1)
         assert get_names(merge_dataclasses(DC1, DC1, bases=())) == ['x']
-        with pytest.raises(TypeError, match='Cannot create a consistent'):
-            _ = merge_dataclasses(DC1, DC2)
+        assert get_names(merge_dataclasses(DC1, DC2)) == ['x']
         assert get_names(merge_dataclasses(DC1, DC2, bases=())) == ['x']
         assert get_names(merge_dataclasses(DC1)) == ['x']
         assert get_names(merge_dataclasses(DC2, DC1)) == ['x']

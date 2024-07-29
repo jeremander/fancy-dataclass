@@ -55,7 +55,7 @@ class DictConvertible(ABC):
 class DictDataclassSettings(MixinSettings):
     """Class-level settings for the [`DictDataclass`][fancy_dataclass.dict.DictDataclass] mixin.
 
-    Subclasses of `DictDataclass` may set the following boolean flags as keyword arguments during inheritance:
+    Subclasses of `DictDataclass` may set the following options as keyword arguments during inheritance:
 
     - `suppress_defaults`: suppress default values in the dict, by default
     - `suppress_none`: suppress `None` values in the dict, by default

@@ -1,13 +1,13 @@
 from dataclasses import Field
 from io import IOBase
-from typing import IO, Any, Union
+from typing import IO, Any, List, Optional, Union
 
 import tomlkit as tk
 from typing_extensions import Self
 
-from fancy_dataclass.dict import AnyDict, DictDataclassFieldSettings
+from fancy_dataclass.dict import AnyDict, DictDataclassFieldSettings, DictDataclassSettings
 from fancy_dataclass.serialize import DictFileSerializableDataclass, TextFileSerializable, from_dict_value_basic, to_dict_value_basic
-from fancy_dataclass.utils import AnyIO
+from fancy_dataclass.utils import AnyIO, dataclass_kw_only
 
 
 class NoneProxy(tk.items.Item):
@@ -19,6 +19,24 @@ class NoneProxy(tk.items.Item):
 
     def __eq__(self, other: Any) -> bool:
         return (other is None) or isinstance(other, NoneProxy)
+
+
+@dataclass_kw_only()
+class TOMLDataclassSettings(DictDataclassSettings):
+    """Class-level settings for the [`TOMLDataclass`][fancy_dataclass.toml.TOMLDataclass] mixin.
+
+    In addition to the settings inherited from [`DictDataclassSettings`][fancy_dataclass.dict.DictDataclassSettings], the following options may be set:
+
+    - `comment`: string that will be displayed as a top-level comment in the serialized TOML
+    - `doc_as_comment`: if `True`, use the class's docstring as a top-level comment (this is overridden if `comment` is set)"""
+    comment: Optional[str] = None
+    doc_as_comment: bool = False
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        # can use comment or doc_as_comment to specify top-level comment, but not both
+        if (self.comment is not None) and self.doc_as_comment:
+            raise ValueError('can set comment to a string or doc_as_comment=True, but not both')
 
 
 class TOMLSerializable(TextFileSerializable):
@@ -71,6 +89,8 @@ class TOMLSerializable(TextFileSerializable):
 class TOMLDataclass(DictFileSerializableDataclass, TOMLSerializable, suppress_defaults=False, store_type='off'):  # type: ignore[misc]
     """Dataclass mixin enabling default serialization of dataclass objects to and from TOML."""
 
+    __settings_type__ = TOMLDataclassSettings
+
     @classmethod
     def _dict_to_text_file(cls, d: AnyDict, fp: IO[str], **kwargs: Any) -> None:
         def _get_body(obj: Any) -> Any:
@@ -106,21 +126,43 @@ class TOMLDataclass(DictFileSerializableDataclass, TOMLSerializable, suppress_de
     def _to_dict_value_basic(cls, val: Any) -> Any:
         return to_dict_value_basic(val)
 
+    @classmethod
+    def _top_level_comments(cls) -> Optional[List[str]]:
+        """Returns a list of top-level comments to place before all of the fields in the TOML output."""
+        settings = cls.__settings__.adapt_to(TOMLDataclassSettings)
+        comment = None
+        if settings.comment is not None:
+            comment = settings.comment
+        elif settings.doc_as_comment:
+            comment = cls.__doc__
+        if comment is None:
+            return None
+        # each line must be its own comment
+        return comment.splitlines()
+
     def _to_dict(self, full: bool) -> AnyDict:
         d = super()._to_dict(full)
         def _is_nested(val: Any) -> bool:
             return isinstance(val, (dict, list, tuple))
         d = dict(sorted(d.items(), key=lambda pair: _is_nested(pair[1])))
         doc = tk.document()
-        # TODO: top-level string (from class settings)
+        if (comments := self._top_level_comments()) is not None:
+            for comment in comments:
+                doc.add(tk.comment(comment) if comment.strip() else tk.nl())
+            doc.add(tk.nl())
         for (key, val) in d.items():
             if (fld := self.__dataclass_fields__.get(key)):  # type: ignore[attr-defined]
                 # TODO: handle None values (comment with empty RHS)
                 settings = self._field_settings(fld).adapt_to(DictDataclassFieldSettings)
                 if settings.doc is not None:
-                    comment = tk.comment(str(settings.doc))
-                    doc.add(comment)
+                    doc.add(tk.comment(str(settings.doc)))
                 val = NoneProxy() if (val is None) else val
+                if isinstance(val, tk.TOMLDocument):
+                    # to preserve, comments, must convert value from TOMLDocument to Table
+                    tbl = tk.table()
+                    for pair in val.body:
+                        tbl.add(*pair)  # type: ignore[arg-type]
+                    val = tbl
                 doc.add(key, val)
         return doc
 

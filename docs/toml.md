@@ -86,3 +86,33 @@ height = 30
 !!! note
 
     You can also use the `Annotated`/`Doc` syntax (PEP 727) to specify field comments. See [`DocFieldSettings`][fancy_dataclass.settings.DocFieldSettings].
+
+#### Top-level Comments
+
+You may also want to include comment lines at the top of the TOML file or section. To do this, you can set parameters for the [class-level settings][fancy_dataclass.toml.TOMLDataclassSettings] in one of the following ways:
+
+1. Set the `comment` setting to a string.
+2. Set the `doc_as_comment` flag to `True`. In this case, the class's docstring will be used as a top-level comment.
+
+These options are mutually exclusive (an error will be thrown if `doc_as_comment=True` and `comment` is also set).
+
+For example, suppose we modify the definition of `Rectangle` above to:
+
+```python
+@dataclass
+class Rectangle(TOMLDataclass, doc_as_comment=True):
+    """Rectangle: A quadrilateral with all right angles."""
+    width: float = field(metadata={'doc': 'width (in cm)'})
+    height: float = field(metadata={'doc': 'height (in cm)'})
+```
+
+Then the TOML output becomes:
+
+```toml
+# Rectangle: A quadrilateral with all right angles.
+
+# width (in cm)
+width = 48.5
+# height (in cm)
+height = 30
+```

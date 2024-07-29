@@ -110,6 +110,11 @@ class TestDataclassMixin:
         class MyDC(MyMixin):
             __settings__ = MySettingsOpt(enhanced=True)
         assert MyDC.__settings__ == MySettingsOpt(enhanced=True)
+        # __settings__ attribute is *not* inherited directly from parent
+        # TODO: should it be?
+        class MyDCSub(MyDC):
+            ...
+        assert MyDCSub.__settings__ == MySettingsOpt(enhanced=False)
         # can set required keyword arg on the base class
         @dataclass
         class MyMixinReq(DataclassMixin, enhanced=False):

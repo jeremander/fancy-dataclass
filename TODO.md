@@ -4,8 +4,6 @@
 
 ## v0.7.0
 
-- Comments in `TOMLDataclass` serialization
-  - Top-level doc (class setting)
 - Test `BooleanOptionalAction` in `ArgparseDataclass` (>= 3.9 only)
 
 ## v0.8.0

@@ -659,8 +659,8 @@ class TestTOML(TestDict):
         """Tests behavior of list types."""
         self._test_serialize_convert(obj, s, err)
 
-    def test_doc(self, tmp_path):
-        """Tests inclusion of documentation in TOML serialization."""
+    def test_field_doc(self, tmp_path):
+        """Tests field-level documentation in TOML serialization."""
         @dataclass
         class DCDoc(TOMLDataclass):
             a: int = 1
@@ -678,7 +678,7 @@ class TestTOML(TestDict):
         obj = DCDocOuter()
         self._test_serialize_round_trip(obj, tmp_path)
         # NOTE: nested gets moved to the end, to prevent parsing ambiguity
-        assert obj.to_toml_string() == '# a string\nstring = "abc"\n# a flag\nflag = false\n\n# nested object\n[nested]\na = 1\nb = 2\nc = 3\nd = 4\n'
+        assert obj.to_toml_string() == '# a string\nstring = "abc"\n# a flag\nflag = false\n\n# nested object\n[nested]\na = 1\n# b value\nb = 2\n# c value\nc = 3\n# d value\nd = 4\n'
         @dataclass
         class DCList(TOMLDataclass):
             vals: Annotated[list[int], Doc('a list')]
@@ -694,3 +694,41 @@ class TestTOML(TestDict):
         obj = DCOptional(1)
         self._test_serialize_round_trip(obj, tmp_path)
         assert obj.to_toml_string() == '# nullable\nval = 1\n'
+
+    def test_top_level_doc(self, tmp_path):
+        """Tests top-level comments in TOML serialization."""
+        @dataclass
+        class DC1(TOMLDataclass, comment='DC1'):
+            x: int = 5
+        obj = DC1()
+        self._test_serialize_round_trip(obj, tmp_path)
+        assert obj.to_toml_string() == '# DC1\n\nx = 5\n'
+        @dataclass
+        class DC2(TOMLDataclass, doc_as_comment=True):
+            """DC2
+
+Subtitle"""
+            x: int = 5
+        obj = DC2()
+        self._test_serialize_round_trip(obj, tmp_path)
+        assert obj.to_toml_string() == '# DC2\n\n# Subtitle\n\nx = 5\n'
+        # comment with no fields
+        @dataclass
+        class DC3(TOMLDataclass, comment='DC3\nSubtitle'):
+            ...
+        obj = DC3()
+        self._test_serialize_round_trip(obj, tmp_path)
+        assert obj.to_toml_string() == '# DC3\n# Subtitle\n\n'
+        # error if comment is set and doc_as_comment=True
+        with pytest.raises(ValueError, match='but not both'):
+            class DC4(TOMLDataclass, comment='DC4', doc_as_comment=True):
+                """DC4"""
+        # nested top-level comment
+        @dataclass
+        class DC5(TOMLDataclass, comment='DC5'):
+            x: int
+            nested: DC1
+            y: int
+        obj = DC5(4, DC1(5), 6)
+        self._test_serialize_round_trip(obj, tmp_path)
+        assert obj.to_toml_string() == '# DC5\n\nx = 4\ny = 6\n\n[nested]\n# DC1\n\nx = 5\n'

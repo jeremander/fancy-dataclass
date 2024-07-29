@@ -13,7 +13,7 @@ import sys
 import types
 from typing import IO, TYPE_CHECKING, Any, Callable, Dict, ForwardRef, Generic, Iterable, Iterator, List, Optional, Sequence, Set, Tuple, Type, TypeVar, Union, cast, get_args, get_origin, get_type_hints
 
-from typing_extensions import TypeGuard
+from typing_extensions import TypeGuard, dataclass_transform
 
 
 if TYPE_CHECKING:
@@ -250,6 +250,7 @@ def get_subclass_with_name(cls: Type[T], name: str) -> Type[T]:
 
 # DATACLASS
 
+@dataclass_transform(kw_only_default=True)
 def dataclass_kw_only(**kwargs: Any) -> Callable[[Type[T]], Type[T]]:
     """Identical to the usual dataclass decorator, but adds kw_only=True (if Python version is >= 3.10)."""
     # TODO: remove this once we no longer support < 3.10
@@ -579,6 +580,13 @@ def merge_dataclasses(*classes: type, cls_name: str = '_', bases: Optional[Tuple
 
     Raises:
         TypeError: If there are any duplicate field names"""
+    # remove any parent classes (NOTE: this is quadratic in the number of classes)
+    # this can prevent 'Cannot create a consistent method resolution order' errors among base classes
+    filtered_classes = []
+    for cls1 in classes:
+        if all((cls2 is cls1) or (not issubclass(cls2, cls1)) for cls2 in classes):
+            filtered_classes.append(cls1)
+    classes = tuple(filtered_classes)
     flds = []
     field_type_map: Dict[str, type] = {}
     base_map: Dict[str, type] = {}
