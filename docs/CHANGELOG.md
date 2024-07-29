@@ -14,7 +14,19 @@ Types of changes:
     - Security
 -->
 
-## [Unreleased]
+## [0.7.0]
+
+2024-07-29
+
+### Added
+
+- `TOMLDataclass`
+    - Support for top-level and field comments
+    - `TOMLDataclassSettings` to configure top-level comments
+        - `comment`: set comment explicitly
+        - `doc_as_comment`: flag indicating to use class docstring as comment
+- `DocFieldSettings` to extract documentation from dataclass fields (supports [PEP 727](https://peps.python.org/pep-0727/))
+- New module, `fancy_dataclass.settings`, for mixin and field settings
 
 ### Changed
 
@@ -23,6 +35,10 @@ Types of changes:
     - Instead, `store_type` is now a string, one of `'auto'` (default), `'off'`, `'name'`, `'qualname'`
         - `JSONDataclass` will raise `TypeError` if a subclass does not set it to a value other than `'auto'`
         - `JSONBaseDataclass` sets it to `'qualname'`
+- Improved `TOMLDataclass` serialization
+- Renamed `DataclassMixinSettings` to `MixinSettings`
+- Mixin and field settings now keyword-only if possible
+- `DictDataclassSettings`: remove `qualified_type` flag in favor of new field, `store_type` with string designating how to store the type in the dict
 
 ### Fixed
 
@@ -228,7 +244,8 @@ Types of changes:
     - `SQLDataclass`: SQL persistence via `sqlalchemy`
     - `SubprocessDataclass`: call out to another program via `subprocess`
 
-[unreleased]: https://github.com/jeremander/fancy-dataclass/compare/v0.6.1...HEAD
+[unreleased]: https://github.com/jeremander/fancy-dataclass/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.7.0
 [0.6.1]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.6.1
 [0.6.0]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.6.0
 [0.5.0]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.5.0
