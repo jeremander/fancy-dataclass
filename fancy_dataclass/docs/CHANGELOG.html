@@ -711,14 +711,23 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#unreleased" class="md-nav__link">
+  <a href="#070" class="md-nav__link">
     <span class="md-ellipsis">
-      Unreleased
+      0.7.0
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Unreleased">
+    <nav class="md-nav" aria-label="0.7.0">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#changed" class="md-nav__link">
@@ -754,7 +763,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#added" class="md-nav__link">
+  <a href="#added_1" class="md-nav__link">
     <span class="md-ellipsis">
       Added
     </span>
@@ -787,7 +796,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#added_1" class="md-nav__link">
+  <a href="#added_2" class="md-nav__link">
     <span class="md-ellipsis">
       Added
     </span>
@@ -820,7 +829,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#added_2" class="md-nav__link">
+  <a href="#added_3" class="md-nav__link">
     <span class="md-ellipsis">
       Added
     </span>
@@ -895,7 +904,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#added_3" class="md-nav__link">
+  <a href="#added_4" class="md-nav__link">
     <span class="md-ellipsis">
       Added
     </span>
@@ -928,7 +937,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#added_4" class="md-nav__link">
+  <a href="#added_5" class="md-nav__link">
     <span class="md-ellipsis">
       Added
     </span>
@@ -952,7 +961,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#added_5" class="md-nav__link">
+  <a href="#added_6" class="md-nav__link">
     <span class="md-ellipsis">
       Added
     </span>
@@ -985,7 +994,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#added_6" class="md-nav__link">
+  <a href="#added_7" class="md-nav__link">
     <span class="md-ellipsis">
       Added
     </span>
@@ -1018,7 +1027,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#added_7" class="md-nav__link">
+  <a href="#added_8" class="md-nav__link">
     <span class="md-ellipsis">
       Added
     </span>
@@ -1060,7 +1069,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#added_8" class="md-nav__link">
+  <a href="#added_9" class="md-nav__link">
     <span class="md-ellipsis">
       Added
     </span>
@@ -1084,7 +1093,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#added_9" class="md-nav__link">
+  <a href="#added_10" class="md-nav__link">
     <span class="md-ellipsis">
       Added
     </span>
@@ -1126,7 +1135,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#added_10" class="md-nav__link">
+  <a href="#added_11" class="md-nav__link">
     <span class="md-ellipsis">
       Added
     </span>
@@ -1170,7 +1179,22 @@ Types of changes:
     - Security
 -->
 
-<h2 id="unreleased"><a href="https://github.com/jeremander/fancy-dataclass/compare/v0.6.1...HEAD">Unreleased</a></h2>
+<h2 id="070"><a href="https://github.com/jeremander/fancy-dataclass/releases/tag/v0.7.0">0.7.0</a></h2>
+<p>2024-07-29</p>
+<h3 id="added">Added</h3>
+<ul>
+<li><code>TOMLDataclass</code><ul>
+<li>Support for top-level and field comments</li>
+<li><code>TOMLDataclassSettings</code> to configure top-level comments<ul>
+<li><code>comment</code>: set comment explicitly</li>
+<li><code>doc_as_comment</code>: flag indicating to use class docstring as comment</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><code>DocFieldSettings</code> to extract documentation from dataclass fields (supports <a href="https://peps.python.org/pep-0727/">PEP 727</a>)</li>
+<li>New module, <code>fancy_dataclass.settings</code>, for mixin and field settings</li>
+</ul>
 <h3 id="changed">Changed</h3>
 <ul>
 <li><code>DictDataclassSettings</code><ul>
@@ -1182,6 +1206,10 @@ Types of changes:
 </li>
 </ul>
 </li>
+<li>Improved <code>TOMLDataclass</code> serialization</li>
+<li>Renamed <code>DataclassMixinSettings</code> to <code>MixinSettings</code></li>
+<li>Mixin and field settings now keyword-only if possible</li>
+<li><code>DictDataclassSettings</code>: remove <code>qualified_type</code> flag in favor of new field, <code>store_type</code> with string designating how to store the type in the dict</li>
 </ul>
 <h3 id="fixed">Fixed</h3>
 <ul>
@@ -1189,7 +1217,7 @@ Types of changes:
 </ul>
 <h2 id="061"><a href="https://github.com/jeremander/fancy-dataclass/releases/tag/v0.6.1">0.6.1</a></h2>
 <p>2024-06-14</p>
-<h3 id="added">Added</h3>
+<h3 id="added_1">Added</h3>
 <ul>
 <li><code>ArgparseDataclass</code>: support for <code>--version</code> option (via <code>version</code> action)<ul>
 <li>User may set the <code>version</code> attribute in <code>ArgparseDataclassSettings</code> during inheritance</li>
@@ -1207,7 +1235,7 @@ Types of changes:
 </ul>
 <h2 id="060"><a href="https://github.com/jeremander/fancy-dataclass/releases/tag/v0.6.0">0.6.0</a></h2>
 <p>2024-06-10</p>
-<h3 id="added_1">Added</h3>
+<h3 id="added_2">Added</h3>
 <ul>
 <li>New <code>ArgparseDataclassSettings</code> fields:<ul>
 <li><code>formatter_class</code>: controls help formatter class for parent parser and subcommands (can be overridden by subcommands)</li>
@@ -1224,7 +1252,7 @@ Types of changes:
 </ul>
 <h2 id="050"><a href="https://github.com/jeremander/fancy-dataclass/releases/tag/v0.5.0">0.5.0</a></h2>
 <p>2024-06-02</p>
-<h3 id="added_2">Added</h3>
+<h3 id="added_3">Added</h3>
 <ul>
 <li>Explicit <code>required</code> metadata flag in <code>ArgparseDataclass</code></li>
 <li>More details in web docs for <code>JSONDataclass</code>, <code>TOMLDataclass</code></li>
@@ -1261,7 +1289,7 @@ Types of changes:
 </ul>
 <h2 id="044"><a href="https://github.com/jeremander/fancy-dataclass/releases/tag/v0.4.4">0.4.4</a></h2>
 <p>2024-05-06</p>
-<h3 id="added_3">Added</h3>
+<h3 id="added_4">Added</h3>
 <ul>
 <li>Groups, mutually exclusive groups, and subparsers for <code>ArgparseDataclass</code><ul>
 <li>Nested <code>ArgparseDataclass</code> can be used as subparser if <code>subcommand=True</code> is set in field metadata</li>
@@ -1276,7 +1304,7 @@ Types of changes:
 </ul>
 <h2 id="043"><a href="https://github.com/jeremander/fancy-dataclass/releases/tag/v0.4.3">0.4.3</a></h2>
 <p>2024-04-30</p>
-<h3 id="added_4">Added</h3>
+<h3 id="added_5">Added</h3>
 <ul>
 <li><code>fancy_dataclass.func</code> module with <code>func_dataclass</code> wrapper<ul>
 <li>Converts an ordinary function into a parametrized dataclass type</li>
@@ -1286,7 +1314,7 @@ Types of changes:
 </ul>
 <h2 id="042"><a href="https://github.com/jeremander/fancy-dataclass/releases/tag/v0.4.2">0.4.2</a></h2>
 <p>2024-04-29</p>
-<h3 id="added_5">Added</h3>
+<h3 id="added_6">Added</h3>
 <ul>
 <li><code>fancy_dataclass/docs</code> subfolder containing HTML documentation (accessible without Internet access)</li>
 </ul>
@@ -1301,7 +1329,7 @@ Types of changes:
 </ul>
 <h2 id="041"><a href="https://github.com/jeremander/fancy-dataclass/releases/tag/v0.4.1">0.4.1</a></h2>
 <p>2024-04-22</p>
-<h3 id="added_6">Added</h3>
+<h3 id="added_7">Added</h3>
 <ul>
 <li><code>DictConfig</code> class for configs stored as untyped dict</li>
 <li><code>DataclassAdaptable</code> mixin to convert one dataclass to another<ul>
@@ -1321,7 +1349,7 @@ Types of changes:
 </ul>
 <h2 id="031"><a href="https://github.com/jeremander/fancy-dataclass/releases/tag/v0.3.1">0.3.1</a></h2>
 <p>2024-04-16</p>
-<h3 id="added_7">Added</h3>
+<h3 id="added_8">Added</h3>
 <ul>
 <li>Documentation: Badges in README (workflow passing, coverage, docs, etc.)</li>
 <li>CI:<ul>
@@ -1342,7 +1370,7 @@ Types of changes:
 </ul>
 <h2 id="030"><a href="https://github.com/jeremander/fancy-dataclass/releases/tag/v0.3.0">0.3.0</a></h2>
 <p>2024-04-14</p>
-<h3 id="added_8">Added</h3>
+<h3 id="added_9">Added</h3>
 <ul>
 <li><code>TOMLDataclass</code> for saving/loading TOML via <a href="https://tomlkit.readthedocs.io/en/latest/"><code>tomlkit</code></a><ul>
 <li>Support for loading TOML configurations in <code>ConfigDataclass</code></li>
@@ -1358,7 +1386,7 @@ Types of changes:
 </ul>
 <h2 id="020"><a href="https://github.com/jeremander/fancy-dataclass/releases/tag/v0.2.0">0.2.0</a></h2>
 <p>2024-04-13</p>
-<h3 id="added_9">Added</h3>
+<h3 id="added_10">Added</h3>
 <ul>
 <li><code>ConfigDataclass</code> mixin for global configurations</li>
 <li>Customization of <code>DataclassMixin</code>:<ul>
@@ -1390,7 +1418,7 @@ Types of changes:
 </ul>
 <h2 id="010"><a href="https://github.com/jeremander/fancy-dataclass/releases/tag/v0.1.0">0.1.0</a></h2>
 <p>2022-06-06</p>
-<h3 id="added_10">Added</h3>
+<h3 id="added_11">Added</h3>
 <ul>
 <li><code>DataclassMixin</code> class providing extra dataclass features<ul>
 <li><code>ArgparseDataclass</code>: command-line argument parsing</li>
