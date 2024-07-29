@@ -63,9 +63,6 @@ lint.exclude = [
     "scripts/*",
 ]
 
-# ignore unused imports in __init__.py files
-lint.ignore-init-module-imports = true
-
 line-length = 10000
 
 [lint.per-file-ignores]

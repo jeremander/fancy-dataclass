@@ -271,13 +271,13 @@ class DictDataclass(DataclassMixin):
             return cls._from_dict_value_basic(tp, val)
         # compound data type
         args = get_args(tp)
-        if origin_type == list:
+        if origin_type is list:
             subtype = args[0]
             return [convert_val(subtype, elt) for elt in val]
-        if origin_type == dict:
+        if origin_type is dict:
             (keytype, valtype) = args
             return {convert_val(keytype, k): convert_val(valtype, v) for (k, v) in val.items()}
-        if origin_type == tuple:
+        if origin_type is tuple:
             subtypes = args
             if subtypes[-1] == Ellipsis:  # treat it like a list
                 subtype = subtypes[0]

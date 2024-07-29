@@ -145,7 +145,7 @@ class JSONDataclass(DictFileSerializableDataclass, JSONSerializable):  # type: i
                 return tp(*vals)
             except KeyError as e:
                 raise TypeConversionError(tp, val) from e
-        if origin_type == dict:  # decode keys to be valid JSON
+        if origin_type is dict:  # decode keys to be valid JSON
             (keytype, valtype) = get_args(tp)
             return {cls.json_key_decoder(cls._from_dict_value(keytype, k)): cls._from_dict_value(valtype, v, strict=strict) for (k, v) in val.items()}
         return super()._from_dict_value(tp, val)
