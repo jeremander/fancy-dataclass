@@ -169,7 +169,7 @@ def _is_instance(obj: Any, tp: type) -> bool:
 
     This attempts to be somewhat more robust than `isinstance` in that it will handle compound types like `List[...]`."""
     # TODO: make this more complete
-    if tp is Any:
+    if tp is Any:  # type: ignore[comparison-overlap]
         return True
     origin = get_origin(tp)
     if origin is Union:
@@ -523,7 +523,7 @@ def _flatten_dataclass(cls: Type[T], bases: Optional[Tuple[type, ...]] = None) -
             for fld in get_dataclass_fields(subobj):
                 val = getattr(subobj, fld.name)
                 if is_dataclass(val):  # recurse into subfield
-                    kwargs.update(_to_dict(prefix + (fld.name,), val))
+                    kwargs.update(_to_dict(prefix + (fld.name,), val))  # type: ignore[arg-type]
                 else:
                     kwargs[fld.name] = val
             return kwargs

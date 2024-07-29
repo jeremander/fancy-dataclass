@@ -25,8 +25,7 @@ class Config:
 
         Returns:
             Global configuration object (`None` if not set)"""
-        # return deepcopy(cls._config)  # type: ignore[return-value]
-        return cls._config  # type: ignore[return-value]
+        return cls._config
 
     @classmethod
     def _set_config(cls, config: Optional[Self]) -> None:

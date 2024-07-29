@@ -60,11 +60,11 @@ pre-publish = [
 
 [tool.hatch.envs.lint]
 dependencies = [
-  "mypy>=1.0",
+  "mypy>=1.11",
   "numpy",
   "py-gadzooks>=0.2.9",
   "pytest",
-  "ruff>=0.3",
+  "ruff>=0.5.5",
   "vermin>=1.6",
 ]
 
