@@ -112,6 +112,13 @@ class DCOptionalStr(JSONDataclass):
 class DCUnion(JSONDataclass):
     x: Union[int, str]
 
+if sys.version_info[:2] < (3, 10):
+    DCBarUnion = DCUnion
+else:
+    @dataclass
+    class DCBarUnion(JSONDataclass):  # novermin
+        x: int | str
+
 @dataclass
 class DCLiteral(JSONDataclass):
     lit: Literal['a', 1]
@@ -201,7 +208,6 @@ class DCList(JSONDataclass):
 class DCListOptional(JSONDataclass):
     vals: List[Optional[int]]
 
-
 @dataclass
 class DCNumpy(JSONDataclass, suppress_defaults=False):
     num_int: np.int64 = np.int64(1)
@@ -243,6 +249,8 @@ TEST_JSON = [
     DCUnion(1),
     DCUnion('a'),
     DCUnion('1'),
+    DCBarUnion(1),
+    DCBarUnion('a'),
     DCLiteral('a'),
     DCLiteral(1),
     DCDatetime(NOW),

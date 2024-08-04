@@ -18,6 +18,7 @@ Types of changes:
 
 ### Fixed
 
+- Bug with dict value conversion of union types constructed with `|` operator (Python 3.10 and above).
 - Bug with dataclass coercion for nested dicts.
 - `TOMLDataclass` formatting of nested dicts.
 

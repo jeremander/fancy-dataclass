@@ -3,6 +3,7 @@ from copy import copy
 import dataclasses
 from dataclasses import Field
 from functools import partial
+import types
 from typing import TYPE_CHECKING, Any, ClassVar, Dict, Iterable, Literal, Optional, Type, TypeVar, Union, _TypedDictMeta, get_args, get_origin  # type: ignore[attr-defined]
 
 from typing_extensions import Self, _AnnotatedAlias
@@ -17,6 +18,8 @@ if TYPE_CHECKING:
 
 T = TypeVar('T', bound=DataclassMixin)
 D = TypeVar('D', bound='DataclassInstance')
+
+_UNION_TYPES = [Union, types.UnionType] if hasattr(types, 'UnionType') else [Union]  # novermin
 
 AnyDict = Dict[str, Any]
 # mode for storing data type in dict
@@ -283,7 +286,7 @@ class DictDataclass(DataclassMixin):
                 subtype = subtypes[0]
                 return tuple(convert_val(subtype, elt) for elt in val)
             return tuple(convert_val(subtype, elt) for (subtype, elt) in zip(args, val))
-        if origin_type == Union:
+        if origin_type in _UNION_TYPES:
             for subtype in args:
                 try:
                     # NB: will resolve to the first valid type in the Union
