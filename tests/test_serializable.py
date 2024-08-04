@@ -6,7 +6,7 @@ from enum import Enum, Flag, auto
 import math
 import re
 import sys
-from typing import Any, List, Literal, NamedTuple, Optional, TypedDict, Union
+from typing import Any, Dict, List, Literal, NamedTuple, Optional, TypedDict, Union
 
 import numpy as np
 import pytest
@@ -658,6 +658,24 @@ class TestTOML(TestDict):
     def test_list(self, obj, s, err):
         """Tests behavior of list types."""
         self._test_serialize_convert(obj, s, err)
+
+    def test_nested_dict(self, tmp_path):
+        """Tests serialization of a dict whose values are TOMLDataclass."""
+        @dataclass
+        class DCInner0(TOMLDataclass):
+            ...
+        @dataclass
+        class DCOuter0(TOMLDataclass):
+            inner: Dict[str, DCInner0]
+        obj = DCOuter0({'key': DCInner0()})
+        self._test_serialize_round_trip(obj, tmp_path)
+        assert obj.to_toml_string() == '[inner.key]\n'
+        obj = DCOuter0({'key1': DCInner0(), 'key2': DCInner0()})
+        self._test_serialize_round_trip(obj, tmp_path)
+        assert obj.to_toml_string() == '[inner]\n\n[inner.key1]\n\n[inner.key2]\n'
+        @dataclass
+        class DCInner1(TOMLDataclass):
+            x: int
 
     def test_field_doc(self, tmp_path):
         """Tests field-level documentation in TOML serialization."""

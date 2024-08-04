@@ -157,11 +157,14 @@ class TOMLDataclass(DictFileSerializableDataclass, TOMLSerializable, suppress_de
                 if settings.doc is not None:
                     doc.add(tk.comment(str(settings.doc)))
                 val = NoneProxy() if (val is None) else val
-                if isinstance(val, tk.TOMLDocument):
+                if isinstance(val, dict):
                     # to preserve, comments, must convert value from TOMLDocument to Table
                     tbl = tk.table()
-                    for pair in val.body:
-                        tbl.add(*pair)  # type: ignore[arg-type]
+                    if (len(val) > 1) and any(isinstance(subval, dict) for subval in val.values()):
+                        tbl.add(tk.nl())
+                    pair_iter = val.body if isinstance(val, tk.TOMLDocument) else val.items()
+                    for pair in pair_iter:
+                        tbl.add(*pair)
                     val = tbl
                 doc.add(key, val)
         return doc

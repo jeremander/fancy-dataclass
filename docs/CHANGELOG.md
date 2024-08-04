@@ -14,6 +14,13 @@ Types of changes:
     - Security
 -->
 
+## [0.7.1]
+
+### Fixed
+
+- Bug with dataclass coercion for nested dicts.
+- `TOMLDataclass` formatting of nested dicts.
+
 ## [0.7.0]
 
 2024-07-29

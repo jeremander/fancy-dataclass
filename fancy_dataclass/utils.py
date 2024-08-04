@@ -375,7 +375,7 @@ def coerce_to_dataclass(cls: Type[T], obj: object) -> T:
                 origin_type = get_origin(fld.type)
                 if origin_type and issubclass_safe(origin_type, Iterable):
                     if issubclass(origin_type, dict):
-                        (_, val_type) = get_args(origin_type)
+                        (_, val_type) = get_args(fld.type)
                         if is_dataclass(val_type):
                             val = type(val)({key: coerce_to_dataclass(val_type, elt) for (key, elt) in val.items()})
                     elif issubclass(origin_type, tuple):
@@ -407,7 +407,7 @@ def dataclass_type_map(cls: Type['DataclassInstance'], func: Callable[[type], ty
         if origin_type and (not _is_instance(fld.type, _AnnotatedAlias)) and issubclass_safe(origin_type, Iterable):
             otype = container_type_map.get(origin_type, origin_type)
             if issubclass(origin_type, dict):
-                (key_type, val_type) = get_args(origin_type)
+                (key_type, val_type) = get_args(fld.type)
                 tp = otype[key_type, _map_func(val_type)]
             elif issubclass(origin_type, tuple):
                 tp = otype[tuple([_map_func(elt_type) for elt_type in get_args(fld.type)])]
