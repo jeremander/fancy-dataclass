@@ -720,10 +720,28 @@ class TestTOML(TestDict):
         assert obj.to_toml_string() == '[inner.key]\n'
         obj = DCOuter0({'key1': DCInner0(), 'key2': DCInner0()})
         self._test_serialize_round_trip(obj, tmp_path)
-        assert obj.to_toml_string() == '[inner]\n\n[inner.key1]\n\n[inner.key2]\n'
+        assert obj.to_toml_string() == '\n[inner.key1]\n\n[inner.key2]\n'
+        @dataclass
+        class DCOuter01(TOMLDataclass):
+            inner: Annotated[Dict[str, DCInner0], Doc('An inner field')]
+        obj = DCOuter01({'key': DCInner0()})
+        self._test_serialize_round_trip(obj, tmp_path)
+        assert obj.to_toml_string() == '\n# An inner field\n[inner.key]\n'
+        obj = DCOuter01({'key1': DCInner0(), 'key2': DCInner0()})
+        self._test_serialize_round_trip(obj, tmp_path)
+        assert obj.to_toml_string() == '\n# An inner field\n\n[inner.key1]\n\n[inner.key2]\n'
         @dataclass
         class DCInner1(TOMLDataclass):
-            x: int
+            x: int = 5
+        @dataclass
+        class DCOuter1(TOMLDataclass):
+            inner: Dict[str, DCInner1]
+        obj = DCOuter1({'key': DCInner1()})
+        self._test_serialize_round_trip(obj, tmp_path)
+        assert obj.to_toml_string() == '[inner.key]\nx = 5\n'
+        obj = DCOuter1({'key1': DCInner1(1), 'key2': DCInner1(2)})
+        self._test_serialize_round_trip(obj, tmp_path)
+        assert obj.to_toml_string() == '\n[inner.key1]\nx = 1\n\n[inner.key2]\nx = 2\n'
 
     def test_field_doc(self, tmp_path):
         """Tests field-level documentation in TOML serialization."""
