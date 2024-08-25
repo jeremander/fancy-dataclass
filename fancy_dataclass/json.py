@@ -1,5 +1,6 @@
+from abc import abstractmethod
 from datetime import datetime
-from io import IOBase, StringIO, TextIOBase
+from io import IOBase, StringIO
 import json
 from json import JSONEncoder
 from typing import IO, Any, Type, cast, get_args, get_origin
@@ -9,6 +10,15 @@ from typing_extensions import Self
 from fancy_dataclass.dict import AnyDict
 from fancy_dataclass.serialize import DictFileSerializableDataclass, TextFileSerializable, from_dict_value_basic, to_dict_value_basic
 from fancy_dataclass.utils import AnyIO, TypeConversionError, issubclass_safe
+
+
+def _dump_value_to_json(val: Any, fp: IO[str], encoder_cls: Type[JSONEncoder], **kwargs: Any) -> None:
+    kwargs = dict(kwargs)
+    indent = kwargs.get('indent')
+    if (indent is not None) and (indent < 0):
+        kwargs['indent'] = None
+    kwargs['cls'] = encoder_cls
+    json.dump(val, fp, **kwargs)
 
 
 class JSONSerializable(TextFileSerializable):
@@ -37,6 +47,16 @@ class JSONSerializable(TextFileSerializable):
         """Override this method to decode a JSON key, for use with `from_dict`."""
         return key
 
+    @classmethod
+    @abstractmethod
+    def _to_json_value(cls, obj: Self) -> Any:
+        """Converts the object to a value that can be JSON serialized."""
+
+    @classmethod
+    def _to_text_file(cls, obj: Self, fp: IO[str], **kwargs: Any) -> None:
+        json_val = type(obj)._to_json_value(obj)
+        _dump_value_to_json(json_val, fp, obj.json_encoder(), **kwargs)
+
     def to_json(self, fp: IOBase, **kwargs: Any) -> None:
         """Writes the object as JSON to a file-like object (text or binary).
         If binary, applies UTF-8 encoding.
@@ -44,7 +64,7 @@ class JSONSerializable(TextFileSerializable):
         Args:
             fp: A writable file-like object
             kwargs: Keyword arguments"""
-        return JSONDataclass._to_file(self, fp, **kwargs)  # type: ignore[arg-type]
+        return type(self)._to_file(self, fp, **kwargs)  # type: ignore[arg-type]
 
     def to_json_string(self, **kwargs: Any) -> str:
         """Converts the object into a JSON string.
@@ -54,7 +74,9 @@ class JSONSerializable(TextFileSerializable):
 
         Returns:
             Object rendered as a JSON string"""
-        return JSONDataclass._to_string(self, **kwargs)  # type: ignore[arg-type]
+        with StringIO() as stream:
+            JSONSerializable._to_text_file(self, stream, **kwargs)
+            return stream.getvalue()
 
     @classmethod
     def _from_binary_file(cls, fp: IO[bytes], **kwargs: Any) -> Self:
@@ -100,24 +122,12 @@ class JSONDataclass(DictFileSerializableDataclass, JSONSerializable):  # type: i
                     raise TypeError("when subclassing a JSONDataclass, you must set store_type to a value other than 'auto', or subclass JSONBaseDataclass instead")
 
     @classmethod
+    def _to_json_value(cls, obj: Self) -> Any:
+        return cls.to_dict(obj)
+
+    @classmethod
     def _dict_to_text_file(cls, d: AnyDict, fp: IO[str], **kwargs: Any) -> None:
-        return _dict_to_text_file(cls, d, fp, **kwargs)
-
-    def to_json(self, fp: IOBase, **kwargs: Any) -> None:
-        """Writes the object as JSON to a file-like object (text or binary).
-        If binary, applies UTF-8 encoding."""
-        # NOTE: we cannot necessarily leverage JSONSerializable's implementation, since in a multiple inheritance situation there may be conflicting implementations of _dict_to_text_file, and we need to ensure the JSON one is used.
-        if isinstance(fp, TextIOBase):
-            _dict_to_text_file(type(self), self.to_dict(), fp, **kwargs)  # type: ignore[arg-type]
-        else:
-            fp.write(self.to_json_string(**kwargs).encode())
-
-    def to_json_string(self, **kwargs: Any) -> str:
-        """Converts the object into a JSON string."""
-        # NOTE: we cannot necessarily leverage JSONSerializable's implementation, since in a multiple inheritance situation there may be conflicting implementations of _dict_to_text_file, and we need to ensure the JSON one is used.
-        with StringIO() as stream:
-            _dict_to_text_file(type(self), self.to_dict(), stream, **kwargs)
-            return stream.getvalue()
+        return _dump_value_to_json(d, fp, cls.json_encoder(), **kwargs)
 
     @classmethod
     def _text_file_to_dict(cls, fp: IO[str], **kwargs: Any) -> AnyDict:
@@ -167,11 +177,3 @@ class JSONBaseDataclass(JSONDataclass, store_type='qualname'):
     """This class should be used in place of [`JSONDataclass`][fancy_dataclass.json.JSONDataclass] when you intend to inherit from the class.
 
     When converting a subclass to a dict with [`to_dict`][fancy_dataclass.dict.DictDataclass.to_dict], it will store the subclass's fully qualified type in the `type` field. It will also resolve this type when calling [`from_dict`][fancy_dataclass.dict.DictDataclass.from_dict]."""
-
-
-def _dict_to_text_file(cls: Type[JSONSerializable], d: AnyDict, fp: IO[str], **kwargs: Any) -> None:
-    indent = kwargs.get('indent')
-    if (indent is not None) and (indent < 0):
-        kwargs['indent'] = None
-    kwargs['cls'] = cls.json_encoder()
-    json.dump(d, fp, **kwargs)

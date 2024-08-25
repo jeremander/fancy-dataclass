@@ -15,7 +15,7 @@ import pytest
 from typing_extensions import Annotated, Doc
 
 from fancy_dataclass.dict import DictDataclass
-from fancy_dataclass.json import JSONBaseDataclass, JSONDataclass
+from fancy_dataclass.json import JSONBaseDataclass, JSONDataclass, JSONSerializable
 from fancy_dataclass.toml import TOMLDataclass
 from fancy_dataclass.utils import coerce_to_dataclass, dataclass_type_map, issubclass_safe
 
@@ -593,6 +593,23 @@ class TestJSON(TestDict):
 
     def test_custom_json_encoder(self):
         """Tests behavior of overriding the `json_encoder` method."""
+        class MyEncoder(JSONEncoder):
+            def default(self, obj: Any) -> Any:
+                if isinstance(obj, set):
+                    return sorted(obj)
+                return super().default(obj)
+        class MyClass(JSONSerializable):
+            @classmethod
+            def _to_json_value(cls, obj):
+                return {1, 2, 3}
+            @classmethod
+            def _from_text_file(cls, fp, **kwargs):
+                return cls()
+            @classmethod
+            def json_encoder(cls):
+                return MyEncoder
+        obj = MyClass()
+        assert obj.to_json_string() == '[1, 2, 3]'
         @dataclass
         class MyDC1(JSONBaseDataclass, store_type='off', suppress_defaults=False):
             xs: Set[int] = field(default_factory=lambda: {1, 2, 3})
@@ -600,11 +617,6 @@ class TestJSON(TestDict):
         class MyDC2(MyDC1):
             @classmethod
             def json_encoder(cls):
-                class MyEncoder(JSONEncoder):
-                    def default(self, obj: Any) -> Any:
-                        if isinstance(obj, set):
-                            return sorted(obj)
-                        return super().default(obj)
                 return MyEncoder
         obj1 = MyDC1()
         assert obj1.to_dict() == {'xs': {1, 2, 3}}
