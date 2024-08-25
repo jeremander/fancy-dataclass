@@ -1,5 +1,5 @@
 from datetime import datetime
-from io import IOBase
+from io import IOBase, StringIO, TextIOBase
 import json
 from json import JSONEncoder
 from typing import IO, Any, Type, cast, get_args, get_origin
@@ -101,11 +101,23 @@ class JSONDataclass(DictFileSerializableDataclass, JSONSerializable):  # type: i
 
     @classmethod
     def _dict_to_text_file(cls, d: AnyDict, fp: IO[str], **kwargs: Any) -> None:
-        indent = kwargs.get('indent')
-        if (indent is not None) and (indent < 0):
-            kwargs['indent'] = None
-        kwargs['cls'] = cls.json_encoder()
-        json.dump(d, fp, **kwargs)
+        return _dict_to_text_file(cls, d, fp, **kwargs)
+
+    def to_json(self, fp: IOBase, **kwargs: Any) -> None:
+        """Writes the object as JSON to a file-like object (text or binary).
+        If binary, applies UTF-8 encoding."""
+        # NOTE: we cannot necessarily leverage JSONSerializable's implementation, since in a multiple inheritance situation there may be conflicting implementations of _dict_to_text_file, and we need to ensure the JSON one is used.
+        if isinstance(fp, TextIOBase):
+            _dict_to_text_file(type(self), self.to_dict(), fp, **kwargs)  # type: ignore[arg-type]
+        else:
+            fp.write(self.to_json_string(**kwargs).encode())
+
+    def to_json_string(self, **kwargs: Any) -> str:
+        """Converts the object into a JSON string."""
+        # NOTE: we cannot necessarily leverage JSONSerializable's implementation, since in a multiple inheritance situation there may be conflicting implementations of _dict_to_text_file, and we need to ensure the JSON one is used.
+        with StringIO() as stream:
+            _dict_to_text_file(type(self), self.to_dict(), stream, **kwargs)
+            return stream.getvalue()
 
     @classmethod
     def _text_file_to_dict(cls, fp: IO[str], **kwargs: Any) -> AnyDict:
@@ -155,3 +167,11 @@ class JSONBaseDataclass(JSONDataclass, store_type='qualname'):
     """This class should be used in place of [`JSONDataclass`][fancy_dataclass.json.JSONDataclass] when you intend to inherit from the class.
 
     When converting a subclass to a dict with [`to_dict`][fancy_dataclass.dict.DictDataclass.to_dict], it will store the subclass's fully qualified type in the `type` field. It will also resolve this type when calling [`from_dict`][fancy_dataclass.dict.DictDataclass.from_dict]."""
+
+
+def _dict_to_text_file(cls: Type[JSONSerializable], d: AnyDict, fp: IO[str], **kwargs: Any) -> None:
+    indent = kwargs.get('indent')
+    if (indent is not None) and (indent < 0):
+        kwargs['indent'] = None
+    kwargs['cls'] = cls.json_encoder()
+    json.dump(d, fp, **kwargs)

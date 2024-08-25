@@ -20,7 +20,7 @@
     - Avoid cyclic references (`weakref`?)
   - Deal with namespace collision? E.g. use `globals()` to ensure the latest version is the only one accessible within module's namespace, even if it is defined earlier than the others.
 
-## v0.7.1
+## v0.8.1
 
 - documentation
   - Dataclass mixins/settings

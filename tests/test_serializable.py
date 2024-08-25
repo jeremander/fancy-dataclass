@@ -3,10 +3,12 @@ from contextlib import nullcontext
 from dataclasses import asdict, dataclass, field, fields, make_dataclass
 from datetime import datetime
 from enum import Enum, Flag, auto
+from io import StringIO
+from json import JSONEncoder
 import math
 import re
 import sys
-from typing import Any, Dict, List, Literal, NamedTuple, Optional, TypedDict, Union
+from typing import Any, Dict, List, Literal, NamedTuple, Optional, Set, TypedDict, Union
 
 import numpy as np
 import pytest
@@ -588,6 +590,32 @@ class TestJSON(TestDict):
         assert MyDC.from_json_string(s, strict=True, parse_int=parse_int) == MyDC(2)
         with pytest.raises(TypeError, match="unexpected keyword argument 'fake_kwarg'"):
             _ = MyDC.from_json_string(s, fake_kwarg=True)
+
+    def test_custom_json_encoder(self):
+        """Tests behavior of overriding the `json_encoder` method."""
+        @dataclass
+        class MyDC1(JSONBaseDataclass, store_type='off', suppress_defaults=False):
+            xs: Set[int] = field(default_factory=lambda: {1, 2, 3})
+        @dataclass
+        class MyDC2(MyDC1):
+            @classmethod
+            def json_encoder(cls):
+                class MyEncoder(JSONEncoder):
+                    def default(self, obj: Any) -> Any:
+                        if isinstance(obj, set):
+                            return sorted(obj)
+                        return super().default(obj)
+                return MyEncoder
+        obj1 = MyDC1()
+        assert obj1.to_dict() == {'xs': {1, 2, 3}}
+        with pytest.raises(TypeError, match='not JSON serializable'):
+            _ = obj1.to_json_string()
+        obj2 = MyDC2()
+        assert obj2.to_dict() == {'xs': {1, 2, 3}}
+        assert obj2.to_json_string() == '{"xs": [1, 2, 3]}'
+        with StringIO() as sio:
+            obj2.to_json(sio)
+            assert sio.getvalue() == '{"xs": [1, 2, 3]}'
 
 
 class TestTOML(TestDict):
