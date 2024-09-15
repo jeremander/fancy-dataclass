@@ -16,6 +16,8 @@ Types of changes:
 
 ## [0.7.1]
 
+2024-09-15
+
 ### Fixed
 
 - Bug with dict value conversion of union types constructed with `|` operator (Python 3.10 and above).
@@ -252,7 +254,8 @@ Types of changes:
     - `SQLDataclass`: SQL persistence via `sqlalchemy`
     - `SubprocessDataclass`: call out to another program via `subprocess`
 
-[unreleased]: https://github.com/jeremander/fancy-dataclass/compare/v0.7.0...HEAD
+[unreleased]: https://github.com/jeremander/fancy-dataclass/compare/v0.7.1...HEAD
+[0.7.1]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.7.1
 [0.7.0]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.7.0
 [0.6.1]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.6.1
 [0.6.0]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.6.0
