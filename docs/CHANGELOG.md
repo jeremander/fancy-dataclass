@@ -14,6 +14,12 @@ Types of changes:
     - Security
 -->
 
+## [0.7.2]
+
+### Fixed
+
+- Resolving string annotations (or postponed annotations) properly in `ArgparseDataclass.configure_argument`.
+
 ## [0.7.1]
 
 2024-09-15

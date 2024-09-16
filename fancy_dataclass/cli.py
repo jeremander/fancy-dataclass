@@ -2,7 +2,7 @@ from argparse import Action, ArgumentParser, HelpFormatter, Namespace, _Argument
 from contextlib import suppress
 from dataclasses import MISSING, fields
 from enum import IntEnum
-from typing import Any, Callable, ClassVar, Dict, List, Literal, Optional, Sequence, Tuple, Type, TypeVar, Union, get_args, get_origin
+from typing import Any, Callable, ClassVar, Dict, List, Literal, Optional, Sequence, Tuple, Type, TypeVar, Union, get_args, get_origin, get_type_hints
 
 from typing_extensions import Self, TypeGuard
 
@@ -261,6 +261,8 @@ class ArgparseDataclass(DataclassMixin):
             return
         # determine the type of the parser argument for the field
         tp: type = settings.type or fld.type  # type: ignore[assignment]
+        if isinstance(tp, str):  # resolve type
+            tp = get_type_hints(cls)[name]
         action = settings.action or 'store'
         origin_type = get_origin(tp)
         if origin_type is not None:  # compound type

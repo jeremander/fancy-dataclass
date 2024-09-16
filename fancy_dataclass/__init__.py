@@ -10,7 +10,7 @@ from .subprocess import SubprocessDataclass
 from .toml import TOMLDataclass
 
 
-__version__ = '0.7.1'
+__version__ = '0.7.2'
 
 __all__ = [
     'ArgparseDataclass',

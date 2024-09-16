@@ -292,6 +292,18 @@ def test_argparse_options():
         x: int = field(default=1, metadata={'args': ['-x'], 'required': True})
     check_invalid_args(DC27, [], 'required: -x')
 
+def test_string_field_annotations():
+    """Tests what happens when ArgparseDataclass field annotations are strings."""
+    @dataclass
+    class DC(ArgparseDataclass):
+        x: 'int'
+        flag: 'bool' = False
+        val: 'Optional[str]' = None
+    args = DC.from_cli_args(['5', '--val', 'abc'])
+    assert args.x == 5
+    assert args.flag is False
+    assert args.val == 'abc'
+
 def test_positional():
     """Tests positional argument."""
     @dataclass
