@@ -23,7 +23,6 @@ dependencies = [
 ]
 
 [project.urls]
-# Documentation = "https://github.com/jeremander/fancy-dataclass#readme"
 Documentation = "https://fancy-dataclass.readthedocs.io"
 Issues = "https://github.com/jeremander/fancy-dataclass/issues"
 Source = "https://github.com/jeremander/fancy-dataclass"
@@ -78,7 +77,7 @@ run-mypy = "mypy --install-types --non-interactive {args:fancy_dataclass tests}"
 # print info about lines of code
 run-loc-summarize = "gadzooks loc-summarize fancy_dataclass"
 # print out formatter diffs
-run-format = "gadzooks check-format fancy_dataclass --formatter yapf --ignore-patterns '\\s*'"
+run-format = "gadzooks check-format {args:fancy_dataclass} --formatter yapf --ignore-patterns '\\s*'"
 all = ["run-ruff", "run-vermin", "run-mypy", "run-loc-summarize"]
 
 [tool.hatch.envs.test]
@@ -95,7 +94,7 @@ cov-report = ["- coverage combine", "coverage report", "coverage html"]
 cov = ["test", "cov-report"]
 
 [[tool.hatch.envs.test.matrix]]
-python = ["3.8", "3.9", "3.10", "3.11", "3.12"]
+python = ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
 
 [tool.hatch.envs.badge]
 dependencies = [
