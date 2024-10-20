@@ -16,9 +16,16 @@ Types of changes:
 
 ## [0.7.2]
 
+2024-10-20
+
+### Added
+
+- Coverage for Python 3.13 in test configurations.
+
 ### Fixed
 
 - Resolving string annotations (or postponed annotations) properly in `ArgparseDataclass.configure_argument`.
+- Type annotations for `mypy 1.12.1`.
 
 ## [0.7.1]
 
