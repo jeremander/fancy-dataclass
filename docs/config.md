@@ -88,13 +88,10 @@ admin
 >>> print_current_username()
 test1
 
-# update the config with another object
+# update the global config with another object
 >>> from copy import deepcopy
 >>> cfg2 = deepcopy(cfg)
 >>> cfg2.database.username = 'test2'
->>> cfg2.update_config()
-
-# update the global config
 >>> cfg2.update_config()
 >>> print_current_username()
 test2
