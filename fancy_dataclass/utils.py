@@ -272,6 +272,16 @@ def check_dataclass(cls: type) -> TypeGuard[Type['DataclassInstance']]:
         raise TypeError(f'{cls.__name__} is not a dataclass')
     return True
 
+def is_dataclass_type(cls: type) -> TypeGuard[Type['DataclassInstance']]:
+    """Returns True if the given type is a dataclass.
+
+    Args:
+        cls: A Python type
+
+    Returns:
+        True if `cls` is a dataclass"""
+    return is_dataclass(cls)
+
 def make_dataclass_with_constructors(cls_name: str, fields: Sequence[Union[str, Tuple[str, type]]], constructors: Sequence[Constructor], **kwargs: Any) -> Type['DataclassInstance']:
     """Type factory for dataclasses with custom constructors.
 
@@ -369,20 +379,20 @@ def coerce_to_dataclass(cls: Type[T], obj: object) -> T:
     for fld in dataclasses.fields(cls):  # type: ignore[arg-type]
         if hasattr(obj, fld.name):
             val = getattr(obj, fld.name)
-            if is_dataclass(fld.type):
+            if is_dataclass_type(fld.type):  # type: ignore[arg-type]
                 val = coerce_to_dataclass(fld.type, val)
             else:
                 origin_type = get_origin(fld.type)
                 if origin_type and issubclass_safe(origin_type, Iterable):
                     if issubclass(origin_type, dict):
                         (_, val_type) = get_args(fld.type)
-                        if is_dataclass(val_type):
+                        if is_dataclass_type(val_type):
                             val = type(val)({key: coerce_to_dataclass(val_type, elt) for (key, elt) in val.items()})
                     elif issubclass(origin_type, tuple):
-                        val = type(val)(coerce_to_dataclass(tp, elt) if is_dataclass(tp) else elt for (tp, elt) in zip(get_args(fld.type), val))
+                        val = type(val)(coerce_to_dataclass(tp, elt) if is_dataclass_type(tp) else elt for (tp, elt) in zip(get_args(fld.type), val))
                     else:
                         (elt_type,) = get_args(fld.type)
-                        if is_dataclass(elt_type):
+                        if is_dataclass_type(elt_type):
                             val = type(val)(coerce_to_dataclass(elt_type, elt) for elt in val)
             kwargs[fld.name] = val
     return cls(**kwargs)
@@ -415,7 +425,7 @@ def dataclass_type_map(cls: Type['DataclassInstance'], func: Callable[[type], ty
                 (elt_type,) = get_args(fld.type)
                 tp = otype[_map_func(elt_type)]
         else:
-            tp = _map_func(fld.type)
+            tp = _map_func(fld.type)  # type: ignore[arg-type]
         field_data.append((fld.name, tp, new_fld))
     return make_dataclass(cls.__name__, field_data, bases=cls.__bases__)
 
@@ -441,7 +451,7 @@ def traverse_dataclass(cls: type) -> Iterator[Tuple[RecordPath, Field]]:  # type
         TypeError: if the type cannot be traversed"""
     def _make_optional(fld: Field) -> Field:  # type: ignore[type-arg]
         new_fld = copy(fld)
-        new_fld.type = Optional[fld.type]  # type: ignore
+        new_fld.type = Optional[fld.type]
         new_fld.default = None
         return new_fld
     def _traverse(prefix: RecordPath, tp: type) -> Iterator[Tuple[RecordPath, Field]]:  # type: ignore[type-arg]
@@ -469,7 +479,7 @@ def traverse_dataclass(cls: type) -> Iterator[Tuple[RecordPath, Field]]:  # type
                     fld = _make_optional(fld)
                 yield (path, fld)
             for base_type in base_types:
-                if is_dataclass(base_type):
+                if is_dataclass_type(base_type):
                     subfields = _traverse(path, base_type)
                     if is_union:
                         # wrap each field type in an Optional
@@ -556,7 +566,7 @@ def _flatten_dataclass(cls: Type[T], bases: Optional[Tuple[type, ...]] = None) -
                         else:
                             raise TypeError(f'could not extract field of type {fld.type}')
                 else:
-                    kwargs[name] = _get_val(fld.type)
+                    kwargs[name] = _get_val(cast(type, fld.type))
             return subcls(**kwargs)
         return _to_nested((), cls)  # type: ignore
     converter: DataclassConverter[T, Any] = DataclassConverter(cls, flattened_type, to_flattened, to_nested)
@@ -613,7 +623,7 @@ def merge_dataclasses(*classes: type, cls_name: str = '_', bases: Optional[Tuple
                 if base != base_map[fld.name]:
                     raise TypeError(f'duplicate field name {fld.name!r}')
             else:
-                field_type_map[fld.name] = fld.type
+                field_type_map[fld.name] = cast(type, fld.type)
                 base_map[fld.name] = base
                 flds.append((fld.name, fld.type, fld))
     # if bases are unspecified, use the original classes

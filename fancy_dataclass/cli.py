@@ -2,7 +2,7 @@ from argparse import Action, ArgumentParser, HelpFormatter, Namespace, _Argument
 from contextlib import suppress
 from dataclasses import MISSING, fields
 from enum import IntEnum
-from typing import Any, Callable, ClassVar, Dict, List, Literal, Optional, Sequence, Tuple, Type, TypeVar, Union, get_args, get_origin, get_type_hints
+from typing import Any, Callable, ClassVar, Dict, List, Literal, Optional, Sequence, Tuple, Type, TypeVar, Union, cast, get_args, get_origin, get_type_hints
 
 from typing_extensions import Self, TypeGuard
 
@@ -168,7 +168,7 @@ class ArgparseDataclass(DataclassMixin):
             if subcommand is None:
                 # check field type is ArgparseDataclass or Union thereof
                 subcommand = fld.name
-                tp = fld.type
+                tp = cast(type, fld.type)
                 if issubclass_safe(tp, ArgparseDataclass):
                     continue
                 err = TypeError(f'invalid subcommand field {fld.name!r}, type must be an ArgparseDataclass or Union thereof')
@@ -435,9 +435,10 @@ class ArgparseDataclass(DataclassMixin):
         d = {}
         for field in fields(cls):  # type: ignore[arg-type]
             nested_field = False
-            if issubclass_safe(field.type, ArgparseDataclass):
+            tp = cast(type, field.type)
+            if issubclass_safe(tp, ArgparseDataclass):
                 # recursively gather arguments for nested ArgparseDataclass
-                val = field.type.args_to_dict(args)
+                val = tp.args_to_dict(args)  # type: ignore[attr-defined]
                 nested_field = True
             elif hasattr(args, field.name):  # extract arg from the namespace
                 val = getattr(args, field.name)
@@ -462,7 +463,7 @@ class ArgparseDataclass(DataclassMixin):
         kwargs = {}
         for fld in fields(cls):  # type: ignore[arg-type]
             name = fld.name
-            tp: Optional[type] = fld.type
+            tp: Optional[type] = cast(type, fld.type)
             is_subcommand = fld.metadata.get('subcommand', False)
             origin_type = get_origin(tp)
             if origin_type == Union:
@@ -481,7 +482,7 @@ class ArgparseDataclass(DataclassMixin):
                     kwargs[name] = tuple(d[name])
                 else:
                     kwargs[name] = d[name]
-            elif type_is_optional(fld.type) and (fld.default == MISSING) and (fld.default_factory == MISSING):
+            elif type_is_optional(cast(type, fld.type)) and (fld.default == MISSING) and (fld.default_factory == MISSING):
                 # positional optional argument with no default: fill in None
                 kwargs[name] = None
         return cls(**kwargs)

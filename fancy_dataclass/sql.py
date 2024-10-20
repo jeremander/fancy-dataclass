@@ -1,6 +1,6 @@
 from dataclasses import MISSING, dataclass, fields
 from datetime import datetime
-from typing import Any, Callable, ClassVar, Dict, Optional, Type, TypeVar, Union, get_args, get_origin
+from typing import Any, Callable, ClassVar, Dict, Optional, Type, TypeVar, Union, cast, get_args, get_origin
 
 from sqlalchemy import Boolean, Column, DateTime, Integer, LargeBinary, Numeric, PickleType, String, Table
 import sqlalchemy.orm
@@ -79,7 +79,7 @@ class SQLDataclass(DataclassMixin):
             nullable = False
             if not settings.sql:  # skip fields whose 'sql' setting is False
                 continue
-            tp = fld.type
+            tp: type = cast(type, fld.type)
             origin = get_origin(tp)
             if origin:  # compound type
                 if origin is Union:  # use the first type of a Union (also handles Optional)

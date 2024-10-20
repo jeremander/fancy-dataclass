@@ -1,5 +1,5 @@
 from dataclasses import Field, fields
-from typing import Optional, Type, TypeVar
+from typing import Optional, Type, TypeVar, cast
 
 from typing_extensions import Doc, Self, _AnnotatedAlias
 
@@ -45,7 +45,7 @@ class FieldSettings(DataclassAdaptable):
         for fld in fields(self):  # type: ignore[arg-type]
             val = getattr(self, fld.name)
             # semi-robust type checking (could still be improved)
-            if not _is_instance(val, fld.type):
+            if not _is_instance(val, cast(type, fld.type)):
                 raise TypeError(f'expected type {fld.type} for field {fld.name!r}, got {type(val)}')
 
     @classmethod
