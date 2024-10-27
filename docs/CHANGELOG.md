@@ -14,6 +14,14 @@ Types of changes:
     - Security
 -->
 
+## [0.7.3]
+
+### Added
+
+- New flag, `default_help`, for both the class-level `ArgparseDataclassSettings` and `ArgparseDataclassFieldSettings`.
+    - If set to `True`, this includes a field's default value in its help string.
+    - If set at the class level, applies this behavior to all fields that have a default (unless overridden by field-level setting).
+
 ## [0.7.2]
 
 2024-10-20
@@ -267,7 +275,8 @@ Types of changes:
     - `SQLDataclass`: SQL persistence via `sqlalchemy`
     - `SubprocessDataclass`: call out to another program via `subprocess`
 
-[unreleased]: https://github.com/jeremander/fancy-dataclass/compare/v0.7.1...HEAD
+[unreleased]: https://github.com/jeremander/fancy-dataclass/compare/v0.7.2...HEAD
+[0.7.2]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.7.2
 [0.7.1]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.7.1
 [0.7.0]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.7.0
 [0.6.1]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.6.1

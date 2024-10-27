@@ -901,7 +901,7 @@ def test_default_help():
     with pytest.raises(ValueError, match="cannot use default_help=True for field 'x' since it has no default"):
         _ = DCInvalid.make_parser()
     @dataclass
-    class DCInner(ArgparseDataclass):
+    class DCInner(ArgparseDataclass, default_help=True):
         x: int = field(default=1, metadata={'help': 'an int'})
         y: str = field(default='abc', metadata={'help': 'a str', 'default_help': False})
         z: float = field(default=3.14, metadata={'default_help': True})
@@ -917,7 +917,7 @@ def test_default_help():
         r'a\s+required int',
         r'-b B\s+int with default \(default: 1\)',
         r'-c C\s+int with default factory \(default: 2\)',
-        r'-x X\s+an int',
+        r'-x X\s+an int \(default: 1\)',
         r'-y Y\s+a str',
         r'-z Z\s+\(default: 3.14\)',
     ]:

@@ -75,13 +75,15 @@ class ArgparseDataclassSettings(MixinSettings):
     - `help_descr_brief`: string to use for the *brief* help description, which is used when the class is used as a *subcommand* entry. This is the text that appears in the menu of subcommands, which is often briefer than the main description.
         - If `None`, the class's docstring will be used by default (lowercased).
     - `command_name`: when this class is used to define a subcommand, the name of that subcommand
-    - `version`: if set to a string, expose a `--version` argument displaying the version automatically (see [`argparse`](https://docs.python.org/3/library/argparse.html#action) docs)"""
+    - `version`: if set to a string, expose a `--version` argument displaying the version automatically (see [`argparse`](https://docs.python.org/3/library/argparse.html#action) docs)
+    - `default_help`: if set to `True`, includes each field's default value in its help string (this can be overridden by the field-level `default_help` flag)"""
     parser_class: Type[ArgumentParser] = ArgumentParser
     formatter_class: Optional[Type[HelpFormatter]] = None
     help_descr: Optional[str] = None
     help_descr_brief: Optional[str] = None
     command_name: Optional[str] = None
     version: Optional[str] = None
+    default_help: bool = False
 
 
 @dataclass_kw_only()
@@ -104,6 +106,7 @@ class ArgparseDataclassFieldSettings(FieldSettings):
     - `subcommand`: boolean flag marking this field as a [subcommand](https://docs.python.org/3/library/argparse.html#sub-commands)
     - `parse_exclude`: boolean flag indicating that the field should not be included in the parser
     - `default_help`: boolean flag indicating the field's default value (if present) should be shown in the help
+      - If `None`, falls back on the class-level `default_help` flag
 
     Note that these line up closely with the usual options that can be passed to [`ArgumentParser.add_argument`](https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser.add_argument).
 
@@ -131,7 +134,7 @@ class ArgparseDataclassFieldSettings(FieldSettings):
     exclusive_group: Optional[str] = None
     subcommand: bool = False
     parse_exclude: bool = False
-    default_help: bool = False
+    default_help: Optional[bool] = None
 
 
 class ArgparseDataclass(DataclassMixin):
@@ -344,7 +347,14 @@ class ArgparseDataclass(DataclassMixin):
                 kwargs[key] = fld.metadata[key]
         if kwargs.get('action') == 'store_const':
             del kwargs['type']
-        if settings.default_help:
+        # determine if the field show its default in the help string
+        if cls.__settings__.default_help:
+            # include default if there is one, and the flag is not overridden to False at the field level
+            default_help = has_default and (settings.default_help is not False)
+        else:
+            # include default if the field-level flag is set to True
+            default_help = bool(settings.default_help)
+        if default_help:
             if not has_default:
                 raise ValueError(f'cannot use default_help=True for field {name!r} since it has no default')
             help_str = kwargs.get('help', None)
