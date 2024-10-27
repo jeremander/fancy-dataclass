@@ -101,12 +101,14 @@ class ArgparseDataclassFieldSettings(FieldSettings):
     - `help`: help string
     - `metavar`: name for the argument in usage messages
     - `required`: whether the option is required
-    - `group`: name of the [argument group](https://docs.python.org/3/library/argparse.html#argument-groups) in which to put the argument; the group will be created if it does not already exist in the parser
-    - `exclusive_group`: name of the [mutually exclusive](https://docs.python.org/3/library/argparse.html#mutual-exclusion) argument group in which to put the argument; the group will be created if it does not already exist in the parser
+    - `group`: name of the [argument group](https://docs.python.org/3/library/argparse.html#argument-groups) in which to put the argument
+        - The group will be created if it does not already exist in the parser
+    - `exclusive_group`: name of the [mutually exclusive](https://docs.python.org/3/library/argparse.html#mutual-exclusion) argument group in which to put the argument
+        - The group will be created if it does not already exist in the parser
     - `subcommand`: boolean flag marking this field as a [subcommand](https://docs.python.org/3/library/argparse.html#sub-commands)
     - `parse_exclude`: boolean flag indicating that the field should not be included in the parser
     - `default_help`: boolean flag indicating the field's default value (if present) should be shown in the help
-      - If `None`, falls back on the class-level `default_help` flag
+        - If `None`, falls back on the class-level `default_help` flag
 
     Note that these line up closely with the usual options that can be passed to [`ArgumentParser.add_argument`](https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser.add_argument).
 
