@@ -103,6 +103,7 @@ class ArgparseDataclassFieldSettings(FieldSettings):
     - `exclusive_group`: name of the [mutually exclusive](https://docs.python.org/3/library/argparse.html#mutual-exclusion) argument group in which to put the argument; the group will be created if it does not already exist in the parser
     - `subcommand`: boolean flag marking this field as a [subcommand](https://docs.python.org/3/library/argparse.html#sub-commands)
     - `parse_exclude`: boolean flag indicating that the field should not be included in the parser
+    - `default_help`: boolean flag indicating the field's default value (if present) should be shown in the help
 
     Note that these line up closely with the usual options that can be passed to [`ArgumentParser.add_argument`](https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser.add_argument).
 
@@ -130,6 +131,7 @@ class ArgparseDataclassFieldSettings(FieldSettings):
     exclusive_group: Optional[str] = None
     subcommand: bool = False
     parse_exclude: bool = False
+    default_help: bool = False
 
 
 class ArgparseDataclass(DataclassMixin):
@@ -323,12 +325,14 @@ class ArgparseDataclass(DataclassMixin):
             kwargs['dest'] = fld.name
         if settings.required is not None:
             kwargs['required'] = settings.required
+        has_default = 'default' in kwargs
+        default = kwargs.get('default')
         if fld.type is bool:  # use boolean flag instead of an argument
             action = settings.action or 'store_true'
             kwargs['action'] = action
             if isinstance(action, str) and (action not in ['store_true', 'store_false']):
                 raise ValueError(f'invalid action {action!r} for boolean flag field {name!r}')
-            if (default := kwargs.get('default')) is not None:
+            if default is not None:
                 if (action != 'store_false') == default:
                     raise ValueError(f'cannot use default value of {default} for action {action!r} with boolean flag field {name!r}')
             for key in ('type', 'required'):
@@ -340,6 +344,13 @@ class ArgparseDataclass(DataclassMixin):
                 kwargs[key] = fld.metadata[key]
         if kwargs.get('action') == 'store_const':
             del kwargs['type']
+        if settings.default_help:
+            if not has_default:
+                raise ValueError(f'cannot use default_help=True for field {name!r} since it has no default')
+            help_str = kwargs.get('help', None)
+            # append the default value to the help string
+            help_str = ((help_str + ' ') if help_str else '') + f'(default: {default})'
+            kwargs['help'] = help_str
         if (result := _get_parser_group_name(settings, fld.name)) is not None:
             # add argument to the group instead of the main parser
             (group_name, is_exclusive) = result
@@ -359,7 +370,6 @@ class ArgparseDataclass(DataclassMixin):
             # create subparsers for each variant
             assert isinstance(parser, ArgumentParser)
             dest = cls.subcommand_dest_name
-            has_default = 'default' in kwargs
             required = kwargs.get('required', not has_default)
             if (not required) and (not has_default):
                 raise ValueError(f'{name!r} field cannot set required=False with no default value')

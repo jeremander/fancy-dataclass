@@ -48,7 +48,7 @@ class DC1(CLIDataclass):
     optional: str = field(default='default', metadata={'nargs': '?', 'const': 'unspecified', 'help': 'optional argument'})
     flag: bool = field(default=False, metadata={'help': 'activate flag'})
     extra_items: List[str] = field(default_factory=list, metadata={'nargs': '*', 'help': 'list of extra items'})
-    x: int = field(default=7, metadata={'help': 'x value', 'group': 'numeric arguments'})
+    x: int = field(default=7, metadata={'help': 'x value', 'group': 'numeric arguments', 'default_help': True})
     y: float = field(default=3.14, metadata={'help': 'y value', 'group': 'numeric arguments'})
     pair: Tuple[int, int] = field(default=(0, 0), metadata={'nargs': 2, 'metavar': ('FIRST', 'SECOND'), 'help': 'pair of integers', 'group': 'numeric arguments'})
     ignored_value: str = field(default='ignored', metadata={'args': [], 'parse_exclude': True})
@@ -72,7 +72,7 @@ def test_argparse_dataclass_help():
     parser.add_argument('--flag', action='store_true', help='activate flag')
     parser.add_argument('--extra-items', nargs='*', default=[], help='list of extra items')
     num_group = parser.add_argument_group('numeric arguments')
-    num_group.add_argument('-x', type=int, default=7, help='x value')
+    num_group.add_argument('-x', type=int, default=7, help='x value (default: 7)')
     num_group.add_argument('-y', type=float, default=3.14, help='y value')
     num_group.add_argument('--pair', type=int, nargs=2, default=(0, 0), metavar=('FIRST', 'SECOND'), help='pair of integers')
     dc1_parser = DC1.make_parser()
@@ -893,3 +893,33 @@ def test_version(capsys):
     toks = capsys.readouterr().out.strip().split()
     assert len(toks) == 2
     assert toks[1] == '2.0'
+
+def test_default_help():
+    @dataclass
+    class DCInvalid(ArgparseDataclass):
+        x: int = field(metadata={'help': 'required int', 'default_help': True})
+    with pytest.raises(ValueError, match="cannot use default_help=True for field 'x' since it has no default"):
+        _ = DCInvalid.make_parser()
+    @dataclass
+    class DCInner(ArgparseDataclass):
+        x: int = field(default=1, metadata={'help': 'an int'})
+        y: str = field(default='abc', metadata={'help': 'a str', 'default_help': False})
+        z: float = field(default=3.14, metadata={'default_help': True})
+    @dataclass
+    class DCDefault(ArgparseDataclass):
+        a: int = field(metadata={'help': 'required int'})
+        b: int = field(default=1, metadata={'help': 'int with default', 'default_help': True})
+        c: int = field(default_factory=lambda: 2, metadata={'help': 'int with default factory', 'default_help': True})
+        inner: DCInner = field(default_factory=DCInner)
+    parser = DCDefault.make_parser()
+    lines = parser.format_help().splitlines()
+    for pattern in [
+        r'a\s+required int',
+        r'-b B\s+int with default \(default: 1\)',
+        r'-c C\s+int with default factory \(default: 2\)',
+        r'-x X\s+an int',
+        r'-y Y\s+a str',
+        r'-z Z\s+\(default: 3.14\)',
+    ]:
+        r = re.compile(r'\s*' + pattern)
+        assert any(r.fullmatch(line) for line in lines)
