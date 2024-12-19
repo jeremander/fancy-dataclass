@@ -11,9 +11,19 @@
   - `@version` decorator (with required integer argument)
     - Augments base type with `VersionedDataclass`
     - Allows you to define multiple classes with the same name; stores distinct `version` `ClassVar` attributes and registers them with the same name
-    - Initialization looks up the version number in the registry; if only newer exists:
-      - If `strict=True`, raises an error; otherwise, attempts to coerce and issues a warning
     - Error if duplicate versions are set
+    - Handle version mismatches
+      - Initialization looks up the version number in the registry; if only newer exists:
+        - If `strict=True`, raises an error; otherwise, attempts to coerce and issues a warning
+      - Deserialize from mismatched version:
+        - If target version exists in registry, use it, then migrate.
+        - Otherwise, two options (perhaps based on class setting)
+          - Issue warning, then attempt to coerce directly (which will work if fields are a subset)
+          - Error
+      - Are versions identified by name or qualname?
+        - If the former, could have accidental collisions.
+        - If the latter, all versions would have to be defined in the same module.
+        - (Currently leaning toward the former, since we'll error if duplicate occurs.)
   - `def migrate(self, version)` method from object of one version to another
   - Singleton `VersionRegistry` object via `registry` property
     - Helper methods like `get_version`, `get_available_versions`, `has_version`
@@ -22,6 +32,10 @@
   - With `ArgparseDataclass`, include a `--version` argument like:
     - `parser.add_argument('--version', action='version', version='%(prog)s {version}')`
     - Provide class settings flag letting user turn this off?
+  - Tests
+    - Errors upon creation (missing version, non-int version)
+    - `suppress_defaults` True or False
+    - Version mismatch on deserialization
 
 ## v0.9.1
 
