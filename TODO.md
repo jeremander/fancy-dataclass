@@ -5,11 +5,7 @@
 ## v0.9.0
 
 - `VersionedDataclass`
-  - `version` class setting (int) and `version` read-only class property
-  - Should probably subclass `DictDataclass`, ensures that `version` property is stored in dict
-    - Or could make it implicit, setting `version` to a `ClassVar` with `suppress` field setting `False`
   - `@version` decorator (with required integer argument)
-    - Augments base type with `VersionedDataclass`
     - Allows you to define multiple classes with the same name; stores distinct `version` `ClassVar` attributes and registers them with the same name
     - Error if duplicate versions are set
     - Handle version mismatches
@@ -33,9 +29,8 @@
     - `parser.add_argument('--version', action='version', version='%(prog)s {version}')`
     - Provide class settings flag letting user turn this off?
   - Tests
-    - Errors upon creation (missing version, non-int version)
-    - `suppress_defaults` True or False
     - Version mismatch on deserialization
+  - Make documentation page
 
 ## v0.9.1
 
