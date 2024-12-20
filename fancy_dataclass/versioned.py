@@ -1,5 +1,5 @@
-from dataclasses import Field, dataclass
-from typing import Any, Callable, ClassVar, Optional, Type, TypeVar, cast
+from dataclasses import Field, dataclass, field
+from typing import Any, Callable, ClassVar, Dict, Optional, Type, TypeVar, cast
 
 from fancy_dataclass.dict import DictDataclass, DictDataclassFieldSettings, DictDataclassSettings
 from fancy_dataclass.settings import FieldSettings
@@ -7,7 +7,81 @@ from fancy_dataclass.utils import dataclass_kw_only
 
 
 T = TypeVar('T')
+Version = int
 
+
+###################
+# GLOBAL REGISTRY #
+###################
+
+@dataclass(frozen=True)
+class _VersionedDataclassGroup:
+    """Represents a collection of [`VersionedDataclass`][fancy_dataclass.versioned.VersionedDataclass] subclasses with the same name but different versions."""
+    name: str
+    class_by_version: Dict[Version, Type['VersionedDataclass']] = field(default_factory=dict)
+    version_by_class: Dict[Type['VersionedDataclass'], Version] = field(default_factory=dict)
+
+    def register_class(self, version: Version, cls: Type['VersionedDataclass']) -> None:
+        """Registers a new `VersionedDataclass` subclass with the given version.
+        If that version is already registered, or if the same class is already registered, raises a `TypeError`."""
+        if not issubclass(cls, VersionedDataclass):
+            raise TypeError('class must be a subclass of VersionedDataclass')
+        if cls.__name__ != self.name:
+            raise TypeError(f'mismatch between group name {self.name!r} and class name {cls.__name__!r}')
+        if version in self.class_by_version:
+            raise TypeError(f'class already registered with name {self.name!r}, version {version}: {cls.__qualname__}')
+        if cls in self.version_by_class:
+            ver = self.version_by_class[cls]
+            raise TypeError(f'class {cls.__qualname__} is already registered with version {ver}')
+        self.class_by_version[version] = cls
+        self.version_by_class[cls] = version
+
+    def get_class(self, version: Optional[Version] = None) -> Type['VersionedDataclass']:
+        """Gets the [`VersionedDataclass`][fancy_dataclass.versioned.VersionedDataclass] subclass with the given version associated with this group.
+        If no version is given, uses the latest existing version.
+        If no matching version exists, raises a `ValueError."""
+        if not self.class_by_version:
+            raise ValueError(f'no class registered with name {self.name!r}')
+        if version is None:
+            version = max(self.class_by_version)
+        if version not in self.class_by_version:
+            raise ValueError(f'no class registered with name {self.name!r}, version {version}')
+        return self.class_by_version[version]
+
+
+@dataclass(frozen=True)
+class _VersionedDataclassRegistry:
+    """A registry tracking all subclasses of [`VersionedDataclass`][fancy_dataclass.versioned.VersionedDataclass]."""
+    # mapping from class name to the group of all `VersionedDataclass` subclasses with that name
+    # NOTE: the names are *not* qualified, which allows classes in different modules to belong to the same group
+    groups_by_name: Dict[str, _VersionedDataclassGroup] = field(default_factory=dict)
+
+    def register_class(self, version: Version, cls: Type['VersionedDataclass']) -> None:
+        """Registers a new `VersionedDataclass` subclass with the given version.
+        If that version is already registered, raises a `TypeError`."""
+        if not issubclass(cls, VersionedDataclass):
+            raise TypeError('class must be a subclass of VersionedDataclass')
+        name = cls.__name__
+        group = self.groups_by_name.setdefault(name, _VersionedDataclassGroup(name))
+        group.register_class(version, cls)
+
+    def get_class(self, name: str, version: Optional[Version] = None) -> Type['VersionedDataclass']:
+        """Gets the [`VersionedDataclass`][fancy_dataclass.versioned.VersionedDataclass] subclass with the given name and version.
+        If no version is given, uses the latest version in the registry.
+        If no matching class exists, raises a `ValueError."""
+        if name not in self.groups_by_name:
+            raise ValueError(f'no class registered with name {name!r}')
+        group = self.groups_by_name[name]
+        return group.get_class(version=version)
+
+
+# global registry
+_VERSIONED_DATACLASS_REGISTRY = _VersionedDataclassRegistry()
+
+
+#######################
+# VERSIONED DATACLASS #
+#######################
 
 @dataclass_kw_only()
 class VersionedDataclassSettings(DictDataclassSettings):
@@ -18,7 +92,7 @@ class VersionedDataclassSettings(DictDataclassSettings):
     Additionally they may set the following options as keyword arguments during inheritance:
 
     - `suppress_version`: suppress version field when converting to a dict"""
-    version: Optional[int] = None
+    version: Optional[Version] = None
     suppress_version: bool = False
 
 
@@ -32,7 +106,7 @@ class VersionedDataclass(DictDataclass):
     __settings_type__ = VersionedDataclassSettings
     __settings__ = VersionedDataclassSettings()
 
-    version: ClassVar[int]
+    version: ClassVar[Version]
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
@@ -73,9 +147,3 @@ def version(version: int, suppress_version: bool = False) -> Callable[[Type[T]],
     def _wrap_dataclass(tp: Type[T]) -> Type[T]:
         return VersionedDataclass.wrap_dataclass(tp, version=version, suppress_version=suppress_version)  # type: ignore[return-value]
     return _wrap_dataclass
-
-# example usage:
-# @version(5)
-# @dataclass
-# class A:
-#     x: int = 1
