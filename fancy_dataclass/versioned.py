@@ -151,6 +151,13 @@ class VersionedDataclass(DictDataclass):
         return _VERSIONED_DATACLASS_REGISTRY.get_class(cls.__name__, version=version)
 
     @classmethod
+    def dataclass_args_from_dict(cls, d: AnyDict, strict: bool = False) -> AnyDict:
+        """Given a dict of arguments, performs type conversion and/or validity checking, then returns a new dict that can be passed to the class's constructor."""
+        if 'version' in d:
+            d = {key: val for (key, val) in d.items() if (key != 'version')}
+        return super().dataclass_args_from_dict(d, strict=strict)
+
+    @classmethod
     def _get_type_from_dict(cls, d: AnyDict) -> Type[Self]:
         cls = super()._get_type_from_dict(d)
         if (version := d.get('version')) is not None:
@@ -176,6 +183,23 @@ class VersionedDataclass(DictDataclass):
             elif (fld.default == dataclasses.MISSING) and (fld.default_factory == dataclasses.MISSING):
                 raise MissingRequiredFieldError(fld.name)
         return cls(**kwargs)
+
+    @classmethod
+    def from_dict(cls, d: AnyDict, **kwargs: Any) -> Self:
+        """Constructs an object from a dictionary of fields.
+
+        This may also perform some basic type/validity checking.
+
+        Args:
+            d: Dict to convert into an object
+            kwargs: Keyword arguments <ul><li>`strict`: if `True`, raise an error if extraneous dict fields are present</li><li>`migrate`: if `True`, migrate to the calling class's version</li></ul>
+
+        Returns:
+            Converted object of this class"""
+        obj = super().from_dict(d, **kwargs)
+        if kwargs.get('migrate', False):
+            return cast(Self, obj.migrate(cls.version))
+        return obj
 
 def version(version: int, suppress_version: bool = False) -> Callable[[Type[T]], Type[T]]:
     """Decorator turning a regular dataclass into a [`VersionedDataclass`][fancy_dataclass.versioned.VersionedDataclass].

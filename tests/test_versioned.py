@@ -350,3 +350,54 @@ def test_migrate_nested():
     assert isinstance(obj12, Outer2)
     assert isinstance(obj12.inner, Inner2)
     assert obj12 == obj2
+
+def test_from_dict():
+    """Tests behavior of `VersionedDataclass.from_dict`."""
+    @version(1)
+    @dataclass
+    class A:
+        x: int
+        y: str = 'a'
+    A1 = A
+    a1 = A1(1)
+    d1 = {'version': 1, 'x': 1}
+    @version(2)
+    @dataclass
+    class A:
+        x: int
+        y: str = 'b'
+        z: float = 3.14
+    A2 = A
+    a2 = A2(2, z=7.0)
+    d2 = {'version': 2, 'x': 2, 'z': 7.0}
+    @version(3)
+    @dataclass
+    class A:
+        x: int
+        y: int = 123
+    A3 = A
+    a3 = A3(3)
+    d3 = {'version': 3, 'x': 3}
+    assert a1.to_dict() == d1
+    for cls in [A1, A2, A3]:
+        for strict in [False, True]:
+            assert cls.from_dict(d1, strict=strict) == a1
+            assert cls.from_dict(d2, strict=strict) == a2
+            assert cls.from_dict(d3, strict=strict) == a3
+    for strict in [False, True]:
+        assert A1.from_dict(d1, migrate=True, strict=strict) == a1
+        assert A1.from_dict(d2, migrate=True, strict=strict) == A1(x=2, y='b')
+        # NOTE: type of y is wrong after migration
+        # TODO: error if this happens during migration? Or just do general validation.
+        assert A1.from_dict(d3, migrate=True, strict=strict) == A1(x=3, y=123)
+    assert A1.from_dict({'version': 1, 'x': 1, 'z': 7.0}, migrate=True, strict=False) == A1(x=1, y='a')
+    with pytest.raises(ValueError, match="'z' is not a valid field for A"):
+        _ = A1.from_dict({'version': 1, 'x': 1, 'z': 7.0}, migrate=True, strict=True)
+    for strict in [False, True]:
+        assert A2.from_dict(d2, migrate=True, strict=strict) == a2
+        assert A2.from_dict(d1, migrate=True, strict=strict) == A2(x=1, y='a', z=3.14)
+        assert A2.from_dict(d3, migrate=True, strict=strict) == A2(x=3, y=123)
+    for strict in [False, True]:
+        assert A3.from_dict(d3, migrate=True, strict=strict) == a3
+        assert A3.from_dict(d1, migrate=True, strict=strict) == A3(x=1, y='a')
+        assert A3.from_dict(d2, migrate=True, strict=strict) == A3(x=2, y='b')
