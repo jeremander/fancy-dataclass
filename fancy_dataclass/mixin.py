@@ -153,7 +153,9 @@ class DataclassMixin:
             return tp
         # otherwise, create a new type that inherits from this class
         try:
-            return type(tp.__name__, (tp, cls), {}, **kwargs)
+            # preserve the original
+            d = {'__module__': tp.__module__, '__qualname__': tp.__qualname__}
+            return type(tp.__name__, (tp, cls), d, **kwargs)
         except TypeError as e:
             if 'Cannot create a consistent' in str(e):
                 # try the opposite order of inheritance

@@ -3,7 +3,7 @@ from typing import Any, Callable, ClassVar, Dict, Optional, Type, TypeVar, cast
 
 from fancy_dataclass.dict import DictDataclass, DictDataclassFieldSettings, DictDataclassSettings
 from fancy_dataclass.settings import FieldSettings
-from fancy_dataclass.utils import dataclass_kw_only
+from fancy_dataclass.utils import dataclass_kw_only, fully_qualified_class_name
 
 
 T = TypeVar('T')
@@ -28,11 +28,12 @@ class _VersionedDataclassGroup:
             raise TypeError('class must be a subclass of VersionedDataclass')
         if cls.__name__ != self.name:
             raise TypeError(f'mismatch between group name {self.name!r} and class name {cls.__name__!r}')
+        qualname = fully_qualified_class_name(cls)
         if version in self.class_by_version:
-            raise TypeError(f'class already registered with name {self.name!r}, version {version}: {cls.__qualname__}')
+            raise TypeError(f'class already registered with name {self.name!r}, version {version}: {qualname}')
         if cls in self.version_by_class:
             ver = self.version_by_class[cls]
-            raise TypeError(f'class {cls.__qualname__} is already registered with version {ver}')
+            raise TypeError(f'class {qualname} is already registered with version {ver}')
         self.class_by_version[version] = cls
         self.version_by_class[cls] = version
 
@@ -55,6 +56,10 @@ class _VersionedDataclassRegistry:
     # mapping from class name to the group of all `VersionedDataclass` subclasses with that name
     # NOTE: the names are *not* qualified, which allows classes in different modules to belong to the same group
     groups_by_name: Dict[str, _VersionedDataclassGroup] = field(default_factory=dict)
+
+    def clear(self) -> None:
+        """Clears all entries in the registry."""
+        self.groups_by_name.clear()
 
     def register_class(self, version: Version, cls: Type['VersionedDataclass']) -> None:
         """Registers a new `VersionedDataclass` subclass with the given version.
@@ -117,6 +122,7 @@ class VersionedDataclass(DictDataclass):
             # if subclass gets generated dynamically, it might not have a 'version' ClassVar field, so create it
             cls.__dataclass_fields__['version'] = VersionedDataclass.__dataclass_fields__['version']
         cls.version = version
+        _VERSIONED_DATACLASS_REGISTRY.register_class(version, cls)
 
     @classmethod
     def _field_settings(cls, fld: Field) -> FieldSettings:  # type: ignore[type-arg]
@@ -133,13 +139,31 @@ class VersionedDataclass(DictDataclass):
             raise AttributeError("cannot assign to field 'version'")
         super().__setattr__(name, value)
 
+    @classmethod
+    def get_class_with_version(cls, version: Optional[Version] = None) -> Type['VersionedDataclass']:
+        """Gets the corresponding class to this class with the given version.
+
+        Args:
+            version: Version of the class to retrieve from the global registry (if `None`, use the latest)"""
+        return _VERSIONED_DATACLASS_REGISTRY.get_class(cls.__name__, version=version)
+
+    def migrate(self, version: Optional[int] = None) -> 'VersionedDataclass':
+        """Migrates the object to a class corresponding to a (possibly different) version of this class, if possible.
+
+        Args:
+            version: Version of the class to migrate to (if `None`, use the latest)"""
+        cls = self.get_class_with_version(version=version)
+        if cls is type(self):
+            return self
+        return cls.from_dict(self.to_dict())
+
 
 def version(version: int, suppress_version: bool = False) -> Callable[[Type[T]], Type[T]]:
     """Decorator turning a regular dataclass into a [`VersionedDataclass`][fancy_dataclass.versioned.VersionedDataclass].
 
     Args:
         version: Version number associated with the class
-        suppress_version: W
+        suppress_version: Whether to suppress the version when converting to dict
         typename: Name of subclass
 
     Returns:

@@ -1,8 +1,16 @@
 from dataclasses import dataclass, is_dataclass
+from types import ModuleType
 
 import pytest
 
-from fancy_dataclass.versioned import VersionedDataclass, _VersionedDataclassGroup, _VersionedDataclassRegistry, version
+from fancy_dataclass.utils import fully_qualified_class_name
+from fancy_dataclass.versioned import _VERSIONED_DATACLASS_REGISTRY, VersionedDataclass, _VersionedDataclassGroup, _VersionedDataclassRegistry, version
+
+
+@pytest.fixture(autouse=True)
+def _clear_registry() -> None:
+    """Clears the global VersionedDataclass registry (does this when invoking every test function in this module)."""
+    _VERSIONED_DATACLASS_REGISTRY.clear()
 
 
 def test_versioned_dataclass():
@@ -187,3 +195,158 @@ def test_versioned_dataclass_registry():
     assert reg.get_class('A', version=1) is A_v1
     assert reg.get_class('A', version=2) is A_v2
     assert reg.get_class('A', version=None) is A_v2
+
+def test_global_versioned_dataclass_registry():
+    """Tests behavior of the global `_VERSIONED_DATACLASS_REGISTRY`."""
+    reg = _VERSIONED_DATACLASS_REGISTRY
+    assert reg.groups_by_name == {}
+    for ver in [None, 1]:
+        with pytest.raises(ValueError, match="no class registered with name 'A'"):
+            reg.get_class('A', version=ver)
+    class A(VersionedDataclass, version=0):
+        ...
+    A_v0 = A
+    assert reg.groups_by_name == {'A': _VersionedDataclassGroup('A', {0: A_v0}, {A_v0: 0})}
+    assert reg.get_class('A', version=0) is A_v0
+    assert reg.get_class('A') is A_v0
+    with pytest.raises(TypeError, match="class already registered with name 'A', version 0: .*A"):
+        class A(VersionedDataclass, version=0):
+            ...
+    @version(5)
+    @dataclass
+    class A:
+        ...
+    A_v5 = A
+    assert reg.groups_by_name == {'A': _VersionedDataclassGroup('A', {0: A_v0, 5: A_v5}, {A_v0: 0, A_v5: 5})}
+    assert reg.get_class('A', version=5) is A_v5
+    assert reg.get_class('A') is A_v5
+    # simulate importing from a module
+    src1 = """
+from fancy_dataclass.versioned import VersionedDataclass
+class A(VersionedDataclass, version=1):
+    ...
+    """
+    mod1 = ModuleType('mod1')
+    exec(src1, mod1.__dict__)
+    A_v1 = reg.get_class('A', 1)
+    assert issubclass(A_v1, VersionedDataclass)
+    assert A_v1.__module__ == 'mod1'
+    assert fully_qualified_class_name(A_v1) == 'mod1.A'
+    mod2 = ModuleType('mod2')
+    with pytest.raises(TypeError, match="class already registered with name 'A', version 1: mod2.A"):
+        exec(src1, mod2.__dict__)
+    src2 = """
+from dataclasses import dataclass
+from fancy_dataclass.versioned import version
+@version(2)
+@dataclass
+class A:
+    ...
+    """
+    exec(src2, mod2.__dict__)
+    A_v2 = reg.get_class('A', 2)
+    assert issubclass(A_v2, VersionedDataclass)
+    assert A_v2.__module__ == 'mod2'
+    assert fully_qualified_class_name(A_v2) == 'mod2.A'
+
+def test_migrate():
+    """Tests migration behavior."""
+    @version(1)
+    @dataclass
+    class A:
+        x: int
+    A1 = A
+    a1 = A(1)
+    # version 2 adds a field
+    @version(2)
+    @dataclass
+    class A:
+        x: int
+        y: str = 'a'
+    A2 = A
+    a2 = A(2, '2')
+    # version 3 renames a field
+    @version(3)
+    @dataclass
+    class A:
+        x: int
+        z: str = 'a'
+    A3 = A
+    # version 4 subtracts a field
+    @version(4)
+    @dataclass
+    class A:
+        x: int
+    A4 = A
+    a4 = A(4)
+    # version 1 migration
+    assert a1.migrate(version=1) is a1
+    assert isinstance(a1.migrate(version=2), A2)
+    assert a1.migrate(version=2) == A2(1, 'a')
+    assert isinstance(a1.migrate(version=3), A3)
+    assert a1.migrate(version=3) == A3(1, 'a')
+    for ver in [4, None]:
+        assert isinstance(a1.migrate(version=ver), A4)
+        assert a1.migrate(version=ver) == A4(1)
+    # version 2 migration
+    assert isinstance(a2.migrate(version=1), A1)
+    assert a2.migrate(version=1) == A1(2)
+    assert a2.migrate(version=2) is a2
+    assert isinstance(a2.migrate(version=3), A3)
+    assert a2.migrate(version=3) == A3(2, 'a')
+    for ver in [4, None]:
+        assert isinstance(a2.migrate(version=ver), A4)
+        assert a2.migrate(version=ver) == A4(2)
+    # version 4 migration
+    assert isinstance(a4.migrate(version=1), A1)
+    assert a4.migrate(version=1) == A1(4)
+    assert isinstance(a4.migrate(version=2), A2)
+    assert a4.migrate(version=2) == A2(4, 'a')
+    for ver in [4, None]:
+        assert a4.migrate(version=ver) is a4
+    # remove required field
+    @version(5)
+    @dataclass
+    class A:
+        ...
+    A5 = A
+    a5 = A()
+    for obj in [a1, a2, a4]:
+        assert isinstance(obj.migrate(version=5), A5)
+        assert obj.migrate(version=5) == a5
+        with pytest.raises(ValueError, match="'x' field is required"):
+            _ = a5.migrate(version=obj.version)
+    with pytest.raises(ValueError, match="no class registered with name 'A', version 6"):
+        _ = a5.migrate(version=6)
+
+def test_migrate_nested():
+    """Tests migration of nested VersionedDataclass types."""
+    @version(1)
+    @dataclass
+    class Inner:
+        ...
+    Inner1 = Inner
+    @version(1)
+    @dataclass
+    class Outer:
+        inner: Inner
+    Outer1 = Outer
+    @version(2)
+    @dataclass
+    class Inner:
+        ...
+    Inner2 = Inner
+    @version(2)
+    @dataclass
+    class Outer:
+        inner: Inner
+    Outer2 = Outer
+    obj1 = Outer1(Inner1())
+    obj2 = Outer2(Inner2())
+    assert obj1.to_dict() == {'version': 1, 'inner': {'version': 1}}
+    assert obj2.to_dict() == {'version': 2, 'inner': {'version': 2}}
+    assert obj1 != obj2
+    obj12 = obj1.migrate()
+    assert isinstance(obj12, Outer2)
+    assert isinstance(obj12.inner, Inner2)
+    assert obj12 == obj2

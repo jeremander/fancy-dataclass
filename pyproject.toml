@@ -110,7 +110,7 @@ badges = ["badge-cov"]
 disable = true
 
 [tool.coverage.run]
-source_pkgs = ["fancy_dataclass", "tests"]
+source_pkgs = ["fancy_dataclass"]
 branch = true
 parallel = true
 omit = ["venv/*"]

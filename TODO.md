@@ -16,12 +16,7 @@
         - Otherwise, two options (perhaps based on class setting)
           - Issue warning, then attempt to coerce directly (which will work if fields are a subset)
           - Error
-      - Are versions identified by name or qualname?
-        - If the former, could have accidental collisions.
-        - If the latter, all versions would have to be defined in the same module.
-        - (Currently leaning toward the former, since we'll error if duplicate occurs.)
-  - `def migrate(self, version)` method from object of one version to another
-  - Singleton `VersionRegistry` object via `registry` property
+    - Singleton `VersionRegistry` object via `registry` property
     - Helper methods like `get_version`, `get_available_versions`, `has_version`
     - Avoid cyclic references (`weakref`?)
   - Deal with namespace collision? E.g. use `globals()` to ensure the latest version is the only one accessible within module's namespace, even if it is defined earlier than the others.
