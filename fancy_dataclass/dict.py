@@ -9,7 +9,7 @@ from typing_extensions import Self, _AnnotatedAlias
 
 from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.settings import DocFieldSettings, MixinSettings
-from fancy_dataclass.utils import TypeConversionError, _flatten_dataclass, check_dataclass, dataclass_field_type, dataclass_kw_only, fully_qualified_class_name, issubclass_safe, obj_class_name, safe_dict_insert
+from fancy_dataclass.utils import MissingRequiredFieldError, TypeConversionError, _flatten_dataclass, check_dataclass, dataclass_field_type, dataclass_kw_only, fully_qualified_class_name, issubclass_safe, obj_class_name, safe_dict_insert
 
 
 if TYPE_CHECKING:
@@ -321,8 +321,8 @@ class DictDataclass(DataclassMixin):
     def _get_missing_value(cls, fld: Field) -> Any:  # type: ignore[type-arg]
         settings = cls._field_settings(fld).adapt_to(DictDataclassFieldSettings)
         if settings.alias is None:
-            raise ValueError(f'{fld.name!r} field is required')
-        raise ValueError(f'{fld.name!r} field (alias {settings.alias!r}) is required')
+            raise MissingRequiredFieldError(fld.name)
+        raise MissingRequiredFieldError(fld.name, alias=settings.alias)
 
     @classmethod
     def dataclass_args_from_dict(cls, d: AnyDict) -> AnyDict:
@@ -362,6 +362,20 @@ class DictDataclass(DataclassMixin):
         return kwargs
 
     @classmethod
+    def _get_type_from_dict(cls, d: AnyDict) -> Type[Self]:
+        typename = d.get('type')
+        if typename is None:  # type field unspecified, so use the calling class
+            return cls
+        cls_name = fully_qualified_class_name(cls) if ('.' in typename) else cls.__name__
+        if cls_name == typename:  # type name already matches this class
+            return cls
+        # tp must be a subclass of cls
+        # the name must be in scope to be found, allowing two alternatives for retrieval:
+        # option 1: all subclasses of this DictDataclass are defined in the same module as the base class
+        # option 2: the name is fully qualified, so the name can be loaded into scope
+        return cls.get_subclass_with_name(typename)
+
+    @classmethod
     def from_dict(cls, d: AnyDict, **kwargs: Any) -> Self:
         """Constructs an object from a dictionary of fields.
 
@@ -374,23 +388,12 @@ class DictDataclass(DataclassMixin):
         Returns:
             Converted object of this class"""
         # first establish the type, which may be present in the 'type' field of the dict
-        typename = d.get('type')
-        if (typename is None) or ('type' in cls.__dataclass_fields__):  # type: ignore[attr-defined]
-            # type field is unspecified *or* 'type' is an expected dataclass field: use the calling class
-            tp = cls
-        else:
-            cls_name = fully_qualified_class_name(cls) if ('.' in typename) else cls.__name__
-            if cls_name == typename:  # type name already matches this class
-                tp = cls
-            else:
-                # tp must be a subclass of cls
-                # the name must be in scope to be found, allowing two alternatives for retrieval:
-                # option 1: all subclasses of this DictDataclass are defined in the same module as the base class
-                # option 2: the name is fully qualified, so the name can be loaded into scope
-                # call from_dict on the subclass in case it has its own custom implementation
-                # (remove the type name before passing to the constructor)
-                d2 = {key: val for (key, val) in d.items() if (key != 'type')}
-                return cls.get_subclass_with_name(typename).from_dict(d2, **kwargs)
+        tp = cls._get_type_from_dict(d)
+        if tp is not cls:
+            # call from_dict on the subclass in case it has its own custom implementation
+            # (remove the type name before passing to the constructor)
+            d2 = {key: val for (key, val) in d.items() if (key != 'type')}
+            return tp.from_dict(d2, **kwargs)
         conv = None
         if cls.__settings__.flattened:
             # produce equivalent subfield-flattened type

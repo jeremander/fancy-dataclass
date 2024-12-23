@@ -1,9 +1,12 @@
+import dataclasses
 from dataclasses import Field, dataclass, field
 from typing import Any, Callable, ClassVar, Dict, Optional, Type, TypeVar, cast
 
-from fancy_dataclass.dict import DictDataclass, DictDataclassFieldSettings, DictDataclassSettings
+from typing_extensions import Self
+
+from fancy_dataclass.dict import AnyDict, DictDataclass, DictDataclassFieldSettings, DictDataclassSettings
 from fancy_dataclass.settings import FieldSettings
-from fancy_dataclass.utils import dataclass_kw_only, fully_qualified_class_name
+from fancy_dataclass.utils import MissingRequiredFieldError, dataclass_kw_only, fully_qualified_class_name, get_dataclass_fields, issubclass_safe
 
 
 T = TypeVar('T')
@@ -147,6 +150,14 @@ class VersionedDataclass(DictDataclass):
             version: Version of the class to retrieve from the global registry (if `None`, use the latest)"""
         return _VERSIONED_DATACLASS_REGISTRY.get_class(cls.__name__, version=version)
 
+    @classmethod
+    def _get_type_from_dict(cls, d: AnyDict) -> Type[Self]:
+        cls = super()._get_type_from_dict(d)
+        if (version := d.get('version')) is not None:
+            # use the dict-specified version
+            return cls.get_class_with_version(version=version)  # type: ignore[return-value]
+        return cls
+
     def migrate(self, version: Optional[int] = None) -> 'VersionedDataclass':
         """Migrates the object to a class corresponding to a (possibly different) version of this class, if possible.
 
@@ -155,8 +166,16 @@ class VersionedDataclass(DictDataclass):
         cls = self.get_class_with_version(version=version)
         if cls is type(self):
             return self
-        return cls.from_dict(self.to_dict())
-
+        kwargs = {}
+        for fld in get_dataclass_fields(cls):
+            if hasattr(self, fld.name):
+                val = getattr(self, fld.name)
+                if isinstance(val, VersionedDataclass) and issubclass_safe(fld.type, VersionedDataclass):  # type: ignore[arg-type]
+                    val = val.migrate(fld.type.version)  # type: ignore[union-attr]
+                kwargs[fld.name] = val
+            elif (fld.default == dataclasses.MISSING) and (fld.default_factory == dataclasses.MISSING):
+                raise MissingRequiredFieldError(fld.name)
+        return cls(**kwargs)
 
 def version(version: int, suppress_version: bool = False) -> Callable[[Type[T]], Type[T]]:
     """Decorator turning a regular dataclass into a [`VersionedDataclass`][fancy_dataclass.versioned.VersionedDataclass].

@@ -34,6 +34,10 @@ RecordPath = Tuple[str, ...]
 MAX_DATACLASS_DEPTH = 100
 
 
+###############
+# ERROR TYPES #
+###############
+
 class TypeConversionError(ValueError):
     """Error type for type conversion."""
 
@@ -47,6 +51,24 @@ class TypeConversionError(ValueError):
         self.val = val
         tp_name = re.sub("'>$", '', re.sub(r"^<\w+ '", '', str(tp)))
         super().__init__(f'could not convert {val!r} to type {tp_name!r}')
+
+
+class MissingRequiredFieldError(ValueError):
+    """Error type for a missing required field."""
+
+    def __init__(self, name: str, alias: Optional[str] = None) -> None:
+        """Constructor for `MissingRequiredFieldError`.
+
+        Args:
+            name: name of the missing field
+            alias: alias of the missing field (e.g. when converting a JSON key)"""
+        self.name = name
+        self.alias = alias
+        msg = f'{self.name!r} field'
+        if alias:
+            msg += f' (alias {alias!r})'
+        msg += ' is required'
+        super().__init__(msg)
 
 
 ####################

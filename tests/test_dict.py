@@ -7,6 +7,7 @@ from typing_extensions import Annotated, Doc
 
 from fancy_dataclass.dict import DictDataclass, safe_dict_insert
 from fancy_dataclass.mixin import DataclassMixin
+from fancy_dataclass.utils import MissingRequiredFieldError
 
 
 @dataclass
@@ -342,7 +343,7 @@ def test_suppress_required_field():
         _ = DCSuppressRequired()
     obj = DCSuppressRequired(1)
     assert obj.to_dict() == {}
-    with pytest.raises(ValueError, match="'x' field is required"):
+    with pytest.raises(MissingRequiredFieldError, match="'x' field is required"):
         _ = DCSuppressRequired.from_dict({})
     _ = DCSuppressRequired.from_dict({'x': 1})
 
@@ -422,7 +423,7 @@ def test_suppress_none():
         x: Optional[int]
     assert DC(None).to_dict() == {}
     assert DC(1).to_dict() == {'x': 1}
-    with pytest.raises(ValueError, match="'x' field is required"):
+    with pytest.raises(MissingRequiredFieldError, match="'x' field is required"):
         _ = DC.from_dict({})
     # suppress_none is based on the value, not the type
     @dataclass

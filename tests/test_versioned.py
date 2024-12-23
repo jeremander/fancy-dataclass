@@ -3,7 +3,7 @@ from types import ModuleType
 
 import pytest
 
-from fancy_dataclass.utils import fully_qualified_class_name
+from fancy_dataclass.utils import MissingRequiredFieldError, fully_qualified_class_name
 from fancy_dataclass.versioned import _VERSIONED_DATACLASS_REGISTRY, VersionedDataclass, _VersionedDataclassGroup, _VersionedDataclassRegistry, version
 
 
@@ -112,9 +112,9 @@ def test_from_dict_same_version():
     assert A.from_dict({'version': 1, 'x': 'a'}) == a
     assert A.from_dict({'x': 'a'}) == a
     # missing required field
-    with pytest.raises(ValueError, match="'x' field is required"):
+    with pytest.raises(MissingRequiredFieldError, match="'x' field is required"):
         assert A.from_dict({'version': 1}) == a
-    with pytest.raises(ValueError, match="'x' field is required"):
+    with pytest.raises(MissingRequiredFieldError, match="'x' field is required"):
         assert A.from_dict({}) == a
     # extraneous field gets ignored
     assert A.from_dict({'version': 1, 'x': 'a', 'y': 5}) == a
@@ -314,7 +314,7 @@ def test_migrate():
     for obj in [a1, a2, a4]:
         assert isinstance(obj.migrate(version=5), A5)
         assert obj.migrate(version=5) == a5
-        with pytest.raises(ValueError, match="'x' field is required"):
+        with pytest.raises(MissingRequiredFieldError, match="'x' field is required"):
             _ = a5.migrate(version=obj.version)
     with pytest.raises(ValueError, match="no class registered with name 'A', version 6"):
         _ = a5.migrate(version=6)
