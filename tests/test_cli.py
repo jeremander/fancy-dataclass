@@ -261,7 +261,7 @@ def test_argparse_options():
         assert cls.from_cli_args(['1']).choice == 1
         check_invalid_args(cls, [], 'required: choice')
         check_invalid_args(cls, ['a'], "invalid int value: 'a'")
-        check_invalid_args(cls, ['0'], 'invalid choice: 0')
+        check_invalid_args(cls, ['0'], "invalid choice: '?0'?")
     @dataclass
     class DC23(ArgparseDataclass):
         choice: Literal[1, 'a']
