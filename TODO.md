@@ -22,6 +22,11 @@
 
 ## v0.8.1
 
+- `mypy` error when subclassing `JSONDataclass` with additional mixin.
+- `from_dict` in the case where custom `__init__` doesn't line up with dataclass fields?
+- `alias` metadata field for dict conversion
+- Mode to be strict about extra fields in `from_dict` when validating.
+  - Can pass `strict` explicitly, but this should be a class-level setting too.
 - documentation
   - Dataclass mixins/settings
     - For now, `dataclass` decorator is required
