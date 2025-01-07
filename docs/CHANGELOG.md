@@ -14,7 +14,17 @@ Types of changes:
     - Security
 -->
 
+## [0.7.4]
+
+2025-01-07
+
+### Fixed
+
+- Bug with `Optional[List[...]]` dataclass fields in `ArgparseDataclass`.
+
 ## [0.7.3]
+
+2024-10-27
 
 ### Added
 
@@ -275,7 +285,9 @@ Types of changes:
     - `SQLDataclass`: SQL persistence via `sqlalchemy`
     - `SubprocessDataclass`: call out to another program via `subprocess`
 
-[unreleased]: https://github.com/jeremander/fancy-dataclass/compare/v0.7.2...HEAD
+[unreleased]: https://github.com/jeremander/fancy-dataclass/compare/v0.7.4...HEAD
+[0.7.4]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.7.4
+[0.7.3]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.7.3
 [0.7.2]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.7.2
 [0.7.1]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.7.1
 [0.7.0]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.7.0
