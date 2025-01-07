@@ -23,8 +23,6 @@ lint.extend-select = [
 
 # rules to ignore
 lint.ignore = [
-    "ANN101",  # type annotation for 'self' in method
-    "ANN102",  # type annotation for 'cls' in classmethod
     "ANN401",  # use of the 'Any' type
     "B027",  # empty method not marked with abstractmethod
     "B905",  # zip without explicit 'strict' parameter
