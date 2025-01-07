@@ -406,7 +406,7 @@ class ArgparseDataclass(DataclassMixin):
             if not hasattr(parser, '_pos_args'):
                 parser._pos_args = set()  # type: ignore[union-attr]
             if positional:
-                pos_args = parser._pos_args
+                pos_args = parser._pos_args  # type: ignore[union-attr]
                 if args[0] in pos_args:
                     raise ValueError(f'duplicate positional argument {args[0]!r}')
                 pos_args.add(args[0])
