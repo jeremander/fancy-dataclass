@@ -923,3 +923,19 @@ def test_default_help():
     ]:
         r = re.compile(r'\s*' + pattern)
         assert any(r.fullmatch(line) for line in lines)
+
+def test_optional_list():
+    @dataclass
+    class DC1(ArgparseDataclass):
+        strings: Optional[List[str]] = field(default=None, metadata={'nargs': '*'})
+    assert DC1.from_cli_args([]) == DC1(None)
+    assert DC1.from_cli_args(['--strings']) == DC1([])
+    assert DC1.from_cli_args(['--strings', 'abc']) == DC1(['abc'])
+    assert DC1.from_cli_args(['--strings', 'abc', 'def']) == DC1(['abc', 'def'])
+    @dataclass
+    class DC2(ArgparseDataclass):
+        strings: Optional[List[str]] = field(default=None, metadata={'nargs': '+'})
+    assert DC2.from_cli_args([]) == DC2(None)
+    check_invalid_args(DC2, ['--strings'], 'expected at least one argument')
+    assert DC2.from_cli_args(['--strings', 'abc']) == DC2(['abc'])
+    assert DC2.from_cli_args(['--strings', 'abc', 'def']) == DC2(['abc', 'def'])

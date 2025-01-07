@@ -299,6 +299,8 @@ class ArgparseDataclass(DataclassMixin):
         if issubclass_safe(tp, IntEnum):
             # use a bare int type
             tp = int
+        if issubclass_safe(get_origin(tp), list):  # type: ignore[arg-type]
+            tp = get_args(tp)[0]
         kwargs['type'] = tp
         # determine the default value
         if fld.default == MISSING:
