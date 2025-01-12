@@ -154,7 +154,7 @@ class JSONDataclass(DictFileSerializableDataclass, JSONSerializable):  # type: i
         return super()._from_dict_value_basic(tp, from_dict_value_basic(tp, val))
 
     @classmethod
-    def _from_dict_value(cls, tp: type, val: Any, strict: bool = False) -> Any:
+    def _from_dict_value(cls, tp: type, val: Any) -> Any:
         # customize behavior for JSONSerializable
         origin_type = get_origin(tp)
         if (origin_type is None) and issubclass_safe(tp, tuple) and isinstance(val, dict) and hasattr(tp, '_fields'):  # namedtuple
@@ -163,13 +163,13 @@ class JSONDataclass(DictFileSerializableDataclass, JSONSerializable):  # type: i
                 for key in tp._fields:
                     # if NamedTuple's types are annotated, check them
                     valtype = getattr(tp, '__annotations__', {}).get(key)
-                    vals.append(val[key] if (valtype is None) else cls._from_dict_value(valtype, val[key], strict=strict))
+                    vals.append(val[key] if (valtype is None) else cls._from_dict_value(valtype, val[key]))
                 return tp(*vals)
             except KeyError as e:
                 raise TypeConversionError(tp, val) from e
         if origin_type is dict:  # decode keys to be valid JSON
             (keytype, valtype) = get_args(tp)
-            return {cls.json_key_decoder(cls._from_dict_value(keytype, k)): cls._from_dict_value(valtype, v, strict=strict) for (k, v) in val.items()}
+            return {cls.json_key_decoder(cls._from_dict_value(keytype, k)): cls._from_dict_value(valtype, v) for (k, v) in val.items()}
         return super()._from_dict_value(tp, val)
 
 

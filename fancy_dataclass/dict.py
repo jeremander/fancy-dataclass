@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 from copy import copy
 import dataclasses
 from dataclasses import Field
-from functools import partial
 import types
 from typing import TYPE_CHECKING, Any, ClassVar, Dict, Iterable, Literal, Optional, Type, TypeVar, Union, _TypedDictMeta, get_args, get_origin  # type: ignore[attr-defined]
 
@@ -68,11 +67,13 @@ class DictDataclassSettings(MixinSettings):
         - `name`: store the type name
         - `qualname`: store the fully qualified type name (easiest way to resolve the type from the dict)
     - `flattened`: if `True`, [`DictDataclass`][fancy_dataclass.dict.DictDataclass] subfields fields will be merged together with the main fields (provided there are no name collisions); otherwise, they are nested
+    - `strict`: if `True`, raise an error when converting from a dict if unknown fields are present
     - `validate`: if `True`, attempt to validate data when converting from a dict"""
     suppress_defaults: bool = True
     suppress_none: bool = False
     store_type: StoreTypeMode = 'auto'
     flattened: bool = False
+    strict: bool = False
     validate: bool = True
 
     def __post_init__(self) -> None:
@@ -208,11 +209,11 @@ class DictDataclass(DataclassMixin):
         return self._to_dict(full)
 
     @staticmethod
-    def _from_dict_value_convertible(tp: Type['DictDataclass'], val: Any, strict: bool) -> Any:
+    def _from_dict_value_convertible(tp: Type['DictDataclass'], val: Any) -> Any:
         if isinstance(val, tp):  # already converted from a dict
             return val
         # otherwise, convert from a dict
-        return tp.from_dict(val, strict=strict)
+        return tp.from_dict(val)
 
     @classmethod
     def _from_dict_value_basic(cls, tp: type, val: Any) -> Any:
@@ -231,11 +232,11 @@ class DictDataclass(DataclassMixin):
         return val
 
     @classmethod
-    def _from_dict_value(cls, tp: type, val: Any, strict: bool = False) -> Any:
+    def _from_dict_value(cls, tp: type, val: Any) -> Any:
         """Given a type and a value, attempts to convert the value to the given type."""
         def err() -> TypeConversionError:
             return TypeConversionError(tp, val)
-        convert_val = partial(cls._from_dict_value, strict=strict)
+        convert_val = cls._from_dict_value
         if tp is type(None):
             if val is None:
                 return None
@@ -260,7 +261,7 @@ class DictDataclass(DataclassMixin):
                 # this limitation means we can only use TypeVar for basic types
                 return val
             if hasattr(tp, 'from_dict'):  # handle nested fields which are themselves convertible from a dict
-                return cls._from_dict_value_convertible(tp, val, strict)
+                return cls._from_dict_value_convertible(tp, val)
             if issubclass(tp, tuple):
                 return tp(*val)
             if issubclass(tp, dict):
@@ -298,7 +299,7 @@ class DictDataclass(DataclassMixin):
                 # one of the Literal options is matched
                 return val
         elif hasattr(origin_type, 'from_dict'):
-            return cls._from_dict_value_convertible(origin_type, val, strict)
+            return cls._from_dict_value_convertible(origin_type, val)
         elif issubclass_safe(origin_type, Iterable):  # arbitrary iterable
             subtype = args[0]
             return type(val)(convert_val(subtype, elt) for elt in val)
@@ -309,13 +310,13 @@ class DictDataclass(DataclassMixin):
         raise ValueError(f'{fld.name!r} field is required')
 
     @classmethod
-    def dataclass_args_from_dict(cls, d: AnyDict, strict: bool = False) -> AnyDict:
+    def dataclass_args_from_dict(cls, d: AnyDict) -> AnyDict:
         """Given a dict of arguments, performs type conversion and/or validity checking, then returns a new dict that can be passed to the class's constructor."""
         check_dataclass(cls)
         kwargs = {}
         bases = cls.mro()
         fields = dataclasses.fields(cls)  # type: ignore[arg-type]
-        if strict:  # check there are no extraneous fields
+        if cls.__settings__.strict:  # check there are no extraneous fields
             field_names = {field.name for field in fields}
             for key in d:
                 if key not in field_names:
@@ -328,7 +329,7 @@ class DictDataclass(DataclassMixin):
                 for base in bases:
                     try:
                         field_type = dataclass_field_type(base, fld.name)
-                        kwargs[fld.name] = cls._from_dict_value(field_type, d[fld.name], strict=strict)
+                        kwargs[fld.name] = cls._from_dict_value(field_type, d[fld.name])
                         break
                     except (AttributeError, KeyError):
                         pass
@@ -351,7 +352,7 @@ class DictDataclass(DataclassMixin):
 
         Args:
             d: Dict to convert into an object
-            kwargs: Keyword arguments <ul><li>`strict`: if `True`, raise an error if extraneous dict fields are present</li></ul>
+            kwargs: Keyword arguments
 
         Returns:
             Converted object of this class"""
@@ -380,6 +381,5 @@ class DictDataclass(DataclassMixin):
             conv = _flatten_dataclass(tp, cls.__bases__)[1]
             tp = conv.to_type  # type: ignore[assignment]
             tp.__settings__ = settings
-        strict = kwargs.get('strict', False)
-        result: Self = tp(**tp.dataclass_args_from_dict(d, strict=strict))
+        result: Self = tp(**tp.dataclass_args_from_dict(d))
         return conv.backward(result) if cls.__settings__.flattened else result  # type: ignore

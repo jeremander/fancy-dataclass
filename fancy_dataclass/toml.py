@@ -170,10 +170,10 @@ class TOMLDataclass(DictFileSerializableDataclass, TOMLSerializable, suppress_de
         return doc
 
     @classmethod
-    def _from_dict_value(cls, tp: type, val: Any, strict: bool = False) -> Any:
+    def _from_dict_value(cls, tp: type, val: Any) -> Any:
         if isinstance(val, NoneProxy):
             return None
-        return super()._from_dict_value(tp, val, strict=strict)
+        return super()._from_dict_value(tp, val)
 
     @classmethod
     def _from_dict_value_basic(cls, tp: type, val: Any) -> Any:

@@ -340,8 +340,5 @@ class DictFileSerializableDataclass(DictDataclass, TextFileSerializable):  # typ
 
     @classmethod
     def _from_text_file(cls, fp: IO[str], **kwargs: Any) -> Self:
-        # pop off known DictDataclass.from_dict kwargs
-        default_dict_kwargs = {'strict': False}
-        load_kwargs = {key: val for (key, val) in kwargs.items() if (key not in default_dict_kwargs)}
-        from_dict_kwargs = {key: kwargs.get(key, default_dict_kwargs[key]) for key in default_dict_kwargs}
-        return cls.from_dict(cls._text_file_to_dict(fp, **load_kwargs), **from_dict_kwargs)
+        # NOTE: kwargs are passed to _text_file_from_dict, not from_dict
+        return cls.from_dict(cls._text_file_to_dict(fp, **kwargs))

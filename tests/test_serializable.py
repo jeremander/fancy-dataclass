@@ -589,14 +589,17 @@ class TestJSON(TestDict):
         @dataclass
         class MyDC(JSONDataclass):
             x: int = 1
+        @dataclass
+        class MyDCStrict(JSONDataclass, strict=True):
+            x: int = 1
         s = '{"x": 1}'
         assert MyDC.from_json_string(s) == MyDC()
-        assert MyDC.from_json_string(s, strict=True) == MyDC()
+        assert MyDCStrict.from_json_string(s) == MyDCStrict()
         with pytest.raises(ValueError, match="'y' is not a valid field for MyDC"):
-            _ = MyDC.from_json_string('{"x": 1, "y": 2}', strict=True)
+            _ = MyDCStrict.from_json_string('{"x": 1, "y": 2}', strict=True)
         parse_int = lambda val: int(val) + 1
         assert MyDC.from_json_string(s, parse_int=parse_int) == MyDC(2)
-        assert MyDC.from_json_string(s, strict=True, parse_int=parse_int) == MyDC(2)
+        assert MyDCStrict.from_json_string(s, parse_int=parse_int) == MyDCStrict(2)
         with pytest.raises(TypeError, match="unexpected keyword argument 'fake_kwarg'"):
             _ = MyDC.from_json_string(s, fake_kwarg=True)
 

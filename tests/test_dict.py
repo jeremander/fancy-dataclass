@@ -196,22 +196,43 @@ def test_flattened():
 def test_from_dict_strict():
     """Tests behavior of strict=True for DictDataclass."""
     @dataclass
-    class MyDC(DictDataclass):
+    class InnerLax(DictDataclass):
         x: int = 1
-    assert MyDC.from_dict({}) == MyDC()
-    assert MyDC.from_dict({'x': 2}) == MyDC(x=2)
-    assert MyDC.from_dict({'x': 1, 'y': 2}) == MyDC()
-    with pytest.raises(ValueError, match="'y' is not a valid field for MyDC"):
-        _ = MyDC.from_dict({'x': 1, 'y': 2}, strict=True)
     @dataclass
-    class OuterDC(DictDataclass):
-        inner: MyDC
-    assert OuterDC.from_dict({'inner': {'x': 1}}) == OuterDC(MyDC())
-    assert OuterDC.from_dict({'inner': {'y': 1}}) == OuterDC(MyDC())
-    with pytest.raises(ValueError, match="'y' is not a valid field for MyDC"):
-        _ = OuterDC.from_dict({'inner': {'y': 1}}, strict=True)
-    with pytest.raises(ValueError, match="'extra' is not a valid field for OuterDC"):
-        OuterDC.from_dict({'inner': {'x': 1}, 'extra': None}, strict=True)
+    class InnerStrict(DictDataclass, strict=True):
+        x: int = 1
+    for cls in [InnerLax, InnerStrict]:
+        assert cls.from_dict({}) == cls()
+        assert cls.from_dict({'x': 2}) == cls(x=2)
+    assert InnerLax.from_dict({'x': 1, 'y': 2}) == InnerLax()
+    with pytest.raises(ValueError, match="'y' is not a valid field for InnerStrict"):
+        _ = InnerStrict.from_dict({'x': 1, 'y': 2})
+    @dataclass
+    class OuterLaxInnerLax(DictDataclass):
+        z: InnerLax
+    @dataclass
+    class OuterLaxInnerStrict(DictDataclass):
+        z: InnerStrict
+    @dataclass
+    class OuterStrictInnerLax(DictDataclass, strict=True):
+        z: InnerLax
+    @dataclass
+    class OuterStrictInnerStrict(DictDataclass, strict=True):
+        z: InnerStrict
+    for cls in [OuterLaxInnerLax, OuterLaxInnerStrict, OuterStrictInnerLax, OuterStrictInnerStrict]:
+        inner_cls = cls.__dataclass_fields__['z'].type
+        assert cls.from_dict({'z': {'x': 1}}) == cls(inner_cls())
+    for cls in [OuterLaxInnerLax, OuterStrictInnerLax]:
+        inner_cls = cls.__dataclass_fields__['z'].type
+        assert cls.from_dict({'z': {'y': 1}}) == cls(inner_cls())
+    for cls in [OuterLaxInnerStrict, OuterStrictInnerStrict]:
+        inner_cls = cls.__dataclass_fields__['z'].type
+        for d in [{'y': 1}, {'x': 1, 'y': 1}]:
+            with pytest.raises(ValueError, match=f"'y' is not a valid field for {inner_cls.__name__}"):
+                _ = cls.from_dict({'z': d})
+    for cls in [OuterStrictInnerLax, OuterStrictInnerStrict]:
+        with pytest.raises(ValueError, match=f"'extra' is not a valid field for {cls.__name__}"):
+            _ = cls.from_dict({'z': {'x': 1}, 'extra': None})
 
 def test_store_type_setting():
     """Tests behavior of the store_type setting."""
