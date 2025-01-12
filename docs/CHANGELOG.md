@@ -14,6 +14,13 @@ Types of changes:
     - Security
 -->
 
+## [0.8.0]
+
+### Changed
+
+- Removed `strict` flag from `DictDataclass.from_dict`, instead making it a class-level setting.
+- Implicitly convert between `pathlib.Path` and `str` for dict conversion in `JSONDataclass`/`TOMLDataclass`.
+
 ## [0.7.4]
 
 2025-01-07
@@ -285,7 +292,8 @@ Types of changes:
     - `SQLDataclass`: SQL persistence via `sqlalchemy`
     - `SubprocessDataclass`: call out to another program via `subprocess`
 
-[unreleased]: https://github.com/jeremander/fancy-dataclass/compare/v0.7.4...HEAD
+[unreleased]: https://github.com/jeremander/fancy-dataclass/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.8.0
 [0.7.4]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.7.4
 [0.7.3]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.7.3
 [0.7.2]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.7.2

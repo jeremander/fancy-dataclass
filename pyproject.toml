@@ -59,7 +59,7 @@ pre-publish = [
 
 [tool.hatch.envs.lint]
 dependencies = [
-  "mypy>=1.11",
+  "mypy>=1.14",
   "numpy",
   "py-gadzooks>=0.2.9",
   "pytest",

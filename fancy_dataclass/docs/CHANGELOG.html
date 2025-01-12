@@ -711,6 +711,30 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#080" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.8.0
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.8.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      Changed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#074" class="md-nav__link">
     <span class="md-ellipsis">
       0.7.4
@@ -835,7 +859,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#changed" class="md-nav__link">
+  <a href="#changed_1" class="md-nav__link">
     <span class="md-ellipsis">
       Changed
     </span>
@@ -910,7 +934,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#changed_1" class="md-nav__link">
+  <a href="#changed_2" class="md-nav__link">
     <span class="md-ellipsis">
       Changed
     </span>
@@ -943,7 +967,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#changed_2" class="md-nav__link">
+  <a href="#changed_3" class="md-nav__link">
     <span class="md-ellipsis">
       Changed
     </span>
@@ -976,7 +1000,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#changed_3" class="md-nav__link">
+  <a href="#changed_4" class="md-nav__link">
     <span class="md-ellipsis">
       Changed
     </span>
@@ -1075,7 +1099,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#changed_4" class="md-nav__link">
+  <a href="#changed_5" class="md-nav__link">
     <span class="md-ellipsis">
       Changed
     </span>
@@ -1108,7 +1132,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#changed_5" class="md-nav__link">
+  <a href="#changed_6" class="md-nav__link">
     <span class="md-ellipsis">
       Changed
     </span>
@@ -1141,7 +1165,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#changed_6" class="md-nav__link">
+  <a href="#changed_7" class="md-nav__link">
     <span class="md-ellipsis">
       Changed
     </span>
@@ -1207,7 +1231,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#changed_7" class="md-nav__link">
+  <a href="#changed_8" class="md-nav__link">
     <span class="md-ellipsis">
       Changed
     </span>
@@ -1284,6 +1308,12 @@ Types of changes:
     - Security
 -->
 
+<h2 id="080"><a href="https://github.com/jeremander/fancy-dataclass/releases/tag/v0.8.0">0.8.0</a></h2>
+<h3 id="changed">Changed</h3>
+<ul>
+<li>Removed <code>strict</code> flag from <code>DictDataclass.from_dict</code>, instead making it a class-level setting.</li>
+<li>Implicitly convert between <code>pathlib.Path</code> and <code>str</code> for dict conversion in <code>JSONDataclass</code>/<code>TOMLDataclass</code>.</li>
+</ul>
 <h2 id="074"><a href="https://github.com/jeremander/fancy-dataclass/releases/tag/v0.7.4">0.7.4</a></h2>
 <p>2025-01-07</p>
 <h3 id="fixed">Fixed</h3>
@@ -1335,7 +1365,7 @@ Types of changes:
 <li><code>DocFieldSettings</code> to extract documentation from dataclass fields (supports <a href="https://peps.python.org/pep-0727/">PEP 727</a>)</li>
 <li>New module, <code>fancy_dataclass.settings</code>, for mixin and field settings</li>
 </ul>
-<h3 id="changed">Changed</h3>
+<h3 id="changed_1">Changed</h3>
 <ul>
 <li><code>DictDataclassSettings</code><ul>
 <li>Removed <code>fully_qualified</code> flag</li>
@@ -1386,7 +1416,7 @@ Types of changes:
 </ul>
 </li>
 </ul>
-<h3 id="changed_1">Changed</h3>
+<h3 id="changed_2">Changed</h3>
 <ul>
 <li>(<em>Breaking</em>) <code>ArgparseDataclass</code>: <code>parser_class</code> and <code>parser_description</code> classmethods have become <code>ArgparseDataclassSettings</code> fields <code>parser_class</code> and <code>help_descr</code>.</li>
 </ul>
@@ -1397,7 +1427,7 @@ Types of changes:
 <li>Explicit <code>required</code> metadata flag in <code>ArgparseDataclass</code></li>
 <li>More details in web docs for <code>JSONDataclass</code>, <code>TOMLDataclass</code></li>
 </ul>
-<h3 id="changed_2">Changed</h3>
+<h3 id="changed_3">Changed</h3>
 <ul>
 <li>(<em>Breaking</em>) <code>JSONDataclass</code> methods <code>json_encoder</code> and <code>json_key_decoder</code> now public</li>
 </ul>
@@ -1407,7 +1437,7 @@ Types of changes:
 </ul>
 <h2 id="045"><a href="https://github.com/jeremander/fancy-dataclass/releases/tag/v0.4.5">0.4.5</a></h2>
 <p>2024-05-30</p>
-<h3 id="changed_3">Changed</h3>
+<h3 id="changed_4">Changed</h3>
 <ul>
 <li><code>ArgparseDataclass</code> <code>subcommand</code> property to <code>subcommand_name</code></li>
 </ul>
@@ -1458,7 +1488,7 @@ Types of changes:
 <ul>
 <li><code>fancy_dataclass/docs</code> subfolder containing HTML documentation (accessible without Internet access)</li>
 </ul>
-<h3 id="changed_4">Changed</h3>
+<h3 id="changed_5">Changed</h3>
 <ul>
 <li>Using <a href="https://github.com/jeremander/gadzooks"><code>gadzooks</code></a> repo for the following <code>pre-commit</code> hooks:<ul>
 <li><code>build-docs</code>: rebuild docs if any source markdown files changed</li>
@@ -1478,7 +1508,7 @@ Types of changes:
 </li>
 <li><code>save</code> and <code>load</code> convenience methods for <code>FileSerializable</code> (includes <code>JSONDataclass</code> and <code>TOMLDataclass</code>)</li>
 </ul>
-<h3 id="changed_5">Changed</h3>
+<h3 id="changed_6">Changed</h3>
 <ul>
 <li><code>Config.get_config</code> returns reference instead of deepcopy</li>
 <li>Class hierarchy of <code>FileSerializable</code><ul>
@@ -1498,7 +1528,7 @@ Types of changes:
 </ul>
 </li>
 </ul>
-<h3 id="changed_6">Changed</h3>
+<h3 id="changed_7">Changed</h3>
 <ul>
 <li>Top-level <code>*</code>-imports mostly limited to mixin classes via <code>__all__</code></li>
 <li>Renamed <code>Config.configure</code> context manager to <code>as_config</code></li>
@@ -1547,7 +1577,7 @@ Types of changes:
 </ul>
 </li>
 </ul>
-<h3 id="changed_7">Changed</h3>
+<h3 id="changed_8">Changed</h3>
 <ul>
 <li>Build via <a href="https://github.com/pypa/hatch"><code>hatch</code></a></li>
 <li>Better flattened/nested dataclass conversions</li>
