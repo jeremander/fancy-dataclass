@@ -6,6 +6,7 @@ from enum import Enum, Flag, auto
 from io import StringIO
 from json import JSONEncoder
 import math
+from pathlib import Path
 import re
 import sys
 from typing import Any, Dict, List, Literal, NamedTuple, Optional, Set, TypedDict, Union
@@ -165,6 +166,10 @@ class DCRange(JSONDataclass):
     range: range
 
 @dataclass
+class DCPath(JSONDataclass):
+    path: Path
+
+@dataclass
 class DCAnnotated(JSONDataclass):
     x: Annotated[int, 'an integer']
     y: Annotated[float, Doc('a float')]
@@ -232,6 +237,7 @@ class DCNumpy(JSONDataclass, suppress_defaults=False):
 DictDCDatetime = _convert_json_dataclass(DCDatetime, DictDataclass)
 DictDCEnum = _convert_json_dataclass(DCEnum, DictDataclass)
 DictDCRange = _convert_json_dataclass(DCRange, DictDataclass)
+DictDCPath = _convert_json_dataclass(DCPath, DictDataclass)
 
 JSONDCSuppress = to_json_dataclass(DCSuppress)
 JSONDCSuppress2 = to_json_dataclass(DCSuppress2)
@@ -260,6 +266,7 @@ TEST_JSON = [
     DCStrEnum(MyStrEnum.a),
     DCColors(list(Color)),
     DCRange(range(1, 10, 3)),
+    DCPath(Path('/example/path')),
     DCAnnotated(3, 4.7),
     DCTypedDict({'x': 3, 'y': 'a'}),
     DCUntypedNamedTuple(UntypedNamedTuple(3, 'a')),
@@ -408,6 +415,8 @@ class TestJSON(TestDict):
         (DCRange(range(1, 10, 3)), {'range': [1, 10, 3]}),
         (DictDCRange(range(1, 10)), {'range': range(1, 10)}),
         (DCRange(range(1, 10)), {'range': [1, 10]}),
+        (DictDCPath(Path('test')), {'path': Path('test')}),
+        (DCPath(Path('test')), {'path': 'test'}),
     ])
     def test_special_types(self, obj, d):
         """Tests that DictDataclass does not do special type conversion for certain types, while JSONDataclass does."""

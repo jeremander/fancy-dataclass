@@ -26,6 +26,8 @@ def to_dict_value_basic(val: Any) -> Any:
         if val.step != 1:
             bounds.append(val.step)
         return bounds
+    if isinstance(val, Path):  # convert Path to string
+        return str(val)
     if hasattr(val, 'dtype'):
         if hasattr(val, '__len__'):  # assume it's a numpy array of numbers
             return [float(elt) for elt in val]
@@ -52,6 +54,8 @@ def from_dict_value_basic(tp: type, val: Any) -> Any:
         return tp(val)  # type: ignore[call-arg]
     if issubclass(tp, range):
         return tp(*val)
+    if issubclass(tp, Path):
+        return tp(val)
     if issubclass(tp, Enum):
         try:
             return tp(val)
