@@ -11,6 +11,10 @@ from fancy_dataclass.utils import coerce_to_dataclass, merge_dataclasses
 from tests.test_cli import DC1
 
 
+TEST_DIR = Path(__file__).parent
+PKG_DIR = TEST_DIR.parent
+
+
 def test_subprocess_dataclass(tmpdir):
     """Tests SubprocessDataclass behavior."""
     DC2FieldSettings = merge_dataclasses(DC1.__field_settings_type__, SubprocessDataclassFieldSettings, allow_duplicates=True)
@@ -24,11 +28,11 @@ def test_subprocess_dataclass(tmpdir):
     assert dc2.get_args(suppress_defaults=True) == [prog, 'positional_arg', '-i', 'my_input', '-o', 'my_output', '--flag']
     # create a script to run the CLIDataclass
     dc1 = coerce_to_dataclass(DC1, dc2)
-    cwd = str(Path(__file__).parent)
     with open(prog, 'w') as f:
         print(f"""#!/usr/bin/env python3
 import sys
-sys.path.insert(0, {cwd!r})
+sys.path.insert(0, {str(TEST_DIR)!r})
+sys.path.insert(0, {str(PKG_DIR)!r})
 from test_cli import DC1
 DC1.main()""", file=f)
     Path(prog).chmod(0o770)
