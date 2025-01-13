@@ -4,6 +4,11 @@
 
 ## v0.8.0
 
+- `mypy` error when subclassing `JSONDataclass` with additional mixin.
+  - https://github.com/jeremander/fancy-dataclass/issues/3
+
+## v0.9.0
+
 - `VersionedDataclass`
   - `version` class setting (int) and `version` read-only class property
   - Should probably subclass `DictDataclass`, ensures that `version` property is stored in dict
@@ -20,11 +25,8 @@
     - Avoid cyclic references (`weakref`?)
   - Deal with namespace collision? E.g. use `globals()` to ensure the latest version is the only one accessible within module's namespace, even if it is defined earlier than the others.
 
-## v0.8.1
+## v0.9.1
 
-- `mypy` error when subclassing `JSONDataclass` with additional mixin.
-- `from_dict` in the case where custom `__init__` doesn't line up with dataclass fields?
-- `alias` metadata field for dict conversion
 - documentation
   - Dataclass mixins/settings
     - For now, `dataclass` decorator is required
@@ -45,6 +47,10 @@
 
 ## Future
 
+- `from_dict` in the case where custom `__init__` doesn't line up with dataclass fields?
+- `alias` metadata field for dict conversion
+- Field converters
+  - https://github.com/jeremander/fancy-dataclass/issues/2
 - `PromptDataclass` to prompt user for each value type
   - Be able to supply validator functions
   - Specify behavior on error (bail or loop)

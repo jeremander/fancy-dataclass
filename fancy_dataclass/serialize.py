@@ -242,7 +242,7 @@ class TextSerializable(BinarySerializable, ABC):
         return cls._from_string(b.decode(), **kwargs)
 
 
-class TextFileSerializable(TextSerializable, BinaryFileSerializable, FileSerializable):  # type: ignore[misc]
+class TextFileSerializable(TextSerializable, BinaryFileSerializable):  # type: ignore[misc]
     """Mixin class enabling serialization of an object to/from a text file.
 
     Subclasses should override `_to_text_file` and `_from_text_file` to implement them."""
