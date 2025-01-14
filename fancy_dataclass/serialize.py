@@ -128,7 +128,7 @@ class BinarySerializable(ABC):
 
     @classmethod
     @abstractmethod
-    def _to_bytes(cls, obj: Self, **kwargs: Any) -> bytes:
+    def _to_bytes(cls, obj: object, **kwargs: Any) -> bytes:
         """Converts the object into raw bytes.
 
         Args:
@@ -140,7 +140,7 @@ class BinarySerializable(ABC):
 
     @classmethod
     @abstractmethod
-    def _from_bytes(cls, b: bytes, **kwargs: Any) -> Self:
+    def _from_bytes(cls, b: bytes, **kwargs: Any) -> object:
         """Deserializes the object from raw bytes.
 
         Args:
@@ -183,13 +183,13 @@ class BinaryFileSerializable(BinarySerializable, FileSerializable):
             The deserialized object"""
 
     @classmethod
-    def _to_bytes(cls, obj: Self, **kwargs: Any) -> bytes:
+    def _to_bytes(cls, obj: object, **kwargs: Any) -> bytes:
         with BytesIO() as stream:
-            cls._to_binary_file(obj, stream, **kwargs)
+            cls._to_binary_file(cast(Self, obj), stream, **kwargs)
             return stream.getvalue()
 
     @classmethod
-    def _from_bytes(cls, b: bytes, **kwargs: Any) -> Self:
+    def _from_bytes(cls, b: bytes, **kwargs: Any) -> object:
         with BytesIO(b) as bio:
             return cls._from_binary_file(bio, **kwargs)
 
@@ -232,17 +232,17 @@ class TextSerializable(BinarySerializable, ABC):
             The deserialized object"""
 
     @classmethod
-    def _to_bytes(cls, obj: Self, **kwargs: Any) -> bytes:
+    def _to_bytes(cls, obj: object, **kwargs: Any) -> bytes:
         # by default, encode string as UTF-8
-        return cls._to_string(obj, **kwargs).encode()
+        return cls._to_string(cast(Self, obj), **kwargs).encode()
 
     @classmethod
-    def _from_bytes(cls, b: bytes, **kwargs: Any) -> Self:
+    def _from_bytes(cls, b: bytes, **kwargs: Any) -> object:
         # by default, decode bytes as UTF-8
         return cls._from_string(b.decode(), **kwargs)
 
 
-class TextFileSerializable(TextSerializable, BinaryFileSerializable):  # type: ignore[misc]
+class TextFileSerializable(TextSerializable, BinaryFileSerializable):
     """Mixin class enabling serialization of an object to/from a text file.
 
     Subclasses should override `_to_text_file` and `_from_text_file` to implement them."""
@@ -290,7 +290,7 @@ class TextFileSerializable(TextSerializable, BinaryFileSerializable):  # type: i
 
     @classmethod
     def _from_binary_file(cls, fp: IO[bytes], **kwargs: Any) -> Self:
-        return cls._from_bytes(fp.read(), **kwargs)
+        return cast(Self, cls._from_bytes(fp.read(), **kwargs))
 
     @classmethod
     def _to_file(cls, obj: Self, fp: AnyIO, **kwargs: Any) -> None:
@@ -306,7 +306,7 @@ class TextFileSerializable(TextSerializable, BinaryFileSerializable):  # type: i
         return cls._from_binary_file(cast(BinaryIO, fp), **kwargs)
 
 
-class DictFileSerializableDataclass(DictDataclass, TextFileSerializable):  # type: ignore[misc]
+class DictFileSerializableDataclass(DictDataclass, TextFileSerializable):
     """Mixin class for a [`DictDataclass`][fancy_dataclass.dict.DictDataclass] capable of serializing its dict representation to some type of file.
 
     Examples include JSON and TOML."""
