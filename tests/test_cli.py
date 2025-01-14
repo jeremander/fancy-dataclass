@@ -307,6 +307,13 @@ def test_choices():
     # custom choice can be parsed, but it is not valid for the type
     with pytest.raises(ValueError, match="invalid value 'c'"):
         _ = DC5.from_cli_args(['c'])
+    # optional Literal
+    @dataclass
+    class DC6(ArgparseDataclass):
+        x: Optional[Literal['a', 'b']] = None
+    assert DC6.from_cli_args([]).x is None
+    assert DC6.from_cli_args(['-x', 'a']).x == 'a'
+    check_invalid_args(DC6, ['-x', 'c'], "invalid choice: 'c'")
 
 def test_string_field_annotations():
     """Tests what happens when ArgparseDataclass field annotations are strings."""

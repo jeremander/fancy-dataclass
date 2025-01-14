@@ -289,6 +289,9 @@ class ArgparseDataclass(DataclassMixin):
                             name = f'list of {arg.__name__}' if issubclass_safe(origin_type, list) else f'tuple with {arg}'  # type: ignore[attr-defined]
                             raise ValueError(f'{name} not allowed in ArgparseDataclass parser')
                 tp = tp_args[0]
+                if get_origin(tp) == Literal:  # Optional[Literal[...]]: unwrap to Literal[...]
+                    tp_args = get_args(tp)
+                    origin_type = Literal
                 if origin_type == Literal:  # literal options will become choices
                     arg_types = {type(arg) for arg in tp_args}
                     if len(arg_types) == 1:
@@ -470,7 +473,7 @@ class ArgparseDataclass(DataclassMixin):
                 nested_field = True
             elif hasattr(args, field.name):  # extract arg from the namespace
                 val = getattr(args, field.name)
-                # do some basic type-checking
+                # check that Literal value matches one of the allowed values
                 # TODO: let general-purpose validation mixin handle this post-init?
                 if get_origin(tp) == Literal:
                     if not any(val == arg for arg in get_args(tp)):
