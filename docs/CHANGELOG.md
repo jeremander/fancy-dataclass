@@ -18,8 +18,12 @@ Types of changes:
 
 ### Changed
 
-- Removed `strict` flag from `DictDataclass.from_dict`, instead making it a class-level setting.
-- Implicitly convert between `pathlib.Path` and `str` for dict conversion in `JSONDataclass`/`TOMLDataclass`.
+- Remove `strict` flag from `DictDataclass.from_dict`, instead making it a class-level setting.
+- Implicitly convert between `pathlib.Path` and `str` for dict conversion in `JSONDataclass`/`TOMLDataclass` ([#1]).
+
+### Fixed
+
+- Relax type signatures in `TextFileSerializable` private methods to avoid "incompatible definition" `mypy` error ([#3]).
 
 ## [0.7.4]
 
@@ -311,6 +315,9 @@ Types of changes:
 [0.3.0]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.3.0
 [0.2.0]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.2.0
 [0.1.0]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.1.0
+
+[#1]: https://github.com/jeremander/fancy-dataclass/issues/1
+[#3]: https://github.com/jeremander/fancy-dataclass/issues/3
 
 <br>
 

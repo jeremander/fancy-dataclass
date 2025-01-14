@@ -2,11 +2,6 @@
 
 # TODO
 
-## v0.8.0
-
-- `mypy` error when subclassing `JSONDataclass` with additional mixin.
-  - https://github.com/jeremander/fancy-dataclass/issues/3
-
 ## v0.9.0
 
 - `VersionedDataclass`
@@ -49,6 +44,7 @@
 
 - `from_dict` in the case where custom `__init__` doesn't line up with dataclass fields?
 - `alias` metadata field for dict conversion
+  - Should this be bidirectional? Or separate fields for each direction? [pydantic](https://docs.pydantic.dev/latest/concepts/alias/) provides both.
 - Field converters
   - https://github.com/jeremander/fancy-dataclass/issues/2
 - `PromptDataclass` to prompt user for each value type
