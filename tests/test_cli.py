@@ -314,6 +314,22 @@ def test_choices():
     assert DC6.from_cli_args([]).x is None
     assert DC6.from_cli_args(['-x', 'a']).x == 'a'
     check_invalid_args(DC6, ['-x', 'c'], "invalid choice: 'c'")
+    # list of Literal
+    @dataclass
+    class DC7(ArgparseDataclass):
+        x: List[Literal['a', 'b']] = field(default_factory=list, metadata={'nargs': '*'})
+    assert DC7.from_cli_args([]).x == []
+    assert DC7.from_cli_args(['-x']).x == []
+    assert DC7.from_cli_args(['-x', 'a']).x == ['a']
+    assert DC7.from_cli_args(['-x', 'a', 'b']).x == ['a', 'b']
+    check_invalid_args(DC7, ['-x', 'c'], "invalid choice: 'c'")
+    check_invalid_args(DC7, ['-x', 'a', 'b', 'c'], "invalid choice: 'c'")
+    # Union with Literal
+    @dataclass
+    class DC8(ArgparseDataclass):
+        x: Union[int, Literal['a', 'b']]
+    with pytest.raises(ValueError, match='union type .* not allowed'):
+        _ = DC8.make_parser()
 
 def test_string_field_annotations():
     """Tests what happens when ArgparseDataclass field annotations are strings."""

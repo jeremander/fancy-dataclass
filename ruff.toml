@@ -65,8 +65,9 @@ line-length = 10000
 
 [lint.per-file-ignores]
 "__init__.py" = ["D104", "F401"]
+"fancy_dataclass/json.py" = ["A005"]
+"fancy_dataclass/subprocess.py" = ["A005"]
 "tests/*" = ["ANN", "D"]
-
 
 [lint.flake8-pytest-style]
 parametrize-names-type = "list"
