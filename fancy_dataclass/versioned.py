@@ -151,11 +151,11 @@ class VersionedDataclass(DictDataclass):
         return _VERSIONED_DATACLASS_REGISTRY.get_class(cls.__name__, version=version)
 
     @classmethod
-    def dataclass_args_from_dict(cls, d: AnyDict, strict: bool = False) -> AnyDict:
+    def dataclass_args_from_dict(cls, d: AnyDict) -> AnyDict:
         """Given a dict of arguments, performs type conversion and/or validity checking, then returns a new dict that can be passed to the class's constructor."""
         if 'version' in d:
             d = {key: val for (key, val) in d.items() if (key != 'version')}
-        return super().dataclass_args_from_dict(d, strict=strict)
+        return super().dataclass_args_from_dict(d)
 
     @classmethod
     def _get_type_from_dict(cls, d: AnyDict) -> Type[Self]:
