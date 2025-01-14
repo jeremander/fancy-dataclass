@@ -290,7 +290,11 @@ class ArgparseDataclass(DataclassMixin):
                             raise ValueError(f'{name} not allowed in ArgparseDataclass parser')
                 tp = tp_args[0]
                 if origin_type == Literal:  # literal options will become choices
-                    tp = type(tp)
+                    arg_types = {type(arg) for arg in tp_args}
+                    if len(arg_types) == 1:
+                        tp = arg_types.pop()
+                    else:
+                        tp = None  # type: ignore[assignment]
                     kwargs['choices'] = tp_args
             else:  # type cannot be inferred
                 raise ValueError(f'cannot infer type of items in field {name!r}')

@@ -250,47 +250,54 @@ def test_argparse_options():
     assert DC20.from_cli_args(['--vals', '1', '--vals', '2']).vals == [1, 2]
     # abbrevation works
     assert DC20.from_cli_args(['--val', '1', '--vals', '2']).vals == [1, 2]
-    # choices
-    @dataclass
-    class DC21(ArgparseDataclass):
-        choice: int = field(metadata={'choices': (1, 2)})
-    @dataclass
-    class DC22(ArgparseDataclass):
-        choice: Literal[1, 2]
-    for cls in [DC21, DC22]:
-        assert cls.from_cli_args(['1']).choice == 1
-        check_invalid_args(cls, [], 'required: choice')
-        check_invalid_args(cls, ['a'], "invalid int value: 'a'")
-        check_invalid_args(cls, ['0'], "invalid choice: '?0'?")
-    @dataclass
-    class DC23(ArgparseDataclass):
-        choice: Literal[1, 'a']
-    assert DC23.from_cli_args(['1']).choice == 1
-    # not flexible enough to handle mixed types
-    check_invalid_args(DC23, ['a'], "invalid int value: 'a'")
     # integer nargs
     @dataclass
-    class DC24(ArgparseDataclass):
+    class DC21(ArgparseDataclass):
         vals: List[int] = field(metadata={'nargs': 2})
-    assert DC24.from_cli_args(['1', '2']).vals == [1, 2]
-    check_invalid_args(DC24, [], 'required: vals')
-    check_invalid_args(DC24, ['1'], 'required: vals')
-    check_invalid_args(DC24, ['1', 'a'], "invalid int value: 'a'")
-    check_invalid_args(DC24, ['1', '2', '3'], 'unrecognized arguments: 3')
+    assert DC21.from_cli_args(['1', '2']).vals == [1, 2]
+    check_invalid_args(DC21, [], 'required: vals')
+    check_invalid_args(DC21, ['1'], 'required: vals')
+    check_invalid_args(DC21, ['1', 'a'], "invalid int value: 'a'")
+    check_invalid_args(DC21, ['1', '2', '3'], 'unrecognized arguments: 3')
     # explicit required flag (overrides default behavior)
     @dataclass
-    class DC25(ArgparseDataclass):
+    class DC22(ArgparseDataclass):
         x: int = field(metadata={'required': False})
     with pytest.raises(TypeError, match="'required' is an invalid argument for positionals"):
-        _ = DC25.from_cli_args([])
+        _ = DC22.from_cli_args([])
     @dataclass
-    class DC26(ArgparseDataclass):
+    class DC23(ArgparseDataclass):
         x: int = field(metadata={'args': ['-x'], 'required': False})
-    assert DC26.from_cli_args([]).x is None
+    assert DC23.from_cli_args([]).x is None
     @dataclass
-    class DC27(ArgparseDataclass):
+    class DC24(ArgparseDataclass):
         x: int = field(default=1, metadata={'args': ['-x'], 'required': True})
-    check_invalid_args(DC27, [], 'required: -x')
+    check_invalid_args(DC24, [], 'required: -x')
+
+def test_choices():
+    """Tests how choices and Literal-typed fields are handled (including with compound types)."""
+    @dataclass
+    class DC1(ArgparseDataclass):
+        x: int = field(metadata={'choices': (1, 2)})
+    @dataclass
+    class DC2(ArgparseDataclass):
+        x: Literal[1, 2]
+    for cls in [DC1, DC2]:
+        assert cls.from_cli_args(['1']).x == 1
+        check_invalid_args(cls, [], 'required: x')
+        check_invalid_args(cls, ['a'], "invalid int value: 'a'")
+        check_invalid_args(cls, ['0'], "invalid choice: '?0'?")
+    # mixed types in Literal (not flexible enough to do coercion here)
+    @dataclass
+    class DC3(ArgparseDataclass):
+        x: Literal[1, 'a']
+    @dataclass
+    class DC4(ArgparseDataclass):
+        x: Literal['a', 1]
+    for cls in [DC3, DC4]:
+        check_invalid_args(cls, ['1'], "invalid choice: '1'")
+        check_invalid_args(cls, ['b'], "invalid choice: 'b'")
+        assert cls.from_cli_args(['a']).x == 'a'
 
 def test_string_field_annotations():
     """Tests what happens when ArgparseDataclass field annotations are strings."""
@@ -299,10 +306,10 @@ def test_string_field_annotations():
         x: 'int'
         flag: 'bool' = False
         val: 'Optional[str]' = None
-    args = DC.from_cli_args(['5', '--val', 'abc'])
-    assert args.x == 5
-    assert args.flag is False
-    assert args.val == 'abc'
+    obj = DC.from_cli_args(['5', '--val', 'abc'])
+    assert obj.x == 5
+    assert obj.flag is False
+    assert obj.val == 'abc'
 
 def test_positional():
     """Tests positional argument."""

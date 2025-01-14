@@ -63,7 +63,7 @@ dependencies = [
   "numpy",
   "py-gadzooks>=0.2.9",
   "pytest",
-  "ruff>=0.5.5",
+  "ruff>=0.9",
   "vermin>=1.6",
 ]
 

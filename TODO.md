@@ -45,6 +45,7 @@
 - `from_dict` in the case where custom `__init__` doesn't line up with dataclass fields?
 - `alias` metadata field for dict conversion
   - Should this be bidirectional? Or separate fields for each direction? [pydantic](https://docs.pydantic.dev/latest/concepts/alias/) provides both.
+  - https://github.com/jeremander/fancy-dataclass/issues/5
 - Field converters
   - https://github.com/jeremander/fancy-dataclass/issues/2
 - `PromptDataclass` to prompt user for each value type
