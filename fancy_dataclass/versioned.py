@@ -192,7 +192,7 @@ class VersionedDataclass(DictDataclass):
 
         Args:
             d: Dict to convert into an object
-            kwargs: Keyword arguments <ul><li>`strict`: if `True`, raise an error if extraneous dict fields are present</li><li>`migrate`: if `True`, migrate to the calling class's version</li></ul>
+            kwargs: Keyword arguments <ul><li>`migrate`: if `True`, migrate to the calling class's version</li></ul>
 
         Returns:
             Converted object of this class"""
