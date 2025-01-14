@@ -16,6 +16,8 @@ Types of changes:
 
 ## [0.8.0]
 
+2025-01-13
+
 ### Changed
 
 - Remove `strict` flag from `DictDataclass.from_dict`, instead making it a class-level setting.

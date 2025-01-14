@@ -45,6 +45,8 @@ class Person:
 **Fancy dataclass**
 
 ```python
+from fancy_dataclass import JSONDataclass
+
 @dataclass
 class Person(JSONDataclass):
     name: str
