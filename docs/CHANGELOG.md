@@ -14,6 +14,14 @@ Types of changes:
     - Security
 -->
 
+## [Unreleased]
+
+### Fixed
+
+- `Literal`-typed fields in `ArgparseDataclass`.
+    - Support `Optional[Literal[...]]` fields.
+    - Validate that parsed values match permitted values.
+
 ## [0.8.0]
 
 2025-01-13
