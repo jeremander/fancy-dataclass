@@ -298,6 +298,15 @@ def test_choices():
         check_invalid_args(cls, ['1'], "invalid choice: '1'")
         check_invalid_args(cls, ['b'], "invalid choice: 'b'")
         assert cls.from_cli_args(['a']).x == 'a'
+    # override choices
+    @dataclass
+    class DC5(ArgparseDataclass):
+        x: Literal['a', 'b'] = field(metadata={'choices': ['a', 'c']})
+    assert DC5.from_cli_args(['a']).x == 'a'
+    check_invalid_args(DC5, ['b'], "invalid choice: 'b'")
+    # custom choice can be parsed, but it is not valid for the type
+    with pytest.raises(ValueError, match="invalid value 'c'"):
+        _ = DC5.from_cli_args(['c'])
 
 def test_string_field_annotations():
     """Tests what happens when ArgparseDataclass field annotations are strings."""

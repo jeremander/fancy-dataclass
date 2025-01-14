@@ -42,6 +42,9 @@
 
 ## Future
 
+- General-purpose validator mixin?
+  - Does type-checking post-init, with ability to supply custom validation functions
+  - Have most other mixins inherit from this?
 - `from_dict` in the case where custom `__init__` doesn't line up with dataclass fields?
 - `alias` metadata field for dict conversion
   - Should this be bidirectional? Or separate fields for each direction? [pydantic](https://docs.pydantic.dev/latest/concepts/alias/) provides both.

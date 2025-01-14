@@ -470,6 +470,11 @@ class ArgparseDataclass(DataclassMixin):
                 nested_field = True
             elif hasattr(args, field.name):  # extract arg from the namespace
                 val = getattr(args, field.name)
+                # do some basic type-checking
+                # TODO: let general-purpose validation mixin handle this post-init?
+                if get_origin(tp) == Literal:
+                    if not any(val == arg for arg in get_args(tp)):
+                        raise ValueError(f'invalid value {val!r} for type {tp}')
             else:  # argument not present
                 continue
             if nested_field:  # merge in nested ArgparseDataclass
