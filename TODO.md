@@ -19,6 +19,9 @@
     - Helper methods like `get_version`, `get_available_versions`, `has_version`
     - Avoid cyclic references (`weakref`?)
   - Deal with namespace collision? E.g. use `globals()` to ensure the latest version is the only one accessible within module's namespace, even if it is defined earlier than the others.
+  - With `ArgparseDataclass`, include a `--version` argument like:
+    - `parser.add_argument('--version', action='version', version='%(prog)s {version}')`
+    - Provide class settings flag letting user turn this off?
 
 ## v0.9.1
 

@@ -754,6 +754,21 @@ def test_boolean_flag():  # novermin
         with pytest.raises(ValueError, match='cannot use default value of True'):
             _ = DCBooleanOptionalActionTrue.make_parser()
 
+def test_count_action():
+    """Tests the 'count' action of a field."""
+    @dataclass
+    class DCCount(ArgparseDataclass):
+        verbose: int = field(default=0, metadata={'action': 'count', 'args': ['-v']})
+    assert DCCount.from_cli_args([]).verbose == 0
+    assert DCCount.from_cli_args(['-v']).verbose == 1
+    assert DCCount.from_cli_args(['-vvv']).verbose == 3
+    # use the wrong field type for the 'count' action
+    @dataclass
+    class DCCountBool(ArgparseDataclass):
+        verbose: bool = field(default=False, metadata={'action': 'count', 'args': ['-v']})
+    with pytest.raises(ValueError, match="invalid action 'count' for boolean flag field 'verbose'"):
+        _ = DCCountBool.make_parser()
+
 def test_type_metadata():
     """Tests the behavior of using the "type" entry in the field metadata."""
     @dataclass

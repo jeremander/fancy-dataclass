@@ -16,11 +16,17 @@ Types of changes:
 
 ## [Unreleased]
 
+## [0.8.1]
+
+2025-01-20
+
 ### Fixed
 
-- `Literal`-typed fields in `ArgparseDataclass`.
-    - Support `Optional[Literal[...]]` fields.
-    - Validate that parsed values match permitted values.
+- `ArgparseDataclass`
+    - Support `"count"` action with integer fields.
+    - `Literal`-typed fields
+        - Support `Optional[Literal[...]]` fields.
+        - Validate that parsed values match permitted values.
 
 ## [0.8.0]
 
@@ -306,7 +312,8 @@ Types of changes:
     - `SQLDataclass`: SQL persistence via `sqlalchemy`
     - `SubprocessDataclass`: call out to another program via `subprocess`
 
-[unreleased]: https://github.com/jeremander/fancy-dataclass/compare/v0.8.0...HEAD
+[unreleased]: https://github.com/jeremander/fancy-dataclass/compare/v0.8.1...HEAD
+[0.8.1]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.8.1
 [0.8.0]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.8.0
 [0.7.4]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.7.4
 [0.7.3]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.7.3

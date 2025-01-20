@@ -356,7 +356,7 @@ class ArgparseDataclass(DataclassMixin):
         for key in cls._parser_argument_kwarg_names():
             if key in fld.metadata:
                 kwargs[key] = fld.metadata[key]
-        if kwargs.get('action') == 'store_const':
+        if kwargs.get('action') in ['count', 'store_const']:
             del kwargs['type']
         # determine if the field show its default in the help string
         if cls.__settings__.default_help:
