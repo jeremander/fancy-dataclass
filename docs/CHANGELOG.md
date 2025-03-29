@@ -16,6 +16,15 @@ Types of changes:
 
 ## [Unreleased]
 
+## [0.8.2]
+
+2025-03-29
+
+### Fixed
+
+- `ArgparseDataclass`
+    - Fix bug with resolving PEP 563 stringized type annotations.
+
 ## [0.8.1]
 
 2025-01-20
@@ -312,7 +321,8 @@ Types of changes:
     - `SQLDataclass`: SQL persistence via `sqlalchemy`
     - `SubprocessDataclass`: call out to another program via `subprocess`
 
-[unreleased]: https://github.com/jeremander/fancy-dataclass/compare/v0.8.1...HEAD
+[unreleased]: https://github.com/jeremander/fancy-dataclass/compare/v0.8.2...HEAD
+[0.8.2]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.8.2
 [0.8.1]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.8.1
 [0.8.0]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.8.0
 [0.7.4]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.7.4
