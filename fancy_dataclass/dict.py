@@ -364,7 +364,8 @@ class DictDataclass(DataclassMixin):
     @classmethod
     def _get_type_from_dict(cls, d: AnyDict) -> Type[Self]:
         typename = d.get('type')
-        if typename is None:  # type field unspecified, so use the calling class
+        if (typename is None) or ('type' in cls.__dataclass_fields__):  # type: ignore[attr-defined]
+            # type field is unspecified *or* 'type' is an expected dataclass field: use the calling class
             return cls
         cls_name = fully_qualified_class_name(cls) if ('.' in typename) else cls.__name__
         if cls_name == typename:  # type name already matches this class
