@@ -53,7 +53,7 @@ class _FuncDataclass(Protocol[P, R]):
 
     This is for use in static type checking and need not be subclassed directly."""
 
-    def __call__(self, *args: P.args) -> R:
+    def __call__(self, *args: P.args) -> R:  # type: ignore[valid-type]
         ...
 
 

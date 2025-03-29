@@ -7,6 +7,7 @@ import dataclasses
 from dataclasses import Field, dataclass, is_dataclass, make_dataclass
 from functools import lru_cache, partial
 import importlib
+import inspect
 from pathlib import Path
 import re
 import sys
@@ -319,6 +320,15 @@ def get_dataclass_fields(obj: Union[type, object], include_classvars: bool = Fal
             raise TypeError('must be called with a dataclass type or instance') from None
     return dataclasses.fields(obj)  # type: ignore[arg-type]
 
+def _get_all_stack_variables() -> Dict[str, Any]:
+    """Gets a dict of global and local variables for all frames of the current call stack."""
+    globs = {}
+    stack = inspect.stack()
+    for finfo in stack[::-1]:
+        globs.update(finfo.frame.f_globals)
+        globs.update(finfo.frame.f_locals)
+    return globs
+
 def eval_type_str(type_str: str) -> type:
     """Gets the fully-evaluated type from a "stringized" type.
 
@@ -335,7 +345,6 @@ def eval_type_str(type_str: str) -> type:
             tp = get_object_from_fully_qualified_name(type_str)
     # otherwise, a builtin type, locally defined type, or type with complex annotations
     if tp is None:
-        # NOTE: globals do not get carried from up the stack
         # since names from typing/typing_extensions are common, we import all the names
         globs = {}
         for mod_name in ['typing_extensions', 'typing']:
@@ -343,7 +352,13 @@ def eval_type_str(type_str: str) -> type:
             globs[mod_name] = mod
             globs.update(mod.__dict__)
         globs.update(globals())
-        tp = eval(type_str, globs)
+        try:
+            tp = eval(type_str, globs)
+        except NameError:
+            # NOTE: globals do not get carried from up the stack.
+            # Some names may be missing, so we include them here.
+            globs = {**_get_all_stack_variables(), **globs}
+            tp = eval(type_str, globs)
     return cast(type, tp)
 
 def dataclass_field_type(cls: Type['DataclassInstance'], name: str) -> type:

@@ -19,7 +19,7 @@ classifiers = [
 dependencies = [
   "sqlalchemy >= 2.0",
   "tomlkit >= 0.13.2",
-  "typing_extensions"
+  "typing_extensions >= 4.13"
 ]
 
 [project.urls]
@@ -59,7 +59,7 @@ pre-publish = [
 
 [tool.hatch.envs.lint]
 dependencies = [
-  "mypy>=1.14",
+  "mypy>=1.15",
   "numpy",
   "py-gadzooks>=0.2.9",
   "pytest",

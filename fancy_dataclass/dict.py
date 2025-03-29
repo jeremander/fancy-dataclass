@@ -358,7 +358,8 @@ class DictDataclass(DataclassMixin):
             Converted object of this class"""
         # first establish the type, which may be present in the 'type' field of the dict
         typename = d.get('type')
-        if typename is None:  # type field unspecified, so use the calling class
+        if (typename is None) or ('type' in cls.__dataclass_fields__):  # type: ignore[attr-defined]
+            # type field is unspecified *or* 'type' is an expected dataclass field: use the calling class
             tp = cls
         else:
             cls_name = fully_qualified_class_name(cls) if ('.' in typename) else cls.__name__

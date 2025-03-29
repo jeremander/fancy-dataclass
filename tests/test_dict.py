@@ -162,8 +162,7 @@ def test_type_field():
         x: 'DC1'
     obj = DC9(DC1(1))
     d = obj.to_dict()
-    with pytest.raises(NameError, match="name 'DC1' is not defined"):
-        _ = DC9.from_dict(d)
+    assert DC9.from_dict(d) == obj
     # Annotated, as a string
     @dataclass
     class DC10(DictDataclass):

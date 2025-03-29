@@ -108,7 +108,7 @@ class JSONSerializable(TextFileSerializable):
         return cls._from_string(s, **kwargs)
 
 
-class JSONDataclass(DictFileSerializableDataclass, JSONSerializable):  # type: ignore[misc]
+class JSONDataclass(DictFileSerializableDataclass, JSONSerializable):
     """Dataclass mixin enabling default serialization of dataclass objects to and from JSON."""
 
     @classmethod

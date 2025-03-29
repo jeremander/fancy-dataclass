@@ -2,13 +2,13 @@ from argparse import Action, ArgumentParser, HelpFormatter, Namespace, _Argument
 from contextlib import suppress
 from dataclasses import MISSING, fields
 from enum import IntEnum
-from typing import Any, Callable, ClassVar, Dict, List, Literal, Optional, Sequence, Tuple, Type, TypeVar, Union, cast, get_args, get_origin, get_type_hints
+from typing import Any, Callable, ClassVar, Dict, List, Literal, Optional, Sequence, Tuple, Type, TypeVar, Union, cast, get_args, get_origin
 
-from typing_extensions import Self, TypeGuard
+from typing_extensions import Self, TypeGuard, get_annotations  # type: ignore[attr-defined]
 
 from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.settings import FieldSettings, MixinSettings
-from fancy_dataclass.utils import camel_case_to_kebab_case, check_dataclass, dataclass_kw_only, issubclass_safe, type_is_optional
+from fancy_dataclass.utils import camel_case_to_kebab_case, check_dataclass, dataclass_kw_only, eval_type_str, issubclass_safe, type_is_optional
 
 
 T = TypeVar('T')
@@ -269,7 +269,10 @@ class ArgparseDataclass(DataclassMixin):
         # determine the type of the parser argument for the field
         tp: type = settings.type or fld.type  # type: ignore[assignment]
         if isinstance(tp, str):  # resolve type
-            tp = get_type_hints(cls)[name]
+            tp = get_annotations(cls)[name]
+            assert isinstance(tp, str)
+            if isinstance(tp, str):
+                tp = eval_type_str(tp)
         action = settings.action or 'store'
         origin_type = get_origin(tp)
         if origin_type is not None:  # compound type
@@ -499,7 +502,10 @@ class ArgparseDataclass(DataclassMixin):
         kwargs = {}
         for fld in fields(cls):  # type: ignore[arg-type]
             name = fld.name
-            tp: Optional[type] = cast(type, fld.type)
+            if isinstance(fld.type, str):
+                tp = eval_type_str(fld.type)
+            else:
+                tp = fld.type
             is_subcommand = fld.metadata.get('subcommand', False)
             origin_type = get_origin(tp)
             if origin_type == Union:
@@ -509,7 +515,7 @@ class ArgparseDataclass(DataclassMixin):
                     tp_args = [arg for arg in tp_args if (arg.__settings__.command_name == subcommand)]
                     assert len(tp_args) == 1, f'exactly one type within {tp} should have command name {subcommand}'
                     assert issubclass_safe(tp_args[0], ArgparseDataclass)
-                tp = tp_args[0] if (subcommand or (not is_subcommand)) else None
+                tp = tp_args[0] if (subcommand or (not is_subcommand)) else None  # type: ignore[assignment]
             if tp and issubclass_safe(tp, ArgparseDataclass):
                 # handle nested ArgparseDataclass
                 kwargs[name] = tp.from_args(args)  # type: ignore[attr-defined]

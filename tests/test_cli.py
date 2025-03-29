@@ -334,14 +334,22 @@ def test_choices():
 def test_string_field_annotations():
     """Tests what happens when ArgparseDataclass field annotations are strings."""
     @dataclass
-    class DC(ArgparseDataclass):
+    class DCInner(ArgparseDataclass):
+        a: 'str' = 'a'
+    @dataclass
+    class DCOuter(ArgparseDataclass):
         x: 'int'
         flag: 'bool' = False
         val: 'Optional[str]' = None
-    obj = DC.from_cli_args(['5', '--val', 'abc'])
+        inner: 'Optional[DCInner]' = None
+    obj = DCOuter.from_cli_args(['5', '--val', 'abc', '-a', 'b'])
     assert obj.x == 5
     assert obj.flag is False
     assert obj.val == 'abc'
+    assert isinstance(obj.inner, DCInner)
+    assert obj.inner.a == 'b'
+
+# test inner/outer conflict
 
 def test_positional():
     """Tests positional argument."""
