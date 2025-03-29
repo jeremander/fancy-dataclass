@@ -4,11 +4,11 @@ from dataclasses import MISSING, fields
 from enum import IntEnum
 from typing import Any, Callable, ClassVar, Dict, List, Literal, Optional, Sequence, Tuple, Type, TypeVar, Union, cast, get_args, get_origin
 
-from typing_extensions import Self, TypeGuard, get_annotations  # type: ignore[attr-defined]
+from typing_extensions import Self, TypeGuard
 
 from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.settings import FieldSettings, MixinSettings
-from fancy_dataclass.utils import camel_case_to_kebab_case, check_dataclass, dataclass_kw_only, eval_type_str, issubclass_safe, type_is_optional
+from fancy_dataclass.utils import camel_case_to_kebab_case, check_dataclass, dataclass_kw_only, eval_type_str, get_annotations, issubclass_safe, type_is_optional
 
 
 T = TypeVar('T')

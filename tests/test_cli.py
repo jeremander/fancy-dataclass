@@ -348,6 +348,14 @@ def test_string_field_annotations():
     assert obj.val == 'abc'
     assert isinstance(obj.inner, DCInner)
     assert obj.inner.a == 'b'
+    @dataclass
+    class DCInnerSub(DCInner):
+        b: 'str' = 'b'
+    @dataclass
+    class DCOuter(ArgparseDataclass):
+        inner: 'Optional[DCInnerSub]' = None
+    obj = DCOuter.from_cli_args(['-a', 'x', '-b', 'y'])
+    assert obj == DCOuter(inner=DCInnerSub(a='x', b='y'))
 
 # test inner/outer conflict
 
