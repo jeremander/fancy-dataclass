@@ -357,7 +357,19 @@ def test_string_field_annotations():
     obj = DCOuter.from_cli_args(['-a', 'x', '-b', 'y'])
     assert obj == DCOuter(inner=DCInnerSub(a='x', b='y'))
 
-# test inner/outer conflict
+def test_nested_name_collision():
+    """Tests what happens when a nested ArgparseDataclass has a field with the same name as the outer one."""
+    @dataclass
+    class DCInner(ArgparseDataclass):
+        x: int = 1
+        y: int = 2
+    @dataclass
+    class DCOuter(ArgparseDataclass):
+        x: int = 3
+        z: int = 4
+        inner: DCInner = field(default_factory=DCInner)
+    with pytest.raises(argparse.ArgumentError, match='argument -x: conflicting option string: -x'):
+        _ = DCOuter.make_parser()
 
 def test_positional():
     """Tests positional argument."""
