@@ -20,6 +20,11 @@ Types of changes:
 
 2025-03-30
 
+### Changed
+
+- `ArgparseDataclass`
+    - Positional arguments will be placed *before* subcommands, regardless of the order they occur in the dataclass fields.
+
 ### Fixed
 
 - `ArgparseDataclass`

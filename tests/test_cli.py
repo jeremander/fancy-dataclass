@@ -652,26 +652,28 @@ def test_subcommand(capsys):
         @dataclass
         class DCSub3(ArgparseDataclass):
             x: Union[Sub1, int] = field(metadata={'subcommand': True})
-    # simple subcommand
+    # one subcommand with extra top-level fields
     @dataclass
     class DCSub4(ArgparseDataclass):
         sub1: Sub1 = field(metadata={'subcommand': True})
-        x: int = field(metadata={'help': 'x value'})  # positional arg in addition to subparser is allowed, though it's weird
+        # positional arg in addition to subparser is allowed, though it's weird
+        # NOTE: this must be provided *before* the subcommand, since those get processed last
+        x: int = field(metadata={'help': 'x value'})
         y: int = 2
     assert DCSub4.__settings__.command_name == 'dc-sub4'
     assert DCSub4.subcommand_field_name == 'sub1'
     assert DCSub4.subcommand_dest_name == '_subcommand_DCSub4'
     assert DCSub4(Sub1(1, 2), 1).subcommand_name == 'sub1'
     help_str = DCSub4.make_parser().format_help()
-    assert re.search(r'positional arguments:.+sub1\s+first subcommand\s+x\s+x value\s+option.+-y Y', help_str, re.DOTALL)
-    check_invalid_args(DCSub4, [], 'the following arguments are required: subcommand, x')
-    check_invalid_args(DCSub4, ['5'], "invalid choice: '5'")
-    check_invalid_args(DCSub4, ['sub1', '-h'], r'usage:.*First subcommand.*x1\s+y1')
-    for args in [['sub1'], ['sub1', '1']]:
-        check_invalid_args(DCSub4, args, 'the following arguments are required: x1, y1')
-    check_invalid_args(DCSub4, ['sub1', '1', '2'], 'the following arguments are required: y1')
-    check_invalid_args(DCSub4, ['sub1', '1', '2', 'a'], "argument x: invalid int value: 'a'")
-    assert DCSub4.from_cli_args(['sub1', '1', '2', '5']) == DCSub4(Sub1(1, 2), 5)
+    assert re.search(r'positional arguments:.+x\s+x value\s+subcommand\s+sub1\s+first subcommand\s+option.+-y Y', help_str, re.DOTALL)
+    check_invalid_args(DCSub4, [], 'the following arguments are required: x, subcommand')
+    check_invalid_args(DCSub4, ['5'], 'the following arguments are required: subcommand')
+    check_invalid_args(DCSub4, ['sub1', '-h'], "invalid int value: 'sub1'")
+    check_invalid_args(DCSub4, ['5', 'sub1', '-h'], r'usage:.*First subcommand.*x1\s+y1')
+    check_invalid_args(DCSub4, ['5', 'sub1'], 'the following arguments are required: x1, y1')
+    check_invalid_args(DCSub4, ['5', 'sub1', '1'], 'the following arguments are required: y1')
+    check_invalid_args(DCSub4, ['a', 'sub1', '1', '2'], "argument x: invalid int value: 'a'")
+    assert DCSub4.from_cli_args(['5', 'sub1', '1', '2']) == DCSub4(Sub1(1, 2), 5)
     # union subcommand
     @dataclass
     class DCSub5(CLIDataclass):
@@ -691,6 +693,7 @@ def test_subcommand(capsys):
     check_invalid_args(DCSub5, ['sub2'], "invalid choice: 'sub2'")
     check_invalid_args(DCSub5, ['my-subcommand'], 'required: x2')
     assert DCSub5.from_cli_args(['sub1', '1', '2']) == DCSub5(Sub1(1, 2))
+    assert DCSub5.from_cli_args(['my-subcommand', '5', '--y2', 'xyz']) == DCSub5(Sub2(5, 'xyz'))
     # parent parser's options must come before subparser invocation
     assert DCSub5.from_cli_args(['-x', '5', 'sub1', '1', '2']) == DCSub5(Sub1(1, 2), 5)
     check_invalid_args(DCSub5, ['sub1', '1', '2', '-x', '5'], 'unrecognized arguments: -x 5')
@@ -860,6 +863,63 @@ def test_type_metadata():
     assert DCTypeCallable.from_cli_args(['0']).x == 0
     check_invalid_args(DCTypeCallable, ['a'], "invalid positive_int value: 'a'")
     check_invalid_args(DCTypeCallable, ['-1'], "invalid positive_int value: '-1'")
+
+def test_nested_subcommand_name_collision():
+    """Tests what happens when there are duplicate field names across subcommands."""
+    # nested fields have duplicate names, but it's OK since subcommands are mutually exclusive
+    @dataclass
+    class Sub1(ArgparseDataclass, command_name='sub1'):
+        x: int = 1
+    @dataclass
+    class Sub2(ArgparseDataclass, command_name='sub2'):
+        x: int = 2
+    @dataclass
+    class DCOuter(ArgparseDataclass):
+        subcommand: Union[Sub1, Sub2] = field(metadata={'subcommand': True})
+    assert DCOuter.from_cli_args(['sub1', '-x', '5']) == DCOuter(Sub1(x=5))
+    assert DCOuter.from_cli_args(['sub2', '-x', '5']) == DCOuter(Sub2(x=5))
+    # setting 'dest' is not necessary, but it's OK to do
+    @dataclass
+    class Sub1(ArgparseDataclass, command_name='sub1'):
+        x: int = field(default=1, metadata={'dest': 'x1'})
+    @dataclass
+    class Sub2(ArgparseDataclass, command_name='sub2'):
+        x: int = field(default=2, metadata={'dest': 'x2'})
+    @dataclass
+    class DCOuter(ArgparseDataclass):
+        subcommand: Union[Sub1, Sub2] = field(metadata={'subcommand': True})
+    assert DCOuter.from_cli_args(['sub1', '-x', '5']) == DCOuter(Sub1(x=5))
+    assert DCOuter.from_cli_args(['sub2', '-x', '5']) == DCOuter(Sub2(x=5))
+    # subcommand field cannot collide with a field in the parent parser
+    @dataclass
+    class Sub2(ArgparseDataclass, command_name='sub2'):
+        y: int = 2
+    @dataclass
+    class DCOuter(ArgparseDataclass):
+        subcommand: Union[Sub1, Sub2] = field(metadata={'subcommand': True})
+        y: int = 0
+    with pytest.raises(ValueError, match="duplicate destination field 'y'"):
+        _ = DCOuter.make_parser()
+    # disambiguating with the argument name is insufficient
+    @dataclass
+    class Sub2(ArgparseDataclass, command_name='sub2'):
+        y: int = field(default=2, metadata={'args': ['--y2']})
+    @dataclass
+    class DCOuter(ArgparseDataclass):
+        subcommand: Union[Sub1, Sub2] = field(metadata={'subcommand': True})
+        y: int = 0
+    with pytest.raises(ValueError, match="duplicate destination field 'y'"):
+        _ = DCOuter.make_parser()
+    # disambiguating with 'dest' makes it work (even if argument name is the same)
+    @dataclass
+    class Sub2(ArgparseDataclass, command_name='sub2'):
+        y: int = field(default=2, metadata={'dest': 'y2'})
+    @dataclass
+    class DCOuter(ArgparseDataclass):
+        subcommand: Union[Sub1, Sub2] = field(metadata={'subcommand': True})
+        y: int = 0
+    assert DCOuter.from_cli_args(['sub2', '-y', '5']) == DCOuter(Sub2(y=5), y=0)
+    assert DCOuter.from_cli_args(['-y', '1', 'sub2', '-y', '5']) == DCOuter(Sub2(y=5), y=1)
 
 def test_doubly_nested_subcommand():
     """Tests behavior of a doubly nested subcommand."""
