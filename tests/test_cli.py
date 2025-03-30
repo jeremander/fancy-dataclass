@@ -358,7 +358,8 @@ def test_string_field_annotations():
     assert obj == DCOuter(inner=DCInnerSub(a='x', b='y'))
 
 def test_nested_name_collision():
-    """Tests what happens when a nested ArgparseDataclass has a field with the same name as the outer one."""
+    """Tests what happens when name collisions occur with nested ArgparseDataclasses."""
+    # name collision between inner and outer dataclass
     @dataclass
     class DCInner(ArgparseDataclass):
         x: int = 1
@@ -368,8 +369,48 @@ def test_nested_name_collision():
         x: int = 3
         z: int = 4
         inner: DCInner = field(default_factory=DCInner)
-    with pytest.raises(argparse.ArgumentError, match='argument -x: conflicting option string: -x'):
+    with pytest.raises(ValueError, match="duplicate destination field 'x'"):
         _ = DCOuter.make_parser()
+    # name collision between two inner dataclasses
+    @dataclass
+    class DCInner1(ArgparseDataclass):
+        x: int = 1
+    @dataclass
+    class DCInner2(ArgparseDataclass):
+        x: int = 2
+    @dataclass
+    class DCOuter(ArgparseDataclass):
+        inner1: DCInner1 = field(default_factory=DCInner1)
+        inner2: DCInner2 = field(default_factory=DCInner2)
+    with pytest.raises(ValueError, match="duplicate destination field 'x'"):
+        _ = DCOuter.make_parser()
+    # same as above, but changing the CLI argument name
+    @dataclass
+    class DCInner1(ArgparseDataclass):
+        x: int = field(default=1, metadata={'args': ['--x1']})
+    @dataclass
+    class DCInner2(ArgparseDataclass):
+        x: int = field(default=2, metadata={'args': ['--x2']})
+    @dataclass
+    class DCOuter(ArgparseDataclass):
+        inner1: DCInner1 = field(default_factory=DCInner1)
+        inner2: DCInner2 = field(default_factory=DCInner2)
+    with pytest.raises(ValueError, match="duplicate destination field 'x'"):
+        _ = DCOuter.make_parser()
+    # same as above, but also using the 'dest' metadata to disambiguate fields with the same name
+    @dataclass
+    class DCInner1(ArgparseDataclass):
+        x: int = field(default=1, metadata={'args': ['--x1'], 'dest': 'x1'})
+    @dataclass
+    class DCInner2(ArgparseDataclass):
+        x: int = field(default=2, metadata={'args': ['--x2'], 'dest': 'x2'})
+    @dataclass
+    class DCOuter(ArgparseDataclass):
+        inner1: DCInner1 = field(default_factory=DCInner1)
+        inner2: DCInner2 = field(default_factory=DCInner2)
+    help_str = DCOuter.make_parser().format_help()
+    assert re.search(r'.*--x1\s+X1\s+--x2\s+X2.*', help_str)
+    assert DCOuter.from_cli_args(['--x1', '5', '--x2', '6']) == DCOuter(DCInner1(5), DCInner2(6))
 
 def test_positional():
     """Tests positional argument."""

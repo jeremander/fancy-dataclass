@@ -24,6 +24,7 @@ Types of changes:
 
 - `ArgparseDataclass`
     - Fix bug with resolving PEP 563 stringized type annotations.
+    - Forbid name collisions with nested `ArgparseDataclass` fields. Users must now explicitly provide a `dest` variable in the metadata to disambiguate such fields.
 
 ## [0.8.2]
 

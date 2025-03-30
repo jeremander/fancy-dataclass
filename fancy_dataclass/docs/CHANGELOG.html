@@ -1405,6 +1405,7 @@ Types of changes:
 <ul>
 <li><code>ArgparseDataclass</code><ul>
 <li>Fix bug with resolving PEP 563 stringized type annotations.</li>
+<li>Forbid name collisions with nested <code>ArgparseDataclass</code> fields. Users must now explicitly provide a <code>dest</code> variable in the metadata to disambiguate such fields.</li>
 </ul>
 </li>
 </ul>
