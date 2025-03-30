@@ -420,7 +420,8 @@ class ArgparseDataclass(DataclassMixin):
                     # inherit formatter_class from the parent
                     subparser_kwargs['formatter_class'] = parser.formatter_class
                 subparser = subparsers.add_parser(arg.__settings__.command_name, help=descr_brief, **subparser_kwargs)
-                subparser._dests = parser._dests  # type: ignore[attr-defined]
+                # a subparser inherits the dest variables of its parents but *not* its siblings, so make a copy
+                subparser._dests = set(parser._dests)  # type: ignore[attr-defined]
                 arg.configure_parser(subparser)
             return
         if is_nested(tp):  # recursively configure a nested ArgparseDataclass field
@@ -453,15 +454,23 @@ class ArgparseDataclass(DataclassMixin):
         if (version := cls.__settings__.version):
             parser.add_argument('--version', action='version', version=version)
         subcommand = None
+        field_names = []
         for fld in fields(cls):  # type: ignore[arg-type]
+            name = fld.name
             if fld.metadata.get('subcommand', False):
                 # TODO: check field type is ArgparseDataclass or Union thereof
                 # TODO: move this to __init_dataclass__
                 if subcommand is None:
-                    subcommand = fld.name
+                    subcommand = name
                 else:
                     raise ValueError(f'multiple fields ({subcommand!r} and {fld.name!r}) registered as subcommands, at most one is allowed')
-            cls.configure_argument(parser, fld.name)
+            else:
+                field_names.append(name)
+        if subcommand is not None:
+            # process subcommand last, since the subparser must inherit the names of all parent 'dest' fields
+            field_names.append(subcommand)
+        for name in field_names:
+            cls.configure_argument(parser, name)
 
     @classmethod
     def make_parser(cls) -> ArgumentParser:
