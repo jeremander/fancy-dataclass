@@ -46,6 +46,8 @@ def _add_exclusive_group(parser: ArgParser, group_name: str, required: bool) -> 
     if isinstance(parser, _MutuallyExclusiveGroup):
         raise ValueError('nested exclusive groups are not allowed')
     group = parser.add_mutually_exclusive_group()
+    # store the parent parser's set of dests on the group itself
+    group._dests = parser._dests  # type: ignore
     # set the title attribute so the group can be retrieved later
     group.title = group_name
     group.required = required
@@ -55,7 +57,10 @@ def _add_group(parser: ArgParser, group_name: str, **group_kwargs: Any) -> _Argu
     if isinstance(parser, _ArgumentGroup):
         raise ValueError('nested argument groups are not allowed')
     kwargs = {key: val for (key, val) in group_kwargs.items() if (key in ['title', 'description'])}
-    return parser.add_argument_group(group_name, **kwargs)
+    group = parser.add_argument_group(group_name, **kwargs)
+    # store the parent parser's set of dests on the group itself
+    group._dests = parser._dests  # type: ignore[attr-defined]
+    return group
 
 
 ##########
@@ -99,6 +104,7 @@ class ArgparseDataclassFieldSettings(FieldSettings):
     - `const`: constant value required by some action/nargs combinations
     - `choices`: list of possible inputs allowed
     - `help`: help string
+    - `dest`: name of destination variable (only needed to avoid field name collisions when nesting `ArgparseDataclass`)
     - `metavar`: name for the argument in usage messages
     - `required`: whether the option is required
     - `group`: name of the [argument group](https://docs.python.org/3/library/argparse.html#argument-groups) in which to put the argument
@@ -246,7 +252,10 @@ class ArgparseDataclass(DataclassMixin):
 
         Returns:
             New top-level parser derived from the class's fields"""
-        return cls.__settings__.parser_class(**cls.parser_kwargs())
+        parser = cls.__settings__.parser_class(**cls.parser_kwargs())
+        # we disallow duplicate 'dest' variables for the same parser, so track them in a set
+        parser._dests = set()  # type: ignore[attr-defined]
+        return parser
 
     @classmethod
     def configure_argument(cls, parser: ArgParser, name: str) -> None:
@@ -263,6 +272,7 @@ class ArgparseDataclass(DataclassMixin):
             return issubclass_safe(tp, ArgparseDataclass)
         kwargs: Dict[str, Any] = {}
         fld = cls.__dataclass_fields__[name]  # type: ignore[attr-defined]
+        meta = fld.metadata
         settings = cls._field_settings(fld).adapt_to(ArgparseDataclassFieldSettings)
         if settings.parse_exclude:  # exclude the argument from the parser
             return
@@ -338,8 +348,11 @@ class ArgparseDataclass(DataclassMixin):
                 argname = fld.name.replace('_', '-')
                 args = [prefix + argname]
         if args and (not positional):
-            # store the argument based on the name of the field, and not whatever flag name was provided
-            kwargs['dest'] = fld.name
+            if 'dest' in meta:  # user explicitly set 'dest' in metadata
+                kwargs['dest'] = meta['dest']
+            else:
+                # store the argument based on the name of the field, and not whatever flag name was provided
+                kwargs['dest'] = fld.name
         if settings.required is not None:
             kwargs['required'] = settings.required
         has_default = 'default' in kwargs
@@ -357,8 +370,8 @@ class ArgparseDataclass(DataclassMixin):
                     kwargs.pop(key)
         # extract additional items from metadata
         for key in cls._parser_argument_kwarg_names():
-            if key in fld.metadata:
-                kwargs[key] = fld.metadata[key]
+            if key in meta:
+                kwargs[key] = meta[key]
         if kwargs.get('action') in ['count', 'store_const']:
             del kwargs['type']
         # determine if the field show its default in the help string
@@ -407,6 +420,7 @@ class ArgparseDataclass(DataclassMixin):
                     # inherit formatter_class from the parent
                     subparser_kwargs['formatter_class'] = parser.formatter_class
                 subparser = subparsers.add_parser(arg.__settings__.command_name, help=descr_brief, **subparser_kwargs)
+                subparser._dests = parser._dests  # type: ignore[attr-defined]
                 arg.configure_parser(subparser)
             return
         if is_nested(tp):  # recursively configure a nested ArgparseDataclass field
@@ -420,6 +434,11 @@ class ArgparseDataclass(DataclassMixin):
                 if args[0] in pos_args:
                     raise ValueError(f'duplicate positional argument {args[0]!r}')
                 pos_args.add(args[0])
+            if (dest := kwargs.get('dest')) is not None:  # type: ignore[assignment]
+                assert hasattr(parser, '_dests')
+                if dest in parser._dests:
+                    raise ValueError(f'duplicate destination field {dest!r}')
+                parser._dests.add(dest)
             parser.add_argument(*args, **kwargs)
 
     @classmethod
@@ -467,15 +486,16 @@ class ArgparseDataclass(DataclassMixin):
             A dict mapping from field names to values"""
         check_dataclass(cls)
         d = {}
-        for field in fields(cls):  # type: ignore[arg-type]
-            nested_field = False
-            tp = cast(type, field.type)
+        for fld in fields(cls):  # type: ignore[arg-type]
+            is_nested_field = False
+            tp = cast(type, fld.type)
+            dest = fld.metadata.get('dest', fld.name)
             if issubclass_safe(tp, ArgparseDataclass):
                 # recursively gather arguments for nested ArgparseDataclass
                 val = tp.args_to_dict(args)  # type: ignore[attr-defined]
-                nested_field = True
-            elif hasattr(args, field.name):  # extract arg from the namespace
-                val = getattr(args, field.name)
+                is_nested_field = True
+            elif hasattr(args, dest):  # extract arg from the namespace
+                val = getattr(args, dest)
                 # check that Literal value matches one of the allowed values
                 # TODO: let general-purpose validation mixin handle this post-init?
                 if get_origin(tp) == Literal:
@@ -483,10 +503,10 @@ class ArgparseDataclass(DataclassMixin):
                         raise ValueError(f'invalid value {val!r} for type {tp}')
             else:  # argument not present
                 continue
-            if nested_field:  # merge in nested ArgparseDataclass
+            if is_nested_field:  # merge in nested ArgparseDataclass
                 d.update(val)
             else:
-                d[field.name] = val
+                d[fld.name] = val
         return d
 
     @classmethod
