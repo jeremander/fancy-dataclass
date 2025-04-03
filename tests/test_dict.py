@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field, make_dataclass
+import re
 from typing import ClassVar, List, Optional
 
 import pytest
@@ -472,3 +473,31 @@ def test_class_var():
     obj = MyDC4()
     assert obj.to_dict() == {'x': 2}  # no longer equals default
     assert obj.to_dict(full=True) == {'x': 2}
+
+def test_alias():
+    """Tests the 'alias' field setting for DictDataclass."""
+    with pytest.raises(TypeError, match="duplicate field name or alias 'y'"):
+        @dataclass
+        class MyDC(DictDataclass):
+            x: int = field(metadata={'alias': 'y'})
+            y: int
+    with pytest.raises(TypeError, match="duplicate field name or alias 'y'"):
+        @dataclass
+        class MyDC(DictDataclass):
+            y: int
+            x: int = field(metadata={'alias': 'y'})
+    with pytest.raises(TypeError, match="duplicate field name or alias 'y'"):
+        @dataclass
+        class MyDC(DictDataclass):
+            x1: int = field(metadata={'alias': 'y'})
+            x2: int = field(metadata={'alias': 'y'})
+    @dataclass
+    class MyDC(DictDataclass):
+        x: int = field(metadata={'alias': 'y'})
+    obj = MyDC(3)
+    assert obj == MyDC(x=3)
+    assert obj.to_dict() == {'y': 3}
+    assert MyDC.from_dict(obj.to_dict()) == obj
+    with pytest.raises(ValueError, match=re.escape("'x' field (alias 'y') is required")):
+        _ = MyDC.from_dict({'x': 4})
+    assert MyDC.from_dict({'x': 4, 'y': 3}) == obj
