@@ -25,6 +25,10 @@ class NestedComposedAB(DictDataclass):
     comp_b: NestedComponentB
 
 @dataclass
+class NestedList(DictDataclass):
+    comps: List[NestedComponentA]
+
+@dataclass
 class FlattenedComponentA(DictDataclass):
     a1: int
     a2: float
@@ -77,6 +81,13 @@ def test_composition_nested():
 def test_composition_flattened():
     """Tests behavior of flattened components."""
     assert TEST_FLATTENED.to_dict() == {'a1' : 3, 'a2' : 4.5, 'b1' : 'b', 'b2' : [1, 2, 3]}
+
+def test_nested_list():
+    """Tests a list of nested DictDataclasses."""
+    obj = NestedList([NestedComponentA(1, 2.0), NestedComponentA(3, 4.0)])
+    d = obj.to_dict()
+    assert d == {'comps': [{'a1': 1, 'a2': 2.0}, {'a1': 3, 'a2': 4.0}]}
+    assert NestedList.from_dict(d) == obj
 
 def test_make_dataclass():
     """Tests behavior of make_dataclass."""

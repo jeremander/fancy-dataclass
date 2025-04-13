@@ -18,7 +18,10 @@ Types of changes:
 
 ## [0.8.3]
 
-2025-03-30
+### Added
+
+- `DictDataclass`
+    - `alias` field setting sets an alternate key for converting both to and from a dict.
 
 ### Changed
 
