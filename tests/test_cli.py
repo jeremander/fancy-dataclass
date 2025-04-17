@@ -287,6 +287,8 @@ def test_choices():
         check_invalid_args(cls, [], 'required: x')
         check_invalid_args(cls, ['a'], "invalid int value: 'a'")
         check_invalid_args(cls, ['0'], "invalid choice: '?0'?")
+        check_invalid_args(cls, ["'1'"], "invalid int value: \"'1'\"")
+        check_invalid_args(cls, ['"1"'], "invalid int value: '\"1\"'")
     # mixed types in Literal (not flexible enough to do coercion here)
     @dataclass
     class DC3(ArgparseDataclass):
