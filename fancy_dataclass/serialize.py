@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from enum import Enum
+from inspect import getfullargspec
 from io import BytesIO, StringIO, TextIOBase
 from numbers import Integral
 from pathlib import Path
@@ -340,5 +341,10 @@ class DictFileSerializableDataclass(DictDataclass, TextFileSerializable):
 
     @classmethod
     def _from_text_file(cls, fp: IO[str], **kwargs: Any) -> Self:
-        # NOTE: kwargs are passed to _text_file_from_dict, not from_dict
-        return cls.from_dict(cls._text_file_to_dict(fp, **kwargs))
+        # explicit keyword arguments get passed to from_dict; variable kwargs get passed to _text_file_from_dict
+        spec = getfullargspec(cls.from_dict)
+        kw_defaults = spec.kwonlydefaults or {}
+        inner_kwargs = {key: val for (key, val) in kwargs.items() if (key not in kw_defaults)}
+        d = cls._text_file_to_dict(fp, **inner_kwargs)
+        outer_kwargs = {key: val for (key, val) in kwargs.items() if (key in kw_defaults)}
+        return cls.from_dict(d, **outer_kwargs)

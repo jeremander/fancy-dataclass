@@ -150,6 +150,12 @@ class VersionedDataclass(DictDataclass):
             version: Version of the class to retrieve from the global registry (if `None`, use the latest)"""
         return _VERSIONED_DATACLASS_REGISTRY.get_class(cls.__name__, version=version)
 
+    def _to_dict(self, full: bool) -> AnyDict:
+        d = super()._to_dict(full)
+        if 'version' in d:  # ensure the 'version' key comes first in the ordering
+            d = {'version': d.pop('version'), **d}
+        return d
+
     @classmethod
     def dataclass_args_from_dict(cls, d: AnyDict) -> AnyDict:
         """Given a dict of arguments, performs type conversion and/or validity checking, then returns a new dict that can be passed to the class's constructor."""
@@ -185,19 +191,20 @@ class VersionedDataclass(DictDataclass):
         return cls(**kwargs)
 
     @classmethod
-    def from_dict(cls, d: AnyDict, **kwargs: Any) -> Self:
+    def from_dict(cls, d: AnyDict, *, migrate: bool = False, **kwargs: Any) -> Self:
         """Constructs an object from a dictionary of fields.
 
         This may also perform some basic type/validity checking.
 
         Args:
             d: Dict to convert into an object
-            kwargs: Keyword arguments <ul><li>`migrate`: if `True`, migrate to the calling class's version</li></ul>
+            migrate: If `True`, migrate to the calling class's version
+            kwargs: Keyword arguments
 
         Returns:
             Converted object of this class"""
         obj = super().from_dict(d, **kwargs)
-        if kwargs.get('migrate', False):
+        if migrate:
             return cast(Self, obj.migrate(cls.version))
         return obj
 

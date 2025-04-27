@@ -1,8 +1,10 @@
 from dataclasses import dataclass, is_dataclass
+import json
 from types import ModuleType
 
 import pytest
 
+from fancy_dataclass.json import JSONDataclass
 from fancy_dataclass.utils import MissingRequiredFieldError, fully_qualified_class_name
 from fancy_dataclass.versioned import _VERSIONED_DATACLASS_REGISTRY, VersionedDataclass, _VersionedDataclassGroup, _VersionedDataclassRegistry, version
 
@@ -407,3 +409,32 @@ def test_from_dict():
         assert A3.from_dict(d3, migrate=True) == a3
         assert A3.from_dict(d1, migrate=True) == A3(x=1, y='a')
         assert A3.from_dict(d2, migrate=True) == A3(x=2, y='b')
+
+def test_json():
+    """Tests behavior of JSON conversion."""
+    @version(1)
+    @dataclass
+    class A(JSONDataclass, store_type='off'):
+        x: int
+    A1 = A
+    a1 = A1(1)
+    @version(2)
+    @dataclass
+    class A(JSONDataclass, store_type='off'):
+        x: int
+        y: str
+    A2 = A
+    a2 = A2(1, 'a')
+    s1 = a1.to_json_string()
+    assert s1 == json.dumps({'version': 1, 'x': 1})
+    s2 = a2.to_json_string()
+    assert s2 == json.dumps({'version': 2, 'x': 1, 'y': 'a'})
+    assert A1.from_json_string(s1) == a1
+    assert A1.from_json_string(s1, migrate=True) == a1
+    assert A1.from_json_string(s2) == a2
+    assert A1.from_json_string(s2, migrate=True) == a1
+    assert A2.from_json_string(s2) == a2
+    assert A2.from_json_string(s2, migrate=True) == a2
+    assert A2.from_json_string(s1) == a1
+    with pytest.raises(MissingRequiredFieldError, match="'y' field is required"):
+        _ = A2.from_json_string(s1, migrate=True)
