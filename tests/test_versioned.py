@@ -438,3 +438,6 @@ def test_json():
     assert A2.from_json_string(s1) == a1
     with pytest.raises(MissingRequiredFieldError, match="'y' field is required"):
         _ = A2.from_json_string(s1, migrate=True)
+    d = {'version': 3, 'x': 1}
+    with pytest.raises(ValueError, match="no class registered with name 'A', version 3"):
+        _ = A1.from_json_string(json.dumps(d))

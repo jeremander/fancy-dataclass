@@ -5,26 +5,10 @@
 ## v0.9.0
 
 - `VersionedDataclass`
-  - `@version` decorator (with required integer argument)
-    - Allows you to define multiple classes with the same name; stores distinct `version` `ClassVar` attributes and registers them with the same name
-    - Error if duplicate versions are set
-    - Handle version mismatches
-      - Initialization looks up the version number in the registry; if only newer exists:
-        - If `strict=True`, raises an error; otherwise, attempts to coerce and issues a warning
-      - Deserialize from mismatched version:
-        - If target version exists in registry, use it, then migrate.
-        - Otherwise, two options (perhaps based on class setting)
-          - Issue warning, then attempt to coerce directly (which will work if fields are a subset)
-          - Error
-    - Singleton `VersionRegistry` object via `registry` property
-    - Helper methods like `get_version`, `get_available_versions`, `has_version`
-    - Avoid cyclic references (`weakref`?)
-  - Deal with namespace collision? E.g. use `globals()` to ensure the latest version is the only one accessible within module's namespace, even if it is defined earlier than the others.
+  - Avoid cyclic references (`weakref`?)
   - With `ArgparseDataclass`, include a `--version` argument like:
     - `parser.add_argument('--version', action='version', version='%(prog)s {version}')`
     - Provide class settings flag letting user turn this off?
-  - Tests
-    - Version mismatch on deserialization
 
 ## v0.9.1
 
@@ -66,6 +50,14 @@
   - Convert to/from `pandas` `Series` and `DataFrame`?
     - If so, make `pandas` an optional dependency
     - Easy to implement conversion via `dict`, if we subclass `DictDataclass`
+- `VersionedDataclass`
+  - Helper functions for the following (only if deemed useful):
+    - `get_version`: given name and version, gets the class
+    - `get_versions`: given name, gets dict from version to class
+    - `has_version`:
+      - could be method on `VersionedDataclass` to get a specific version
+      - or a function that takes a name and version and returns a bool
+    - `get_version_registry`: return the global singleton registry
 - `JSON5Dataclass`?
 - Field metadata
   - Be strict about unknown field metadata keys? (Maybe issue warning?)

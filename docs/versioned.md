@@ -212,3 +212,45 @@ Then the migration works like we want it to:
 >>> person3.migrate(version=4)
 Person(name='Alice', age=28, interests=['chess'])
 ```
+
+### Dict Conversion
+
+When converting from a dict or JSON, there is a keyword argument, `migrate` (default `False`), which will auto-migrate if set to `True`. This example illustrates the difference in behavior from the `migrate` flag:
+
+```python
+from dataclasses import dataclass
+from typing import Optional
+
+from fancy_dataclass import JSONDataclass, version
+
+@version(1)
+@dataclass
+class Person(JSONDataclass, store_type='off'):
+    name: str
+    age: int
+    hobbies: Optional[list[str]] = None
+
+Person_V1 = Person
+
+@version(2)
+@dataclass
+class Person(JSONDataclass, store_type='off'):
+    name: str
+    age: int
+    height: Optional[float] = None
+
+Person_V2 = Person
+
+>>> person2 = Person_V2(name='Alice', age=28, height=63.5)
+>>> json_str = person2.to_json_string()
+>>> json_str
+'{"version": 2, "name": "Alice", "age": 28, "height": 63.5}
+# this is version 2 since the default is to use the given version information
+>>> person = Person_V1.from_json_string(json_str)
+>>> person.version
+2
+# this is version 1 since we force migration to the calling class
+>>> person = Person_V1.from_json_string(json_str, migrate=True)
+>>> person.version
+1
+```
