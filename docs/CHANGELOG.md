@@ -18,6 +18,8 @@ Types of changes:
 
 ## [0.8.3]
 
+2025-04-27
+
 ### Added
 
 - `DictDataclass`
