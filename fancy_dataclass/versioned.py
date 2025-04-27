@@ -207,7 +207,6 @@ def version(version: int, suppress_version: bool = False) -> Callable[[Type[T]],
     Args:
         version: Version number associated with the class
         suppress_version: Whether to suppress the version when converting to dict
-        typename: Name of subclass
 
     Returns:
         Decorator to wrap a `dataclass` into a `VersionedDataclass`"""
