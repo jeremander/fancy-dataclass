@@ -265,7 +265,7 @@ def test_migrate():
         y: str = 'a'
     A2 = A
     a2 = A(2, '2')
-    # version 3 renames a field
+    # version 3 renames a field from version 2
     @version(3)
     @dataclass
     class A:

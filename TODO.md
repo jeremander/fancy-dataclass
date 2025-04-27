@@ -25,7 +25,6 @@
     - Provide class settings flag letting user turn this off?
   - Tests
     - Version mismatch on deserialization
-  - Make documentation page
 
 ## v0.9.1
 
