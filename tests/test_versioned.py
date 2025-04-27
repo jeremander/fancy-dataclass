@@ -1,6 +1,9 @@
 from dataclasses import dataclass, is_dataclass
+import gc
 import json
+import sys
 from types import ModuleType
+import weakref
 
 import pytest
 
@@ -441,3 +444,23 @@ def test_json():
     d = {'version': 3, 'x': 1}
     with pytest.raises(ValueError, match="no class registered with name 'A', version 3"):
         _ = A1.from_json_string(json.dumps(d))
+
+def test_refs():
+    """Tests that weak references to classes in the global version registry are dropped as expected."""
+    @version(1)
+    @dataclass
+    class A:
+        ...
+    A_ref = weakref.ref(A)
+    assert A_ref() is A
+    assert sys.getrefcount(A) == 3
+    assert weakref.getweakrefcount(A) == 3
+    reg = _VERSIONED_DATACLASS_REGISTRY
+    assert len(reg.groups_by_name['A'].class_by_version) == 1
+    assert len(reg.groups_by_name['A'].version_by_class) == 1
+    # all references to A are weak, so they will get dropped when A is deleted
+    del A
+    gc.collect()
+    assert len(reg.groups_by_name['A'].class_by_version) == 0
+    assert len(reg.groups_by_name['A'].version_by_class) == 0
+    assert A_ref() is None

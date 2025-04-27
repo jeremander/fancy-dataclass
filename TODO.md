@@ -5,7 +5,6 @@
 ## v0.9.0
 
 - `VersionedDataclass`
-  - Avoid cyclic references (`weakref`?)
   - With `ArgparseDataclass`, include a `--version` argument like:
     - `parser.add_argument('--version', action='version', version='%(prog)s {version}')`
     - Provide class settings flag letting user turn this off?

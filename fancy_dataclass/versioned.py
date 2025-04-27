@@ -1,6 +1,7 @@
 import dataclasses
 from dataclasses import Field, dataclass, field
 from typing import Any, Callable, ClassVar, Dict, Optional, Type, TypeVar, cast
+from weakref import WeakKeyDictionary, WeakValueDictionary
 
 from typing_extensions import Self
 
@@ -21,8 +22,8 @@ Version = int
 class _VersionedDataclassGroup:
     """Represents a collection of [`VersionedDataclass`][fancy_dataclass.versioned.VersionedDataclass] subclasses with the same name but different versions."""
     name: str
-    class_by_version: Dict[Version, Type['VersionedDataclass']] = field(default_factory=dict)
-    version_by_class: Dict[Type['VersionedDataclass'], Version] = field(default_factory=dict)
+    class_by_version: Dict[Version, Type['VersionedDataclass']] = field(default_factory=WeakValueDictionary)  # type: ignore[arg-type]
+    version_by_class: Dict[Type['VersionedDataclass'], Version] = field(default_factory=WeakKeyDictionary)  # type: ignore[arg-type]
 
     def register_class(self, cls: Type['VersionedDataclass'], version: Version) -> None:
         """Registers a new `VersionedDataclass` subclass with the given version.
