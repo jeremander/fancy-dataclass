@@ -133,16 +133,16 @@ def test_versioned_dataclass_group():
     class A:
         ...
     with pytest.raises(TypeError, match='class must be a subclass of VersionedDataclass'):
-        group.register_class(1, A)
+        group.register_class(A, 1)
     # register class with the wrong name
     class B(VersionedDataclass, version=1):
         ...
     with pytest.raises(TypeError, match="mismatch between group name 'A' and class name 'B'"):
-        group.register_class(1, B)
+        group.register_class(B, 1)
     class A(VersionedDataclass, version=1):
         ...
     A_v1 = A
-    group.register_class(1, A_v1)
+    group.register_class(A_v1, 1)
     assert group.class_by_version == {1: A_v1}
     assert group.version_by_class == {A_v1: 1}
     assert group.get_class(1) is A_v1
@@ -151,16 +151,16 @@ def test_versioned_dataclass_group():
         _ = group.get_class(2)
     # register same class again
     with pytest.raises(TypeError, match="class already registered with name 'A', version 1: .*A"):
-        group.register_class(1, A_v1)
+        group.register_class(A_v1, 1)
     with pytest.raises(TypeError, match='class .* is already registered with version 1'):
-        group.register_class(2, A_v1)
+        group.register_class(A_v1, 2)
     # register another class
     class A(VersionedDataclass, version=2):
         ...
     A_v2 = A
     with pytest.raises(TypeError, match="class already registered with name 'A', version 1: .*A"):
-        group.register_class(1, A_v2)
-    group.register_class(2, A_v2)
+        group.register_class(A_v2, 1)
+    group.register_class(A_v2, 2)
     assert group.class_by_version == {1: A_v1, 2: A_v2}
     assert group.version_by_class == {A_v1: 1, A_v2: 2}
     assert group.get_class(1) is A_v1
@@ -177,11 +177,11 @@ def test_versioned_dataclass_registry():
         with pytest.raises(ValueError, match="no class registered with name 'A'"):
             reg.get_class('A', version=ver)
     with pytest.raises(TypeError, match='class must be a subclass of VersionedDataclass'):
-        reg.register_class(1, int)
+        reg.register_class(int, 1)
     class A(VersionedDataclass, version=-1):
         ...
     A_v1 = A
-    reg.register_class(1, A_v1)
+    reg.register_class(A_v1, 1)
     assert reg.groups_by_name == {'A': _VersionedDataclassGroup('A', {1: A_v1}, {A_v1: 1})}
     for ver in [None, 1]:
         assert reg.get_class('A', version=ver) is A_v1
@@ -190,7 +190,7 @@ def test_versioned_dataclass_registry():
     class A(VersionedDataclass, version=2):
         ...
     A_v2 = A
-    reg.register_class(2, A_v2)
+    reg.register_class(A_v2, 2)
     assert reg.groups_by_name == {'A': _VersionedDataclassGroup('A', {1: A_v1, 2: A_v2}, {A_v1: 1, A_v2: 2})}
     assert reg.get_class('A', version=1) is A_v1
     assert reg.get_class('A', version=2) is A_v2

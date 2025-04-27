@@ -24,7 +24,7 @@ class _VersionedDataclassGroup:
     class_by_version: Dict[Version, Type['VersionedDataclass']] = field(default_factory=dict)
     version_by_class: Dict[Type['VersionedDataclass'], Version] = field(default_factory=dict)
 
-    def register_class(self, version: Version, cls: Type['VersionedDataclass']) -> None:
+    def register_class(self, cls: Type['VersionedDataclass'], version: Version) -> None:
         """Registers a new `VersionedDataclass` subclass with the given version.
         If that version is already registered, or if the same class is already registered, raises a `TypeError`."""
         if not issubclass(cls, VersionedDataclass):
@@ -64,14 +64,14 @@ class _VersionedDataclassRegistry:
         """Clears all entries in the registry."""
         self.groups_by_name.clear()
 
-    def register_class(self, version: Version, cls: Type['VersionedDataclass']) -> None:
+    def register_class(self, cls: Type['VersionedDataclass'], version: Version) -> None:
         """Registers a new `VersionedDataclass` subclass with the given version.
         If that version is already registered, raises a `TypeError`."""
         if not issubclass(cls, VersionedDataclass):
             raise TypeError('class must be a subclass of VersionedDataclass')
         name = cls.__name__
         group = self.groups_by_name.setdefault(name, _VersionedDataclassGroup(name))
-        group.register_class(version, cls)
+        group.register_class(cls, version)
 
     def get_class(self, name: str, version: Optional[Version] = None) -> Type['VersionedDataclass']:
         """Gets the [`VersionedDataclass`][fancy_dataclass.versioned.VersionedDataclass] subclass with the given name and version.
@@ -125,7 +125,7 @@ class VersionedDataclass(DictDataclass):
             # if subclass gets generated dynamically, it might not have a 'version' ClassVar field, so create it
             cls.__dataclass_fields__['version'] = VersionedDataclass.__dataclass_fields__['version']
         cls.version = version
-        _VERSIONED_DATACLASS_REGISTRY.register_class(version, cls)
+        _VERSIONED_DATACLASS_REGISTRY.register_class(cls, version)
 
     @classmethod
     def _field_settings(cls, fld: Field) -> FieldSettings:  # type: ignore[type-arg]
