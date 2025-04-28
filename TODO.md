@@ -7,7 +7,15 @@
 - `VersionedDataclass`
   - With `ArgparseDataclass`, include a `--version` argument like:
     - `parser.add_argument('--version', action='version', version='%(prog)s {version}')`
-    - Provide class settings flag letting user turn this off?
+    - `prog` class setting will override value of `%(prog)s` specifier
+    - `version` class attribute will activate version argument if not `None`
+      - NOTE: this is *already* a class setting... what will happen if we mixin both `ArgparseDataclass` and `VersionedDataclass`?
+        - TypeError: error merging base class settings for A: duplicate field name 'version'
+        - Might need special handling to carve out this edge case...
+    - `include_version_arg` class setting:
+      - If `None`, show version if `version` attribute exists
+      - If `True`, show version and require it (error if absent)
+      - If `False`, do not show version
 
 ## v0.9.1
 

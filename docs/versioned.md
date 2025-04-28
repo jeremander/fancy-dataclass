@@ -2,7 +2,7 @@
 
 The [`VersionedDataclass`][fancy_dataclass.versioned.VersionedDataclass] mixin provides a versioning mechanism for dataclass types. This ensures the following:
 
-- A `version` attribute is set on the class, which must be an integer.
+- A `version` attribute is set on the class, which may be an integer, integer tuple, or `.`-separated string like `2.13.1`.
 - Any two `VersionedDataclass` subclasses with the same name must have distinct versions.
 - A global registry tracks the available versions of each `VersionedDataclass`. This can be used to manage different versions of "the same" class, which can be useful for things like [migrations](#migrations).
 
@@ -58,15 +58,22 @@ class Person:
 
 ## Version Restrictions
 
-If you try to set a version that is not an integer, or that is a duplicate of an already-existing version, you get an error:
+A version may be one of the following types:
+
+- An integer, e.g. `2`.
+- A tuple of integers, e.g. `(2, 13, 1)`.
+- A `.`-separated string, e.g. `2.13.1`.
+    - Note: this does not permit all valid [SemVer](https://semver.org) strings such as `2.13.1-alpha1`; for now, all components must be integers.
+
+If you try to set a version of the wrong form, or a version that is a duplicate of an already-existing version, you get an error:
 
 ```python
-@version('1.2')
+@version('2.13.1-alpha1')
 @dataclass
 class Person:
     ...
 
-TypeError: must supply an integer `version` attribute for class 'Person'
+TypeError: invalid version '2.13.1-alpha1' for class 'Person'
 ```
 
 ```python

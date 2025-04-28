@@ -9,7 +9,7 @@ import pytest
 
 from fancy_dataclass.json import JSONDataclass
 from fancy_dataclass.utils import MissingRequiredFieldError, fully_qualified_class_name
-from fancy_dataclass.versioned import _VERSIONED_DATACLASS_REGISTRY, VersionedDataclass, _VersionedDataclassGroup, _VersionedDataclassRegistry, version
+from fancy_dataclass.versioned import _VERSIONED_DATACLASS_REGISTRY, Version, VersionedDataclass, _VersionedDataclassGroup, _VersionedDataclassRegistry, version
 
 
 @pytest.fixture(autouse=True)
@@ -55,20 +55,52 @@ def test_versioned_dataclass():
         x: str
     e = E('e')
     assert e.to_dict() == {'x': 'e'}
+    # tuple version
+    @dataclass
+    class F(VersionedDataclass, version=(1, 2)):
+        ...
+    f = F()
+    assert f.version == (1, 2)
+    # list version
+    @dataclass
+    class G(VersionedDataclass, version=[2]):
+        ...
+    g = G()
+    assert g.version == [2]
+    # string version
+    @dataclass
+    class H(VersionedDataclass, version='3'):
+        ...
+    h = H()
+    assert h.version == '3'
+    @dataclass
+    class I(VersionedDataclass, version='3.7'):  # noqa: E742
+        ...
+    i = I()
+    assert i.version == '3.7'
 
 def test_missing_version():
     """Tests what happens when the version field is missing."""
-    with pytest.raises(TypeError, match='must supply an integer `version` attribute'):
+    with pytest.raises(TypeError, match="must supply a valid version for class 'A'"):
         class A(VersionedDataclass):
             ...
 
 def test_invalid_version():
-    """Tests what happens when the version field is not an integer."""
-    with pytest.raises(TypeError, match='must supply an integer `version` attribute'):
+    """Tests what happens when the version field is an invalid value."""
+    with pytest.raises(TypeError, match="invalid version 1.0 for class 'A'"):
         class A(VersionedDataclass, version=1.0):
             ...
-    with pytest.raises(TypeError, match='must supply an integer `version` attribute'):
-        class B(VersionedDataclass, version='3'):
+    with pytest.raises(TypeError, match="invalid version '3.' for class 'A'"):
+        class A(VersionedDataclass, version='3.'):
+            ...
+    with pytest.raises(TypeError, match=r"invalid version \(\) for class 'A'"):
+        class A(VersionedDataclass, version=()):
+            ...
+    with pytest.raises(TypeError, match=r"invalid version \[\] for class 'A'"):
+        class A(VersionedDataclass, version=[]):
+            ...
+    with pytest.raises(TypeError, match="must supply a valid version for class 'A'"):
+        class A(VersionedDataclass, version=None):
             ...
 
 def test_set_version():
@@ -148,8 +180,8 @@ def test_versioned_dataclass_group():
         ...
     A_v1 = A
     group.register_class(A_v1, 1)
-    assert group.class_by_version == {1: A_v1}
-    assert group.version_by_class == {A_v1: 1}
+    assert group.class_by_version == {(1,): A_v1}
+    assert group.version_by_class == {A_v1: (1,)}
     assert group.get_class(1) is A_v1
     assert group.get_class(None) is A_v1
     with pytest.raises(ValueError, match="no class registered with name 'A', version 2"):
@@ -166,8 +198,8 @@ def test_versioned_dataclass_group():
     with pytest.raises(TypeError, match="class already registered with name 'A', version 1: .*A"):
         group.register_class(A_v2, 1)
     group.register_class(A_v2, 2)
-    assert group.class_by_version == {1: A_v1, 2: A_v2}
-    assert group.version_by_class == {A_v1: 1, A_v2: 2}
+    assert group.class_by_version == {(1,): A_v1, (2,): A_v2}
+    assert group.version_by_class == {A_v1: (1,), A_v2: (2,)}
     assert group.get_class(1) is A_v1
     assert group.get_class(2) is A_v2
     assert group.get_class(None) is A_v2
@@ -187,7 +219,7 @@ def test_versioned_dataclass_registry():
         ...
     A_v1 = A
     reg.register_class(A_v1, 1)
-    assert reg.groups_by_name == {'A': _VersionedDataclassGroup('A', {1: A_v1}, {A_v1: 1})}
+    assert reg.groups_by_name == {'A': _VersionedDataclassGroup('A', {Version(1): A_v1}, {A_v1: Version(1)})}
     for ver in [None, 1]:
         assert reg.get_class('A', version=ver) is A_v1
     with pytest.raises(ValueError, match="no class registered with name 'B'"):
@@ -196,7 +228,7 @@ def test_versioned_dataclass_registry():
         ...
     A_v2 = A
     reg.register_class(A_v2, 2)
-    assert reg.groups_by_name == {'A': _VersionedDataclassGroup('A', {1: A_v1, 2: A_v2}, {A_v1: 1, A_v2: 2})}
+    assert reg.groups_by_name == {'A': _VersionedDataclassGroup('A', {Version(1): A_v1, Version(2): A_v2}, {A_v1: Version(1), A_v2: Version(2)})}
     assert reg.get_class('A', version=1) is A_v1
     assert reg.get_class('A', version=2) is A_v2
     assert reg.get_class('A', version=None) is A_v2
@@ -211,7 +243,7 @@ def test_global_versioned_dataclass_registry():
     class A(VersionedDataclass, version=0):
         ...
     A_v0 = A
-    assert reg.groups_by_name == {'A': _VersionedDataclassGroup('A', {0: A_v0}, {A_v0: 0})}
+    assert reg.groups_by_name == {'A': _VersionedDataclassGroup('A', {Version(0): A_v0}, {A_v0: Version(0)})}
     assert reg.get_class('A', version=0) is A_v0
     assert reg.get_class('A') is A_v0
     with pytest.raises(TypeError, match="class already registered with name 'A', version 0: .*A"):
@@ -222,7 +254,7 @@ def test_global_versioned_dataclass_registry():
     class A:
         ...
     A_v5 = A
-    assert reg.groups_by_name == {'A': _VersionedDataclassGroup('A', {0: A_v0, 5: A_v5}, {A_v0: 0, A_v5: 5})}
+    assert reg.groups_by_name == {'A': _VersionedDataclassGroup('A', {Version(0): A_v0, Version(5): A_v5}, {A_v0: Version(0), A_v5: Version(5)})}
     assert reg.get_class('A', version=5) is A_v5
     assert reg.get_class('A') is A_v5
     # simulate importing from a module
@@ -253,6 +285,33 @@ class A:
     assert issubclass(A_v2, VersionedDataclass)
     assert A_v2.__module__ == 'mod2'
     assert fully_qualified_class_name(A_v2) == 'mod2.A'
+
+def test_alternate_version_types():
+    """Tests duplication checking of versions with different types."""
+    class A(VersionedDataclass, version=1):
+        ...
+    assert A().version == 1
+    with pytest.raises(TypeError, match="class already registered with name 'A', version 1"):
+        class A(VersionedDataclass, version=(1,)):
+            ...
+    with pytest.raises(TypeError, match="class already registered with name 'A', version 1"):
+        class A(VersionedDataclass, version=Version(1)):
+            ...
+    with pytest.raises(TypeError, match="class already registered with name 'A', version 1"):
+        class A(VersionedDataclass, version='1'):
+            ...
+    class B(VersionedDataclass, version=(1,)):
+        ...
+    assert B().version == (1,)
+    class A(VersionedDataclass, version=(1, 0)):  # this is *not* the same as 1 or (1,)
+        ...
+    assert A().version == (1, 0)
+    with pytest.raises(TypeError, match="class already registered with name 'A', version 1.0"):
+        class A(VersionedDataclass, version=Version((1, 0))):
+            ...
+    with pytest.raises(TypeError, match="class already registered with name 'A', version 1.0"):
+        class A(VersionedDataclass, version='1.0'):
+            ...
 
 def test_migrate():
     """Tests migration behavior."""
