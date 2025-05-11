@@ -16,6 +16,15 @@ Types of changes:
 
 ## [Unreleased]
 
+### Added
+
+- `VersionedDataclass`
+    - Mixin class for providing a `version` class attribute to mark the version of the class itself.
+    - The version can be an integer, SemVer string, or integer tuple.
+    - Also have a `version` decorator to extend an arbitrary dataclass type to a `VersionedDataclass` with the supplied version.
+    - Provides a `migrate` method to migrate from one version of a class to another.
+- `prog` field to `ArgparseDataclassSettings` to specify program name, e.g. when using `--version` argument. By default, the program name will appear with the version if the `prog` field is set, otherwise only the version will appear.
+
 ## [0.8.3]
 
 2025-04-27
