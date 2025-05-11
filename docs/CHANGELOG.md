@@ -25,6 +25,10 @@ Types of changes:
     - Provides a `migrate` method to migrate from one version of a class to another.
 - `prog` field to `ArgparseDataclassSettings` to specify program name, e.g. when using `--version` argument. By default, the program name will appear with the version if the `prog` field is set, otherwise only the version will appear.
 
+### Removed
+
+- Built documentation pages will no longer appear in `fancy_dataclass.docs` package.
+
 ## [0.8.3]
 
 2025-04-27
