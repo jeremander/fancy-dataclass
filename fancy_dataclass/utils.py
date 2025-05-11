@@ -14,7 +14,6 @@ import sys
 import types
 from typing import IO, TYPE_CHECKING, Any, Callable, ClassVar, Dict, ForwardRef, Generic, Iterable, Iterator, List, Optional, Sequence, Set, Tuple, Type, TypeVar, Union, cast, get_args, get_origin, get_type_hints
 
-import typing_extensions
 from typing_extensions import TypeGuard, _AnnotatedAlias, dataclass_transform
 
 
@@ -368,9 +367,9 @@ def get_dataclass_fields(obj: Union[type, object], include_classvars: bool = Fal
 
 def get_annotations(cls: type) -> Dict[str, Any]:
     """Given a type, gets a dict mapping from field names to types."""
-    anns = {}
+    anns: Dict[str, Any] = {}
     for tp in cls.mro()[::-1]:
-        anns.update(typing_extensions.get_annotations(tp))  # type: ignore[attr-defined]
+        anns.update(getattr(tp, '__annotations__', {}))
     return anns
 
 def _get_all_stack_variables() -> Dict[str, Any]:

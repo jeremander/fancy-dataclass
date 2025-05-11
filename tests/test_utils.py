@@ -1,12 +1,17 @@
 from dataclasses import dataclass, is_dataclass
 import sys
-from types import NoneType
 from typing import Any, ClassVar, Dict, List, Optional, Sequence, Union
 
 import pytest
 from pytest import param
 
 from fancy_dataclass.utils import _flatten_dataclass, _is_instance, _is_subtype, camel_case_to_kebab_case, coerce_to_dataclass, get_dataclass_fields, merge_dataclasses, snake_case_to_camel_case, traverse_dataclass, type_is_optional
+
+
+try:
+    from types import NoneType  # novermin
+except ImportError:  # Python < 3.10
+    NoneType = type(None)  # type: ignore[misc]
 
 
 @pytest.mark.parametrize(['snake', 'camel'], [
@@ -91,9 +96,9 @@ def test_type_is_optional_py310():  # novermin
     (Union[int, str], Union[int, str], True),
     (Union[int, str, float], Union[int, str], False),
     (Union[int, str], Union[int, str, float], True),
-    (int, int | None, True),
+    (int, Union[int, None], True),
     (None, Optional[int], False),
-    (NoneType, Optional[int], True),
+    (NoneType, Optional[int], True),  # novermin
     (Sequence[str], Sequence[str], True),
     (Sequence[int], Sequence[str], False),
     (List[str], List[str], True),

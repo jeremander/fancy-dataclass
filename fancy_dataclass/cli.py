@@ -80,13 +80,16 @@ class ArgparseDataclassSettings(MixinSettings):
     - `help_descr_brief`: string to use for the *brief* help description, which is used when the class is used as a *subcommand* entry. This is the text that appears in the menu of subcommands, which is often briefer than the main description.
         - If `None`, the class's docstring will be used by default (lowercased).
     - `command_name`: when this class is used to define a subcommand, the name of that subcommand
-    - `version`: if set to an int or string, expose a `--version` argument displaying the version automatically (see [`argparse`](https://docs.python.org/3/library/argparse.html#action) docs)
+    - `prog`: name of the program to display when using the `%(prog)` format specifier
+    - `version`: if set, expose a `--version` argument displaying the version automatically (see [`argparse`](https://docs.python.org/3/library/argparse.html#action) docs)
+        - If `prog` is set, displays the program name and the version, otherwise just the version.
     - `default_help`: if set to `True`, includes each field's default value in its help string (this can be overridden by the field-level `default_help` flag)"""
     parser_class: Type[ArgumentParser] = ArgumentParser
     formatter_class: Optional[Type[HelpFormatter]] = None
     help_descr: Optional[str] = None
     help_descr_brief: Optional[str] = None
     command_name: Optional[str] = None
+    prog: Optional[str] = None
     version: Optional[Union[int, str]] = None
     default_help: bool = False
 
@@ -137,7 +140,6 @@ class ArgparseDataclassFieldSettings(FieldSettings):
     help: Optional[str] = None
     metavar: Optional[Union[str, Sequence[str]]] = None
     required: Optional[bool] = None
-    version: Optional[Union[int, str]] = None
     group: Optional[str] = None
     exclusive_group: Optional[str] = None
     subcommand: bool = False
@@ -234,8 +236,9 @@ class ArgparseDataclass(DataclassMixin):
         Returns:
             Keyword arguments passed upon construction of the `ArgumentParser`"""
         kwargs: Dict[str, Any] = {'description': cls._parser_description()}
-        if (fmt_cls := cls.__settings__.formatter_class) is not None:
-            kwargs['formatter_class'] = fmt_cls
+        for key in ['formatter_class', 'prog']:
+            if (val := getattr(cls.__settings__, key)) is not None:
+                kwargs[key] = val
         return kwargs
 
     @classmethod
@@ -253,6 +256,7 @@ class ArgparseDataclass(DataclassMixin):
         Returns:
             New top-level parser derived from the class's fields"""
         parser = cls.__settings__.parser_class(**cls.parser_kwargs())
+
         # we disallow duplicate 'dest' variables for the same parser, so track them in a set
         parser._dests = set()  # type: ignore[attr-defined]
         return parser
@@ -443,6 +447,16 @@ class ArgparseDataclass(DataclassMixin):
             parser.add_argument(*args, **kwargs)
 
     @classmethod
+    def configure_version_argument(cls, parser: Union[ArgumentParser, _ArgumentGroup]) -> None:
+        """Configures the special --version argument if a version field is included in the class settings."""
+        if version := cls.__settings__.version:
+            if cls.__settings__.prog:  # display the program name
+                version_str = f'%(prog)s {version}'
+            else:
+                version_str = str(version)
+            parser.add_argument('--version', action='version', version=version_str)
+
+    @classmethod
     def configure_parser(cls, parser: Union[ArgumentParser, _ArgumentGroup]) -> None:
         """Configures an argument parser by adding the appropriate arguments.
 
@@ -451,8 +465,7 @@ class ArgparseDataclass(DataclassMixin):
         Args:
             parser: `ArgumentParser` to configure"""
         check_dataclass(cls)
-        if (version := cls.__settings__.version):
-            parser.add_argument('--version', action='version', version=f'%(prog)s {version}')
+        cls.configure_version_argument(parser)
         subcommand = None
         field_names = []
         for fld in fields(cls):  # type: ignore[arg-type]

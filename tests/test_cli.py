@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 import pytest
 
 from fancy_dataclass.cli import ArgparseDataclass, CLIDataclass
+from fancy_dataclass.versioned import Version
 
 
 def _fix_parser(parser):
@@ -1064,20 +1065,24 @@ def test_subcommand_run(capsys):
 def test_version(capsys):
     # display version
     @dataclass
-    class DCV1(ArgparseDataclass, version='1.0'):
+    class DCV1(ArgparseDataclass, version=1):
         ...
     assert DCV1.from_cli_args([]) == DCV1()
     check_invalid_args(DCV1, ['--version'], 'exit with status 0')
-    assert capsys.readouterr().out.strip() == '1.0'
+    assert capsys.readouterr().out.strip() == '1'
     # include required argument and 'prog' placeholder
     @dataclass
-    class DCV2(ArgparseDataclass, version='%(prog)s 2.0'):
+    class DCV2(ArgparseDataclass, prog='myprog', version='2.0'):
         x: int
     check_invalid_args(DCV2, [], 'required: x')
     check_invalid_args(DCV2, ['--version'], 'exit with status 0')
-    toks = capsys.readouterr().out.strip().split()
-    assert len(toks) == 2
-    assert toks[1] == '2.0'
+    assert capsys.readouterr().out.strip() == 'myprog 2.0'
+    @dataclass
+    class DCV3(ArgparseDataclass, version=Version((3,7))):
+        ...
+    assert DCV3.from_cli_args([]) == DCV3()
+    check_invalid_args(DCV3, ['--version'], 'exit with status 0')
+    assert capsys.readouterr().out.strip() == '3.7'
 
 def test_default_help():
     @dataclass
