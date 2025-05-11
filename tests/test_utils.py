@@ -1,11 +1,12 @@
 from dataclasses import dataclass, is_dataclass
 import sys
+from types import NoneType
 from typing import Any, ClassVar, Dict, List, Optional, Sequence, Union
 
 import pytest
 from pytest import param
 
-from fancy_dataclass.utils import _flatten_dataclass, _is_instance, camel_case_to_kebab_case, coerce_to_dataclass, get_dataclass_fields, merge_dataclasses, snake_case_to_camel_case, traverse_dataclass, type_is_optional
+from fancy_dataclass.utils import _flatten_dataclass, _is_instance, _is_subtype, camel_case_to_kebab_case, coerce_to_dataclass, get_dataclass_fields, merge_dataclasses, snake_case_to_camel_case, traverse_dataclass, type_is_optional
 
 
 @pytest.mark.parametrize(['snake', 'camel'], [
@@ -74,6 +75,40 @@ def test_type_is_optional_py310():  # novermin
     assert type_is_optional(Optional[int | str])
     assert type_is_optional(Optional[int] | str)
 
+@pytest.mark.parametrize(['tp1', 'tp2', 'output'], [
+    (int, int, True),
+    (str, str, True),
+    (int, str, False),
+    (float, int, False),
+    (int, float, False),
+    (bool, int, True),
+    (Optional[int], int, False),
+    (int, Optional[int], True),
+    (Optional[int], Optional[int], True),
+    (Optional[int], Optional[float], False),
+    (Union[int, str], int, False),
+    (int, Union[int, str], True),
+    (Union[int, str], Union[int, str], True),
+    (Union[int, str, float], Union[int, str], False),
+    (Union[int, str], Union[int, str, float], True),
+    (int, int | None, True),
+    (None, Optional[int], False),
+    (NoneType, Optional[int], True),
+    (Sequence[str], Sequence[str], True),
+    (Sequence[int], Sequence[str], False),
+    (List[str], List[str], True),
+    (List[int], List[str], False),
+    (Dict[int, str], Dict[int, str], True),
+    (Dict[int, str], Dict[int, int], False),
+    (Dict[bool, str], Dict[int, str], True),
+    (ClassVar[int], ClassVar[int], True),
+    (ClassVar[bool], ClassVar[int], True),
+    (ClassVar[int], ClassVar[str], False),
+])
+def test_check_is_subtype(tp1, tp2, output):
+    """Tests the _is_subtype helper function."""
+    assert _is_subtype(tp1, tp2) is output
+
 @pytest.mark.parametrize(['obj', 'tp', 'output'], [
     (1, int, True),
     ('a', int, False),
@@ -108,6 +143,7 @@ def test_type_is_optional_py310():  # novermin
     ((1, 2), Optional[Union[int, Sequence[int]]], True),
 ])
 def test_check_isinstance(obj, tp, output):
+    """Tests the _is_instance helper function."""
     assert _is_instance(obj, tp) is output
 
 def test_coerce_to_dataclass():

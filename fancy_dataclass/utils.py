@@ -12,7 +12,7 @@ from pathlib import Path
 import re
 import sys
 import types
-from typing import IO, TYPE_CHECKING, Any, Callable, Dict, ForwardRef, Generic, Iterable, Iterator, List, Optional, Sequence, Set, Tuple, Type, TypeVar, Union, cast, get_args, get_origin, get_type_hints
+from typing import IO, TYPE_CHECKING, Any, Callable, ClassVar, Dict, ForwardRef, Generic, Iterable, Iterator, List, Optional, Sequence, Set, Tuple, Type, TypeVar, Union, cast, get_args, get_origin, get_type_hints
 
 import typing_extensions
 from typing_extensions import TypeGuard, _AnnotatedAlias, dataclass_transform
@@ -188,10 +188,33 @@ def issubclass_safe(type1: type, type2: type) -> bool:
     except TypeError:
         return False
 
+def _is_subtype(tp1: type, tp2: type) -> bool:
+    """Checks if one type is a subtype of the other.
+
+    This attempts to be somewhat more flexible than `issubclass` in that it will handle compound types like `List[...]`."""
+    # TODO: make this more complete
+    if tp2 is Any:  # type: ignore[comparison-overlap]
+        return True
+    origin1 = get_origin(tp1)
+    origin2 = get_origin(tp2)
+    if origin1 is Union:
+        return all(_is_subtype(arg, tp2) for arg in get_args(tp1))
+    if origin2 is Union:
+        return any(_is_subtype(tp1, arg) for arg in get_args(tp2))
+    if origin2 in [list, collections.abc.Sequence, ClassVar]:
+        return (origin1 == origin2) and _is_subtype(get_args(tp1)[0], get_args(tp2)[0])
+    if origin2 is dict:
+        if origin1 == origin2:
+            (key_type1, val_type1) = get_args(tp1)
+            (key_type2, val_type2) = get_args(tp2)
+            return _is_subtype(key_type1, key_type2) and _is_subtype(val_type1, val_type2)
+        return False
+    return issubclass_safe(tp1, tp2)  # fallback
+
 def _is_instance(obj: Any, tp: type) -> bool:
     """Checks if the given object is an instance of the given type.
 
-    This attempts to be somewhat more robust than `isinstance` in that it will handle compound types like `List[...]`."""
+    This attempts to be somewhat more flexible than `isinstance` in that it will handle compound types like `List[...]`."""
     # TODO: make this more complete
     if tp is Any:  # type: ignore[comparison-overlap]
         return True
@@ -661,7 +684,11 @@ def merge_dataclasses(*classes: type, cls_name: str = '_', bases: Optional[Tuple
             base = _base_type_with_field(cls, fld.name)
             if fld.name in field_type_map:
                 if allow_duplicates:
-                    if (field_type_map[fld.name] == fld.type):
+                    tp = dataclass_field_type(cls, fld.name)
+                    if _is_subtype(field_type_map[fld.name], tp):
+                        continue
+                    if _is_subtype(tp, field_type_map[fld.name]):
+                        field_type_map[fld.name] = tp
                         continue
                     raise TypeError(f'duplicate field name {fld.name!r} with mismatched types')
                 # allow duplicate field if it came from the same ancestor class

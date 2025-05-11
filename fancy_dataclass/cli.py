@@ -80,14 +80,14 @@ class ArgparseDataclassSettings(MixinSettings):
     - `help_descr_brief`: string to use for the *brief* help description, which is used when the class is used as a *subcommand* entry. This is the text that appears in the menu of subcommands, which is often briefer than the main description.
         - If `None`, the class's docstring will be used by default (lowercased).
     - `command_name`: when this class is used to define a subcommand, the name of that subcommand
-    - `version`: if set to a string, expose a `--version` argument displaying the version automatically (see [`argparse`](https://docs.python.org/3/library/argparse.html#action) docs)
+    - `version`: if set to an int or string, expose a `--version` argument displaying the version automatically (see [`argparse`](https://docs.python.org/3/library/argparse.html#action) docs)
     - `default_help`: if set to `True`, includes each field's default value in its help string (this can be overridden by the field-level `default_help` flag)"""
     parser_class: Type[ArgumentParser] = ArgumentParser
     formatter_class: Optional[Type[HelpFormatter]] = None
     help_descr: Optional[str] = None
     help_descr_brief: Optional[str] = None
     command_name: Optional[str] = None
-    version: Optional[str] = None
+    version: Optional[Union[int, str]] = None
     default_help: bool = False
 
 
@@ -137,7 +137,7 @@ class ArgparseDataclassFieldSettings(FieldSettings):
     help: Optional[str] = None
     metavar: Optional[Union[str, Sequence[str]]] = None
     required: Optional[bool] = None
-    version: Optional[str] = None
+    version: Optional[Union[int, str]] = None
     group: Optional[str] = None
     exclusive_group: Optional[str] = None
     subcommand: bool = False
@@ -452,7 +452,7 @@ class ArgparseDataclass(DataclassMixin):
             parser: `ArgumentParser` to configure"""
         check_dataclass(cls)
         if (version := cls.__settings__.version):
-            parser.add_argument('--version', action='version', version=version)
+            parser.add_argument('--version', action='version', version=f'%(prog)s {version}')
         subcommand = None
         field_names = []
         for fld in fields(cls):  # type: ignore[arg-type]

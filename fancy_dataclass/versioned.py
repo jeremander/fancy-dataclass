@@ -150,7 +150,7 @@ class VersionedDataclass(DictDataclass):
     version: ClassVar[AnyVersion]
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
-        super().__init_subclass__(**kwargs)
+        super().__init_subclass__(allow_duplicates=True, **kwargs)
         version: Optional[AnyVersion] = getattr(cls, 'version', cls.__settings__.version)
         if version is None:
             raise TypeError(f'must supply a valid version for class {cls.__name__!r}')

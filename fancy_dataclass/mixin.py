@@ -28,7 +28,7 @@ dataclasses._process_class = _process_class  # type: ignore[attr-defined]
 # SETTINGS #
 ############
 
-def _configure_mixin_settings(cls: Type['DataclassMixin'], **kwargs: Any) -> None:
+def _configure_mixin_settings(cls: Type['DataclassMixin'], allow_duplicates: bool = False, **kwargs: Any) -> None:
     """Sets up a `DataclassMixin`'s settings (at definition time), given inheritance kwargs."""
     # get user-specified settings (need to use __dict__ here rather than direct access, which inherits parent class's value)
     stype = cls.__dict__.get('__settings_type__')
@@ -40,7 +40,10 @@ def _configure_mixin_settings(cls: Type['DataclassMixin'], **kwargs: Any) -> Non
         stypes = list(dict.fromkeys(stypes))
         if stypes:
             try:
-                stype = stypes[0] if (len(stypes) == 1) else merge_dataclasses(*stypes, cls_name='MiscDataclassSettings')
+                if len(stypes) == 1:
+                    stype = stypes[0]
+                else:
+                    stype = merge_dataclasses(*stypes, cls_name='MiscDataclassSettings', allow_duplicates=allow_duplicates)
             except TypeError as e:
                 raise TypeError(f'error merging base class settings for {cls.__name__}: {e}') from e
             cls.__settings_type__ = stype
