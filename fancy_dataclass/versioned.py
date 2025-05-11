@@ -245,6 +245,7 @@ class VersionedDataclass(DictDataclass):
             return cast(Self, obj.migrate(cls.version))
         return obj
 
+
 def version(version: AnyVersion, suppress_version: bool = False) -> Callable[[Type[T]], Type[T]]:
     """Decorator turning a regular dataclass into a [`VersionedDataclass`][fancy_dataclass.versioned.VersionedDataclass].
 
