@@ -47,14 +47,16 @@ dependencies = [
 ]
 
 [tool.hatch.envs.doc.scripts]
+# build docs to site/ directory
 build = "mkdocs build --clean --strict --no-directory-urls {args}"
-# build docs within the package, if not already up-to-date
-build-pkg = "gadzooks build-docs --src-docs docs {args} -- mkdocs build --strict --no-directory-urls -d fancy_dataclass/docs"
+# check whether input docs have changed
 check = "gadzooks build-docs --src-docs docs --check-only {args}"
+# serve docs on development server
 serve = "mkdocs serve"
+# build docs for Readthedocs
 deploy = "mkdocs build --site-dir $READTHEDOCS_OUTPUT/html"
+# validate version string, CHANGELOG, Git tag, etc.
 pre-publish = [
-  "build-pkg",
   "cat docs/.changelog-version-regex.txt | xargs gadzooks check-version --check-tag --dist-dir dist --changelog docs/CHANGELOG.md --changelog-version-regex",
 ]
 
