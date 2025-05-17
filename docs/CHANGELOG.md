@@ -16,6 +16,8 @@ Types of changes:
 
 ## [Unreleased]
 
+## [0.9.0]
+
 ### Added
 
 - `VersionedDataclass`
@@ -27,7 +29,7 @@ Types of changes:
 
 ### Removed
 
-- Built documentation pages will no longer appear in `fancy_dataclass.docs` package.
+- Built documentation pages will no longer appear in `fancy_dataclass.docs` package ([#4]).
 
 ## [0.8.3]
 
@@ -36,7 +38,7 @@ Types of changes:
 ### Added
 
 - `DictDataclass`
-    - `alias` field setting sets an alternate key for converting both to and from a dict.
+    - `alias` field setting sets an alternate key for converting both to and from a dict ([#5]).
 
 ### Changed
 
@@ -354,7 +356,8 @@ Types of changes:
     - `SQLDataclass`: SQL persistence via `sqlalchemy`
     - `SubprocessDataclass`: call out to another program via `subprocess`
 
-[unreleased]: https://github.com/jeremander/fancy-dataclass/compare/v0.8.3...HEAD
+[unreleased]: https://github.com/jeremander/fancy-dataclass/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.9.0
 [0.8.3]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.8.3
 [0.8.2]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.8.2
 [0.8.1]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.8.1
@@ -379,6 +382,8 @@ Types of changes:
 
 [#1]: https://github.com/jeremander/fancy-dataclass/issues/1
 [#3]: https://github.com/jeremander/fancy-dataclass/issues/3
+[#4]: https://github.com/jeremander/fancy-dataclass/issues/4
+[#5]: https://github.com/jeremander/fancy-dataclass/issues/5
 
 <br>
 
