@@ -30,9 +30,14 @@ class SubprocessDataclassFieldSettings(FieldSettings):
         - If a non-empty list, use the first entry as the argument name if it starts with a dash, and treat it as a positional argument otherwise
         - If `None`, use the field name prefixed by one dash (if single letter) or two dashes, with underscores replaced by dashes
         - If an empty list, exclude this field from the arguments
-        - If the field type is `bool`, will provide the argument as a flag if the value is `True`, and omit it otherwise"""
+        - If the field type is `bool`, will provide the argument as a flag if the value is `True`, and omit it otherwise
+    - `repeat_arg_name`: if `True` and the field type is a list, repeat the argument for each list value
+        - Examples:
+            - If `False` (default), generate `--my-arg value1 value2 value3`
+            - If `True`, generate `--my-arg value1 --my-arg value2 --my-arg value3`"""
     exec: bool = False
     args: Optional[Union[str, Sequence[str]]] = None
+    repeat_arg_name: bool = False
 
 
 class SubprocessDataclass(DataclassMixin):
@@ -109,7 +114,11 @@ class SubprocessDataclass(DataclassMixin):
             val = []
         elif isinstance(val, (list, tuple)):
             if val:
-                val = [str(x) for x in val]
+                if settings.repeat_arg_name:  # repeat the argument for each value in the list
+                    val = [y for x in val for y in [arg, str(x)]]
+                    arg = None
+                else:
+                    val = [str(x) for x in val]
             else:
                 arg = None
         elif val is not None:  # convert the field value to a string

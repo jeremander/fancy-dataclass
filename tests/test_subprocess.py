@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from pathlib import Path
 import re
-from typing import ClassVar
+from typing import ClassVar, List
 
 import pytest
 
@@ -149,3 +149,18 @@ def test_underscore_conversion():
     class DC16(SubprocessDataclass, exec='prog'):
         my_arg: int
     assert DC16(1).get_args() == ['prog', '--my-arg', '1']
+
+def test_repeat_arg_name():
+    """Tests behavior of the `repeat_arg_name` flag."""
+    @dataclass
+    class DC1(SubprocessDataclass, exec='prog'):
+        my_arg: List[int]
+    assert DC1([]).get_args() == ['prog']
+    assert DC1([1]).get_args() == ['prog', '--my-arg', '1']
+    assert DC1([1, 2]).get_args() == ['prog', '--my-arg', '1', '2']
+    @dataclass
+    class DC2(SubprocessDataclass, exec='prog'):
+        my_arg: List[int] = field(metadata={'repeat_arg_name': True})
+    assert DC2([]).get_args() == ['prog']
+    assert DC2([1]).get_args() == ['prog', '--my-arg', '1']
+    assert DC2([1, 2]).get_args() == ['prog', '--my-arg', '1', '--my-arg', '2']

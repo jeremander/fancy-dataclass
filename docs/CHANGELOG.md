@@ -16,6 +16,14 @@ Types of changes:
 
 ## [Unreleased]
 
+### Added
+
+- `SubprocessDataclass`: `repeat_arg_name` field setting (flag).
+    - If `True` and the field type is a list, repeats the argument for each list value.
+    - Examples:
+        - If `False` (default), generate `--my-arg value1 value2`
+        - If `True`, generate `--my-arg value1 --my-arg value2`
+
 ## [0.9.0]
 
 ### Added
@@ -185,7 +193,7 @@ Types of changes:
 
 ### Changed
 
-- (_Breaking_) `ArgparseDataclass`: `parser_class` and `parser_description` classmethods have become `ArgparseDataclassSettings` fields `parser_class` and `help_descr`.
+- (*Breaking*) `ArgparseDataclass`: `parser_class` and `parser_description` classmethods have become `ArgparseDataclassSettings` fields `parser_class` and `help_descr`.
 
 ## [0.5.0]
 
@@ -198,7 +206,7 @@ Types of changes:
 
 ### Changed
 
-- (_Breaking_) `JSONDataclass` methods `json_encoder` and `json_key_decoder` now public
+- (*Breaking*) `JSONDataclass` methods `json_encoder` and `json_key_decoder` now public
 
 ### Fixed
 
