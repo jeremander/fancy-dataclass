@@ -43,14 +43,30 @@ class Container(SQLDataclass):
 @pytest.fixture
 def sqlite_engine(tmpdir):
     path = f'sqlite:///{tmpdir}/test.sqlite'
-    return create_engine(path)
+    engine = create_engine(path)
+    yield engine
+    engine.dispose()  # explicitly close pooled connections
 
 @pytest.fixture
 def session(sqlite_engine):
     DEFAULT_REGISTRY.metadata.create_all(sqlite_engine)
-    return sessionmaker(bind=sqlite_engine)()
+    SessionLocal = sessionmaker(bind=sqlite_engine)
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
-example_cols = [('_id', Integer), ('a', Integer), ('b', Numeric), ('c', String), ('d', DateTime), ('e', PickleType), ('f', PickleType), ('g', PickleType)]
+example_cols = [
+    ('_id', Integer),
+    ('a', Integer),
+    ('b', Numeric),
+    ('c', String),
+    ('d', DateTime),
+    ('e', PickleType),
+    ('f', PickleType),
+    ('g', PickleType)
+]
 
 @pytest.mark.parametrize(['cls', 'columns'], [
     (Example, example_cols),

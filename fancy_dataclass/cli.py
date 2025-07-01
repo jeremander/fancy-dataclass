@@ -318,7 +318,7 @@ class ArgparseDataclass(DataclassMixin):
                     kwargs['choices'] = tp_args
             else:  # type cannot be inferred
                 raise ValueError(f'cannot infer type of items in field {name!r}')
-            if issubclass_safe(origin_type, list) and (action == 'store'):
+            if issubclass_safe(origin_type, list) and (action == 'store'):  # type: ignore[arg-type]
                 kwargs['nargs'] = '*'  # allow multiple arguments by default
         if issubclass_safe(tp, IntEnum):
             # use a bare int type
@@ -440,10 +440,11 @@ class ArgparseDataclass(DataclassMixin):
                     raise ValueError(f'duplicate positional argument {args[0]!r}')
                 pos_args.add(args[0])
             if (dest := kwargs.get('dest')) is not None:  # type: ignore[assignment]
-                assert hasattr(parser, '_dests')
-                if dest in parser._dests:
+                if not hasattr(parser, '_dests'):
+                    parser._dests = set()  # type: ignore[union-attr]
+                elif dest in parser._dests:
                     raise ValueError(f'duplicate destination field {dest!r}')
-                parser._dests.add(dest)
+                parser._dests.add(dest)  # type: ignore[union-attr]
             parser.add_argument(*args, **kwargs)
 
     @classmethod

@@ -192,7 +192,7 @@ def _is_subtype(tp1: type, tp2: type) -> bool:
 
     This attempts to be somewhat more flexible than `issubclass` in that it will handle compound types like `List[...]`."""
     # TODO: make this more complete
-    if tp2 is Any:  # type: ignore[comparison-overlap]
+    if tp2 is Any:
         return True
     origin1 = get_origin(tp1)
     origin2 = get_origin(tp2)
@@ -215,7 +215,7 @@ def _is_instance(obj: Any, tp: type) -> bool:
 
     This attempts to be somewhat more flexible than `isinstance` in that it will handle compound types like `List[...]`."""
     # TODO: make this more complete
-    if tp is Any:  # type: ignore[comparison-overlap]
+    if tp is Any:
         return True
     origin = get_origin(tp)
     if origin is Union:

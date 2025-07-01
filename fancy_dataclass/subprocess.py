@@ -124,7 +124,7 @@ class SubprocessDataclass(DataclassMixin):
         elif val is not None:  # convert the field value to a string
             val = str(val)
         args = [arg] if arg else []
-        args += val if isinstance(val, list) else [val]
+        args += val if isinstance(val, list) else [val]  # type: ignore[list-item]
         return args
 
     def get_executable(self) -> Optional[str]:
