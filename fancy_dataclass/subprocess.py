@@ -1,4 +1,4 @@
-from dataclasses import MISSING, fields
+from dataclasses import MISSING
 import subprocess
 from typing import Any, ClassVar, List, Optional, Type, get_origin
 
@@ -30,7 +30,10 @@ class SubprocessDataclassFieldSettings(FieldSettings):
         - If a string, use this as the option name, prepending with one or two dashes if not provided
         - If `None`, use the field name prefixed by one dash (if single letter) or two dashes, with underscores replaced by dashes
         - If the field type is `bool`, will provide the argument as a flag if the value is `True`, and omit it otherwise
-    - `subprocess_exclude`: if `True`, do not use this field in a subprocess call
+    - `subprocess_exclude`:
+        - If `True`, exclude this field in the subprocess args
+        - If `False`, include this field in the subprocess args
+        - If `None` (default), exclude this field in the subprocess args if the field is a `ClassVar`
     - `subprocess_positional`: if `True`, make this a positional argument rather than an option
     - `subprocess_flag`: if `False` and the field type is `bool`, treat the field as a regular option rather than a flag
     - `repeat_option_name`: if `True` and the field type is a list, repeat the option name for each list value
@@ -39,7 +42,7 @@ class SubprocessDataclassFieldSettings(FieldSettings):
             - If `True`, generate `--my-option value1 --my-option value2 --my-option value3`"""
     exec: bool = False
     option_name: Optional[str] = None
-    subprocess_exclude: bool = False
+    subprocess_exclude: Optional[bool] = None
     subprocess_positional: bool = False
     subprocess_flag: Optional[bool] = None
     repeat_option_name: bool = False
@@ -91,10 +94,12 @@ class SubprocessDataclass(DataclassMixin):
         settings = self._field_settings(fld).adapt_to(SubprocessDataclassFieldSettings)
         if settings.exec:  # this field is the executable, so return no arguments
             return []
-        if settings.subprocess_exclude:  # exclude the argument
-            return []
         if get_origin(fld.type) is ClassVar:
-            # ignore fields associated with the class, rather than the instance
+            # by default, exclude fields associated with the class rather than the instance
+            exclude = settings.subprocess_exclude is not False
+        else:
+            exclude = settings.subprocess_exclude is True
+        if exclude:  # exclude the argument
             return []
         val = getattr(self, name, None)
         if val is None:  # optional value is None
@@ -192,7 +197,7 @@ class SubprocessDataclass(DataclassMixin):
         if not executable:
             raise ValueError(f'no executable identified for use with {obj_class_name(self)} instance')
         args = [executable]
-        for fld in fields(self):  # type: ignore[arg-type]
+        for fld in get_dataclass_fields(self, include_classvars=True):
             args += [arg for arg in self.get_arg(fld.name, suppress_defaults=suppress_defaults) if arg]
         return args
 

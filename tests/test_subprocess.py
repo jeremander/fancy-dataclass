@@ -94,6 +94,13 @@ def test_option():
     class DC4(SubprocessDataclass, exec='prog'):
         my_arg_with_underscores_: int
     assert DC4(1).get_args() == ['prog', '--my-arg-with-underscores-', '1']
+    # duplicate option names are allowed
+    @dataclass
+    class DC5(SubprocessDataclass, exec='prog'):
+        a: int = field(metadata={'option_name': '--option'})
+        b: int = field(metadata={'option_name': 'option'})
+        option: int
+    assert DC5(1, 2, 3).get_args() == ['prog', '--option', '1', '--option', '2', '--option', '3']
 
 def test_positional():
     """Tests behavior of subprocess positional arguments."""
@@ -122,6 +129,17 @@ def test_positional():
         @dataclass
         class DC5(SubprocessDataclass, exec='prog'):
             a: int = field(metadata={'option_name': '-a', 'subprocess_positional': True})
+
+def test_exclusion():
+    """Tests the subprocess_exclude flag."""
+    # NOTE: for now we do not error if other subprocess-related fields are set in conjunction with subprocess_exclude=True, but this flag takes priority over all else.
+    @dataclass
+    class DC1(SubprocessDataclass, exec='prog'):
+        a: int = field(metadata={'subprocess_exclude': True})
+        b: int = field(metadata={'subprocess_exclude': True, 'subprocess_positional': True})
+        c: int = field(metadata={'subprocess_exclude': True, 'option_name': '--option'})
+        d: int = field(metadata={'subprocess_exclude': True, 'repeat_option_name': True})
+    assert DC1(1, 2, 3, 4).get_args() == ['prog']
 
 def test_boolean_flag():
     """Tests a boolean field being treated as an on/off flag."""
@@ -173,5 +191,21 @@ def test_repeat_option_name():
         class DC3(SubprocessDataclass, exec='prog'):
             my_arg: List[int] = field(metadata={'subprocess_positional': True, 'repeat_option_name': True})
 
-# TODO: test exclusion
-# TODO: duplicate names
+def test_class_var():
+    """Tests behavior of ClassVar fields."""
+    @dataclass
+    class DC1(SubprocessDataclass, exec='prog'):
+        a: ClassVar[int] = 1
+        b: ClassVar[int] = field(default=2, metadata={'subprocess_exclude': False})
+        c: ClassVar[int] = field(default=3, metadata={'subprocess_exclude': True})
+        d: int
+        e: int = field(metadata={'subprocess_exclude': False})
+        f: int = field(metadata={'subprocess_exclude': True})
+    assert DC1(4, 5, 6).get_args() == ['prog', '-b', '2', '-d', '4', '-e', '5']
+    # can make a ClassVar positional or set its option name
+    @dataclass
+    class DC2(SubprocessDataclass, exec='prog'):
+        a: ClassVar[int] = field(default=1, metadata={'subprocess_exclude': False})
+        b: ClassVar[int] = field(default=2, metadata={'subprocess_positional': True, 'subprocess_exclude': False})
+        c: ClassVar[int] = field(default=3, metadata={'option_name': 'option', 'subprocess_exclude': False})
+    assert DC2().get_args() == ['prog', '-a', '1', '2', '--option', '3']
