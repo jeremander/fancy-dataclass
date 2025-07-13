@@ -23,22 +23,22 @@ class ListDir(SubprocessDataclass, exec='ls'):  # specify program to run
     # list in long form
     long: bool = field(
         default=False,
-        metadata={'args': '-l'}
+        metadata={'option_name': '-l'}
     )
     # list in reverse order
     reverse: bool = field(
         default=False,
-        metadata={'args': '-r'}
+        metadata={'option_name': '-r'}
     )
     # sort by time
     time: bool = field(
         default=False,
-        metadata={'args': '-t'}
+        metadata={'option_name': '-t'}
     )
     # name of directory to list
     dir_name: str = field(
         default='.',
-        metadata={'args': ''}
+        metadata={'subprocess_positional': True}
     )
 ```
 

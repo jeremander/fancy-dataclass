@@ -2,9 +2,13 @@
 
 # TODO
 
-## v0.9.1
+## v0.10.0
 
-- documentation
+- Update CHANGELOG
+
+## v0.10.1
+
+- Documentation
   - Dataclass mixins/settings
     - For now, `dataclass` decorator is required
     - Note purpose of `flattened=True` (good for tabular data like CSV/SQL)
