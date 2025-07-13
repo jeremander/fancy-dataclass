@@ -30,6 +30,8 @@
 
 ## Future
 
+- When subclassing `TOMLDataclass` and `JSONDataclass`, the `to_dict` representation includes `NoneProxy`, which cannot get JSON serialized and is not "truly" `None`.
+  - Current workaround is to make `NoneProxy` JSON-serializable, but this is a hack.
 - General-purpose validator mixin?
   - Does type-checking post-init, with ability to supply custom validation functions
   - Have most other mixins inherit from this?
