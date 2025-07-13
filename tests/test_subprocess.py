@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 import re
-from typing import ClassVar, List
+from typing import ClassVar, List, Optional
 
 import pytest
 
@@ -101,6 +101,11 @@ def test_option():
         b: int = field(metadata={'option_name': 'option'})
         option: int
     assert DC5(1, 2, 3).get_args() == ['prog', '--option', '1', '--option', '2', '--option', '3']
+    # optional value is omitted
+    @dataclass
+    class DC6(SubprocessDataclass, exec='prog'):
+        a: Optional[int] = None
+    assert DC6().get_args() == ['prog']
 
 def test_positional():
     """Tests behavior of subprocess positional arguments."""
@@ -209,3 +214,46 @@ def test_class_var():
         b: ClassVar[int] = field(default=2, metadata={'subprocess_positional': True, 'subprocess_exclude': False})
         c: ClassVar[int] = field(default=3, metadata={'option_name': 'option', 'subprocess_exclude': False})
     assert DC2().get_args() == ['prog', '-a', '1', '2', '--option', '3']
+
+def test_nested():
+    """Tests a nested SubprocessDataclass field."""
+    @dataclass
+    class DC1(SubprocessDataclass):
+        a: int
+        b: int = field(metadata={'option_name': 'option'})
+    @dataclass
+    class DC2(SubprocessDataclass, exec='inner'):
+        a: int
+        b: int = field(metadata={'option_name': 'option'})
+    @dataclass
+    class DC3(SubprocessDataclass, exec='outer'):
+        dc1: DC1
+        c: int
+    @dataclass
+    class DC4(SubprocessDataclass, exec='outer'):
+        dc2: DC2
+        c: int
+    @dataclass
+    class DC5(SubprocessDataclass, exec='outer'):
+        c: int
+        dc1: DC1
+    @dataclass
+    class DC6(SubprocessDataclass, exec='outer'):
+        c: int
+        dc2: DC2
+    @dataclass
+    class DC7(SubprocessDataclass):
+        dc1: DC1
+        c: int
+    @dataclass
+    class DC8(SubprocessDataclass):
+        dc2: DC2
+        c: int
+    assert DC3(DC1(1, 2), 3).get_args() == ['outer', '-a', '1', '--option', '2', '-c', '3']
+    assert DC4(DC2(1, 2), 3).get_args() == ['outer', 'inner', '-a', '1', '--option', '2', '-c', '3']
+    assert DC5(3, DC1(1, 2)).get_args() == ['outer', '-c', '3', '-a', '1', '--option', '2']
+    assert DC6(3, DC2(1, 2)).get_args() == ['outer', '-c', '3', 'inner', '-a', '1', '--option', '2']
+    with pytest.raises(ValueError, match='no executable identified for use with DC7 instance'):
+        _ = DC7(DC1(1, 2), 3).get_args()
+    with pytest.raises(ValueError, match='no executable identified for use with DC8 instance'):
+        _ = DC8(DC2(1, 2), 3).get_args()

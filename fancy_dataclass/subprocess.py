@@ -105,7 +105,10 @@ class SubprocessDataclass(DataclassMixin):
         if val is None:  # optional value is None
             return []
         if isinstance(val, SubprocessDataclass):  # get args via nested SubprocessDataclass
-            return val.get_args(suppress_defaults=suppress_defaults)
+            if val.get_executable():  # nested value has an executable, so include it (e.g. a subcommand)
+                return val.get_args(suppress_defaults=suppress_defaults)
+            # otherwise, only include the arguments
+            return val._get_args(suppress_defaults=suppress_defaults)
         if suppress_defaults:  # if value matches the default, suppress the argument
             default = None
             has_default = True
@@ -140,8 +143,6 @@ class SubprocessDataclass(DataclassMixin):
                 if not val:
                     return []
                 val = []
-        elif settings.subprocess_flag:
-            raise ValueError('cannot use subprocess_flag=True when the field type is not bool')
         elif isinstance(val, (list, tuple)):
             if val:
                 if settings.repeat_option_name:  # repeat the argument for each value in the list
@@ -153,7 +154,8 @@ class SubprocessDataclass(DataclassMixin):
                     val = [str(x) for x in val]
             else:
                 return []
-        elif val is not None:  # convert the field value to a string
+        else:
+            assert val is not None
             val = str(val)
         args = [option_name] if option_name else []
         args += val if isinstance(val, list) else [val]  # type: ignore[list-item]
@@ -183,6 +185,12 @@ class SubprocessDataclass(DataclassMixin):
                 return _check_type(getattr(self, fld.name, None))
         return None
 
+    def _get_args(self, suppress_defaults: bool = False) -> List[str]:
+        args = []
+        for fld in get_dataclass_fields(self, include_classvars=True):
+            args += [arg for arg in self.get_arg(fld.name, suppress_defaults=suppress_defaults) if arg]
+        return args
+
     def get_args(self, suppress_defaults: bool = False) -> List[str]:
         """Converts dataclass fields to a list of command-line arguments for a subprocess call.
 
@@ -196,10 +204,7 @@ class SubprocessDataclass(DataclassMixin):
         executable = self.get_executable()
         if not executable:
             raise ValueError(f'no executable identified for use with {obj_class_name(self)} instance')
-        args = [executable]
-        for fld in get_dataclass_fields(self, include_classvars=True):
-            args += [arg for arg in self.get_arg(fld.name, suppress_defaults=suppress_defaults) if arg]
-        return args
+        return [executable] + self._get_args(suppress_defaults=suppress_defaults)
 
     def run_subprocess(self, **kwargs: Any) -> subprocess.CompletedProcess:  # type: ignore[type-arg]
         """Executes the full subprocess command corresponding to the dataclass parameters.
