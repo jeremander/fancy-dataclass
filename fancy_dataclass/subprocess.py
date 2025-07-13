@@ -158,7 +158,7 @@ class SubprocessDataclass(DataclassMixin):
             assert val is not None
             val = str(val)
         args = [option_name] if option_name else []
-        args += val if isinstance(val, list) else [val]  # type: ignore[list-item]
+        args += val if isinstance(val, list) else [val]
         return args
 
     def get_executable(self) -> Optional[str]:

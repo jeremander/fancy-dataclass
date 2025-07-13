@@ -290,7 +290,7 @@ class TestDataclassMixin:
         class DocMixin(DataclassMixin):
             __field_settings_type__ = DocFieldSettings
         @dataclass
-        class DC(DocMixin):
+        class DC1(DocMixin):
             a: int = 1  # no doc
             b: int = field(default=2, metadata={'doc': 'b'})  # metadata doc field
             c: Annotated[int, Doc('c')] = 3  # Annotated Doc field
@@ -301,7 +301,7 @@ class TestDataclassMixin:
             h: "Annotated[int, Doc('h')]" = 8  # stringized annotation
             # stringized annotation, fully qualified
             i: "typing_extensions.Annotated[int, typing_extensions.Doc('i')]" = 9  # type: ignore[name-defined]  # noqa: F821
-        docs = [DC._field_settings(fld).doc for fld in fields(DC)]
+        docs = [DC1._field_settings(fld).doc for fld in fields(DC1)]
         assert docs[0] is None
         assert docs[1] == 'b'
         assert docs[2] == 'c'
@@ -311,3 +311,14 @@ class TestDataclassMixin:
         assert docs[6] == 'g2'
         assert docs[7] == 'h'
         assert docs[8] == 'i'
+        # try to convert a field with unknown type to DocFieldSettings
+        @dataclass
+        class DC2:
+            x: 'fake-type'  # type: ignore  # noqa: F821
+        fld = fields(DC2)[0]
+        settings = DocFieldSettings.from_field(fld)
+        assert settings == DocFieldSettings(doc=None)
+        @dataclass
+        class DC3(DocMixin):
+            x: 'fake-type'  # type: ignore  # noqa: F821
+        assert DC3._field_settings(fields(DC3)[0]) == DocFieldSettings(doc=None)
