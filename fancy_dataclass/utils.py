@@ -516,7 +516,7 @@ def traverse_dataclass(cls: type) -> Iterator[Tuple[RecordPath, Field]]:  # type
         cls: Dataclass type
 
     Returns:
-        Generator of (name, field) pairs, where each field is a `dataclasses.Field` object
+        Generator of (path, field) pairs, where `path` is a tuple of strings, and `field` is a `dataclasses.Field` object
 
     Raises:
         TypeError: if the type cannot be traversed"""
@@ -564,7 +564,7 @@ def traverse_dataclass(cls: type) -> Iterator[Tuple[RecordPath, Field]]:  # type
 
 @dataclass
 class DataclassConverter(Generic[T, U]):
-    """Class for converting values from one dataclass type to another."""
+    """Class to assist in converting values from one dataclass type to another."""
     from_type: Type[T]
     to_type: Type[U]
     forward: Callable[[T], U]
