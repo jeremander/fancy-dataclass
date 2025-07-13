@@ -1,6 +1,6 @@
 from dataclasses import MISSING, fields
 import subprocess
-from typing import Any, ClassVar, List, Optional, Sequence, Type, Union, get_origin
+from typing import Any, ClassVar, List, Optional, Type, get_origin
 
 from typing_extensions import Self
 
@@ -26,18 +26,23 @@ class SubprocessDataclassFieldSettings(FieldSettings):
     Each field may define a `metadata` dict containing any of the following entries:
 
     - `exec`: if `True`, use this field as the name of the executable, rather than an argument
-    - `args`: command-line arguments corresponding to the field
-        - If a non-empty list, use the first entry as the argument name if it starts with a dash, and treat it as a positional argument otherwise
+    - `option_name`: command-line option name for this field
+        - If a string, use this as the option name, prepending with one or two dashes if not provided
         - If `None`, use the field name prefixed by one dash (if single letter) or two dashes, with underscores replaced by dashes
-        - If an empty list, exclude this field from the arguments
         - If the field type is `bool`, will provide the argument as a flag if the value is `True`, and omit it otherwise
-    - `repeat_arg_name`: if `True` and the field type is a list, repeat the argument for each list value
+    - `subprocess_exclude`: if `True`, do not use this field in a subprocess call
+    - `subprocess_positional`: if `True`, make this a positional argument rather than an option
+    - `subprocess_flag`: if `False` and the field type is `bool`, treat the field as a regular option rather than a flag
+    - `repeat_option_name`: if `True` and the field type is a list, repeat the option name for each list value
         - Examples:
-            - If `False` (default), generate `--my-arg value1 value2 value3`
-            - If `True`, generate `--my-arg value1 --my-arg value2 --my-arg value3`"""
+            - If `False` (default), generate `--my-option value1 value2 value3`
+            - If `True`, generate `--my-option value1 --my-option value2 --my-option value3`"""
     exec: bool = False
-    args: Optional[Union[str, Sequence[str]]] = None
-    repeat_arg_name: bool = False
+    option_name: Optional[str] = None
+    subprocess_exclude: bool = True
+    subprocess_positional: bool = False
+    subprocess_flag: Optional[bool] = None
+    repeat_option_name: bool = False
 
 
 class SubprocessDataclass(DataclassMixin):
@@ -62,6 +67,16 @@ class SubprocessDataclass(DataclassMixin):
                 if exec_field is not None:
                     raise TypeError(f"cannot have more than one field with 'exec' flag set to True (already set executable to {exec_field})")
                 exec_field = fld.name
+            if fld_settings.option_name == '':
+                raise ValueError('empty string not allowed for option_name')
+            if fld_settings.subprocess_positional:
+                if fld_settings.option_name:
+                    raise ValueError('cannot specify a field option_name when subprocess_positional=True')
+                if fld_settings.repeat_option_name:
+                    raise ValueError('cannot repeat option name for positional field (subprocess_positional=True)')
+            if fld_settings.subprocess_flag:
+                if fld.type is not bool:
+                    raise ValueError('cannot use subprocess_flag=True when the field type is not bool')
 
     def get_arg(self, name: str, suppress_defaults: bool = False) -> List[str]:
         """Gets the command-line arguments for the given dataclass field.
@@ -74,11 +89,9 @@ class SubprocessDataclass(DataclassMixin):
             List of command-line args corresponding to the field"""
         fld = self.__dataclass_fields__[name]  # type: ignore[attr-defined]
         settings = self._field_settings(fld).adapt_to(SubprocessDataclassFieldSettings)
-        args = settings.args
-        args = [args] if isinstance(args, str) else args
-        if args == []:  # exclude the argument
-            return []
         if settings.exec:  # this field is the executable, so return no arguments
+            return []
+        if not settings.subprocess_exclude:  # exclude the argument
             return []
         if get_origin(fld.type) is ClassVar:
             # ignore fields associated with the class, rather than the instance
@@ -100,30 +113,44 @@ class SubprocessDataclass(DataclassMixin):
                 default = fld.default
             if has_default and (val == default):
                 return []
-        if args:  # use arg name provided by the metadata
-            arg: Optional[str] = args[0]
-            if not arg.startswith('-'):  # type: ignore[union-attr]
-                arg = None
-        else:  # use the field name (assume a single dash if it is a single letter)
-            prefix = '-' if (len(name) == 1) else '--'
-            arg = prefix + name.replace('_', '-')
+        # determine the option name (if any)
+        if settings.subprocess_positional:
+            assert not settings.option_name
+            option_name = None
+        else:
+            # if option_name is unspecified, use the field name with underscore replaced by dash
+            if settings.option_name is None:
+                option_name = name.replace('_', '-')
+            else:
+                option_name = settings.option_name
+            if not option_name.startswith('-'):
+                # assume a single dash if the name is a single letter, otherwise a double dash
+                prefix = '-' if (len(name) == 1) else '--'
+                option_name = prefix + option_name
+        # determine the value
         if isinstance(val, bool):
-            # make it a boolean flag if True, otherwise omit it
-            if not val:
-                arg = None
-            val = []
+            if settings.subprocess_flag is False:  # use a literal boolean-valued option
+                val = [str(val)]
+            else:  # make it a boolean flag if value True, otherwise omit it
+                if not val:
+                    return []
+                val = []
+        elif settings.subprocess_flag:
+            raise ValueError('cannot use subprocess_flag=True when the field type is not bool')
         elif isinstance(val, (list, tuple)):
             if val:
-                if settings.repeat_arg_name:  # repeat the argument for each value in the list
-                    val = [y for x in val for y in [arg, str(x)]]
-                    arg = None
+                if settings.repeat_option_name:  # repeat the argument for each value in the list
+                    assert not settings.subprocess_positional
+                    assert option_name
+                    val = [y for x in val for y in [option_name, str(x)]]
+                    option_name = None
                 else:
                     val = [str(x) for x in val]
             else:
-                arg = None
+                return []
         elif val is not None:  # convert the field value to a string
             val = str(val)
-        args = [arg] if arg else []
+        args = [option_name] if option_name else []
         args += val if isinstance(val, list) else [val]  # type: ignore[list-item]
         return args
 
