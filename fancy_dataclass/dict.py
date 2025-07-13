@@ -104,11 +104,13 @@ class DictDataclassFieldSettings(DocFieldSettings):
     - `suppress_default`: flag to suppress this field in the dict if it matches its default value (overrides class-level `suppress_defaults`)
     - `suppress_none`: flag to suppress this field in the dict if its value is `None` (overrides class-level `suppress_none`)
     - `alias`: alternate name to use for the field, both when converting to and from a dict key
+    - `flatten`: if set to `True` or `False` and the field is a `DictDataclass`, determines whether to merge subfields into the outer dataclass (this overrides the class-level `flatten` setting)
     - `doc`: a text description of the field, which may be used when generating schemas or serializing the data"""
     suppress: Optional[bool] = None
     suppress_default: Optional[bool] = None
     suppress_none: Optional[bool] = None
     alias: Optional[str] = None
+    flatten: Optional[bool] = None
 
 
 class DictDataclass(DataclassMixin):
