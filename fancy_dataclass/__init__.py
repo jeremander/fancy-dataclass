@@ -11,7 +11,7 @@ from .toml import TOMLDataclass
 from .versioned import VersionedDataclass, version
 
 
-__version__ = '0.9.1'
+__version__ = '0.10.0'
 
 __all__ = [
     'ArgparseDataclass',

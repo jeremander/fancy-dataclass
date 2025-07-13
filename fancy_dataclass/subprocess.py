@@ -39,7 +39,7 @@ class SubprocessDataclassFieldSettings(FieldSettings):
             - If `True`, generate `--my-option value1 --my-option value2 --my-option value3`"""
     exec: bool = False
     option_name: Optional[str] = None
-    subprocess_exclude: bool = True
+    subprocess_exclude: bool = False
     subprocess_positional: bool = False
     subprocess_flag: Optional[bool] = None
     repeat_option_name: bool = False
@@ -91,7 +91,7 @@ class SubprocessDataclass(DataclassMixin):
         settings = self._field_settings(fld).adapt_to(SubprocessDataclassFieldSettings)
         if settings.exec:  # this field is the executable, so return no arguments
             return []
-        if not settings.subprocess_exclude:  # exclude the argument
+        if settings.subprocess_exclude:  # exclude the argument
             return []
         if get_origin(fld.type) is ClassVar:
             # ignore fields associated with the class, rather than the instance
@@ -125,7 +125,7 @@ class SubprocessDataclass(DataclassMixin):
                 option_name = settings.option_name
             if not option_name.startswith('-'):
                 # assume a single dash if the name is a single letter, otherwise a double dash
-                prefix = '-' if (len(name) == 1) else '--'
+                prefix = '-' if (len(option_name) == 1) else '--'
                 option_name = prefix + option_name
         # determine the value
         if isinstance(val, bool):
