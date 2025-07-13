@@ -82,7 +82,7 @@ def _get_dataclass_type_for_path(path: AnyPath) -> Type[FileSerializable]:
     raise ValueError(f'unknown config file extension {p.suffix!r}')
 
 
-class ConfigDataclass(DictDataclass, FileConfig, suppress_defaults=False):
+class ConfigDataclass(DictDataclass, FileConfig, suppress_defaults=False, store_type='off'):
     """A dataclass representing a collection of configurations.
 
     The configurations can be loaded from a file, the type of which will be inferred from its extension.

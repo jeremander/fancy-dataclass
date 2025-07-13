@@ -177,8 +177,8 @@ def test_argparse_subprocess():
     assert DC1(1, 2, 3, 4).get_args(suppress_defaults=True) == ['prog']
     assert DC1.from_cli_args(['--a-value', '1', '-b', '2', '-c', '3', '--name1', '4']) == DC1(1, 2, 3, 4)
 
-def test_dict_cli_subprocess_dataclass(tmpdir):
-    """Tests running  behavior."""
+def test_cli_subprocess_dataclass(tmpdir):
+    """Tests subclassing both CLIDataclass and SubprocessDataclass."""
     @dataclass
     class DC2(DC1, SubprocessDataclass):
         prog: str = field(default='prog', metadata={'exec': True})
@@ -203,3 +203,15 @@ DC1.main()""", file=f)
     # call the script with subprocess
     res = dc2.run_subprocess(capture_output=True, text=True)
     assert res.stdout.rstrip() == str(dc1)
+
+def test_config_json_dataclass():
+    """Tests subclassing both ConfigDataclass and JSONDataclass."""
+    @dataclass
+    # class DC1(ConfigDataclass, JSONDataclass):
+    class DC1(ConfigDataclass, JSONBaseDataclass):
+        x: int
+    assert DC1.from_dict({'x': 1}) == DC1(1)
+    @dataclass
+    class DC2(DC1):
+        y: int
+    assert DC2.from_dict({'x': 1, 'y': 2}) == DC2(1, 2)

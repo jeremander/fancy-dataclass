@@ -4,7 +4,6 @@
 
 ## v0.10.0
 
-- Currently can't subclass both `ConfigDataclass` and `JSONDataclass` (settings don't carry over).
 - Enable an *individual* field to be flattened within its parent for dict/JSON/TOML representation
 - Update CHANGELOG
 
