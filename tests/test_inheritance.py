@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from io import StringIO
 from pathlib import Path
+from typing import Optional
 
 import pytest
 
@@ -9,6 +10,7 @@ from fancy_dataclass import ArgparseDataclass, ConfigDataclass, DictDataclass, J
 from fancy_dataclass.cli import ArgparseDataclassSettings
 from fancy_dataclass.dict import DictDataclassSettings
 from fancy_dataclass.mixin import DataclassMixin, MixinSettings
+from fancy_dataclass.toml import NoneProxy
 from fancy_dataclass.utils import coerce_to_dataclass
 
 from .test_cli import DC1
@@ -207,7 +209,6 @@ DC1.main()""", file=f)
 def test_config_json_dataclass():
     """Tests subclassing both ConfigDataclass and JSONDataclass."""
     @dataclass
-    # class DC1(ConfigDataclass, JSONDataclass):
     class DC1(ConfigDataclass, JSONBaseDataclass):
         x: int
     assert DC1.from_dict({'x': 1}) == DC1(1)
@@ -215,3 +216,15 @@ def test_config_json_dataclass():
     class DC2(DC1):
         y: int
     assert DC2.from_dict({'x': 1, 'y': 2}) == DC2(1, 2)
+
+def test_toml_json_dataclass():
+    """Tests subclassing both TOMLDataclass and JSONDataclass."""
+    @dataclass
+    class DC1(TOMLDataclass, JSONDataclass):
+        x: int
+        y: Optional[int] = None
+    obj = DC1(1)
+    # NOTE: this is hacky and should probably be fixed, but at present the dict representation for TOMLDataclass must contain NoneProxy, which is not directly JSON serializable
+    assert obj.to_dict() == {'x': 1, 'y': NoneProxy()}
+    assert obj.to_toml_string() == 'x = 1\n# y = \n'
+    assert obj.to_json_string() == '{"x": 1, "y": null}'
