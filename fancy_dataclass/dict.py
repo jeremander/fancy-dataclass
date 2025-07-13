@@ -66,7 +66,7 @@ class DictDataclassSettings(MixinSettings):
         - `off`: do not store the type
         - `name`: store the type name
         - `qualname`: store the fully qualified type name (easiest way to resolve the type from the dict)
-    - `flattened`: if `True`, [`DictDataclass`][fancy_dataclass.dict.DictDataclass] subfields fields will be merged together with the main fields (provided there are no name collisions); otherwise, they are nested
+    - `flattened`: if `True`, [`DictDataclass`][fancy_dataclass.dict.DictDataclass] subfields will be merged together with the main fields (provided there are no name collisions); otherwise, they are nested
     - `strict`: if `True`, raise an error when converting from a dict if unknown fields are present
     - `validate`: if `True`, attempt to validate data when converting from a dict"""
     suppress_defaults: bool = True

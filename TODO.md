@@ -4,6 +4,8 @@
 
 ## v0.10.0
 
+- Currently can't subclass both `ConfigDataclass` and `JSONDataclass` (settings don't carry over).
+- Enable an *individual* field to be flattened within its parent for dict/JSON/TOML representation
 - Update CHANGELOG
 
 ## v0.10.1
@@ -13,6 +15,7 @@
     - For now, `dataclass` decorator is required
     - Note purpose of `flattened=True` (good for tabular data like CSV/SQL)
     - Advanced: how to handle name collisions in settings for multiple inheritance (e.g. `ArgparseDataclass`/`SubprocessDataclass`)
+    - Emphasize type conversions are only to/from dict, not general constructors (this is a difference from `pydantic`).
   - JSON
   - TOML
   - CLI
