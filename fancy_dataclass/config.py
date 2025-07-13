@@ -132,3 +132,8 @@ class DictConfig(FileConfig, Dict[Any, Any]):
             cfg = cls(tp._text_file_to_dict(fp))  # type: ignore[attr-defined]
         cfg.update_config()
         return cfg
+
+    def __repr__(self) -> str:
+        cls_name = type(self).__name__
+        dict_repr = dict.__repr__(self)
+        return f'{cls_name}({dict_repr})'

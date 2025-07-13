@@ -92,7 +92,7 @@ def test_inner_plain(tmpdir):
     Outer.load_config(cfg_path)
     assert Outer.get_config() == Outer(Inner())
 
-def test_dict_config():
+def test_dict_config(tmpdir):
     """Tests behavior of DictConfig."""
     assert DictConfig.get_config() is None
     class MyConfig(DictConfig):
@@ -224,3 +224,10 @@ def test_load_config(tmpdir):
     with open(outfile, 'w') as f:
         f.write('x = 5')
     assert MyConfig.load_config(outfile) == cfg
+    # now use a DictConfig, which has no prescribed schema
+    class MyDictConfig(DictConfig):
+        ...
+    for filename in ['test.json', 'test.toml']:
+        dict_cfg = MyDictConfig.load_config(tmpdir / filename)
+        assert dict(dict_cfg) == {'x': 5}
+        assert str(dict_cfg) == "MyDictConfig({'x': 5})"
