@@ -1,36 +1,39 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 from io import StringIO
-from typing import Optional, Sequence
+from pathlib import Path
 
 import pytest
 
 from fancy_dataclass import ArgparseDataclass, ConfigDataclass, DictDataclass, JSONBaseDataclass, JSONDataclass, SQLDataclass, SubprocessDataclass, TOMLDataclass
-from fancy_dataclass.cli import ArgparseDataclassFieldSettings, ArgparseDataclassSettings
+from fancy_dataclass.cli import ArgparseDataclassSettings
 from fancy_dataclass.dict import DictDataclassSettings
-from fancy_dataclass.mixin import DataclassMixin, FieldSettings, MixinSettings
-from fancy_dataclass.subprocess import SubprocessDataclassFieldSettings
-from fancy_dataclass.utils import merge_dataclasses
+from fancy_dataclass.mixin import DataclassMixin, MixinSettings
+from fancy_dataclass.utils import coerce_to_dataclass
+
+from .test_cli import DC1
 
 
 DEFAULT_MIXINS = [JSONBaseDataclass, ArgparseDataclass, ConfigDataclass, SQLDataclass, TOMLDataclass]
+
+TEST_DIR = Path(__file__).parent
+PKG_DIR = TEST_DIR.parent
 
 
 def test_multiple_inheritance():
     """Tests inheritance from multiple DataclassMixins."""
     @dataclass
-    class MyDC1(ArgparseDataclass, JSONDataclass):
+    class DC1(ArgparseDataclass, JSONDataclass):
         x: int
     assert JSONDataclass.__settings_type__ is DictDataclassSettings
-    assert issubclass(MyDC1.__settings_type__, DictDataclassSettings)
-    assert issubclass(MyDC1.__settings_type__, ArgparseDataclassSettings)
-    # assert all(cls.__settings_type__ is DictDataclassSettings for cls in [JSONDataclass, MyDC1])
+    assert issubclass(DC1.__settings_type__, DictDataclassSettings)
+    assert issubclass(DC1.__settings_type__, ArgparseDataclassSettings)
     # alternatively, add in mixins dynamically with wrap_dataclass
     @dataclass
-    class MyDC2:
+    class DC2:
         x: int
-    MyDC2 = JSONDataclass.wrap_dataclass(ArgparseDataclass.wrap_dataclass(MyDC2))
-    for cls in [MyDC1, MyDC2]:
+    DC2 = JSONDataclass.wrap_dataclass(ArgparseDataclass.wrap_dataclass(DC2))
+    for cls in [DC1, DC2]:
         mro = cls.mro()
         assert mro.index(ArgparseDataclass) < mro.index(JSONDataclass)
         obj = cls(5)
@@ -42,9 +45,9 @@ def test_multiple_inheritance():
 def test_all_inheritance():
     """Tests a class that inherits from all the default DataclassMixins."""
     @dataclass
-    class MyDC:
+    class DC:
         x: int
-    cls = MyDC
+    cls = DC
     for mixin_cls in DEFAULT_MIXINS:
         cls = mixin_cls.wrap_dataclass(cls, store_type='qualname')
     mro = cls.mro()
@@ -57,29 +60,29 @@ def test_invalid_inheritance():
     """Tests invalid inheritance (e.g. parent class before its subclass)."""
     # this order works
     @dataclass
-    class MyDC(JSONDataclass, DictDataclass):
+    class DC(JSONDataclass, DictDataclass):
         pass
-    assert issubclass(MyDC, DictDataclass)
-    assert issubclass(MyDC, JSONDataclass)
+    assert issubclass(DC, DictDataclass)
+    assert issubclass(DC, JSONDataclass)
     @dataclass
-    class MyDC:
+    class DC:
         pass
-    MyDC1 = JSONDataclass.wrap_dataclass(MyDC)
-    MyDC2 = DictDataclass.wrap_dataclass(MyDC1)
+    DC1 = JSONDataclass.wrap_dataclass(DC)
+    DC2 = DictDataclass.wrap_dataclass(DC1)
     # already a subclass, so wrapping does nothing
-    assert MyDC2 is MyDC1
+    assert DC2 is DC1
     # this order doesn't work
     with pytest.raises(TypeError, match='Cannot create a consistent'):
         @dataclass
-        class MyDC(DictDataclass, JSONDataclass):
+        class DC(DictDataclass, JSONDataclass):
             pass
-    MyDC1 = DictDataclass.wrap_dataclass(MyDC)
-    # this works because JSONDataclass is not a subclass of MyDC1
-    MyDC2 = JSONDataclass.wrap_dataclass(MyDC1)
-    assert issubclass(MyDC2, DictDataclass)
-    assert issubclass(MyDC2, JSONDataclass)
-    assert issubclass(MyDC2, MyDC1)
-    assert MyDC2 is not MyDC1
+    DC1 = DictDataclass.wrap_dataclass(DC)
+    # this works because JSONDataclass is not a subclass of DC1
+    DC2 = JSONDataclass.wrap_dataclass(DC1)
+    assert issubclass(DC2, DictDataclass)
+    assert issubclass(DC2, JSONDataclass)
+    assert issubclass(DC2, DC1)
+    assert DC2 is not DC1
 
 def test_post_dataclass_wrap():
     """Tests behavior of `__post_dataclass_wrap__` with multiple inheritance."""
@@ -161,48 +164,42 @@ def test_json_toml():
 
 def test_argparse_subprocess():
     """Tests inheritance from both ArgparseDataclass and SubprocessDataclass."""
-    # field settings have a name collision, 'args'
-    with pytest.raises(TypeError, match="duplicate field name 'args'"):
-        class ArgparseSubprocessDC(ArgparseDataclass, SubprocessDataclass):
-            ...
-    # field settings have a duplicate field, so make a custom merged settings class and set it explicitly
-    ArgparseSubprocessFieldSettings = merge_dataclasses(ArgparseDataclassFieldSettings, SubprocessDataclassFieldSettings, allow_duplicates=True)
-    class ArgparseSubprocessDC2(ArgparseDataclass, SubprocessDataclass):
-        __field_settings_type__ = ArgparseSubprocessFieldSettings
+    # no name collision in field settings, so inheritance works OK
+    class ArgparseSubprocessDC(ArgparseDataclass, SubprocessDataclass):
+        ...
     @dataclass
-    class MyDC2(ArgparseSubprocessDC2):
-        x: int = field(metadata={'args': ['--ex']})
-    # same attribute is used for both parent classes' FieldSettings
-    obj = MyDC2(1)
-    fld_settings = MyDC2._field_settings(obj.__dataclass_fields__['x'])
-    assert fld_settings.adapt_to(ArgparseDataclassFieldSettings).args == ['--ex']
-    assert fld_settings.adapt_to(SubprocessDataclassFieldSettings).args == ['--ex']
-    # custom adapter for FieldSettings
+    class DC1(ArgparseSubprocessDC, exec='prog'):
+        a: int = field(default=1, metadata={'args': ['--a-value']})
+        b: int = field(default=2, metadata={'option_name': 'b-value'})
+        c: int = field(default=3)
+        d: int = field(default=4, metadata={'args': ['--name1'], 'option_name': '--name2'})
+    assert DC1(1, 2, 3, 4).get_args() == ['prog', '-a', '1', '--b-value', '2', '-c', '3', '--name2', '4']
+    assert DC1(1, 2, 3, 4).get_args(suppress_defaults=True) == ['prog']
+    assert DC1.from_cli_args(['--a-value', '1', '-b', '2', '-c', '3', '--name1', '4']) == DC1(1, 2, 3, 4)
+
+def test_dict_cli_subprocess_dataclass(tmpdir):
+    """Tests running  behavior."""
     @dataclass
-    class FieldSettings3(FieldSettings):
-        input_args: Optional[Sequence[str]] = None
-        output_args: Optional[Sequence[str]] = None
-        def adapt_to(self, dest_type):
-            if dest_type is ArgparseDataclassFieldSettings:
-                return dest_type(args=self.input_args)
-            if dest_type is SubprocessDataclassFieldSettings:
-                return dest_type(args=self.output_args)
-            return super().adapt_to(dest_type)
-    class ArgparseSubprocessDC3(ArgparseDataclass, SubprocessDataclass):
-        __field_settings_type__ = FieldSettings3
-    @dataclass
-    class MyDC3(ArgparseSubprocessDC3):
-        x: int = field(metadata={'args': ['--ex']})
-    obj = MyDC3(1)
-    fld_settings = MyDC3._field_settings(obj.__dataclass_fields__['x'])
-    assert fld_settings == FieldSettings3(input_args=None, output_args=None)
-    assert fld_settings.adapt_to(ArgparseDataclassFieldSettings).args is None
-    assert fld_settings.adapt_to(SubprocessDataclassFieldSettings).args is None
-    @dataclass
-    class MyDC4(ArgparseSubprocessDC3):
-        x: int = field(metadata={'input_args': ['--ex1'], 'output_args': ['--ex2']})
-    obj = MyDC4(1)
-    fld_settings = MyDC4._field_settings(obj.__dataclass_fields__['x'])
-    assert fld_settings == FieldSettings3(input_args=['--ex1'], output_args=['--ex2'])
-    assert fld_settings.adapt_to(ArgparseDataclassFieldSettings).args == ['--ex1']
-    assert fld_settings.adapt_to(SubprocessDataclassFieldSettings).args == ['--ex2']
+    class DC2(DC1, SubprocessDataclass):
+        prog: str = field(default='prog', metadata={'exec': True})
+        # ensure the positional arg is positional for both argument parsing *and* subprocess output
+        required_string: str = field(metadata={'args': ['required_string'], 'subprocess_positional': True, 'help': 'a required string'})
+        # ensure the ignored value is excluded from both argument parsing *and* subprocess output
+        ignored_value: str = field(default='ignored', metadata={'args': [], 'parse_exclude': True, 'subprocess_exclude': True})
+    prog = str(tmpdir / 'prog.py')
+    dc2 = DC2(required_string='positional', input_file='my_input', output_file='my_output', choice='a', optional='default', flag=True, extra_items=[], x=7, y=3.14, pair=(0,0), ignored_value='ignored', prog = prog)
+    assert dc2.get_args() == [prog, 'positional', '--input-file', 'my_input', '--output-file', 'my_output', '--choice', 'a', '--optional', 'default', '--flag', '-x', '7', '-y', '3.14', '--pair', '0', '0']
+    assert dc2.get_args(suppress_defaults=True) == [prog, 'positional', '--input-file', 'my_input', '--output-file', 'my_output', '--flag']
+    # create a script to run the CLIDataclass
+    dc1 = coerce_to_dataclass(DC1, dc2)
+    with open(prog, 'w') as f:
+        print(f"""#!/usr/bin/env python3
+import sys
+sys.path.insert(0, {str(TEST_DIR)!r})
+sys.path.insert(0, {str(PKG_DIR)!r})
+from test_cli import DC1
+DC1.main()""", file=f)
+    Path(prog).chmod(0o770)
+    # call the script with subprocess
+    res = dc2.run_subprocess(capture_output=True, text=True)
+    assert res.stdout.rstrip() == str(dc1)

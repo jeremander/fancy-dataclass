@@ -1,15 +1,10 @@
 from dataclasses import dataclass, field
-from pathlib import Path
 import re
 from typing import ClassVar, List
 
 import pytest
 
 from fancy_dataclass.subprocess import SubprocessDataclass
-
-
-TEST_DIR = Path(__file__).parent
-PKG_DIR = TEST_DIR.parent
 
 
 def test_executable():
@@ -87,7 +82,8 @@ def test_option():
     class DC2(SubprocessDataclass, exec='prog'):
         a: int = field(metadata={'option_name': 'a'})
         bb: int = field(metadata={'option_name': 'bb'})
-    assert DC2(1, 2).get_args() == ['prog', '-a', '1', '--bb', '2']
+        c_value: int = field(metadata={'option_name': 'c-value'})
+    assert DC2(1, 2, 3).get_args() == ['prog', '-a', '1', '--bb', '2', '--c-value', '3']
     # empty option_name
     with pytest.raises(ValueError, match='empty string not allowed for option_name'):
         @dataclass
@@ -176,3 +172,6 @@ def test_repeat_option_name():
         @dataclass
         class DC3(SubprocessDataclass, exec='prog'):
             my_arg: List[int] = field(metadata={'subprocess_positional': True, 'repeat_option_name': True})
+
+# TODO: test exclusion
+# TODO: duplicate names
