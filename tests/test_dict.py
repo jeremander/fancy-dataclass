@@ -40,7 +40,7 @@ class FlattenedComponentB(DictDataclass):
     b2: List[int]
 
 @dataclass
-class FlattenedComposedAB(DictDataclass, flattened=True):
+class FlattenedComposedAB(DictDataclass, flatten=True):
     comp_a: FlattenedComponentA
     comp_b: FlattenedComponentB
 
@@ -184,7 +184,7 @@ def test_type_field():
     assert DC10.from_dict(obj.to_dict()) == obj
 
 def test_flattened():
-    """Tests the flattened=True option for DictDataclass."""
+    """Tests the flatten=True option for DictDataclass."""
     @dataclass
     class DC3(DictDataclass):
         y3: int
@@ -199,7 +199,7 @@ def test_flattened():
     obj_nested = DC1Nested(DC2(DC3(3), 2),1)
     assert obj_nested.to_dict() == {'x1': {'x2': {'y3': 3}, 'y2': 2}, 'y1': 1}
     @dataclass
-    class DC1Flat(DictDataclass, flattened=True):
+    class DC1Flat(DictDataclass, flatten=True):
         x1: DC2
         y1: int
     obj_flat = DC1Flat(DC2(DC3(3),2),1)

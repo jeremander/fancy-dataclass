@@ -4,6 +4,7 @@ import dataclasses
 from dataclasses import Field
 import types
 from typing import TYPE_CHECKING, Any, ClassVar, Dict, Iterable, Literal, Optional, Type, TypeVar, Union, _TypedDictMeta, get_args, get_origin  # type: ignore[attr-defined]
+import warnings
 
 from typing_extensions import Self, _AnnotatedAlias
 
@@ -66,13 +67,14 @@ class DictDataclassSettings(MixinSettings):
         - `off`: do not store the type
         - `name`: store the type name
         - `qualname`: store the fully qualified type name (easiest way to resolve the type from the dict)
-    - `flattened`: if `True`, [`DictDataclass`][fancy_dataclass.dict.DictDataclass] subfields will be merged together with the main fields (provided there are no name collisions); otherwise, they are nested
+    - `flatten`: if `True`, [`DictDataclass`][fancy_dataclass.dict.DictDataclass] subfields will be merged together with the main fields (provided there are no name collisions); otherwise, they are nested
     - `strict`: if `True`, raise an error when converting from a dict if unknown fields are present
     - `validate`: if `True`, attempt to validate data when converting from a dict"""
     suppress_defaults: bool = True
     suppress_none: bool = False
     store_type: StoreTypeMode = 'auto'
-    flattened: bool = False
+    flattened: Optional[bool] = None  # DEPRECATED
+    flatten: bool = False
     strict: bool = False
     validate: bool = True
 
@@ -81,6 +83,9 @@ class DictDataclassSettings(MixinSettings):
         if self.store_type not in get_args(StoreTypeMode):
             raise ValueError(f'invalid value {self.store_type!r} for store_type mode')
         self._store_type = self.store_type  # stores the value where 'auto' has been resolved from base class
+        if self.flattened is not None:
+            warnings.warn(f"'flattened' is a deprecated field for {self.__class__.__name__}, use 'flatten' instead", DeprecationWarning, stacklevel=2)
+            self.flatten = self.flattened
 
     def should_store_type(self) -> bool:
         """Returns `True` if the type should be stored (qualified or unqualified) in the output dict."""
@@ -176,7 +181,7 @@ class DictDataclass(DataclassMixin):
         return cls._to_dict_value_basic(val)
 
     def _to_dict(self, full: bool) -> AnyDict:
-        if self.__settings__.flattened:
+        if self.__settings__.flatten:
             cls = type(self)
             flat_obj = _flatten_dataclass(cls)[1].forward(self)
             return flat_obj._to_dict(full)  # type: ignore
@@ -396,12 +401,12 @@ class DictDataclass(DataclassMixin):
             d2 = {key: val for (key, val) in d.items() if (key != 'type')}
             return tp.from_dict(d2, **kwargs)
         conv = None
-        if cls.__settings__.flattened:
+        if cls.__settings__.flatten:
             # produce equivalent subfield-flattened type
             settings = copy(tp.__settings__)
-            settings.flattened = True
+            settings.flatten = True
             conv = _flatten_dataclass(tp, cls.__bases__)[1]
             tp = conv.to_type  # type: ignore[assignment]
             tp.__settings__ = settings
         result: Self = tp(**tp.dataclass_args_from_dict(d))
-        return conv.backward(result) if cls.__settings__.flattened else result  # type: ignore
+        return conv.backward(result) if cls.__settings__.flatten else result  # type: ignore
