@@ -10,7 +10,7 @@ from typing_extensions import Self, _AnnotatedAlias
 
 from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.settings import DocFieldSettings, MixinSettings
-from fancy_dataclass.utils import MissingRequiredFieldError, TypeConversionError, _flatten_dataclass, check_dataclass, dataclass_field_type, dataclass_kw_only, fully_qualified_class_name, issubclass_safe, obj_class_name, safe_dict_insert
+from fancy_dataclass.utils import MissingRequiredFieldError, TypeConversionError, _flatten_dataclass, check_dataclass, dataclass_field_type, dataclass_kw_only, fully_qualified_class_name, issubclass_safe, obj_class_name
 
 
 if TYPE_CHECKING:
@@ -183,13 +183,10 @@ class DictDataclass(DataclassMixin):
         return cls._to_dict_value_basic(val)
 
     def _to_dict(self, full: bool) -> AnyDict:
-        if self.__settings__.flatten:
-            cls = type(self)
-            flat_obj = _flatten_dataclass(cls)[1].forward(self)
-            return flat_obj._to_dict(full)  # type: ignore
         d = self._dict_init()
         class_suppress_none = self.__settings__.suppress_none
         class_suppress_defaults = self.__settings__.suppress_defaults
+        class_flatten = self.__settings__.flatten
         for (name, fld) in self.__dataclass_fields__.items():  # type: ignore[attr-defined]
             is_class_var = get_origin(fld.type) is ClassVar
             settings = self._field_settings(fld).adapt_to(DictDataclassFieldSettings)
@@ -211,9 +208,22 @@ class DictDataclass(DataclassMixin):
                             continue
                     except ValueError:  # some types may fail to compare
                         pass
-            key = name if (settings.alias is None) else settings.alias
-            dict_val = self._to_dict_value(val, full)
-            safe_dict_insert(d, key, dict_val)
+            if isinstance(val, DictDataclass):
+                if class_flatten:
+                    flatten_field = settings.flatten is not False
+                else:
+                    flatten_field = bool(settings.flatten)
+            else:  # field cannot be flattened, so ignore any flags
+                flatten_field = False
+            if flatten_field:
+                d2 = val._to_dict(full)
+            else:
+                key = name if (settings.alias is None) else settings.alias
+                d2 = {key: self._to_dict_value(val, full)}
+            for (inner_key, inner_val) in d2.items():
+                if inner_key in d:
+                    raise ValueError(f'duplicate field name or alias {inner_key!r}')
+                d[inner_key] = inner_val
         return d
 
     def to_dict(self, **kwargs: Any) -> AnyDict:

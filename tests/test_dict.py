@@ -5,7 +5,7 @@ from typing import ClassVar, List, Optional
 import pytest
 from typing_extensions import Annotated, Doc
 
-from fancy_dataclass.dict import DictDataclass, safe_dict_insert
+from fancy_dataclass.dict import DictDataclass
 from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.utils import MissingRequiredFieldError
 
@@ -67,13 +67,6 @@ TEST_FLATTENED = FlattenedComposedAB(
     FlattenedComponentA(3, 4.5),
     FlattenedComponentB('b', [1, 2, 3])
 )
-
-def test_safe_dict_insert():
-    """Tests behavior of safe_dict_insert."""
-    d = {'a': 1, 'b': 2}
-    safe_dict_insert(d, 'c', 3)
-    with pytest.raises(ValueError, match="duplicate key 'c'"):
-        safe_dict_insert(d, 'c', 3)
 
 def test_composition_nested():
     """Tests behavior of nested components."""
@@ -186,24 +179,56 @@ def test_type_field():
 def test_flattened():
     """Tests the flatten=True option for DictDataclass."""
     @dataclass
-    class DC3(DictDataclass):
+    class DC(DictDataclass):
         y3: int
     @dataclass
-    class DC2(DictDataclass):
-        x2: DC3
+    class DCNested(DictDataclass):
+        x2: DC
         y2: int
     @dataclass
-    class DC1Nested(DictDataclass):
-        x1: DC2
-        y1: int
-    obj_nested = DC1Nested(DC2(DC3(3), 2),1)
-    assert obj_nested.to_dict() == {'x1': {'x2': {'y3': 3}, 'y2': 2}, 'y1': 1}
+    class DCFlat(DictDataclass, flatten=True):
+        x2: DC
+        y2: int
+    # no flattening
     @dataclass
-    class DC1Flat(DictDataclass, flatten=True):
-        x1: DC2
+    class DCNestedInNested(DictDataclass):
+        x1: DCNested
         y1: int
-    obj_flat = DC1Flat(DC2(DC3(3),2),1)
-    assert obj_flat.to_dict() == {'y1': 1, 'y2': 2, 'y3': 3}
+    obj = DCNestedInNested(DCNested(DC(3), 2), 1)
+    assert obj.to_dict() == {'x1': {'x2': {'y3': 3}, 'y2': 2}, 'y1': 1}
+    # only the outer level is flattened
+    @dataclass
+    class DCNestedInFlat(DictDataclass, flatten=True):
+        x1: DCNested
+        y1: int
+    obj = DCNestedInFlat(DCNested(DC(3), 2), 1)
+    assert obj.to_dict() == {'x2': {'y3': 3}, 'y2': 2, 'y1': 1}
+    # only the inner level is flattened
+    @dataclass
+    class DCFlatInNested(DictDataclass):
+        x1: DCFlat
+        y1: int
+    obj = DCFlatInNested(DCFlat(DC(3), 2), 1)
+    assert obj.to_dict() == {'x1': {'y3': 3, 'y2': 2}, 'y1': 1}
+    # inner and outer levels are flattened
+    @dataclass
+    class DCFlatInFlat(DictDataclass, flatten=True):
+        x1: DCFlat
+        y1: int
+    obj = DCFlatInFlat(DCFlat(DC(3), 2), 1)
+    assert obj.to_dict() == {'y3': 3, 'y2': 2, 'y1': 1}
+    # attempt to flatten when both inner and outer have the same field
+    @dataclass
+    class DCInner(DictDataclass):
+        a: int
+        b: int
+    @dataclass
+    class DCOuter(DictDataclass, flatten=True):
+        inner: DCInner
+        a: int
+    obj = DCOuter(DCInner(1, 2), 3)
+    with pytest.raises(ValueError, match="duplicate field name or alias 'a'"):
+        _ = obj.to_dict()
 
 def test_from_dict_strict():
     """Tests behavior of strict=True for DictDataclass."""

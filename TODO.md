@@ -5,6 +5,7 @@
 ## v0.10.0
 
 - Enable an *individual* field to be flattened within its parent for dict/JSON/TOML representation
+  - What to do when inner dict has a `type` field? Probably error -- test this.
 - Update CHANGELOG
 
 ## v0.10.1
