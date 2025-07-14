@@ -337,6 +337,23 @@ def test_store_type_setting():
     assert DC12.__settings__.store_type == 'qualname'
     assert DC12.__settings__._store_type == 'qualname'
 
+def test_store_type_with_flatten():
+    """Tests behavior of the store_type setting when combined with flatten=True."""
+    @dataclass
+    class DC1(DictDataclass, store_type='name'):
+        a: int
+    @dataclass
+    class DC2(DictDataclass, store_type='name'):
+        dc1: DC1
+        b: int
+    assert DC2(DC1(1), 2).to_dict() == {'type': 'DC2', 'dc1': {'type': 'DC1', 'a': 1}, 'b': 2}
+    @dataclass
+    class DC2(DictDataclass, store_type='name', flatten=True):
+        dc1: DC1
+        b: int
+    with pytest.raises(ValueError, match="duplicate field name or alias 'type'"):
+        _ = DC2(DC1(1), 2).to_dict()
+
 def test_suppress_field():
     """Tests behavior of setting the 'suppress' option on a field."""
     obj = DCSuppress()
