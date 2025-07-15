@@ -1,6 +1,7 @@
 from dataclasses import dataclass, is_dataclass
 import gc
 import json
+import re
 import sys
 from types import ModuleType
 import weakref
@@ -459,7 +460,7 @@ def test_from_dict():
     A1.__settings__.strict = False
     assert A1.from_dict({'version': 1, 'x': 1, 'z': 7.0}, migrate=True) == A1(x=1, y='a')
     A1.__settings__.strict = True
-    with pytest.raises(ValueError, match="'z' is not a valid field for A"):
+    with pytest.raises(ValueError, match=re.escape("unknown dict fields for A: ['z']")):
         _ = A1.from_dict({'version': 1, 'x': 1, 'z': 7.0}, migrate=True)
     for strict in [False, True]:
         A2.__settings__.strict = strict

@@ -242,7 +242,7 @@ def test_from_dict_strict():
         assert cls.from_dict({}) == cls()
         assert cls.from_dict({'x': 2}) == cls(x=2)
     assert InnerLax.from_dict({'x': 1, 'y': 2}) == InnerLax()
-    with pytest.raises(ValueError, match="'y' is not a valid field for InnerStrict"):
+    with pytest.raises(ValueError, match=re.escape("unknown dict fields for InnerStrict: ['y']")):
         _ = InnerStrict.from_dict({'x': 1, 'y': 2})
     @dataclass
     class OuterLaxInnerLax(DictDataclass):
@@ -265,10 +265,10 @@ def test_from_dict_strict():
     for cls in [OuterLaxInnerStrict, OuterStrictInnerStrict]:
         inner_cls = cls.__dataclass_fields__['z'].type
         for d in [{'y': 1}, {'x': 1, 'y': 1}]:
-            with pytest.raises(ValueError, match=f"'y' is not a valid field for {inner_cls.__name__}"):
+            with pytest.raises(ValueError, match=re.escape(f"unknown dict fields for {inner_cls.__name__}: ['y']")):
                 _ = cls.from_dict({'z': d})
     for cls in [OuterStrictInnerLax, OuterStrictInnerStrict]:
-        with pytest.raises(ValueError, match=f"'extra' is not a valid field for {cls.__name__}"):
+        with pytest.raises(ValueError, match=re.escape(f"unknown dict fields for {cls.__name__}: ['extra']")):
             _ = cls.from_dict({'z': {'x': 1}, 'extra': None})
 
 def test_store_type_setting():

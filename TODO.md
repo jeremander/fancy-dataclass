@@ -6,6 +6,7 @@
 
 - Enable an *individual* field to be flattened within its parent for dict/JSON/TOML representation
   - What to do when inner dict has a `type` field? Probably error -- test this.
+- Rename `strict` in `DictDataclassSettings` to something like `allow_extra_fields`?
 - Update CHANGELOG
 
 ## v0.10.1
