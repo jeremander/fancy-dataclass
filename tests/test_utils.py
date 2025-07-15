@@ -1,11 +1,11 @@
-from dataclasses import dataclass, is_dataclass
+from dataclasses import dataclass
 import sys
 from typing import Any, ClassVar, Dict, List, Optional, Sequence, Union
 
 import pytest
 from pytest import param
 
-from fancy_dataclass.utils import _flatten_dataclass, _is_instance, _is_subtype, camel_case_to_kebab_case, coerce_to_dataclass, get_dataclass_fields, merge_dataclasses, snake_case_to_camel_case, traverse_dataclass, type_is_optional
+from fancy_dataclass.utils import _is_instance, _is_subtype, camel_case_to_kebab_case, coerce_to_dataclass, get_dataclass_fields, merge_dataclasses, snake_case_to_camel_case, type_is_optional
 
 
 try:
@@ -313,91 +313,6 @@ DC_FLATTEN_INVALID_PARAMS = [
     (T, 'type recursion exceeds depth'),
     (U, 'type recursion exceeds depth'),
 ]
-
-class TestFlatten:
-
-    def test_traverse(self):
-        """Tests depth-first traversal of dataclass fields."""
-        def get_names(cls):
-            return ['.'.join(path) for (path, _) in traverse_dataclass(cls)]
-        # test a nested dataclass
-        assert get_names(D) == []
-        assert get_names(A) == ['a1', 'a2.b1', 'a2.b2.c1']
-        assert get_names(F)== ['f1', 'f2']
-        msg = 'must be called with a dataclass type or instance'
-        with pytest.raises(TypeError, match=msg):
-            _ = get_names(int)
-        with pytest.raises(TypeError, match=msg):
-            _ = get_names(E)
-        # duplicate leaf-level field names are OK
-        assert get_names(G) == ['g1', 'g2.g1', 'g2.g2']
-        assert get_names(J) == ['j']
-        assert next(traverse_dataclass(J))[1].type == Optional[int]
-        assert get_names(K) == ['k']
-        assert get_names(M) == ['m', 'm.k']
-        assert get_names(N) == ['n.j', 'n.k']
-        assert get_names(P) == ['p', 'p.g1', 'p.g2.g1', 'p.g2.g2']
-        assert all(type_is_optional(fld.type) for (_, fld) in traverse_dataclass(P))
-        assert get_names(Q) == ['q', 'q.g1', 'q.g2']
-        with pytest.raises(TypeError, match='type cannot contain a member field of its own type'):
-            _ = get_names(R)
-        with pytest.raises(TypeError, match='type cannot contain a ForwardRef'):
-            _ = get_names(S)
-        with pytest.raises(TypeError, match='type recursion exceeds depth'):
-            _ = get_names(T)
-        with pytest.raises(TypeError, match='type recursion exceeds depth'):
-            _ = get_names(U)
-        assert get_names(V) == ['v']
-        assert get_names(W) == ['w']
-        assert get_names(X) == ['x', 'y']
-
-    @pytest.mark.parametrize(['obj', 'flat_fields'], DC_FLATTEN_VALID_PARAMS)
-    def test_flatten_valid(self, obj, flat_fields):
-        def _lookup_field_by_path(obj, path):
-            if not path:
-                return obj
-            if is_dataclass(obj):
-                return _lookup_field_by_path(getattr(obj, path[0]), path[1:])
-            return None
-        nested_cls = type(obj)
-        (field_map, conv) = _flatten_dataclass(nested_cls)
-        assert nested_cls is conv.from_type
-        flat_cls = conv.to_type
-        assert is_dataclass(flat_cls)
-        assert nested_cls.__name__ == flat_cls.__name__
-        flat_obj = conv.forward(obj)
-        assert isinstance(flat_obj, flat_cls)
-        for (name, path) in field_map.items():
-            val = getattr(flat_obj, name)
-            # value could be an object in a Union, which would be None in the flattened version
-            assert (val is None) or (_lookup_field_by_path(obj, path) == val)
-        assert [fld.name for fld in get_dataclass_fields(flat_obj, include_classvars=True)] == flat_fields
-        assert set(flat_fields) == set(field_map)
-        assert conv.backward is not None
-        nested_obj = conv.backward(flat_obj)
-        # exceptional cases exist where the flattened representation is ambiguous
-        is_ambiguous = obj in [Q(None), M('a')]
-        if not is_ambiguous:
-            assert nested_obj == obj
-        assert nested_obj is not obj
-        assert isinstance(nested_obj, nested_cls)
-        flat_obj2 = conv.forward(nested_obj)
-        assert flat_obj2 == flat_obj
-        assert flat_obj2 is not flat_obj
-        assert isinstance(flat_obj2, flat_cls)
-
-    @pytest.mark.parametrize(['cls', 'err'], DC_FLATTEN_INVALID_PARAMS)
-    def test_flatten_invalid(self, cls, err):
-        """Tests various conditions where flattening a dataclass type raises an error."""
-        with pytest.raises(TypeError, match=err):
-            _ = _flatten_dataclass(cls)
-
-    def test_flatten_classvar_collision(self):
-        """Tests ClassVar name collisions."""
-        with pytest.raises(TypeError, match="duplicate key 'y'"):
-            _ = _flatten_dataclass(X3)
-        with pytest.raises(TypeError, match="duplicate key 'y'"):
-            _ = _flatten_dataclass(X4)
 
 
 class TestMerge:

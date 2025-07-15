@@ -12,7 +12,7 @@ from pathlib import Path
 import re
 import sys
 import types
-from typing import IO, TYPE_CHECKING, Any, Callable, ClassVar, Dict, ForwardRef, Generic, Iterable, Iterator, List, Optional, Sequence, Set, Tuple, Type, TypeVar, Union, cast, get_args, get_origin, get_type_hints
+from typing import IO, TYPE_CHECKING, Any, Callable, ClassVar, Dict, Iterable, List, Optional, Sequence, Set, Tuple, Type, TypeVar, Union, cast, get_args, get_origin, get_type_hints
 
 from typing_extensions import TypeGuard, _AnnotatedAlias, dataclass_transform
 
@@ -27,7 +27,6 @@ U = TypeVar('U')
 Constructor = Callable[[Any], Any]
 AnyPath = Union[str, Path]
 AnyIO = Union[IO[str], IO[bytes]]
-RecordPath = Tuple[str, ...]
 
 # maximum depth when traversing the fields of a dataclass
 MAX_DATACLASS_DEPTH = 100
@@ -499,149 +498,6 @@ def dataclass_type_map(cls: Type['DataclassInstance'], func: Callable[[type], ty
         if val := getattr(cls, name, None):
             setattr(new_cls, name, val)
     return new_cls
-
-
-##############
-# FLATTENING #
-##############
-
-def traverse_dataclass(cls: type) -> Iterator[Tuple[RecordPath, Field]]:  # type: ignore[type-arg]
-    """Iterates through the fields of a dataclass, yielding (name, field) pairs.
-
-    If the dataclass contains nested dataclasses, recursively iterates through their fields, in depth-first order.
-
-    Nesting is indicated in the field names via "record path" syntax, e.g. `outer.middle.inner`.
-
-    Args:
-        cls: Dataclass type
-
-    Returns:
-        Generator of (path, field) pairs, where `path` is a tuple of strings, and `field` is a `dataclasses.Field` object
-
-    Raises:
-        TypeError: if the type cannot be traversed"""
-    def _make_optional(fld: Field) -> Field:  # type: ignore[type-arg]
-        new_fld = copy(fld)
-        new_fld.type = Optional[fld.type]
-        new_fld.default = None
-        return new_fld
-    def _traverse(prefix: RecordPath, tp: type) -> Iterator[Tuple[RecordPath, Field]]:  # type: ignore[type-arg]
-        if len(prefix) > MAX_DATACLASS_DEPTH:
-            raise TypeError(f'type recursion exceeds depth {MAX_DATACLASS_DEPTH}')
-        for fld in get_dataclass_fields(tp, include_classvars=True):
-            fld_type = get_type_hints(tp)[fld.name] if isinstance(fld.type, str) else fld.type
-            if fld_type is tp:  # prevent infinite recursion
-                raise TypeError('type cannot contain a member field of its own type')
-            path = prefix + (fld.name,)
-            origin = get_origin(fld_type)
-            is_union = origin is Union
-            if is_union:
-                args = get_args(fld_type)
-                # if optional, use the wrapped type, otherwise error
-                base_types = []
-                for arg in args:
-                    if isinstance(arg, ForwardRef):
-                        raise TypeError('type cannot contain a ForwardRef')
-                    base_types.append(arg)
-            else:
-                base_types = [fld_type]
-            if any(not is_dataclass(base_type) for base_type in base_types):
-                if is_union:
-                    fld = _make_optional(fld)
-                yield (path, fld)
-            for base_type in base_types:
-                if is_dataclass_type(base_type):
-                    subfields = _traverse(path, base_type)
-                    if is_union:
-                        # wrap each field type in an Optional
-                        for (name, subfld) in subfields:
-                            subfld = _make_optional(subfld)
-                            yield (name, subfld)
-                    else:
-                        yield from subfields
-    yield from _traverse((), cls)
-
-
-@dataclass
-class DataclassConverter(Generic[T, U]):
-    """Class to assist in converting values from one dataclass type to another."""
-    from_type: Type[T]
-    to_type: Type[U]
-    forward: Callable[[T], U]
-    backward: Optional[Callable[[U], T]] = None
-
-
-def _flatten_dataclass(cls: Type[T], bases: Optional[Tuple[type, ...]] = None) -> Tuple[Dict[str, RecordPath], DataclassConverter[T, type]]:
-    """Given a nested dataclass type, returns data for converting between it and a flattened version of that type.
-
-    Args:
-        cls: Nested dataclass type
-        bases: Base classes for the flattened type to inherit from
-
-    Returns:
-        A tuple, `(field_map, flattened_type, to_flattened, to_nested)`:
-            - `field_map` maps from leaf field names to fully qualified names
-            - `flattened_type` is the flattened type equivalent to the nested type
-            - `to_flattened` is a function converting an object from the nested type to the flattened type
-            - `to_nested` is a function converting an object from the flattened type to the nested type
-
-    Raises:
-        TypeError: if duplicate field names occur"""
-    fields: List[Any] = []
-    field_map: Dict[str, RecordPath] = {}
-    for (path, fld) in traverse_dataclass(cls):
-        try:
-            safe_dict_insert(field_map, fld.name, path)  # will error on name collision
-        except ValueError as e:
-            raise TypeError(str(e)) from None
-        fields.append(fld)
-    field_data = [(fld.name, fld.type, fld) for fld in fields]
-    bases = cls.__bases__ if (bases is None) else bases
-    flattened_type = make_dataclass(cls.__name__, field_data, bases=bases)
-    def to_flattened(obj: T) -> object:
-        def _to_dict(prefix: RecordPath, subobj: 'DataclassInstance') -> Dict[str, Any]:
-            kwargs = {}
-            for fld in get_dataclass_fields(subobj):
-                val = getattr(subobj, fld.name)
-                if is_dataclass(val):  # recurse into subfield
-                    kwargs.update(_to_dict(prefix + (fld.name,), val))  # type: ignore[arg-type]
-                else:
-                    kwargs[fld.name] = val
-            return kwargs
-        return flattened_type(**_to_dict((), obj))  # type: ignore[arg-type]
-    def to_nested(obj: 'DataclassInstance') -> T:
-        def _to_nested(prefix: RecordPath, subcls: Type['DataclassInstance']) -> 'DataclassInstance':
-            kwargs = {}
-            for fld in get_dataclass_fields(subcls):
-                name = fld.name
-                path = prefix + (name,)
-                origin = get_origin(fld.type)
-                def _get_val(tp: type) -> Any:
-                    val = _to_nested(path, tp) if is_dataclass(tp) else getattr(obj, name)  # noqa: B023
-                    if val is None:
-                        raise TypeError(f'invalid {tp.__name__} value: {val}')
-                    return val
-                if origin is Union:
-                    args = get_args(fld.type)
-                    for tp in args:
-                        try:
-                            val = _get_val(tp)
-                        except TypeError:
-                            continue
-                        if val is not None:
-                            kwargs[name] = val
-                            break
-                    else:
-                        if type(None) in args:
-                            kwargs[name] = None
-                        else:
-                            raise TypeError(f'could not extract field of type {fld.type}')
-                else:
-                    kwargs[name] = _get_val(cast(type, fld.type))
-            return subcls(**kwargs)
-        return _to_nested((), cls)  # type: ignore
-    converter: DataclassConverter[T, Any] = DataclassConverter(cls, flattened_type, to_flattened, to_nested)
-    return (field_map, converter)
 
 
 ###########
