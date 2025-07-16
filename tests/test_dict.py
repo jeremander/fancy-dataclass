@@ -293,41 +293,6 @@ def test_flatten_field_setting():
         b: B = field(metadata={'flatten': False})
     _test_dict_round_trip(DC5(B(1)), {'b': {'x': 1}})
 
-def test_flatten_with_type_field():
-    """Tests the interaction between a stored 'type' field and flattening."""
-    @dataclass
-    class Inner1(DictDataclass, store_type='off'):
-        x: int
-    @dataclass
-    class Inner2(DictDataclass, store_type='name'):
-        x: int
-    @dataclass
-    class Outer11(DictDataclass, store_type='off'):
-        inner: Inner1 = field(metadata={'flatten': True})
-    _test_dict_round_trip(Outer11(Inner1(1)), {'x': 1})
-    @dataclass
-    class Outer12(DictDataclass, store_type='off'):
-        inner: Inner2 = field(metadata={'flatten': True})
-    _test_dict_round_trip(Outer12(Inner2(1)), {'type': 'Inner2', 'x': 1})
-    @dataclass
-    class Outer21(DictDataclass, store_type='name'):
-        inner: Inner1 = field(metadata={'flatten': True})
-    _test_dict_round_trip(Outer21(Inner1(1)), {'type': 'Outer21', 'x': 1})
-    @dataclass
-    class Outer22(DictDataclass, store_type='name'):
-        inner: Inner2 = field(metadata={'flatten': True})
-    obj = Outer22(Inner2(1))
-    with pytest.raises(ValueError, match="duplicate field name or alias 'type'"):
-        _ = obj.to_dict()
-    @dataclass
-    class Outer31(DictDataclass, store_type='auto'):
-        inner: Inner1 = field(metadata={'flatten': True})
-    _test_dict_round_trip(Outer31(Inner1(1)), {'x': 1})
-    @dataclass
-    class Outer32(DictDataclass, store_type='auto'):
-        inner: Inner2 = field(metadata={'flatten': True})
-    _test_dict_round_trip(Outer32(Inner2(1)), {'type': 'Inner2', 'x': 1})
-
 def test_from_dict_strict():
     """Tests behavior of strict=True for DictDataclass."""
     @dataclass
@@ -449,8 +414,38 @@ def test_store_type_with_flatten():
     class DC2(DictDataclass, store_type='name', flatten=True):
         dc1: DC1
         b: int
-    with pytest.raises(ValueError, match="duplicate field name or alias 'type'"):
+    with pytest.raises(ValueError, match="flattened field 'dc1' may not store a 'type' field in dict"):
         _ = DC2(DC1(1), 2).to_dict()
+    @dataclass
+    class Inner1(DictDataclass, store_type='off'):
+        x: int
+    @dataclass
+    class Inner2(DictDataclass, store_type='name'):
+        x: int
+    @dataclass
+    class Outer11(DictDataclass, store_type='off'):
+        inner: Inner1 = field(metadata={'flatten': True})
+    _test_dict_round_trip(Outer11(Inner1(1)), {'x': 1})
+    @dataclass
+    class Outer12(DictDataclass, store_type='off'):
+        inner: Inner2 = field(metadata={'flatten': True})
+    obj = Outer12(Inner2(1))
+    with pytest.raises(ValueError, match="flattened field 'inner' may not store a 'type' field in dict"):
+        _ = obj.to_dict()
+    with pytest.raises(ValueError, match='Inner2 is not a known subclass of Outer12'):
+        _ = Outer12.from_dict({'type': 'Inner2', 'x': 1})
+    @dataclass
+    class Outer21(DictDataclass, store_type='name'):
+        inner: Inner1 = field(metadata={'flatten': True})
+    _test_dict_round_trip(Outer21(Inner1(1)), {'type': 'Outer21', 'x': 1})
+    @dataclass
+    class Outer22(DictDataclass, store_type='name'):
+        inner: Inner2 = field(metadata={'flatten': True})
+    obj = Outer22(Inner2(1))
+    with pytest.raises(ValueError, match="flattened field 'inner' may not store a 'type' field in dict"):
+        _ = obj.to_dict()
+    with pytest.raises(ValueError, match='Inner2 is not a known subclass of Outer22'):
+        _ = Outer22.from_dict({'type': 'Inner2', 'x': 1})
 
 def test_suppress_field():
     """Tests behavior of setting the 'suppress' option on a field."""
