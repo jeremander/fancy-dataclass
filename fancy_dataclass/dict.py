@@ -422,6 +422,8 @@ class DictDataclass(DataclassMixin):
 
     @classmethod
     def _get_type_from_dict(cls, d: AnyDict) -> Type[Self]:
+        if cls.__settings__._store_type == 'off':  # ignore the type field
+            return cls
         typename = d.get('type')
         if (typename is None) or ('type' in cls.__dataclass_fields__):  # type: ignore[attr-defined]
             # type field is unspecified *or* 'type' is an expected dataclass field: use the calling class
