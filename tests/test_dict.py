@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field, make_dataclass
+from dataclasses import InitVar, dataclass, field, make_dataclass
 import re
 from typing import ClassVar, List, Optional
 
@@ -58,30 +58,62 @@ class DCSuppress2(DictDataclass, suppress_defaults=True):
     y: int = field(default=2, metadata={'suppress': True})
     z: int = field(default=3, metadata={'suppress': False})
 
-TEST_NESTED = NestedComposedAB(
-    NestedComponentA(3, 4.5),
-    NestedComponentB('b', [1, 2, 3])
-)
+def test_field_key_map():
+    assert NestedComponentA._get_field_key_map() == {'a1': ['a1'], 'a2': ['a2']}
+    assert NestedComponentB._get_field_key_map() == {'b1': ['b1'], 'b2': ['b2']}
+    assert NestedComposedAB._get_field_key_map() == {'comp_a': ['comp_a'], 'comp_b': ['comp_b']}
+    assert NestedList._get_field_key_map() == {'comps': ['comps']}
+    assert FlattenedComposedAB._get_field_key_map() == {'comp_a': ['a1', 'a2'], 'comp_b': ['b1', 'b2']}
 
-TEST_FLATTENED = FlattenedComposedAB(
-    FlattenedComponentA(3, 4.5),
-    FlattenedComponentB('b', [1, 2, 3])
-)
+def _test_dict_round_trip(obj, d=None):
+    if d is None:
+        d = obj.to_dict()
+    else:
+        assert obj.to_dict() == d
+    assert type(obj).from_dict(d) == obj
+
+def test_init_var():
+    """Tests that InitVar fields are suppressed from the dict."""
+    @dataclass
+    class DC1(DictDataclass):
+        x: int
+        y: InitVar[int]
+    obj = DC1(1, 2)
+    d = {'x': 1}
+    assert obj.to_dict() == d
+    with pytest.raises(MissingRequiredFieldError, match="'y' field is required"):
+        _ = DC1.from_dict(d)
+    assert DC1.from_dict({'x': 1, 'y': 2}) == obj
+    @dataclass
+    class DC2(DictDataclass):
+        x: int
+        y: InitVar[int] = 2
+    _test_dict_round_trip(DC2(1), {'x': 1})
+    @dataclass
+    class DC3(DictDataclass):
+        x: int
+        y: int = field(init=False, default=2)
+    obj = DC3(1)
+    assert obj.y == 2
+    _test_dict_round_trip(obj, {'x': 1})
 
 def test_composition_nested():
     """Tests behavior of nested components."""
-    assert TEST_NESTED.to_dict() == {'comp_a' : {'a1' : 3, 'a2' : 4.5}, 'comp_b' : {'b1' : 'b', 'b2' : [1, 2, 3]}}
+    obj = NestedComposedAB(NestedComponentA(3, 4.5), NestedComponentB('b', [1, 2, 3]))
+    d = {'comp_a' : {'a1' : 3, 'a2' : 4.5}, 'comp_b' : {'b1' : 'b', 'b2' : [1, 2, 3]}}
+    _test_dict_round_trip(obj, d)
 
 def test_composition_flattened():
     """Tests behavior of flattened components."""
-    assert TEST_FLATTENED.to_dict() == {'a1' : 3, 'a2' : 4.5, 'b1' : 'b', 'b2' : [1, 2, 3]}
+    obj = FlattenedComposedAB(FlattenedComponentA(3, 4.5), FlattenedComponentB('b', [1, 2, 3]))
+    d = {'a1' : 3, 'a2' : 4.5, 'b1' : 'b', 'b2' : [1, 2, 3]}
+    _test_dict_round_trip(obj, d)
 
 def test_nested_list():
     """Tests a list of nested DictDataclasses."""
     obj = NestedList([NestedComponentA(1, 2.0), NestedComponentA(3, 4.0)])
-    d = obj.to_dict()
-    assert d == {'comps': [{'a1': 1, 'a2': 2.0}, {'a1': 3, 'a2': 4.0}]}
-    assert NestedList.from_dict(d) == obj
+    d = {'comps': [{'a1': 1, 'a2': 2.0}, {'a1': 3, 'a2': 4.0}]}
+    _test_dict_round_trip(obj, d)
 
 def test_make_dataclass():
     """Tests behavior of make_dataclass."""
@@ -89,7 +121,7 @@ def test_make_dataclass():
     dc = make_dataclass('TestDataclass', [('a', int), ('b', str)], bases=(DictDataclass,))
     obj = dc.from_dict({'a': 3, 'b': 'b'})
     assert isinstance(obj, dc)
-    assert obj.to_dict() == {'a': 3, 'b': 'b'}
+    _test_dict_round_trip(obj, {'a': 3, 'b': 'b'})
     with pytest.raises(ValueError, match="could not convert 4 to type 'str'"):
         _ = dc.from_dict({'a': 3, 'b': 4})
     with pytest.raises(ValueError, match="could not convert '3.7' to type 'int'"):
@@ -97,9 +129,9 @@ def test_make_dataclass():
     # no type annotations
     dc = make_dataclass('TestDataclass', ['a', 'b'], bases=(DictDataclass,))
     obj = dc.from_dict({'a': 3, 'b': 'b'})
-    assert isinstance(obj, dc)
+    _test_dict_round_trip(obj)
     obj = dc.from_dict({'a': '3.7', 'b': 'b'})
-    assert isinstance(obj, dc)
+    _test_dict_round_trip(obj)
 
 def test_wrap_dataclass():
     """Tests behavior of wrap_dataclass."""
@@ -109,25 +141,25 @@ def test_wrap_dataclass():
     assert issubclass(WrappedCompA, NestedComponentA)
     assert issubclass(WrappedCompA, WrappedDataclass)
     obj = WrappedCompA(3, 4.7)
-    assert obj.to_dict() == {'a1': 3, 'a2': 4.7}
+    _test_dict_round_trip(obj, {'a1': 3, 'a2': 4.7})
 
 def test_type_field():
     """Tests behavior of the 'type' field in a DictDataclass's output dict."""
     @dataclass
     class DC1(DictDataclass):
         type: int
-    assert DC1(1).to_dict() == {'type': 1}
+    _test_dict_round_trip(DC1(1), {'type': 1})
     @dataclass
     class DC2(DictDataclass, store_type='name'):
         x: int
-    assert DC2(1).to_dict() == {'type': 'DC2', 'x': 1}
+    _test_dict_round_trip(DC2(1), {'type': 'DC2', 'x': 1})
     @dataclass
     class DC3(DictDataclass, store_type='qualname'):
         x: int
     obj: object = DC3(1)
     d = obj.to_dict()
     assert d == {'type': 'tests.test_dict.test_type_field.<locals>.DC3', 'x': 1}
-    assert DC3.from_dict(d) == obj
+    _test_dict_round_trip(obj, d)
     assert DC3.from_dict({'type': 'DC3', 'x': 1}) == obj
     with pytest.raises(ValueError, match='fake is not a known subclass of DC3'):
         _ = DC3.from_dict({'type': 'fake', 'x': 1})
@@ -146,7 +178,7 @@ def test_type_field():
         x: 'int'
         y: 'numbers.Number'  # type: ignore[name-defined]  # noqa: F821
     obj = DC6(1, 2)
-    assert DC6.from_dict(obj.to_dict()) == obj
+    _test_dict_round_trip(obj)
     # globally-scoped class, as string
     @dataclass
     class DC7(DictDataclass):
@@ -155,29 +187,28 @@ def test_type_field():
     d = obj.to_dict()
     assert 'NestedComponentA' in globals()
     # NOTE: type is in global scope, so it can be resolved from string annotation
-    assert DC7.from_dict(obj.to_dict()) == obj
+    _test_dict_round_trip(obj)
     # fully qualified name OK
     @dataclass
     class DC8(DictDataclass):
         a: 'tests.test_dict.NestedComponentA'  # type: ignore[name-defined]  # noqa: F821
     obj = DC8(NestedComponentA(1, 3.7))
-    assert DC8.from_dict(obj.to_dict()) == obj
+    _test_dict_round_trip(obj)
     # locally-scoped class, as string (no way to fully qualify it)
     @dataclass
     class DC9(DictDataclass):
         x: 'DC1'
     obj = DC9(DC1(1))
-    d = obj.to_dict()
-    assert DC9.from_dict(d) == obj
+    _test_dict_round_trip(obj)
     # Annotated, as a string
     @dataclass
     class DC10(DictDataclass):
         x: 'Annotated[int, Doc("an int")]'
     obj = DC10(1)
-    assert DC10.from_dict(obj.to_dict()) == obj
+    _test_dict_round_trip(obj)
 
-def test_flattened():
-    """Tests the flatten=True option for DictDataclass."""
+def test_flatten_class_setting():
+    """Tests the flatten=True class setting for DictDataclass."""
     @dataclass
     class DC(DictDataclass):
         y3: int
@@ -195,28 +226,28 @@ def test_flattened():
         x1: DCNested
         y1: int
     obj = DCNestedInNested(DCNested(DC(3), 2), 1)
-    assert obj.to_dict() == {'x1': {'x2': {'y3': 3}, 'y2': 2}, 'y1': 1}
+    _test_dict_round_trip(obj, {'x1': {'x2': {'y3': 3}, 'y2': 2}, 'y1': 1})
     # only the outer level is flattened
     @dataclass
     class DCNestedInFlat(DictDataclass, flatten=True):
         x1: DCNested
         y1: int
     obj = DCNestedInFlat(DCNested(DC(3), 2), 1)
-    assert obj.to_dict() == {'x2': {'y3': 3}, 'y2': 2, 'y1': 1}
+    _test_dict_round_trip(obj, {'x2': {'y3': 3}, 'y2': 2, 'y1': 1})
     # only the inner level is flattened
     @dataclass
     class DCFlatInNested(DictDataclass):
         x1: DCFlat
         y1: int
     obj = DCFlatInNested(DCFlat(DC(3), 2), 1)
-    assert obj.to_dict() == {'x1': {'y3': 3, 'y2': 2}, 'y1': 1}
+    _test_dict_round_trip(obj, {'x1': {'y3': 3, 'y2': 2}, 'y1': 1})
     # inner and outer levels are flattened
     @dataclass
     class DCFlatInFlat(DictDataclass, flatten=True):
         x1: DCFlat
         y1: int
     obj = DCFlatInFlat(DCFlat(DC(3), 2), 1)
-    assert obj.to_dict() == {'y3': 3, 'y2': 2, 'y1': 1}
+    _test_dict_round_trip(obj, {'y3': 3, 'y2': 2, 'y1': 1})
     # attempt to flatten when both inner and outer have the same field
     @dataclass
     class DCInner(DictDataclass):
@@ -229,6 +260,38 @@ def test_flattened():
     obj = DCOuter(DCInner(1, 2), 3)
     with pytest.raises(ValueError, match="duplicate field name or alias 'a'"):
         _ = obj.to_dict()
+
+def test_flatten_field_setting():
+    """Tests the flatten=True field setting for DictDataclass."""
+    @dataclass
+    class A:
+        x: int
+    @dataclass
+    class B(DictDataclass):
+        x: int
+    @dataclass
+    class DC1(DictDataclass):
+        # x has a basic type, so flattening has no effect
+        x: int = field(metadata={'flatten': True})
+    _test_dict_round_trip(DC1(1), {'x': 1})
+    @dataclass
+    class DC2(DictDataclass):
+        # A is *not* a DictDataclass, so flattening has no effect
+        a: A = field(metadata={'flatten': True})
+    _test_dict_round_trip(DC2(A(1)), {'a': A(1)})
+    @dataclass
+    class DC3(DictDataclass):
+        b: B = field(metadata={'flatten': True})
+    _test_dict_round_trip(DC3(B(1)), {'x': 1})
+    @dataclass
+    class DC4(DictDataclass, flatten=True):
+        b: B
+    _test_dict_round_trip(DC4(B(1)), {'x': 1})
+    # field setting supersedes class setting
+    @dataclass
+    class DC5(DictDataclass, flatten=True):
+        b: B = field(metadata={'flatten': False})
+    _test_dict_round_trip(DC5(B(1)), {'b': {'x': 1}})
 
 def test_from_dict_strict():
     """Tests behavior of strict=True for DictDataclass."""

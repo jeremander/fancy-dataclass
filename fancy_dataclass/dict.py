@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from collections import defaultdict
 from contextlib import suppress
 import dataclasses
-from dataclasses import Field
+from dataclasses import Field, InitVar
 import types
 from typing import TYPE_CHECKING, Any, ClassVar, Dict, Iterable, List, Literal, Optional, Set, Type, TypeVar, Union, _TypedDictMeta, get_args, get_origin  # type: ignore[attr-defined]
 import warnings
@@ -11,7 +11,7 @@ from typing_extensions import Self, _AnnotatedAlias
 
 from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.settings import DocFieldSettings, MixinSettings
-from fancy_dataclass.utils import MissingRequiredFieldError, TypeConversionError, check_dataclass, dataclass_field_type, dataclass_kw_only, fully_qualified_class_name, issubclass_safe, obj_class_name, safe_dict_update
+from fancy_dataclass.utils import MissingRequiredFieldError, TypeConversionError, check_dataclass, dataclass_field_type, dataclass_kw_only, fully_qualified_class_name, get_dataclass_fields, issubclass_safe, obj_class_name
 
 
 if TYPE_CHECKING:
@@ -206,11 +206,14 @@ class DictDataclass(DataclassMixin):
         class_suppress_none = self.__settings__.suppress_none
         class_suppress_defaults = self.__settings__.suppress_defaults
         flattened_field_names = self._get_flattened_field_names()
-        for (name, fld) in self.__dataclass_fields__.items():  # type: ignore[attr-defined]
+        for fld in get_dataclass_fields(self, include_all=True):
+            name = fld.name
             is_class_var = get_origin(fld.type) is ClassVar
             settings = self._field_settings(fld).adapt_to(DictDataclassFieldSettings)
-            # suppress field by default if it is a ClassVar or init=False
-            if (is_class_var or (not fld.init)) if (settings.suppress is None) else settings.suppress:
+            if (should_suppress := settings.suppress) is None:
+                # suppress field by default if it is a ClassVar or InitVar or init=False
+                should_suppress = is_class_var or isinstance(fld.type, InitVar) or (not fld.init)
+            if should_suppress:
                 continue
             val = getattr(self, name)
             if (not full) and (settings.suppress is None):
@@ -282,6 +285,8 @@ class DictDataclass(DataclassMixin):
             raise err()
         if tp in [Any, 'typing.Any']:  # assume basic data type
             return val
+        if isinstance(tp, InitVar):
+            tp = tp.type
         ttp = type(tp)
         if ttp is _AnnotatedAlias:  # Annotated: just ignore the annotation
             return convert_val(get_args(tp)[0], val)
@@ -355,13 +360,15 @@ class DictDataclass(DataclassMixin):
     def _get_field_key_map(cls) -> Dict[str, List[str]]:
         """Gets a dict mapping from field names to the list of corresponding keys to be consumed when converting from a dict."""
         flattened_field_names = cls._get_flattened_field_names()
-        fields = dataclasses.fields(cls)  # type: ignore[arg-type]
         field_key_map: Dict[str, List[str]] = defaultdict(list)
-        for fld in fields:
+        for fld in get_dataclass_fields(cls, include_all=True):
             settings = cls._field_settings(fld).adapt_to(DictDataclassFieldSettings)
             if fld.name in flattened_field_names:
-                inner_map = cls._get_field_key_map()
-                safe_dict_update(field_key_map, inner_map)
+                tp = dataclass_field_type(cls, fld.name)  # type: ignore[arg-type]
+                assert issubclass(tp, DictDataclass)
+                inner_map = tp._get_field_key_map()
+                inner_names = [name for names in inner_map.values() for name in names]
+                field_key_map[fld.name].extend(inner_names)
             else:
                 key = fld.name if (settings.alias is None) else settings.alias
                 field_key_map[fld.name].append(key)
@@ -373,17 +380,20 @@ class DictDataclass(DataclassMixin):
         check_dataclass(cls)
         kwargs = {}
         bases = cls.mro()
-        fields = dataclasses.fields(cls)  # type: ignore[arg-type]
+        fields = get_dataclass_fields(cls, include_all=True)
         flattened_field_names = cls._get_flattened_field_names()
         field_key_map = cls._get_field_key_map()
         consumed_keys: Set[str] = set()
         for fld in fields:
-            if not fld.init:  # suppress fields where init=False
+            if not fld.init:  # ignore fields where init=False
                 continue
+            if get_origin(fld.type) is ClassVar:  # ignore ClassVars
+                continue
+            tp = dataclass_field_type(cls, fld.name)  # type: ignore[arg-type]
             if fld.name in flattened_field_names:
-                assert isinstance(fld.type, DictDataclass)
+                assert issubclass(tp, DictDataclass)
                 d2 = {key: d[key] for key in field_key_map.get(fld.name, []) if (key in d)}
-                kwargs[fld.name] = fld.type.from_dict(d2)
+                kwargs[fld.name] = tp.from_dict(d2)
                 consumed_keys.update(d2)
             else:
                 key = field_key_map[fld.name][0]

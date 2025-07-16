@@ -348,16 +348,16 @@ def make_dataclass_with_constructors(cls_name: str, fields: Sequence[Union[str, 
     tp._fields = tuple(fld.name for fld in dataclasses.fields(tp))  # type: ignore[attr-defined]
     return tp
 
-def get_dataclass_fields(obj: Union[type, object], include_classvars: bool = False) -> Tuple[Field, ...]:  # type: ignore[type-arg]
-    """Variant of `dataclasses.fields` which can optionally include ClassVars.
+def get_dataclass_fields(obj: Union[type, object], include_all: bool = False) -> Tuple[Field, ...]:  # type: ignore[type-arg]
+    """Variant of `dataclasses.fields` which can optionally include ClassVars and InitVars.
 
     Args:
         obj: Python class or object
-        include_classvars: Whether to include `ClassVar` fields
+        include_all: Whether to include `ClassVar` and `InitVar` fields
 
     Returns:
         Tuple of `dataclasses.Field` objects for the dataclass"""
-    if include_classvars:
+    if include_all:
         try:
             return tuple(obj.__dataclass_fields__.values())  # type: ignore[union-attr]
         except AttributeError:
@@ -477,7 +477,7 @@ def dataclass_type_map(cls: Type['DataclassInstance'], func: Callable[[type], ty
     # for Py3.8 compatibility, can only subscript typing classes
     container_type_map: Dict[type, type] = {dict: Dict, tuple: Tuple, list: List}  # type: ignore[dict-item]
     field_data = []
-    for fld in get_dataclass_fields(cls, include_classvars=True):
+    for fld in get_dataclass_fields(cls, include_all=True):
         new_fld = copy(fld)
         origin_type = get_origin(fld.type)
         if origin_type and (not _is_instance(fld.type, _AnnotatedAlias)) and issubclass_safe(origin_type, Iterable):
@@ -531,7 +531,7 @@ def merge_dataclasses(*classes: type, cls_name: str = '_', bases: Optional[Tuple
     base_map: Dict[str, type] = {}
     @lru_cache
     def _get_field_names(tp: type) -> Set[str]:
-        return {fld.name for fld in get_dataclass_fields(tp, include_classvars=True)}
+        return {fld.name for fld in get_dataclass_fields(tp, include_all=True)}
     def _base_type_with_field(cls: type, name: str) -> type:
         for tp in cls.mro()[::-1]:
             with suppress(TypeError):
@@ -539,7 +539,7 @@ def merge_dataclasses(*classes: type, cls_name: str = '_', bases: Optional[Tuple
                     return tp
         raise TypeError(f'no field named {name!r} for {cls}')
     for cls in classes:
-        for fld in get_dataclass_fields(cls, include_classvars=True):
+        for fld in get_dataclass_fields(cls, include_all=True):
             base = _base_type_with_field(cls, fld.name)
             if fld.name in field_type_map:
                 if allow_duplicates:

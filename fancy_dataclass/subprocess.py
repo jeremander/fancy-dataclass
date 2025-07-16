@@ -62,7 +62,7 @@ class SubprocessDataclass(DataclassMixin):
         cls_exec_field = wrapped_cls.__settings__.exec
         # make sure there is at most one exec field
         exec_field = None
-        for fld in get_dataclass_fields(wrapped_cls, include_classvars=True):
+        for fld in get_dataclass_fields(wrapped_cls, include_all=True):
             fld_settings = cls._field_settings(fld).adapt_to(SubprocessDataclassFieldSettings)
             if fld_settings.exec:
                 if cls_exec_field is not None:
@@ -180,14 +180,14 @@ class SubprocessDataclass(DataclassMixin):
             raise ValueError(f'executable is {val} (must be a string)')
         if self.__settings__.exec:
             return _check_type(self.__settings__.exec)
-        for fld in get_dataclass_fields(self, include_classvars=True):
+        for fld in get_dataclass_fields(self, include_all=True):
             if fld.metadata.get('exec', False):
                 return _check_type(getattr(self, fld.name, None))
         return None
 
     def _get_args(self, suppress_defaults: bool = False) -> List[str]:
         args = []
-        for fld in get_dataclass_fields(self, include_classvars=True):
+        for fld in get_dataclass_fields(self, include_all=True):
             args += [arg for arg in self.get_arg(fld.name, suppress_defaults=suppress_defaults) if arg]
         return args
 

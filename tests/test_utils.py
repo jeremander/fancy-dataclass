@@ -334,7 +334,7 @@ class TestMerge:
         """Merges dataclass types together and checks the resulting fields match what we expect."""
         cls = merge_dataclasses(*classes)
         assert cls.__name__ == '_'  # default name
-        actual_field_names = [fld.name for fld in get_dataclass_fields(cls, include_classvars=True)]
+        actual_field_names = [fld.name for fld in get_dataclass_fields(cls, include_all=True)]
         assert actual_field_names == field_names
 
     def test_merge_invalid(self):
@@ -354,7 +354,7 @@ class TestMerge:
         with pytest.raises(TypeError, match="duplicate field name 'y'"):
             _ = merge_dataclasses(X, X2)
         X3 = merge_dataclasses(X, X2, allow_duplicates=True)
-        assert [fld.name for fld in get_dataclass_fields(X3, include_classvars=True)] == ['x', 'y']
+        assert [fld.name for fld in get_dataclass_fields(X3, include_all=True)] == ['x', 'y']
 
     def test_merge_inheritance(self):
         @dataclass
