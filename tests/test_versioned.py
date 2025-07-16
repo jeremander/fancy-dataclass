@@ -445,30 +445,30 @@ def test_from_dict():
     d3 = {'version': 3, 'x': 3}
     assert a1.to_dict() == d1
     for cls in [A1, A2, A3]:
-        for strict in [True, False]:
-            cls.__settings__.strict = strict
+        for allow_extra in [False, True]:
+            cls.__settings__.allow_extra_fields = allow_extra
             assert cls.from_dict(d1) == a1
             assert cls.from_dict(d2) == a2
             assert cls.from_dict(d3) == a3
-    for strict in [False, True]:
-        A1.__settings__.strict = strict
+    for allow_extra in [False, True]:
+        A1.__settings__.allow_extra_fields = allow_extra
         assert A1.from_dict(d1, migrate=True) == a1
         assert A1.from_dict(d2, migrate=True) == A1(x=2, y='b')
         # NOTE: type of y is wrong after migration
         # TODO: error if this happens during migration? Or just do general validation.
         assert A1.from_dict(d3, migrate=True) == A1(x=3, y=123)
-    A1.__settings__.strict = False
+    A1.__settings__.allow_extra_fields = True
     assert A1.from_dict({'version': 1, 'x': 1, 'z': 7.0}, migrate=True) == A1(x=1, y='a')
-    A1.__settings__.strict = True
+    A1.__settings__.allow_extra_fields = False
     with pytest.raises(ValueError, match=re.escape("unknown dict fields for A: ['z']")):
         _ = A1.from_dict({'version': 1, 'x': 1, 'z': 7.0}, migrate=True)
-    for strict in [False, True]:
-        A2.__settings__.strict = strict
+    for allow_extra in [False, True]:
+        A2.__settings__.allow_extra_fields = allow_extra
         assert A2.from_dict(d2, migrate=True) == a2
         assert A2.from_dict(d1, migrate=True) == A2(x=1, y='a', z=3.14)
         assert A2.from_dict(d3, migrate=True) == A2(x=3, y=123)
-    for strict in [False, True]:
-        A3.__settings__.strict = strict
+    for allow_extra in [False, True]:
+        A3.__settings__.allow_extra_fields = allow_extra
         assert A3.from_dict(d3, migrate=True) == a3
         assert A3.from_dict(d1, migrate=True) == A3(x=1, y='a')
         assert A3.from_dict(d2, migrate=True) == A3(x=2, y='b')

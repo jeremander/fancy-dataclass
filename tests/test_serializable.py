@@ -590,13 +590,13 @@ class TestJSON(TestDict):
         class MyDC(JSONDataclass):
             x: int = 1
         @dataclass
-        class MyDCStrict(JSONDataclass, strict=True):
+        class MyDCStrict(JSONDataclass, allow_extra_fields=False):
             x: int = 1
         s = '{"x": 1}'
         assert MyDC.from_json_string(s) == MyDC()
         assert MyDCStrict.from_json_string(s) == MyDCStrict()
         with pytest.raises(ValueError, match=re.escape("unknown dict fields for MyDCStrict: ['y']")):
-            _ = MyDCStrict.from_json_string('{"x": 1, "y": 2}', strict=True)
+            _ = MyDCStrict.from_json_string('{"x": 1, "y": 2}')
         # kwargs like parse_int get passed to json.load
         parse_int = lambda val: int(val) + 1
         assert MyDC.from_json_string(s, parse_int=parse_int) == MyDC(2)

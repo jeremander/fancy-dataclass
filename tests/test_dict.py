@@ -293,13 +293,13 @@ def test_flatten_field_setting():
         b: B = field(metadata={'flatten': False})
     _test_dict_round_trip(DC5(B(1)), {'b': {'x': 1}})
 
-def test_from_dict_strict():
-    """Tests behavior of strict=True for DictDataclass."""
+def test_allow_extra_fields():
+    """Tests behavior of allow_extra_fields=False for DictDataclass."""
     @dataclass
     class InnerLax(DictDataclass):
         x: int = 1
     @dataclass
-    class InnerStrict(DictDataclass, strict=True):
+    class InnerStrict(DictDataclass, allow_extra_fields=False):
         x: int = 1
     for cls in [InnerLax, InnerStrict]:
         assert cls.from_dict({}) == cls()
@@ -314,10 +314,10 @@ def test_from_dict_strict():
     class OuterLaxInnerStrict(DictDataclass):
         z: InnerStrict
     @dataclass
-    class OuterStrictInnerLax(DictDataclass, strict=True):
+    class OuterStrictInnerLax(DictDataclass, allow_extra_fields=False):
         z: InnerLax
     @dataclass
-    class OuterStrictInnerStrict(DictDataclass, strict=True):
+    class OuterStrictInnerStrict(DictDataclass, allow_extra_fields=False):
         z: InnerStrict
     for cls in [OuterLaxInnerLax, OuterLaxInnerStrict, OuterStrictInnerLax, OuterStrictInnerStrict]:
         inner_cls = cls.__dataclass_fields__['z'].type

@@ -69,14 +69,15 @@ class DictDataclassSettings(MixinSettings):
         - `name`: store the type name
         - `qualname`: store the fully qualified type name (easiest way to resolve the type from the dict)
     - `flatten`: if `True`, [`DictDataclass`][fancy_dataclass.dict.DictDataclass] subfields will be merged together with the main fields (provided there are no name collisions); otherwise, they are nested
-    - `strict`: if `True`, raise an error when converting from a dict if unknown fields are present
+    - `allow_extra_fields`: if `False`, raise an error when converting from a dict if unknown fields are present
     - `validate`: if `True`, attempt to validate data when converting from a dict"""
     suppress_defaults: bool = True
     suppress_none: bool = False
     store_type: StoreTypeMode = 'auto'
     flattened: Optional[bool] = None  # DEPRECATED
     flatten: bool = False
-    strict: bool = False
+    strict: Optional[bool] = None  # DEPRECATED
+    allow_extra_fields: bool = True
     validate: bool = True
 
     def __post_init__(self) -> None:
@@ -87,6 +88,9 @@ class DictDataclassSettings(MixinSettings):
         if self.flattened is not None:
             warnings.warn(f"'flattened' is a deprecated field for {self.__class__.__name__}, use 'flatten' instead", DeprecationWarning, stacklevel=2)
             self.flatten = self.flattened
+        if self.strict is not None:
+            warnings.warn(f"'strict' is a deprecated field for {self.__class__.__name__}, use 'allow_extra_fields' instead", DeprecationWarning, stacklevel=2)
+            self.allow_extra_fields = not self.strict
 
     def should_store_type(self) -> bool:
         """Returns `True` if the type should be stored (qualified or unqualified) in the output dict."""
@@ -416,8 +420,8 @@ class DictDataclass(DataclassMixin):
                         val = fld.default_factory()
                         # raise ValueError(f'{fld.name!r} field is required')
                     kwargs[fld.name] = val
-        if cls.__settings__.strict and (len(consumed_keys) < len(d)):
-            # error if there are no extraneous fields in strict mode
+        if (not cls.__settings__.allow_extra_fields) and (len(consumed_keys) < len(d)):
+            # error if there are unknown fields when they are not allowed
             unknown_fields = [key for key in d if (key not in consumed_keys)]
             raise ValueError(f'unknown dict fields for {cls.__name__}: {unknown_fields!r}')
         return kwargs
