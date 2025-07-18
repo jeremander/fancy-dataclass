@@ -493,11 +493,7 @@ def dataclass_type_map(cls: Type['DataclassInstance'], func: Callable[[type], ty
         else:
             tp = _map_func(fld.type)  # type: ignore[arg-type]
         field_data.append((fld.name, tp, new_fld))
-    new_cls = make_dataclass(cls.__name__, field_data, bases=cls.__bases__)
-    for name in ['__settings_type__', '__settings__']:
-        if val := getattr(cls, name, None):
-            setattr(new_cls, name, val)
-    return new_cls
+    return make_dataclass(cls.__name__, field_data, bases=cls.__bases__, namespace=dict(cls.__dict__))
 
 
 ###########

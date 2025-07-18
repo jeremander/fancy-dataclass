@@ -99,7 +99,7 @@ class ConfigDataclass(DictDataclass, FileConfig, suppress_defaults=False, store_
             if is_dataclass(tp):
                 wrapped_cls = mixin_cls.wrap_dataclass(tp)
                 field_data = [(fld.name, fld.type, fld) for fld in get_dataclass_fields(tp, include_all=True)]
-                return make_dataclass(tp.__name__, field_data, bases=wrapped_cls.__bases__)
+                return make_dataclass(tp.__name__, field_data, bases=wrapped_cls.__bases__, namespace=dict(wrapped_cls.__dict__))
             return tp
         return _wrap(dataclass_type_map(cls, _wrap))  # type: ignore[arg-type]
 
