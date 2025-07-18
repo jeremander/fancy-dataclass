@@ -76,7 +76,7 @@ class SQLDataclass(DataclassMixin):
         cols = {}
         for fld in fields(cls):  # type: ignore[arg-type]
             settings = cls._field_settings(fld).adapt_to(SQLDataclassFieldSettings)
-            nullable = False
+            # nullable = False
             if not settings.sql:  # skip fields whose 'sql' setting is False
                 continue
             tp: type = cast(type, fld.type)
@@ -85,7 +85,7 @@ class SQLDataclass(DataclassMixin):
                 if origin is Union:  # use the first type of a Union (also handles Optional)
                     # column should be nullable by default if the type is optional
                     tp_args = get_args(tp)
-                    nullable |= (type(None) in tp_args)
+                    # nullable |= (type(None) in tp_args)
                     tp = tp_args[0]
                 else:  # some other compound type
                     tp = origin

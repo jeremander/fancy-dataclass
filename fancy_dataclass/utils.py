@@ -12,7 +12,7 @@ from pathlib import Path
 import re
 import sys
 import types
-from typing import IO, TYPE_CHECKING, Any, Callable, ClassVar, Dict, Iterable, List, Optional, Sequence, Set, Tuple, Type, TypeVar, Union, cast, get_args, get_origin, get_type_hints
+from typing import IO, TYPE_CHECKING, Any, Callable, ClassVar, Dict, Iterable, List, Optional, Set, Tuple, Type, TypeVar, Union, cast, get_args, get_origin, get_type_hints
 
 from typing_extensions import TypeGuard, _AnnotatedAlias, dataclass_transform
 
@@ -22,14 +22,9 @@ if TYPE_CHECKING:
 
 
 T = TypeVar('T')
-U = TypeVar('U')
 
-Constructor = Callable[[Any], Any]
 AnyPath = Union[str, Path]
 AnyIO = Union[IO[str], IO[bytes]]
-
-# maximum depth when traversing the fields of a dataclass
-MAX_DATACLASS_DEPTH = 100
 
 
 ###############
@@ -108,20 +103,6 @@ def camel_case_to_kebab_case(name: str) -> str:
     return ''.join(segs).lstrip('-')
 
 # DICT MANIPULATION
-
-def safe_dict_insert(d: Dict[Any, Any], key: str, val: Any) -> None:
-    """Inserts a (key, value) pair into a dict, if the key is not already present.
-
-    Args:
-        d: Dict to modify
-        key: Key to insert
-        val: Value to insert
-
-    Raises:
-        ValueError: If the key is already in the dict"""
-    if key in d:
-        raise ValueError(f'duplicate key {key!r}')
-    d[key] = val
 
 def safe_dict_update(d1: Dict[str, Any], d2: Dict[str, Any]) -> None:
     """Updates the first dict with the second, in-place.
@@ -326,27 +307,6 @@ def is_dataclass_type(cls: type) -> TypeGuard[Type['DataclassInstance']]:
     Returns:
         True if `cls` is a dataclass"""
     return is_dataclass(cls)
-
-def make_dataclass_with_constructors(cls_name: str, fields: Sequence[Union[str, Tuple[str, type]]], constructors: Sequence[Constructor], **kwargs: Any) -> Type['DataclassInstance']:
-    """Type factory for dataclasses with custom constructors.
-
-    Args:
-        cls_name: Name of the dataclass type
-        fields: List of field names, or pairs of field names and types
-        constructors: List of one-argument constructors for each field
-        kwargs: Additional keyword arguments to pass to `dataclasses.make_dataclass`
-
-    Returns:
-        A dataclass type with the given fields and constructors"""
-    def __init__(self: 'DataclassInstance', *args: Any) -> None:
-        # take inputs and wrap them in the provided constructors
-        for (fld, cons, arg) in zip(dataclasses.fields(self), constructors, args):
-            setattr(self, fld.name, cons(arg))
-    tp = make_dataclass(cls_name, fields, init=False, **kwargs)
-    tp.__init__ = __init__  # type: ignore
-    # store the field names in a tuple, to match the behavior of namedtuple
-    tp._fields = tuple(fld.name for fld in dataclasses.fields(tp))  # type: ignore[attr-defined]
-    return tp
 
 def get_dataclass_fields(obj: Union[type, object], include_all: bool = False) -> Tuple[Field, ...]:  # type: ignore[type-arg]
     """Variant of `dataclasses.fields` which can optionally include ClassVars and InitVars.

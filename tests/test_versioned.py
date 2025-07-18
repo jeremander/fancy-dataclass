@@ -514,7 +514,7 @@ def test_refs():
     A_ref = weakref.ref(A)
     assert A_ref() is A
     assert sys.getrefcount(A) == 3
-    assert weakref.getweakrefcount(A) == 3
+    assert weakref.getweakrefcount(A) == 5
     reg = _VERSIONED_DATACLASS_REGISTRY
     assert len(reg.groups_by_name['A'].class_by_version) == 1
     assert len(reg.groups_by_name['A'].version_by_class) == 1

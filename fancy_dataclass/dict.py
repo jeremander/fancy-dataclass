@@ -4,7 +4,7 @@ from contextlib import suppress
 import dataclasses
 from dataclasses import Field, InitVar
 import types
-from typing import TYPE_CHECKING, Any, ClassVar, Dict, Iterable, List, Literal, Optional, Set, Type, TypeVar, Union, _TypedDictMeta, get_args, get_origin  # type: ignore[attr-defined]
+from typing import Any, ClassVar, Dict, Iterable, List, Literal, Optional, Set, Type, TypeVar, Union, _TypedDictMeta, get_args, get_origin  # type: ignore[attr-defined]
 import warnings
 
 from typing_extensions import Self, _AnnotatedAlias
@@ -14,11 +14,7 @@ from fancy_dataclass.settings import DocFieldSettings, MixinSettings
 from fancy_dataclass.utils import MissingRequiredFieldError, TypeConversionError, check_dataclass, dataclass_field_type, dataclass_kw_only, fully_qualified_class_name, get_dataclass_fields, issubclass_safe, obj_class_name
 
 
-if TYPE_CHECKING:
-    from _typeshed import DataclassInstance
-
 T = TypeVar('T', bound=DataclassMixin)
-D = TypeVar('D', bound='DataclassInstance')
 
 _UNION_TYPES = [Union, types.UnionType] if hasattr(types, 'UnionType') else [Union]  # novermin
 
@@ -118,7 +114,7 @@ class DictDataclassFieldSettings(DocFieldSettings):
     flatten: Optional[bool] = None
 
 
-class DictDataclass(DataclassMixin):
+class DictDataclass(DataclassMixin, DictConvertible):
     """Mixin class for dataclasses that can be converted to and from a Python dict.
 
     A subclass may configure settings by using [`DictDataclassSettings`][fancy_dataclass.dict.DictDataclassSettings] fields as keyword arguments when inheriting from `DictDataclass`.
