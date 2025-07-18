@@ -54,11 +54,15 @@ jobs:
           name: loc-summary
           path: loc-summary.txt
       - name: Lint (ruff)
-        run: hatch run lint:run-ruff
+        run: |
+          hatch run lint:ruff --version
+          hatch run lint:run-ruff
       - name: Python compatibility (vermin)
         run: hatch run lint:run-vermin
       - name: Type-check (mypy)
-        run: hatch run lint:run-mypy
+        run: |
+          hatch run lint:mypy --version
+          hatch run lint:run-mypy
       - name: Test (pytest)
         run: |
           hatch run test:test --verbosity=0

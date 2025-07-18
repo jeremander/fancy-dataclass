@@ -302,7 +302,7 @@ def dataclass_kw_only(**kwargs: Any) -> Callable[[Type[T]], Type[T]]:
     """Identical to the usual dataclass decorator, but adds kw_only=True (if Python version is >= 3.10)."""
     # TODO: remove this once we no longer support < 3.10
     if sys.version_info[:2] >= (3, 10):
-        return partial(dataclass, kw_only=True)  # type: ignore[return-value]
+        return partial(dataclass, kw_only=True)
     return dataclass
 
 def check_dataclass(cls: type) -> TypeGuard[Type['DataclassInstance']]:
