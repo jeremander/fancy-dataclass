@@ -12,6 +12,7 @@ import tomlkit
 from fancy_dataclass.config import ConfigDataclass, DictConfig
 from fancy_dataclass.json import JSONDataclass
 from fancy_dataclass.toml import TOMLDataclass
+from fancy_dataclass.utils import TypeConversionError
 
 
 def test_config_dataclass():
@@ -89,8 +90,8 @@ def test_inner_plain(tmpdir):
     toml_str = 'y = "a"\n[inner]\nx = 1\n'
     cfg_path = tmpdir / 'test.toml'
     Path(cfg_path).write_text(toml_str)
-    Outer.load_config(cfg_path)
-    assert Outer.get_config() == Outer(Inner())
+    with pytest.raises(TypeConversionError, match="could not convert {'x': 1}"):
+        _ = Outer.load_config(cfg_path)
 
 def test_dict_config(tmpdir):
     """Tests behavior of DictConfig."""
@@ -116,7 +117,7 @@ def test_json(tmpdir):
     """Tests JSON conversion of ConfigDataclass."""
     dt = datetime.now()
     @dataclass
-    class JSONConfig1(ConfigDataclass):  # defaults not suppressed, by default
+    class JSONConfig1(ConfigDataclass, JSONDataclass):  # defaults not suppressed, by default
         x: float = inf
         y: datetime = dt
     @dataclass
@@ -159,8 +160,8 @@ def test_json(tmpdir):
     d_json_outer = {'inner': d_json}
     with open(outfile, 'w') as f:
         json.dump(d_json_outer, f)
-    obj = OuterConfig.load_config(outfile)
-    assert obj.inner.y == dt
+    outer = OuterConfig.load_config(outfile)
+    assert outer.inner.y == dt
 
 def test_toml(tmpdir):
     """Tests TOML conversion of ConfigDataclass."""
