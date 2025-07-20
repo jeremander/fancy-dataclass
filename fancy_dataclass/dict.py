@@ -114,7 +114,7 @@ class DictDataclassFieldSettings(DocFieldSettings):
     flatten: Optional[bool] = None
 
 
-class DictDataclass(DataclassMixin, DictConvertible):
+class DictDataclass(DataclassMixin):
     """Mixin class for dataclasses that can be converted to and from a Python dict.
 
     A subclass may configure settings by using [`DictDataclassSettings`][fancy_dataclass.dict.DictDataclassSettings] fields as keyword arguments when inheriting from `DictDataclass`.
