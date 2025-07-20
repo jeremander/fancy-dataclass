@@ -16,13 +16,35 @@ Types of changes:
 
 ## [Unreleased]
 
+## [0.10.0]
+
 ### Added
 
-- `SubprocessDataclass`: `repeat_arg_name` field setting (flag).
-    - If `True` and the field type is a list, repeats the argument for each list value.
-    - Examples:
-        - If `False` (default), generate `--my-arg value1 value2`
-        - If `True`, generate `--my-arg value1 --my-arg value2`
+- `DictDataclass`: new field-level `flatten` setting, which flattens only that particular field. This setting overrides the class-level `flatten` setting.
+- `SubprocessDataclass`: several new field settings.
+    - `subprocess_exclude`: if `True`, do not use this field in a subprocess call.
+        - `ClassVar` fields are excluded by default but can be included by setting `subprocess_exclude=False`.
+    - `subprocess_positional`: if `True`, make this a positional argument rather than an option.
+    - `subprocess_flag`: if `False` and the field type is boolean, treat the field as a regular option rather than a flag.
+    - `repeat_option_name`: if `True` and the field type is a list, repeat the argument for each list value.
+        - Example: suppose the value of the `my_arg` field is `[value1, value2]`.
+            - If `False` (default), generate `--my-arg value1 value2`
+            - If `True`, generate `--my-arg value1 --my-arg value2`
+
+### Changed
+
+- `DictDataclass`
+    - Renamed `flattened` class setting to `flatten` (deprecating `flattened`).
+    - Renamed `strict` class setting to `allow_extra_fields` (deprecating `strict`).
+    - Simplified internal implementation of `to_dict` and `from_dict` to avoid excessive type manipulation.
+- `SubprocessDataclass`
+    - (*Breaking*) Renamed `args` (listing argument names for a field) to `option_name` (a single argument name).
+        If the field type is boolean, treats the option name as a flag.
+
+### Removed
+
+- Several no-longer-used helper functions in `fancy_dataclass.utils` such as `dataclass_type_map` and `safe_dict_insert`.
+- Unused `DictConvertible` mixin class (since its only subclass was `DictDataclass`).
 
 ## [0.9.0]
 
@@ -364,7 +386,8 @@ Types of changes:
     - `SQLDataclass`: SQL persistence via `sqlalchemy`
     - `SubprocessDataclass`: call out to another program via `subprocess`
 
-[unreleased]: https://github.com/jeremander/fancy-dataclass/compare/v0.9.0...HEAD
+[unreleased]: https://github.com/jeremander/fancy-dataclass/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.10.0
 [0.9.0]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.9.0
 [0.8.3]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.8.3
 [0.8.2]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.8.2
