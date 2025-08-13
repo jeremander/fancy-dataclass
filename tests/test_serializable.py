@@ -764,9 +764,10 @@ class TestTOML(TestDict):
             b: int = field(default=2, metadata={'doc': 'b value'})
             c: Annotated[int, Doc('c value')] = 3
             d: Annotated[int, Doc('fake')] = field(default=4, metadata={'doc': 'd value'})
+            e: Annotated[int, Doc('Comment Line 1\nComment Line 2')] = 5 # multi-line Doc string
         obj = DCDoc()
         self._test_serialize_round_trip(obj, tmp_path)
-        assert obj.to_toml_string() == 'a = 1\n# b value\nb = 2\n# c value\nc = 3\n# d value\nd = 4\n'
+        assert obj.to_toml_string() == 'a = 1\n# b value\nb = 2\n# c value\nc = 3\n# d value\nd = 4\n# Comment Line 1\n# Comment Line 2\ne = 5\n'
         @dataclass
         class DCDocOuter(TOMLDataclass):
             string: Annotated[str, Doc('a string')] = 'abc'
@@ -775,7 +776,7 @@ class TestTOML(TestDict):
         obj = DCDocOuter()
         self._test_serialize_round_trip(obj, tmp_path)
         # NOTE: nested gets moved to the end, to prevent parsing ambiguity
-        assert obj.to_toml_string() == '# a string\nstring = "abc"\n# a flag\nflag = false\n\n# nested object\n[nested]\na = 1\n# b value\nb = 2\n# c value\nc = 3\n# d value\nd = 4\n'
+        assert obj.to_toml_string() == '# a string\nstring = "abc"\n# a flag\nflag = false\n\n# nested object\n[nested]\na = 1\n# b value\nb = 2\n# c value\nc = 3\n# d value\nd = 4\n# Comment Line 1\n# Comment Line 2\ne = 5\n'
         @dataclass
         class DCList(TOMLDataclass):
             vals: Annotated[List[int], Doc('a list')]
