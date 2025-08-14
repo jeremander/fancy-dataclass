@@ -156,7 +156,7 @@ class TOMLDataclass(DictFileSerializableDataclass, TOMLSerializable, suppress_de
                 settings = self._field_settings(fld).adapt_to(DictDataclassFieldSettings)
                 if settings.doc is not None:
                     for line in settings.doc.splitlines():
-                        doc.add(tk.comment(line) if line.strip() else tk.nl())
+                        doc.add(tk.comment(line))
                 val = NoneProxy() if (val is None) else val
                 if isinstance(val, dict):
                     # to preserve, comments, must convert value from TOMLDocument to Table
