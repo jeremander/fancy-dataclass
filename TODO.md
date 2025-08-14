@@ -2,10 +2,6 @@
 
 # TODO
 
-## v0.10.0
-
-- Update CHANGELOG
-
 ## v0.10.1
 
 - Documentation
