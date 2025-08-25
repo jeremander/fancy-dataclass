@@ -16,7 +16,17 @@ Types of changes:
 
 ## [Unreleased]
 
+## [0.10.1]
+
+2025-08-25
+
+### Fixed
+
+- `TOMLDataclass`: ensure multi-line doc metadata gets rendered as multi-line comment.
+
 ## [0.10.0]
+
+2025-07-20
 
 ### Added
 
@@ -47,6 +57,8 @@ Types of changes:
 - Unused `DictConvertible` mixin class (since its only subclass was `DictDataclass`).
 
 ## [0.9.0]
+
+2025-05-17
 
 ### Added
 
@@ -386,7 +398,8 @@ Types of changes:
     - `SQLDataclass`: SQL persistence via `sqlalchemy`
     - `SubprocessDataclass`: call out to another program via `subprocess`
 
-[unreleased]: https://github.com/jeremander/fancy-dataclass/compare/v0.10.0...HEAD
+[unreleased]: https://github.com/jeremander/fancy-dataclass/compare/v0.10.1...HEAD
+[0.10.1]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.10.1
 [0.10.0]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.10.0
 [0.9.0]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.9.0
 [0.8.3]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.8.3
