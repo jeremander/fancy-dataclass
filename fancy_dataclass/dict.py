@@ -2,20 +2,17 @@ from collections import defaultdict
 from contextlib import suppress
 import dataclasses
 from dataclasses import Field, InitVar
-import types
-from typing import Any, ClassVar, Dict, Iterable, List, Literal, Optional, Set, Type, TypeVar, Union, _TypedDictMeta, get_args, get_origin  # type: ignore[attr-defined]
+from typing import Any, ClassVar, Dict, Iterable, List, Literal, Optional, Set, Type, TypeVar, _TypedDictMeta, get_args, get_origin  # type: ignore[attr-defined]
 import warnings
 
 from typing_extensions import Self, _AnnotatedAlias
 
 from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.settings import DocFieldSettings, MixinSettings
-from fancy_dataclass.utils import MissingRequiredFieldError, TypeConversionError, check_dataclass, dataclass_field_type, dataclass_kw_only, fully_qualified_class_name, get_dataclass_fields, issubclass_safe, obj_class_name
+from fancy_dataclass.utils import MissingRequiredFieldError, TypeConversionError, check_dataclass, dataclass_field_type, dataclass_kw_only, fully_qualified_class_name, get_dataclass_fields, issubclass_safe, obj_class_name, type_is_union
 
 
 T = TypeVar('T', bound=DataclassMixin)
-
-_UNION_TYPES = [Union, types.UnionType] if hasattr(types, 'UnionType') else [Union]  # novermin
 
 AnyDict = Dict[str, Any]
 # mode for storing data type in dict
@@ -304,7 +301,7 @@ class DictDataclass(DataclassMixin):
                 subtype = subtypes[0]
                 return tuple(convert_val(subtype, elt) for elt in val)
             return tuple(convert_val(subtype, elt) for (subtype, elt) in zip(args, val))
-        if origin_type in _UNION_TYPES:
+        if type_is_union(tp):
             for subtype in args:
                 try:
                     # NB: will resolve to the first valid type in the Union

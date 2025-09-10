@@ -120,6 +120,19 @@ def safe_dict_update(d1: Dict[str, Any], d2: Dict[str, Any]) -> None:
 
 # TYPE INSPECTION
 
+_UNION_TYPES = [Union, types.UnionType] if hasattr(types, 'UnionType') else [Union]  # novermin
+
+def type_is_union(tp: type) -> bool:
+    """Determines if a type is a Union type.
+
+    Args:
+        tp: Type to check
+
+    Returns:
+        True if the type is a Union"""
+    origin_type = get_origin(tp)
+    return origin_type in _UNION_TYPES
+
 def type_is_optional(tp: type) -> bool:
     """Determines if a type is an Optional type.
 

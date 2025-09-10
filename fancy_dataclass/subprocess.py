@@ -194,17 +194,17 @@ class SubprocessDataclass(DataclassMixin):
     def get_args(self, suppress_defaults: bool = False) -> List[str]:
         """Converts dataclass fields to a list of command-line arguments for a subprocess call.
 
-        This includes the executable name itself as the first argument.
+        This includes the executable name itself as the first argument, if there is one.
 
         Args:
             suppress_defaults: If `True`, suppresses arguments that are equal to the default values
 
         Returns:
             List of command-line args corresponding to the dataclass fields"""
-        executable = self.get_executable()
-        if not executable:
-            raise ValueError(f'no executable identified for use with {obj_class_name(self)} instance')
-        return [executable] + self._get_args(suppress_defaults=suppress_defaults)
+        args = self._get_args(suppress_defaults=suppress_defaults)
+        if (executable := self.get_executable()):
+            args.insert(0, executable)
+        return args
 
     def run_subprocess(self, **kwargs: Any) -> subprocess.CompletedProcess:  # type: ignore[type-arg]
         """Executes the full subprocess command corresponding to the dataclass parameters.
@@ -217,4 +217,7 @@ class SubprocessDataclass(DataclassMixin):
 
         Raises:
             ValueError: If no executable was found from the `get_executable` method"""
+        executable = self.get_executable()
+        if not executable:
+            raise ValueError(f'no executable identified for use with {obj_class_name(self)} instance')
         return subprocess.run(self.get_args(), **kwargs)

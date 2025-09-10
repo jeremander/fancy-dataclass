@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 import re
-from typing import ClassVar, List, Optional
+from typing import ClassVar, List, Optional, Union
 
 import pytest
 
@@ -40,8 +40,9 @@ def test_executable():
         ...
     obj = DC4()
     assert obj.get_executable() is None
+    assert obj.get_args() == []
     with pytest.raises(ValueError, match='no executable identified for use with DC4 instance'):
-        _ = obj.get_args()
+        obj.run_subprocess()
     # multiple exec fields
     with pytest.raises(TypeError, match=re.escape("cannot have more than one field with 'exec' flag set to True (already set executable to prog1)")):
         @dataclass
@@ -253,7 +254,40 @@ def test_nested():
     assert DC4(DC2(1, 2), 3).get_args() == ['outer', 'inner', '-a', '1', '--option', '2', '-c', '3']
     assert DC5(3, DC1(1, 2)).get_args() == ['outer', '-c', '3', '-a', '1', '--option', '2']
     assert DC6(3, DC2(1, 2)).get_args() == ['outer', '-c', '3', 'inner', '-a', '1', '--option', '2']
+    obj = DC7(DC1(1, 2), 3)
+    assert obj.get_args() == ['-a', '1', '--option', '2', '-c', '3']
     with pytest.raises(ValueError, match='no executable identified for use with DC7 instance'):
-        _ = DC7(DC1(1, 2), 3).get_args()
+        obj.run_subprocess()
+    obj = DC8(DC2(1, 2), 3)
+    assert obj.get_args() == ['inner', '-a', '1', '--option', '2', '-c', '3']
     with pytest.raises(ValueError, match='no executable identified for use with DC8 instance'):
-        _ = DC8(DC2(1, 2), 3).get_args()
+        obj.run_subprocess()
+
+def test_union():
+    """Tests fields with a union type."""
+    @dataclass
+    class DC1(SubprocessDataclass, exec='prog'):
+        a: Union[int, str]
+    assert DC1(1).get_args() == ['prog', '-a', '1']
+    assert DC1('val').get_args() == ['prog', '-a', 'val']
+    @dataclass
+    class Inner1(SubprocessDataclass):
+        a: int
+    @dataclass
+    class Inner2(SubprocessDataclass):
+        b: int
+    @dataclass
+    class DC2(SubprocessDataclass, exec='prog'):
+        inner: Union[Inner1, Inner2]
+    assert DC2(Inner1(1)).get_args() == ['prog', '-a', '1']
+    assert DC2(Inner2(1)).get_args() == ['prog', '-b', '1']
+    @dataclass
+    class DC3(SubprocessDataclass, exec='prog'):
+        inner: Union[int, Inner2]
+    assert DC3(1).get_args() == ['prog', '--inner', '1']
+    assert DC3(Inner2(1)).get_args() == ['prog', '-b', '1']
+    @dataclass
+    class DC4(SubprocessDataclass, exec='prog'):
+        inner: Union[Inner1, int]
+    assert DC3(Inner1(1)).get_args() == ['prog', '-a', '1']
+    assert DC3(1).get_args() == ['prog', '--inner', '1']
