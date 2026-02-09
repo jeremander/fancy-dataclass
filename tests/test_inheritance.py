@@ -76,7 +76,7 @@ def test_invalid_inheritance():
     # this order doesn't work
     with pytest.raises(TypeError, match='Cannot create a consistent'):
         @dataclass
-        class DC(DictDataclass, JSONDataclass):
+        class DC(DictDataclass, JSONDataclass):  # type: ignore[metaclass]
             pass
     DC1 = DictDataclass.wrap_dataclass(DC)
     # this works because JSONDataclass is not a subclass of DC1
