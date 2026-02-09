@@ -298,19 +298,28 @@ class TestDataclassMixin:
             e: Annotated[int, Doc('bad'), Doc('e')] = 5  # multiple Docs (per PEP 727, use the last one)
             f: Annotated[int, Doc(6)] = 6  # non-string Doc (currently permitted)
             g: Annotated[int, Doc('g1')] = field(default=7, metadata={'doc': 'g2'})  # both Doc and metadata (latter takes precedence)
-            h: "Annotated[int, Doc('h')]" = 8  # stringized annotation
+            # stringized annotations:
+            # avoid evaluating them since that would occur at import time
+            h: "Annotated[int, Doc('h')]" = 8
             # stringized annotation, fully qualified
             i: "typing_extensions.Annotated[int, typing_extensions.Doc('i')]" = 9  # type: ignore[name-defined]  # noqa: F821
-        docs = [DC1._field_settings(fld).doc for fld in fields(DC1)]
-        assert docs[0] is None
-        assert docs[1] == 'b'
-        assert docs[2] == 'c'
-        assert docs[3] is None
-        assert docs[4] == 'e'
-        assert docs[5] == 6
-        assert docs[6] == 'g2'
-        assert docs[7] == 'h'
-        assert docs[8] == 'i'
+            # this is OK since the Annotated part is not stringized
+            j: Annotated['int', Doc('j')] = 10
+        docs = {}
+        for fld in fields(DC1):
+            docs[fld.name] = DC1._field_settings(fld).doc
+        assert docs == {
+            'a': None,
+            'b': 'b',
+            'c': 'c',
+            'd': None,
+            'e': 'e',
+            'f': 6,
+            'g': 'g2',
+            'h': None,
+            'i': None,
+            'j': 'j',
+        }
         # try to convert a field with unknown type to DocFieldSettings
         @dataclass
         class DC2:

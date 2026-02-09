@@ -3,7 +3,7 @@ from typing import Optional, Type, TypeVar, cast
 
 from typing_extensions import Doc, Self, _AnnotatedAlias
 
-from fancy_dataclass.utils import _is_instance, check_dataclass, coerce_to_dataclass, dataclass_kw_only, eval_type_str
+from fancy_dataclass.utils import _is_instance, check_dataclass, coerce_to_dataclass, dataclass_kw_only
 
 
 DA = TypeVar('DA', bound='DataclassAdaptable')
@@ -77,13 +77,7 @@ class DocFieldSettings(FieldSettings):
     def from_field(cls, field: Field) -> Self:  # type: ignore[type-arg]  # noqa: D102
         settings = super().from_field(field)
         if settings.doc is None:
-            if isinstance(field.type, str):
-                try:
-                    tp = eval_type_str(field.type)
-                except NameError:
-                    tp = None
-            else:
-                tp = field.type
+            tp = None if isinstance(field.type, str) else field.type
             if isinstance(tp, _AnnotatedAlias):
                 doc = next((arg for arg in tp.__metadata__[::-1] if isinstance(arg, Doc)), None)
                 if doc:
