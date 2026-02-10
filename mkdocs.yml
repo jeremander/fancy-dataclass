@@ -16,7 +16,7 @@ plugins:
   - mkdocstrings:
       handlers:
         python:
-          import:
+          inventories:
           - https://installer.readthedocs.io/en/stable/objects.inv
           options:
             filters: ["!^_[^_]", "_replace"]

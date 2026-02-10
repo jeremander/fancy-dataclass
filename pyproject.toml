@@ -39,7 +39,7 @@ dependencies = [
   "mkdocs",
   "mkdocs-autorefs",
   "mkdocs-material",
-  "mkdocstrings[python] >= 0.29",
+  "mkdocstrings[python] >= 1.0",
   "mkdocs-gen-files",
   "mkdocs-literate-nav",
   "py-gadzooks >= 0.2.8",
