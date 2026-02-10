@@ -1,5 +1,5 @@
 import dataclasses
-from typing import Any, ClassVar, Optional, Type, TypeVar
+from typing import Any, ClassVar, Dict, Optional, Type, TypeVar
 
 from typing_extensions import Self
 
@@ -33,11 +33,11 @@ def _configure_mixin_settings(cls: Type['DataclassMixin'], allow_duplicates: boo
     # get user-specified settings (need to use __dict__ here rather than direct access, which inherits parent class's value)
     stype = cls.__dict__.get('__settings_type__')
     settings = cls.__dict__.get('__settings__')
-    cls.__settings_kwargs__ = {**getattr(cls, '__settings_kwargs__', {}), **kwargs}  # type: ignore[attr-defined]
+    cls.__settings_kwargs__ = {}
     if stype is None:  # merge settings types of base classes
-        stypes = [stype for base in cls.__bases__ if (stype := getattr(base, '__settings_type__', None))]
+        pairs = [(base, stype) for base in cls.__bases__ if (stype := getattr(base, '__settings_type__', None))]
         # remove duplicate settings classes
-        stypes = list(dict.fromkeys(stypes))
+        stypes = list(dict.fromkeys([stype for (_, stype) in pairs]))
         if stypes:
             try:
                 if len(stypes) == 1:
@@ -46,18 +46,23 @@ def _configure_mixin_settings(cls: Type['DataclassMixin'], allow_duplicates: boo
                     stype = merge_dataclasses(*stypes, cls_name='MiscDataclassSettings', allow_duplicates=allow_duplicates)
             except TypeError as e:
                 raise TypeError(f'error merging base class settings for {cls.__name__}: {e}') from e
+            # inherit kwargs from the parent classes, with earlier ones in the inheritance list taking priority
             cls.__settings_type__ = stype
+            for (base, _) in pairs[::-1]:
+                cls.__settings_kwargs__.update(getattr(base, '__settings_kwargs__', {}))
     else:
         if not issubclass(stype, MixinSettings):
             raise TypeError(f'invalid settings type {stype.__name__} for {cls.__name__}')
         assert check_dataclass(stype)
+    # this class's kwargs take priority over the parent classes'
+    cls.__settings_kwargs__.update(kwargs)
     field_names = set() if (stype is None) else {fld.name for fld in dataclasses.fields(stype)}
     d = {}
-    for (key, val) in cls.__settings_kwargs__.items():  # type: ignore[attr-defined]
-        if key in field_names:
-            d[key] = val
+    for (name, val) in cls.__settings_kwargs__.items():
+        if name in field_names:
+            d[name] = val
         else:
-            raise TypeError(f'unknown settings field {key!r} for {cls.__name__}')
+            raise TypeError(f'unknown settings field {name!r} for {cls.__name__}')
     # explicit settings will override inheritance kwargs
     if settings is not None:
         # make sure user-configured settings type has all required fields
@@ -107,6 +112,7 @@ class DataclassMixin:
 
     __settings_type__: ClassVar[Optional[Type[MixinSettings]]] = None
     __settings__: ClassVar[Optional[MixinSettings]] = None
+    __settings_kwargs__: ClassVar[Optional[Dict[str, Any]]] = None
     __field_settings_type__: ClassVar[Optional[Type[FieldSettings]]] = None
 
     @classmethod
