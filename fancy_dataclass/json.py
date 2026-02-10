@@ -122,7 +122,7 @@ class JSONDataclass(DictFileSerializableDataclass, JSONSerializable):
         # this is because resolving the type from a dict may be ambiguous
         if getattr(cls.__settings__, 'store_type', None) == 'auto':
             for base in cls.mro():
-                if (base not in [cls, JSONDataclass]) and issubclass(base, JSONDataclass):
+                if (base not in [cls, JSONDataclass]) and issubclass(base, JSONDataclass) and (not issubclass(base, JSONBaseDataclass)):
                     raise TypeError("when subclassing a JSONDataclass, you must set store_type to a value other than 'auto', or subclass JSONBaseDataclass instead")
 
     @classmethod
