@@ -388,17 +388,34 @@ def test_store_type_setting():
         ...
     assert DC11.__settings__._store_type == 'qualname'
     # multiple inheritance where one is 'auto'
-    # (inherits settings from first base class, but then iterates to find non-auto)
-    @dataclass
-    class DC11(DC2, DC9):
-        ...
-    assert DC11.__settings__.store_type == 'auto'
-    assert DC11.__settings__._store_type == 'qualname'
+    # DC9 takes priority since it both has a kwarg and comes first
     @dataclass
     class DC12(DC9, DC2):
         ...
     assert DC12.__settings__.store_type == 'qualname'
     assert DC12.__settings__._store_type == 'qualname'
+    # DC9 had an explicit kwarg set, so this takes priority over DC2's default despite coming second
+    @dataclass
+    class DC13(DC2, DC9):
+        ...
+    assert DC13.__settings__.store_type == 'qualname'
+    assert DC13.__settings__._store_type == 'qualname'
+    # DC4's kwarg takes priority over DC9's since it appears first,
+    # but since it is set to 'auto' we scan for the first non-auto value to use as _store_type
+    @dataclass
+    class DC14(DC4, DC9):
+        ...
+    assert DC14.__settings__.store_type == 'auto'
+    assert DC14.__settings__._store_type == 'qualname'
+    @dataclass
+    class DC15(DC2, store_type='auto'):
+        ...
+    # two 'auto' values lead to the default of 'off' as the _store_type
+    @dataclass
+    class DC16(DC4, DC15):
+        ...
+    assert DC16.__settings__.store_type == 'auto'
+    assert DC16.__settings__._store_type == 'off'
 
 def test_store_type_with_flatten():
     """Tests behavior of the store_type setting when combined with flatten=True."""

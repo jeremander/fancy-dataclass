@@ -525,6 +525,7 @@ class TestJSON(TestDict):
         @dataclass
         class MyDC(JSONDataclass):
             pass
+        assert MyDC.__settings__._store_type == 'off'
         assert MyDC().to_dict() == {}
         with pytest.raises(TypeError, match='must set store_type'):
             @dataclass
@@ -533,6 +534,7 @@ class TestJSON(TestDict):
         @dataclass
         class MyDC2(MyDC, store_type='qualname'):
             pass
+        assert MyDC2.__settings__._store_type == 'qualname'
         # TODO: forbid local types?
         assert MyDC2().to_dict() == {'type': 'tests.test_serializable.TestJSON.test_subclass_json_dataclass.<locals>.MyDC2'}
         @dataclass
@@ -541,24 +543,29 @@ class TestJSON(TestDict):
         @dataclass
         class MyDC3(MyBaseDC):
             pass
-        assert MyDC3().to_dict() == {'type': 'tests.test_serializable.TestJSON.test_subclass_json_dataclass.<locals>.MyDC3'}
-        with pytest.raises(TypeError, match='must set store_type'):
-            @dataclass
-            class MyDC4(MyBaseDC, store_type='auto'):
-                pass
-        with pytest.raises(TypeError, match='must set store_type'):
-            @dataclass
-            class MyDC5(MyDC, JSONBaseDataclass):
-                pass
+        assert MyDC3.__settings__._store_type == 'qualname'
+        # inherits from JSONBaseDataclass indirectly (OK)
+        @dataclass
+        class MyDC4(MyBaseDC, store_type='auto'):
+            pass
+        assert MyDC4.__settings__._store_type == 'qualname'
+        # inherits from JSONBaseDataclass, so gets 'qualname' as its store_type
+        @dataclass
+        class MyDC5(MyDC, JSONBaseDataclass):
+            pass
+        assert MyDC5.__settings__._store_type == 'qualname'
         @dataclass
         class MyDC6(JSONBaseDataclass, MyDC):
             pass
+        assert MyDC6.__settings__._store_type == 'qualname'
         @dataclass
         class MyDC7(MyDC, JSONBaseDataclass, store_type='qualname'):
             pass
+        assert MyDC7.__settings__._store_type == 'qualname'
         @dataclass
         class MyDC8(MyDC, store_type='off'):
             pass
+        assert MyDC8.__settings__._store_type == 'off'
         assert MyDC8().to_dict() == {}
         assert MyDC8.from_dict({}) == MyDC8()
 

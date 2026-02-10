@@ -164,7 +164,7 @@ def test_json_toml():
         sio.seek(0)
         assert type(obj2).load(sio) == obj2
 
-def test_argparse_subprocess():
+def test_argparse_subprocess_dataclass():
     """Tests inheritance from both ArgparseDataclass and SubprocessDataclass."""
     # no name collision in field settings, so inheritance works OK
     class ArgparseSubprocessDC(ArgparseDataclass, SubprocessDataclass):
@@ -228,3 +228,65 @@ def test_toml_json_dataclass():
     assert obj.to_dict() == {'x': 1, 'y': NoneProxy()}
     assert obj.to_toml_string() == 'x = 1\n# y = \n'
     assert obj.to_json_string() == '{"x": 1, "y": null}'
+
+def test_json_argparse_dataclass():
+    """Tests subclassing both JSONDataclass and ArgparseDataclass."""
+    @dataclass
+    class DC1(JSONDataclass, ArgparseDataclass, prog='prog'):
+        pass
+    assert DC1.__settings__.prog == 'prog'
+    @dataclass
+    class DC2(ArgparseDataclass, prog='prog'):
+        pass
+    assert DC2.__settings__.prog == 'prog'
+    @dataclass
+    class DC3(JSONDataclass, DC2):
+        pass
+    assert DC3.__settings__.prog == 'prog'
+    @dataclass
+    class DC4(JSONDataclass, DC2, prog='new-prog'):
+        pass
+    assert DC4.__settings__.prog == 'new-prog'
+    @dataclass
+    class DC5(ArgparseDataclass, JSONDataclass, prog='prog'):
+        pass
+    assert DC5.__settings__.prog == 'prog'
+    @dataclass
+    class DC6(JSONBaseDataclass, ArgparseDataclass, prog='prog'):
+        pass
+    assert DC6.__settings__.prog == 'prog'
+    @dataclass
+    class DC7(ArgparseDataclass, JSONBaseDataclass, prog='prog'):
+        pass
+    assert DC7.__settings__.prog == 'prog'
+
+def test_json_subprocess_dataclass():
+    """Tests subclassing both JSONDataclass and SubprocessDataclass."""
+    @dataclass
+    class DC1(JSONDataclass, SubprocessDataclass):
+        pass
+    assert DC1.__settings__._store_type == 'off'
+    assert DC1.__settings__.exec is None
+    @dataclass
+    class DC2(SubprocessDataclass, JSONDataclass):
+        pass
+    assert DC2.__settings__._store_type == 'off'
+    assert DC2.__settings__.exec is None
+    @dataclass
+    class DC(JSONBaseDataclass):
+        pass
+    @dataclass
+    class DC3(DC, SubprocessDataclass):
+        pass
+    assert DC3.__settings__._store_type == 'qualname'
+    assert DC3.__settings__.exec is None
+    @dataclass
+    class DC4(SubprocessDataclass, DC):
+        pass
+    assert DC4.__settings__._store_type == 'qualname'
+    assert DC4.__settings__.exec is None
+    @dataclass
+    class DC5(SubprocessDataclass, DC, store_type='off', exec='prog'):
+        pass
+    assert DC5.__settings__._store_type == 'off'
+    assert DC5.__settings__.exec == 'prog'
