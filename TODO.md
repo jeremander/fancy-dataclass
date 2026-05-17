@@ -34,8 +34,6 @@
 - `alias` metadata field for dict conversion
   - Should this be bidirectional? Or separate fields for each direction? [pydantic](https://docs.pydantic.dev/latest/concepts/alias/) provides both.
   - https://github.com/jeremander/fancy-dataclass/issues/5
-- Field converters
-  - https://github.com/jeremander/fancy-dataclass/issues/2
 - `PromptDataclass` to prompt user for each value type
   - Be able to supply validator functions
   - Specify behavior on error (bail or loop)
@@ -55,9 +53,10 @@
     - `get_version_registry`: return the global singleton registry
 - `JSON5Dataclass`?
 - Field metadata
-  - Be strict about unknown field metadata keys? (Maybe issue warning?)
-    - Might be annoying if people want to store extra metadata.
-  - PEP 712 (`converter` argument for dataclass fields)
+  - Field converters
+    - https://github.com/jeremander/fancy-dataclass/issues/2
+  - PEP 712 (`converter` argument for dataclass fields), was rejected
+  - Can implement it by hooking `__post_init__` with `__init_subclass__`, using `object.__setattr__` to set fields to converted values (even for frozen dataclass)
   - Allow `Annotated` as an alternative to `field.metadata`
     - Esp. with `Doc`: this could auto-populate JSON schema, argparse description
   - `BinaryDataclass`?

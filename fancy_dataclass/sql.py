@@ -4,11 +4,11 @@ from typing import Any, Callable, ClassVar, Dict, Optional, Type, TypeVar, Union
 
 from sqlalchemy import Boolean, Column, DateTime, Integer, LargeBinary, Numeric, PickleType, String, Table
 import sqlalchemy.orm
-from typing_extensions import TypeAlias
+from typing_extensions import Annotated, TypeAlias
 
 from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.settings import FieldSettings
-from fancy_dataclass.utils import dataclass_kw_only, safe_dict_update
+from fancy_dataclass.utils import dataclass_kw_only, issubclass_safe, safe_dict_update
 
 
 T = TypeVar('T')
@@ -39,6 +39,17 @@ def get_column_type(tp: type) -> type:
     if issubclass(tp, datetime):
         return DateTime
     return PickleType
+
+def _get_base_type_for_field_type(field_type: Any) -> type:
+    origin = get_origin(field_type)
+    if origin:  # compound type
+        if origin in [Annotated, Union]:  # use the type of the first argument
+            # column should be nullable by default if the type is optional
+            tp_args = get_args(field_type)
+            return _get_base_type_for_field_type(tp_args[0])
+        # some other compound type
+        return cast(type, origin)
+    return cast(type, field_type)
 
 
 @dataclass_kw_only()
@@ -79,18 +90,9 @@ class SQLDataclass(DataclassMixin):
             # nullable = False
             if not settings.sql:  # skip fields whose 'sql' setting is False
                 continue
-            tp: type = cast(type, fld.type)
-            origin = get_origin(tp)
-            if origin:  # compound type
-                if origin is Union:  # use the first type of a Union (also handles Optional)
-                    # column should be nullable by default if the type is optional
-                    tp_args = get_args(tp)
-                    # nullable |= (type(None) in tp_args)
-                    tp = tp_args[0]
-                else:  # some other compound type
-                    tp = origin
-            if issubclass(tp, SQLDataclass):  # nested SQLDataclass
-                cols.update(tp.get_columns())
+            field_type = _get_base_type_for_field_type(fld.type)
+            if issubclass_safe(field_type, SQLDataclass):  # nested SQLDataclass
+                cols.update(field_type.get_columns())  # type: ignore[attr-defined]
             else:
                 # TODO: making columns non-nullable seems to break things for nested SQLDataclasses
                 # column_kwargs = {'nullable' : nullable}
@@ -101,7 +103,8 @@ class SQLDataclass(DataclassMixin):
                     column_kwargs['default'] = fld.default_factory
                 # get additional keyword arguments from 'column' section of metadata, if present
                 column_kwargs.update(settings.column or {})
-                cols[fld.name] = Column(fld.name, get_column_type(tp), **column_kwargs)
+                column_type = get_column_type(field_type)
+                cols[fld.name] = Column(fld.name, column_type, **column_kwargs)
         return cols
 
 
