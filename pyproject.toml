@@ -7,7 +7,7 @@ name = "fancy-dataclass"
 dynamic = ["version"]
 description = "Spiff up your dataclasses with extra features."
 readme = "docs/README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 license = {text = "MIT License"}
 keywords = ["dataclass", "cli", "config", "orm", "serialize", "json", "toml"]
 authors = [
@@ -73,7 +73,7 @@ dependencies = [
 [tool.hatch.envs.lint.scripts]
 # linting
 run-ruff = "ruff check"
-# ensure compatibility with Py3.8 and higher
+# ensure compatibility with minimum Python version
 run-vermin = "vermin {args:.}"
 # type-checking
 run-mypy = "mypy --install-types --non-interactive {args:fancy_dataclass tests}"
@@ -97,7 +97,7 @@ cov-report = ["- coverage combine", "coverage report", "coverage html"]
 cov = ["test", "cov-report"]
 
 [[tool.hatch.envs.test.matrix]]
-python = ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
+python = ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
 
 [tool.hatch.envs.badge]
 dependencies = [

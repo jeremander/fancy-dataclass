@@ -16,14 +16,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: |
-            3.8
             3.9
             3.10
+            3.11
             3.12
             3.13
-            3.11
-      - name: Upgrade pip
-        run: pip install --upgrade pip
+            3.14
       - name: Set up pip cache
         if: runner.os == 'Linux'
         uses: actions/cache@v4
