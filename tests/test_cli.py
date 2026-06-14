@@ -6,6 +6,7 @@ import sys
 from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 
 import pytest
+from typing_extensions import Annotated, Doc
 
 from fancy_dataclass.cli import ArgparseDataclass, CLIDataclass
 from fancy_dataclass.versioned import Version
@@ -1129,3 +1130,18 @@ def test_optional_list():
     check_invalid_args(DC2, ['--strings'], 'expected at least one argument')
     assert DC2.from_cli_args(['--strings', 'abc']) == DC2(['abc'])
     assert DC2.from_cli_args(['--strings', 'abc', 'def']) == DC2(['abc', 'def'])
+
+def test_annotated_doc():
+    """Tests that Annotated/Doc gives rise to a help string."""
+    # display version
+    @dataclass
+    class DCDoc1(ArgparseDataclass):
+        x: Annotated[int, Doc('an int')]
+    help_str = DCDoc1.make_parser().format_help()
+    assert re.search(r'x\s+an int', help_str)
+    @dataclass
+    class DCDoc2(ArgparseDataclass):
+        x: Annotated[int, Doc('an int')] = field(metadata={'help': 'help string'})
+    help_str = DCDoc2.make_parser().format_help()
+    assert not re.search(r'x\s+an int', help_str)
+    assert re.search(r'x\s+help string', help_str)

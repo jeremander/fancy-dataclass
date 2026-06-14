@@ -7,7 +7,7 @@ from typing import Any, Callable, ClassVar, Dict, List, Literal, Optional, Seque
 from typing_extensions import Self, TypeGuard
 
 from fancy_dataclass.mixin import DataclassMixin
-from fancy_dataclass.settings import FieldSettings, MixinSettings
+from fancy_dataclass.settings import DocFieldSettings, MixinSettings
 from fancy_dataclass.utils import camel_case_to_kebab_case, check_dataclass, dataclass_kw_only, eval_type_str, get_annotations, issubclass_safe, type_is_optional
 
 
@@ -95,7 +95,7 @@ class ArgparseDataclassSettings(MixinSettings):
 
 
 @dataclass_kw_only()
-class ArgparseDataclassFieldSettings(FieldSettings):
+class ArgparseDataclassFieldSettings(DocFieldSettings):
     """Settings for [`ArgparseDataclass`][fancy_dataclass.cli.ArgparseDataclass] fields.
 
     Each field may define a `metadata` dict containing any of the following entries:
@@ -107,6 +107,7 @@ class ArgparseDataclassFieldSettings(FieldSettings):
     - `const`: constant value required by some action/nargs combinations
     - `choices`: list of possible inputs allowed
     - `help`: help string
+        - Another way to specify the `help` is to use the `Annotated`/`Doc` pattern on the field (see [PEP 727](https://peps.python.org/pep-0727/))
     - `dest`: name of destination variable (only needed to avoid field name collisions when nesting `ArgparseDataclass`)
     - `metavar`: name for the argument in usage messages
     - `required`: whether the option is required
@@ -378,6 +379,8 @@ class ArgparseDataclass(DataclassMixin):
                 kwargs[key] = meta[key]
         if kwargs.get('action') in ['count', 'store_const']:
             del kwargs['type']
+        if ('help' not in kwargs) and settings.doc:
+            kwargs['help'] = settings.doc
         # determine if the field show its default in the help string
         if cls.__settings__.default_help:
             # include default if there is one, and the flag is not overridden to False at the field level
