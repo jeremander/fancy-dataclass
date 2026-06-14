@@ -27,7 +27,7 @@ By inspecting dataclasses' type annotations, it is possible to endow them with s
 
 ```pip install fancy-dataclass```
 
-Requires Python 3.8 or higher.
+Requires Python 3.9 or higher.
 
 ## Example
 
