@@ -1,6 +1,6 @@
 from dataclasses import MISSING
 import subprocess
-from typing import Any, ClassVar, List, Optional, Type, get_origin
+from typing import Any, ClassVar, Optional, get_origin
 
 from typing_extensions import Self
 
@@ -58,7 +58,7 @@ class SubprocessDataclass(DataclassMixin):
     __field_settings_type__ = SubprocessDataclassFieldSettings
 
     @classmethod
-    def __post_dataclass_wrap__(cls, wrapped_cls: Type[Self]) -> None:
+    def __post_dataclass_wrap__(cls, wrapped_cls: type[Self]) -> None:
         cls_exec_field = wrapped_cls.__settings__.exec
         # make sure there is at most one exec field
         exec_field = None
@@ -81,7 +81,7 @@ class SubprocessDataclass(DataclassMixin):
                 if fld.type is not bool:
                     raise ValueError('cannot use subprocess_flag=True when the field type is not bool')
 
-    def get_arg(self, name: str, suppress_defaults: bool = False) -> List[str]:
+    def get_arg(self, name: str, suppress_defaults: bool = False) -> list[str]:
         """Gets the command-line arguments for the given dataclass field.
 
         Args:
@@ -185,13 +185,13 @@ class SubprocessDataclass(DataclassMixin):
                 return _check_type(getattr(self, fld.name, None))
         return None
 
-    def _get_args(self, suppress_defaults: bool = False) -> List[str]:
+    def _get_args(self, suppress_defaults: bool = False) -> list[str]:
         args = []
         for fld in get_dataclass_fields(self, include_all=True):
             args += [arg for arg in self.get_arg(fld.name, suppress_defaults=suppress_defaults) if arg]
         return args
 
-    def get_args(self, suppress_defaults: bool = False) -> List[str]:
+    def get_args(self, suppress_defaults: bool = False) -> list[str]:
         """Converts dataclass fields to a list of command-line arguments for a subprocess call.
 
         This includes the executable name itself as the first argument, if there is one.

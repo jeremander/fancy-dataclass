@@ -1,8 +1,8 @@
 from dataclasses import astuple, dataclass, field, fields
-from typing import ClassVar
+from typing import Annotated, ClassVar
 
 import pytest
-from typing_extensions import Annotated, Doc
+from typing_extensions import Doc
 
 from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.settings import DocFieldSettings, FieldSettings, MixinSettings

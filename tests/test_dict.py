@@ -1,9 +1,9 @@
 from dataclasses import InitVar, dataclass, field, make_dataclass
 import re
-from typing import ClassVar, List, Optional
+from typing import Annotated, ClassVar, Optional
 
 import pytest
-from typing_extensions import Annotated, Doc
+from typing_extensions import Doc
 
 from fancy_dataclass.dict import DictDataclass
 from fancy_dataclass.mixin import DataclassMixin
@@ -18,7 +18,7 @@ class NestedComponentA(DictDataclass):
 @dataclass
 class NestedComponentB(DictDataclass):
     b1: str
-    b2: List[int]
+    b2: list[int]
 
 @dataclass
 class NestedComposedAB(DictDataclass):
@@ -27,7 +27,7 @@ class NestedComposedAB(DictDataclass):
 
 @dataclass
 class NestedList(DictDataclass):
-    comps: List[NestedComponentA]
+    comps: list[NestedComponentA]
 
 @dataclass
 class FlattenedComponentA(DictDataclass):
@@ -37,7 +37,7 @@ class FlattenedComponentA(DictDataclass):
 @dataclass
 class FlattenedComponentB(DictDataclass):
     b1: str
-    b2: List[int]
+    b2: list[int]
 
 @dataclass
 class FlattenedComposedAB(DictDataclass, flatten=True):

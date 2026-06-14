@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
+from collections.abc import Iterator
 from contextlib import contextmanager
 import json
 from pathlib import Path
-from typing import Any, ClassVar, Dict, Iterator, Optional
+from typing import Any, ClassVar, Optional
 
 from typing_extensions import Self
 
@@ -101,7 +102,7 @@ class ConfigDataclass(DictDataclass, FileConfig, suppress_defaults=False, store_
         return cfg
 
 
-class DictConfig(FileConfig, Dict[Any, Any]):
+class DictConfig(FileConfig, dict[Any, Any]):
     """A collection of configurations, stored as a Python dict.
 
     To impose a type schema on the configurations, use [`ConfigDataclass`][fancy_dataclass.config.ConfigDataclass] instead.

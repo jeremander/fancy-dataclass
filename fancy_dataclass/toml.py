@@ -1,6 +1,6 @@
 from dataclasses import Field
 from io import IOBase
-from typing import IO, Any, List, Optional, Union
+from typing import IO, Any, Optional, Union
 
 import tomlkit as tk
 from typing_extensions import Self
@@ -127,7 +127,7 @@ class TOMLDataclass(DictFileSerializableDataclass, TOMLSerializable, suppress_de
         return to_dict_value_basic(val)
 
     @classmethod
-    def _top_level_comments(cls) -> Optional[List[str]]:
+    def _top_level_comments(cls) -> Optional[list[str]]:
         """Returns a list of top-level comments to place before all of the fields in the TOML output."""
         settings = cls.__settings__.adapt_to(TOMLDataclassSettings)
         comment = None

@@ -3,7 +3,7 @@ from datetime import datetime
 from io import IOBase, StringIO
 import json
 from json import JSONEncoder
-from typing import IO, Any, Type, cast, get_args, get_origin
+from typing import IO, Any, cast, get_args, get_origin
 
 from typing_extensions import Self
 
@@ -12,7 +12,7 @@ from fancy_dataclass.serialize import DictFileSerializableDataclass, TextFileSer
 from fancy_dataclass.utils import AnyIO, TypeConversionError, issubclass_safe
 
 
-def _dump_value_to_json(val: Any, fp: IO[str], encoder_cls: Type[JSONEncoder], **kwargs: Any) -> None:
+def _dump_value_to_json(val: Any, fp: IO[str], encoder_cls: type[JSONEncoder], **kwargs: Any) -> None:
     kwargs = dict(kwargs)
     indent = kwargs.get('indent')
     if (indent is not None) and (indent < 0):
@@ -25,7 +25,7 @@ class JSONSerializable(TextFileSerializable):
     """Mixin class enabling conversion of an object to/from JSON."""
 
     @classmethod
-    def json_encoder(cls) -> Type[JSONEncoder]:
+    def json_encoder(cls) -> type[JSONEncoder]:
         """Override this method to create a custom `JSONEncoder` to handle specific data types.
         A skeleton for this looks like:
 

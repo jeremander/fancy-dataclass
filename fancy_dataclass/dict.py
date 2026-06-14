@@ -1,8 +1,9 @@
 from collections import defaultdict
+from collections.abc import Iterable
 from contextlib import suppress
 import dataclasses
 from dataclasses import Field, InitVar
-from typing import Any, ClassVar, Dict, Iterable, List, Literal, Optional, Set, Type, TypeVar, _TypedDictMeta, get_args, get_origin  # type: ignore[attr-defined]
+from typing import Any, ClassVar, Literal, Optional, TypeVar, _TypedDictMeta, get_args, get_origin  # type: ignore[attr-defined]
 import warnings
 
 from typing_extensions import Self, _AnnotatedAlias
@@ -14,7 +15,7 @@ from fancy_dataclass.utils import MissingRequiredFieldError, TypeConversionError
 
 T = TypeVar('T', bound=DataclassMixin)
 
-AnyDict = Dict[str, Any]
+AnyDict = dict[str, Any]
 # mode for storing data type in dict
 StoreTypeMode = Literal['auto', 'off', 'name', 'qualname']
 
@@ -105,7 +106,7 @@ class DictDataclass(DataclassMixin):
                 cls.__settings__._store_type = 'off'
 
     @classmethod
-    def __post_dataclass_wrap__(cls, wrapped_cls: Type[Self]) -> None:
+    def __post_dataclass_wrap__(cls, wrapped_cls: type[Self]) -> None:
         # disallow 'type' field when the type needs to be stored in the output dict
         if wrapped_cls.__settings__.should_store_type():
             for fld in dataclasses.fields(wrapped_cls):  # type: ignore[arg-type]
@@ -121,7 +122,7 @@ class DictDataclass(DataclassMixin):
             field_names.add(name)
 
     @classmethod
-    def _get_flattened_field_names(cls) -> Set[str]:
+    def _get_flattened_field_names(cls) -> set[str]:
         """Gets the set of flattened field names."""
         class_flatten = cls.__settings__.flatten
         fields = dataclasses.fields(cls)  # type: ignore[arg-type]
@@ -221,7 +222,7 @@ class DictDataclass(DataclassMixin):
         return self._to_dict(full)
 
     @staticmethod
-    def _from_dict_value_convertible(tp: Type['DictDataclass'], val: Any) -> Any:
+    def _from_dict_value_convertible(tp: type['DictDataclass'], val: Any) -> Any:
         if isinstance(val, tp):  # already converted from a dict
             return val
         # otherwise, convert from a dict
@@ -327,10 +328,10 @@ class DictDataclass(DataclassMixin):
         raise MissingRequiredFieldError(fld.name, alias=settings.alias)
 
     @classmethod
-    def _get_field_key_map(cls) -> Dict[str, List[str]]:
+    def _get_field_key_map(cls) -> dict[str, list[str]]:
         """Gets a dict mapping from field names to the list of corresponding keys to be consumed when converting from a dict."""
         flattened_field_names = cls._get_flattened_field_names()
-        field_key_map: Dict[str, List[str]] = defaultdict(list)
+        field_key_map: dict[str, list[str]] = defaultdict(list)
         for fld in get_dataclass_fields(cls, include_all=True):
             settings = cls._field_settings(fld).adapt_to(DictDataclassFieldSettings)
             if fld.name in flattened_field_names:
@@ -353,7 +354,7 @@ class DictDataclass(DataclassMixin):
         fields = get_dataclass_fields(cls, include_all=True)
         flattened_field_names = cls._get_flattened_field_names()
         field_key_map = cls._get_field_key_map()
-        consumed_keys: Set[str] = set()
+        consumed_keys: set[str] = set()
         for fld in fields:
             if not fld.init:  # ignore fields where init=False
                 continue
@@ -391,7 +392,7 @@ class DictDataclass(DataclassMixin):
         return kwargs
 
     @classmethod
-    def _get_type_from_dict(cls, d: AnyDict) -> Type[Self]:
+    def _get_type_from_dict(cls, d: AnyDict) -> type[Self]:
         typename = d.get('type')
         if (typename is None) or ('type' in cls.__dataclass_fields__):  # type: ignore[attr-defined]
             # type field is unspecified *or* 'type' is an expected dataclass field: use the calling class

@@ -1,10 +1,10 @@
 from dataclasses import MISSING, dataclass, fields
 from datetime import datetime
-from typing import Any, Callable, ClassVar, Dict, Optional, Type, TypeVar, Union, cast, get_args, get_origin
+from typing import Annotated, Any, Callable, ClassVar, Optional, TypeVar, Union, cast, get_args, get_origin
 
 from sqlalchemy import Boolean, Column, DateTime, Integer, LargeBinary, Numeric, PickleType, String, Table
 import sqlalchemy.orm
-from typing_extensions import Annotated, TypeAlias
+from typing_extensions import TypeAlias
 
 from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.settings import FieldSettings
@@ -61,7 +61,7 @@ class SQLDataclassFieldSettings(FieldSettings):
     - `sql`: if `True`, include this field as a table column (default `True`)
     - `column`: dict of keyword arguments passed to the [`Column`](https://docs.sqlalchemy.org/en/20/core/metadata.html#sqlalchemy.schema.Column) constructor"""
     sql: bool = True
-    column: Optional[Dict[str, Any]] = None
+    column: Optional[dict[str, Any]] = None
 
 
 class SQLDataclass(DataclassMixin):
@@ -79,7 +79,7 @@ class SQLDataclass(DataclassMixin):
     __table__: ClassVar[Table]
 
     @classmethod
-    def get_columns(cls) -> Dict[str, Column[Any]]:
+    def get_columns(cls) -> dict[str, Column[Any]]:
         """Gets a mapping from the class's field names to sqlalchemy `Column` objects.
 
         Returns:
@@ -108,7 +108,7 @@ class SQLDataclass(DataclassMixin):
         return cols
 
 
-def register(reg: Reg = DEFAULT_REGISTRY, extra_cols: Optional[Dict[str, Column[Any]]] = None) -> Callable[[Type[SQLDataclass]], Type[SQLDataclass]]:
+def register(reg: Reg = DEFAULT_REGISTRY, extra_cols: Optional[dict[str, Column[Any]]] = None) -> Callable[[type[SQLDataclass]], type[SQLDataclass]]:
     """Decorator that registers a sqlalchemy table for a [`SQLDataclass`][fancy_dataclass.sql.SQLDataclass].
 
     Args:
@@ -117,9 +117,9 @@ def register(reg: Reg = DEFAULT_REGISTRY, extra_cols: Optional[Dict[str, Column[
 
     Returns:
         A decorator mapping a `SQLDataclass` type to a registered sqlalchemy table"""
-    def _orm_table(cls: Type[SQLDataclass]) -> Type[SQLDataclass]:
+    def _orm_table(cls: type[SQLDataclass]) -> type[SQLDataclass]:
         cls = dataclass(cls)
-        cols: Dict[str, Column[Any]] = {}
+        cols: dict[str, Column[Any]] = {}
         safe_dict_update(cols, cls.get_columns())
         if extra_cols:
             safe_dict_update(cols, extra_cols)

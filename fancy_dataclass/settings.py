@@ -1,5 +1,5 @@
 from dataclasses import Field, fields
-from typing import Optional, Type, TypeVar, cast, get_args
+from typing import Optional, TypeVar, cast, get_args
 
 from typing_extensions import Doc, Self, _AnnotatedAlias
 
@@ -19,7 +19,7 @@ class DataclassAdaptable:
         Any missing attributes will be set to their default values."""
         return coerce_to_dataclass(cls, obj)
 
-    def adapt_to(self, dest_type: Type[DA]) -> DA:
+    def adapt_to(self, dest_type: type[DA]) -> DA:
         """Converts a `DataclassAdaptable` object to another type, `dest_type`.
 
         By default this will attempt to coerce the fields from the original type to the new type, but subclasses may override the behavior, e.g. to allow field renaming."""

@@ -1,6 +1,7 @@
 """Various utility functions and classes."""
 
 import collections.abc
+from collections.abc import Iterable
 from contextlib import suppress
 from copy import copy
 import dataclasses
@@ -12,7 +13,7 @@ from pathlib import Path
 import re
 import sys
 import types
-from typing import IO, TYPE_CHECKING, Any, Callable, ClassVar, Dict, Iterable, List, Optional, Set, Tuple, Type, TypeVar, Union, cast, get_args, get_origin, get_type_hints
+from typing import IO, TYPE_CHECKING, Any, Callable, ClassVar, Optional, TypeVar, Union, cast, get_args, get_origin, get_type_hints
 
 from typing_extensions import TypeGuard, _AnnotatedAlias, dataclass_transform
 
@@ -104,7 +105,7 @@ def camel_case_to_kebab_case(name: str) -> str:
 
 # DICT MANIPULATION
 
-def safe_dict_update(d1: Dict[str, Any], d2: Dict[str, Any]) -> None:
+def safe_dict_update(d1: dict[str, Any], d2: dict[str, Any]) -> None:
     """Updates the first dict with the second, in-place.
 
     Args:
@@ -143,12 +144,12 @@ def type_is_optional(tp: type) -> bool:
         True if the type is Optional"""
     origin_type = get_origin(tp)
     args = get_args(tp)
-    union_types: List[Any] = [Union]
+    union_types: list[Any] = [Union]
     if hasattr(types, 'UnionType'):  # Python >= 3.10
         union_types.append(types.UnionType)  # novermin
     return (origin_type in union_types) and (type(None) in args)
 
-def all_subclasses(cls: Type[T]) -> List[Type[T]]:
+def all_subclasses(cls: type[T]) -> list[type[T]]:
     """Gets all subclasses of a given class, including the class itself.
 
     Args:
@@ -264,7 +265,7 @@ def get_object_from_fully_qualified_name(name: str) -> object:
     mod = importlib.import_module(mod_name)
     return getattr(mod, obj_name)
 
-def get_subclass_with_name(cls: Type[T], name: str) -> Type[T]:
+def get_subclass_with_name(cls: type[T], name: str) -> type[T]:
     """Gets the subclass of a class with the given name.
 
     Args:
@@ -292,14 +293,14 @@ def get_subclass_with_name(cls: Type[T], name: str) -> Type[T]:
 # DATACLASS
 
 @dataclass_transform(kw_only_default=True)
-def dataclass_kw_only(**kwargs: Any) -> Callable[[Type[T]], Type[T]]:
+def dataclass_kw_only(**kwargs: Any) -> Callable[[type[T]], type[T]]:
     """Identical to the usual dataclass decorator, but adds kw_only=True (if Python version is >= 3.10)."""
     # TODO: remove this once we no longer support < 3.10
     if sys.version_info[:2] >= (3, 10):
         return partial(dataclass, kw_only=True)
     return dataclass
 
-def check_dataclass(cls: type) -> TypeGuard[Type['DataclassInstance']]:
+def check_dataclass(cls: type) -> TypeGuard[type['DataclassInstance']]:
     """Checks whether a given type is a dataclass, raising a `TypeError` otherwise.
 
     Args:
@@ -311,7 +312,7 @@ def check_dataclass(cls: type) -> TypeGuard[Type['DataclassInstance']]:
         raise TypeError(f'{cls.__name__} is not a dataclass')
     return True
 
-def is_dataclass_type(cls: type) -> TypeGuard[Type['DataclassInstance']]:
+def is_dataclass_type(cls: type) -> TypeGuard[type['DataclassInstance']]:
     """Returns True if the given type is a dataclass.
 
     Args:
@@ -321,7 +322,7 @@ def is_dataclass_type(cls: type) -> TypeGuard[Type['DataclassInstance']]:
         True if `cls` is a dataclass"""
     return is_dataclass(cls)
 
-def get_dataclass_fields(obj: Union[type, object], include_all: bool = False) -> Tuple[Field, ...]:  # type: ignore[type-arg]
+def get_dataclass_fields(obj: Union[type, object], include_all: bool = False) -> tuple[Field, ...]:  # type: ignore[type-arg]
     """Variant of `dataclasses.fields` which can optionally include ClassVars and InitVars.
 
     Args:
@@ -337,14 +338,14 @@ def get_dataclass_fields(obj: Union[type, object], include_all: bool = False) ->
             raise TypeError('must be called with a dataclass type or instance') from None
     return dataclasses.fields(obj)  # type: ignore[arg-type]
 
-def get_annotations(cls: type) -> Dict[str, Any]:
+def get_annotations(cls: type) -> dict[str, Any]:
     """Given a type, gets a dict mapping from field names to types."""
-    anns: Dict[str, Any] = {}
+    anns: dict[str, Any] = {}
     for tp in cls.mro()[::-1]:
         anns.update(getattr(tp, '__annotations__', {}))
     return anns
 
-def _get_all_stack_variables() -> Dict[str, Any]:
+def _get_all_stack_variables() -> dict[str, Any]:
     """Gets a dict of global and local variables for all frames of the current call stack."""
     globs = {}
     stack = inspect.stack()
@@ -385,7 +386,7 @@ def eval_type_str(type_str: str) -> type:
             tp = eval(type_str, globs)
     return cast(type, tp)
 
-def dataclass_field_type(cls: Type['DataclassInstance'], name: str) -> type:
+def dataclass_field_type(cls: type['DataclassInstance'], name: str) -> type:
     """Given a dataclass type and field name, gets the dataclass field's type annotation.
 
     If the annotation is a string, resolves it to a type (see PEP 563, 649).
@@ -403,7 +404,7 @@ def dataclass_field_type(cls: Type['DataclassInstance'], name: str) -> type:
         assert isinstance(field_type_str, str)
         return eval_type_str(field_type_str)
 
-def coerce_to_dataclass(cls: Type[T], obj: object) -> T:
+def coerce_to_dataclass(cls: type[T], obj: object) -> T:
     """Coerces the fields from an arbitrary object to an instance of a dataclass type.
 
     Any missing attributes will be set to the dataclass's default values.
@@ -436,7 +437,7 @@ def coerce_to_dataclass(cls: Type[T], obj: object) -> T:
             kwargs[fld.name] = val
     return cls(**kwargs)
 
-def dataclass_type_map(cls: Type['DataclassInstance'], func: Callable[[type], type]) -> Type['DataclassInstance']:
+def dataclass_type_map(cls: type['DataclassInstance'], func: Callable[[type], type]) -> type['DataclassInstance']:
     """Applies a type function to all dataclass field types, recursively through container types.
 
     Args:
@@ -447,22 +448,19 @@ def dataclass_type_map(cls: Type['DataclassInstance'], func: Callable[[type], ty
         A new dataclass type whose field types have been mapped by the function"""
     def _map_func(tp: type) -> type:
         return func(dataclass_type_map(tp, func)) if is_dataclass(tp) else func(tp)
-    # for Py3.8 compatibility, can only subscript typing classes
-    container_type_map: Dict[type, type] = {dict: Dict, tuple: Tuple, list: List}  # type: ignore[dict-item]
     field_data = []
     for fld in get_dataclass_fields(cls, include_all=True):
         new_fld = copy(fld)
         origin_type = get_origin(fld.type)
         if origin_type and (not _is_instance(fld.type, _AnnotatedAlias)) and issubclass_safe(origin_type, Iterable):
-            otype = container_type_map.get(origin_type, origin_type)
             if issubclass(origin_type, dict):
                 (key_type, val_type) = get_args(fld.type)
-                tp = otype[key_type, _map_func(val_type)]
+                tp = origin_type[key_type, _map_func(val_type)]
             elif issubclass(origin_type, tuple):
-                tp = otype[tuple([_map_func(elt_type) for elt_type in get_args(fld.type)])]
+                tp = origin_type[tuple([_map_func(elt_type) for elt_type in get_args(fld.type)])]
             else:
                 (elt_type,) = get_args(fld.type)
-                tp = otype[_map_func(elt_type)]
+                tp = origin_type[_map_func(elt_type)]
         else:
             tp = _map_func(fld.type)  # type: ignore[arg-type]
         field_data.append((fld.name, tp, new_fld))
@@ -473,7 +471,7 @@ def dataclass_type_map(cls: Type['DataclassInstance'], func: Callable[[type], ty
 # MERGING #
 ###########
 
-def merge_dataclasses(*classes: type, cls_name: str = '_', bases: Optional[Tuple[type, ...]] = None, allow_duplicates: bool = False) -> type:
+def merge_dataclasses(*classes: type, cls_name: str = '_', bases: Optional[tuple[type, ...]] = None, allow_duplicates: bool = False) -> type:
     """Merges multiple dataclasses together into a single dataclass whose fields have been combined.
     This preserves `ClassVar`s but does not recursively merge subfields.
 
@@ -496,10 +494,10 @@ def merge_dataclasses(*classes: type, cls_name: str = '_', bases: Optional[Tuple
             filtered_classes.append(cls1)
     classes = tuple(filtered_classes)
     flds = []
-    field_type_map: Dict[str, type] = {}
-    base_map: Dict[str, type] = {}
+    field_type_map: dict[str, type] = {}
+    base_map: dict[str, type] = {}
     @lru_cache
-    def _get_field_names(tp: type) -> Set[str]:
+    def _get_field_names(tp: type) -> set[str]:
         return {fld.name for fld in get_dataclass_fields(tp, include_all=True)}
     def _base_type_with_field(cls: type, name: str) -> type:
         for tp in cls.mro()[::-1]:

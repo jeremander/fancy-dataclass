@@ -1,6 +1,5 @@
 # ruff: noqa: B004,B006
 from dataclasses import dataclass
-from typing import List
 
 import pytest
 
@@ -35,7 +34,7 @@ def test_func_dataclass():
     with pytest.raises(TypeError, match='takes 2 positional arguments but 3 were given'):
         _ = Add2()(1, 2, 3)
     # kwargs
-    def concat_lists(x: List[int] = [], y: List[int] = []) -> List[int]:
+    def concat_lists(x: list[int] = [], y: list[int] = []) -> list[int]:
         return x + y
     ConcatLists = func_dataclass(concat_lists)
     assert ConcatLists()() == []
@@ -45,13 +44,13 @@ def test_func_dataclass():
     assert obj3.y == [3]
     assert obj3() == [1, 2, 3]
     # arg and kwarg
-    def append_list(x: List[int], y: List[int] = []) -> List[int]:
+    def append_list(x: list[int], y: list[int] = []) -> list[int]:
         return y + x
     AppendList = func_dataclass(append_list)
     assert AppendList([])([]) == []
     assert AppendList([1])([2, 3]) == [1, 2, 3]
     # args and kwargs
-    def append_numbers(x: List[int], y: int = 1, z: int = 2) -> List[int]:
+    def append_numbers(x: list[int], y: int = 1, z: int = 2) -> list[int]:
         return x + [y, z]
     AppendNumbers = func_dataclass(append_numbers)
     assert AppendNumbers()([]) == [1, 2]

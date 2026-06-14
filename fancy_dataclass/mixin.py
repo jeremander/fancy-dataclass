@@ -1,5 +1,5 @@
 import dataclasses
-from typing import Any, ClassVar, Dict, Optional, Type, TypeVar
+from typing import Any, ClassVar, Optional, TypeVar
 
 from typing_extensions import Self
 
@@ -28,7 +28,7 @@ dataclasses._process_class = _process_class  # type: ignore[attr-defined]
 # SETTINGS #
 ############
 
-def _configure_mixin_settings(cls: Type['DataclassMixin'], allow_duplicates: bool = False, **kwargs: Any) -> None:
+def _configure_mixin_settings(cls: type['DataclassMixin'], allow_duplicates: bool = False, **kwargs: Any) -> None:
     """Sets up a `DataclassMixin`'s settings (at definition time), given inheritance kwargs."""
     # get user-specified settings (need to use __dict__ here rather than direct access, which inherits parent class's value)
     stype = cls.__dict__.get('__settings_type__')
@@ -76,7 +76,7 @@ def _configure_mixin_settings(cls: Type['DataclassMixin'], allow_duplicates: boo
     if stype is not None:
         cls.__settings__ = stype(**d)
 
-def _configure_field_settings_type(cls: Type['DataclassMixin']) -> None:
+def _configure_field_settings_type(cls: type['DataclassMixin']) -> None:
     """Sets up the __field_settings_type__ attribute on a `DataclassMixin` subclass at definition time.
     This reconciles any such attributes inherited from multiple parent classes."""
     stype = cls.__dict__.get('__field_settings_type__')
@@ -92,7 +92,7 @@ def _configure_field_settings_type(cls: Type['DataclassMixin']) -> None:
             raise TypeError(f'invalid field settings type {stype.__name__} for {cls.__name__}')
         assert check_dataclass(stype)
 
-def _check_field_settings(cls: Type['DataclassMixin']) -> None:
+def _check_field_settings(cls: type['DataclassMixin']) -> None:
     """Performs type checking of a `DataclassMixin`'s fields to catch any errors at dataclass-wrap time."""
     if (stype := cls.__field_settings_type__) is not None:
         for fld in dataclasses.fields(cls):  # type: ignore[arg-type]
@@ -110,10 +110,10 @@ class DataclassMixin:
 
     This mixin also provides a [`wrap_dataclass`][fancy_dataclass.mixin.DataclassMixin.wrap_dataclass] decorator which can be used to wrap an existing dataclass type into one that provides the mixin's functionality."""
 
-    __settings_type__: ClassVar[Optional[Type[MixinSettings]]] = None
+    __settings_type__: ClassVar[Optional[type[MixinSettings]]] = None
     __settings__: ClassVar[Optional[MixinSettings]] = None
-    __settings_kwargs__: ClassVar[Optional[Dict[str, Any]]] = None
-    __field_settings_type__: ClassVar[Optional[Type[FieldSettings]]] = None
+    __settings_kwargs__: ClassVar[Optional[dict[str, Any]]] = None
+    __field_settings_type__: ClassVar[Optional[type[FieldSettings]]] = None
 
     @classmethod
     def __init_subclass__(cls, **kwargs: Any) -> None:
@@ -127,7 +127,7 @@ class DataclassMixin:
         _configure_field_settings_type(cls)
 
     @classmethod
-    def __post_dataclass_wrap__(cls, wrapped_cls: Type[Self]) -> None:
+    def __post_dataclass_wrap__(cls, wrapped_cls: type[Self]) -> None:
         """A hook that is called after the [`dataclasses.dataclass`](https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass) decorator is applied to the mixin subclass.
 
         This can be used, for instance, to validate the dataclass fields at definition time.
@@ -145,7 +145,7 @@ class DataclassMixin:
         return stype.from_field(field)
 
     @classmethod
-    def wrap_dataclass(cls: Type[Self], tp: Type[T], **kwargs: Any) -> Type[Self]:
+    def wrap_dataclass(cls: type[Self], tp: type[T], **kwargs: Any) -> type[Self]:
         """Wraps a dataclass type into a new one which inherits from this mixin class and is otherwise the same.
 
         Args:
@@ -192,7 +192,7 @@ class DataclassMixin:
         return self.__class__(**d)
 
     @classmethod
-    def get_subclass_with_name(cls, typename: str) -> Type[Self]:
+    def get_subclass_with_name(cls, typename: str) -> type[Self]:
         """Gets the subclass of this class with the given name.
 
         Args:

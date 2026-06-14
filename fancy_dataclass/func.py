@@ -1,6 +1,7 @@
+from collections.abc import Sequence
 from dataclasses import field, make_dataclass
 from inspect import getfullargspec
-from typing import Any, Callable, Literal, Optional, Protocol, Sequence, Tuple, Type, TypeVar, Union, overload
+from typing import Any, Callable, Literal, Optional, Protocol, TypeVar, Union, overload
 
 from typing_extensions import ParamSpec
 
@@ -10,10 +11,10 @@ from fancy_dataclass.utils import snake_case_to_camel_case
 P = ParamSpec('P')
 R = TypeVar('R', covariant=True)
 
-Bases = Union[type, Tuple[type, ...]]
+Bases = Union[type, tuple[type, ...]]
 
 
-def _func_dataclass(func: Callable[[Any], Any], method_name: str = '__call__', cls_name: Optional[str] = None, bases: Tuple[type, ...] = ()) -> type:
+def _func_dataclass(func: Callable[[Any], Any], method_name: str = '__call__', cls_name: Optional[str] = None, bases: tuple[type, ...] = ()) -> type:
     """Wraps a function into a new dataclass type with a single method whose positional arguments (other than self) are equivalent to that of the given function, and whose kwargs are dataclass parameters.
 
     Args:
@@ -58,7 +59,7 @@ class _FuncDataclass(Protocol[P, R]):
 
 
 @overload
-def func_dataclass(func: Callable[P, R], method_name: Literal['__call__'] = '__call__', cls_name: Optional[str] = None, bases: Bases = ()) -> Type[_FuncDataclass[P, R]]:
+def func_dataclass(func: Callable[P, R], method_name: Literal['__call__'] = '__call__', cls_name: Optional[str] = None, bases: Bases = ()) -> type[_FuncDataclass[P, R]]:
     ...
 
 @overload

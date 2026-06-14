@@ -48,9 +48,7 @@ lint.ignore = [
     "PT013",  # use simple import of pytest
     "PTH123",  # Path.open instead of regular open
     "RET501",  # return None
-    "UP006",  # deprecated collection types in annotations
     "UP007",  # | instead of Union
-    "UP035"  # import replacements (collections.abc)
 ]
 # ignore = ["B019", "E203", "E251", "E301", "E302", "E305", "E306", "E501", "E722", "E731", "E741", "W292", "W391"]
 

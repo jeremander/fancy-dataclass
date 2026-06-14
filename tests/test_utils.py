@@ -1,6 +1,7 @@
+from collections.abc import Sequence
 from dataclasses import dataclass
 import sys
-from typing import Any, ClassVar, Dict, List, Optional, Sequence, Union
+from typing import Any, ClassVar, Optional, Union
 
 import pytest
 from pytest import param
@@ -66,7 +67,7 @@ def test_camel_case_to_kebab_case(camel, kebab):
     (Union[int, Optional[float]], True),
     (Union[Optional[float], int], True),
     (Optional[type(None)], False),  # Optional[NoneType] -> NoneType
-    (List[Optional[int]], False),
+    (list[Optional[int]], False),
 ])
 def test_type_is_optional(tp, is_optional):
     assert type_is_optional(tp) == is_optional
@@ -101,11 +102,11 @@ def test_type_is_optional_py310():  # novermin
     (NoneType, Optional[int], True),  # novermin
     (Sequence[str], Sequence[str], True),
     (Sequence[int], Sequence[str], False),
-    (List[str], List[str], True),
-    (List[int], List[str], False),
-    (Dict[int, str], Dict[int, str], True),
-    (Dict[int, str], Dict[int, int], False),
-    (Dict[bool, str], Dict[int, str], True),
+    (list[str], list[str], True),
+    (list[int], list[str], False),
+    (dict[int, str], dict[int, str], True),
+    (dict[int, str], dict[int, int], False),
+    (dict[bool, str], dict[int, str], True),
     (ClassVar[int], ClassVar[int], True),
     (ClassVar[bool], ClassVar[int], True),
     (ClassVar[int], ClassVar[str], False),
@@ -130,18 +131,18 @@ def test_check_is_subtype(tp1, tp2, output):
     (1, Union[int, str], True),
     ('a', Union[int, str], True),
     (1.0, Union[int, str], False),
-    ([], List[int], True),
-    (1, List[int], False),
-    ([1, 2], List[int], True),
-    ([1, '2'], List[int], False),
-    ({}, Dict[str, int], True),
-    (1, Dict[str, int], False),
-    ({'a': 1}, Dict[str, int], True),
-    ({'a': '1'}, Dict[str, int], False),
-    ({'a': 1, 2: 2}, Dict[str, int], False),
-    (None, Optional[List[int]], True),
-    ([1, 2], Optional[List[int]], True),
-    ({}, Optional[List[int]], False),
+    ([], list[int], True),
+    (1, list[int], False),
+    ([1, 2], list[int], True),
+    ([1, '2'], list[int], False),
+    ({}, dict[str, int], True),
+    (1, dict[str, int], False),
+    ({'a': 1}, dict[str, int], True),
+    ({'a': '1'}, dict[str, int], False),
+    ({'a': 1, 2: 2}, dict[str, int], False),
+    (None, Optional[list[int]], True),
+    ([1, 2], Optional[list[int]], True),
+    ({}, Optional[list[int]], False),
     ((), Sequence[int], True),
     ((1, 2), Sequence[int], True),
     (None, Sequence[int], False),
@@ -262,11 +263,11 @@ class U:
 
 @dataclass
 class V:
-    v: List[C]
+    v: list[C]
 
 @dataclass
 class W:
-    w: Dict[str, C]
+    w: dict[str, C]
 
 @dataclass
 class X:

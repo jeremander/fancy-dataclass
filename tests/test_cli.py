@@ -3,10 +3,10 @@ from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, HelpFormatte
 from dataclasses import dataclass, field
 import re
 import sys
-from typing import Any, Dict, List, Literal, Optional, Tuple, Union
+from typing import Annotated, Any, Literal, Optional, Union
 
 import pytest
-from typing_extensions import Annotated, Doc
+from typing_extensions import Doc
 
 from fancy_dataclass.cli import ArgparseDataclass, CLIDataclass
 from fancy_dataclass.versioned import Version
@@ -49,14 +49,14 @@ class DC1(CLIDataclass):
     choice: str = field(default='a', metadata={'choices': ['a', 'b', 'c'], 'help': 'one of three choices'})
     optional: str = field(default='default', metadata={'nargs': '?', 'const': 'unspecified', 'help': 'optional argument'})
     flag: bool = field(default=False, metadata={'help': 'activate flag'})
-    extra_items: List[str] = field(default_factory=list, metadata={'nargs': '*', 'help': 'list of extra items'})
+    extra_items: list[str] = field(default_factory=list, metadata={'nargs': '*', 'help': 'list of extra items'})
     x: int = field(default=7, metadata={'help': 'x value', 'group': 'numeric arguments', 'default_help': True})
     y: float = field(default=3.14, metadata={'help': 'y value', 'group': 'numeric arguments'})
-    pair: Tuple[int, int] = field(default=(0, 0), metadata={'nargs': 2, 'metavar': ('FIRST', 'SECOND'), 'help': 'pair of integers', 'group': 'numeric arguments'})
+    pair: tuple[int, int] = field(default=(0, 0), metadata={'nargs': 2, 'metavar': ('FIRST', 'SECOND'), 'help': 'pair of integers', 'group': 'numeric arguments'})
     ignored_value: str = field(default='ignored', metadata={'args': [], 'parse_exclude': True})
 
     @classmethod
-    def parser_kwargs(cls) -> Dict[str, Any]:
+    def parser_kwargs(cls) -> dict[str, Any]:
         return {**super().parser_kwargs(), 'formatter_class': ArgumentDefaultsHelpFormatter}
 
     def run(self) -> None:
@@ -218,7 +218,7 @@ def test_argparse_options():
     # positional list
     @dataclass
     class DC16(ArgparseDataclass):
-        vals: List[int]
+        vals: list[int]
     assert DC16.from_cli_args([]).vals == []
     assert DC16.from_cli_args(['1', '2']).vals == [1, 2]
     check_invalid_args(DC16, ['1', 'a'], "invalid int value: 'a'")
@@ -226,10 +226,10 @@ def test_argparse_options():
     # optional list
     @dataclass
     class DC17(ArgparseDataclass):
-        vals: List[int] = field(default_factory=list)
+        vals: list[int] = field(default_factory=list)
     @dataclass
     class DC18(ArgparseDataclass):
-        vals: List[int] = field(default_factory=list, metadata={'nargs': '+'})
+        vals: list[int] = field(default_factory=list, metadata={'nargs': '+'})
     for cls in [DC17, DC18]:
         assert cls.from_cli_args([]).vals == []
         assert cls.from_cli_args(['--vals', '1']).vals == [1]
@@ -246,7 +246,7 @@ def test_argparse_options():
     # append action
     @dataclass
     class DC20(ArgparseDataclass):
-        vals: List[int] = field(default_factory=list, metadata={'action': 'append'})
+        vals: list[int] = field(default_factory=list, metadata={'action': 'append'})
     assert DC20.from_cli_args([]).vals == []
     assert DC20.from_cli_args(['--vals', '1']).vals == [1]
     assert DC20.from_cli_args(['--vals', '1', '--vals', '2']).vals == [1, 2]
@@ -255,7 +255,7 @@ def test_argparse_options():
     # integer nargs
     @dataclass
     class DC21(ArgparseDataclass):
-        vals: List[int] = field(metadata={'nargs': 2})
+        vals: list[int] = field(metadata={'nargs': 2})
     assert DC21.from_cli_args(['1', '2']).vals == [1, 2]
     check_invalid_args(DC21, [], 'required: vals')
     check_invalid_args(DC21, ['1'], 'required: vals')
@@ -321,7 +321,7 @@ def test_choices():
     # list of Literal
     @dataclass
     class DC7(ArgparseDataclass):
-        x: List[Literal['a', 'b']] = field(default_factory=list, metadata={'nargs': '*'})
+        x: list[Literal['a', 'b']] = field(default_factory=list, metadata={'nargs': '*'})
     assert DC7.from_cli_args([]).x == []
     assert DC7.from_cli_args(['-x']).x == []
     assert DC7.from_cli_args(['-x', 'a']).x == ['a']
@@ -567,7 +567,7 @@ def test_nested():
         x: int
     @dataclass
     class A(ArgparseDataclass):
-        vals: List[X]
+        vals: list[X]
     # list of nested ArgparseDataclass not allowed
     with pytest.raises(ValueError, match='list of X not allowed'):
         _ = A.make_parser()
@@ -582,7 +582,7 @@ def test_nested():
     assert B.from_cli_args(['1', '2']) == B(XY(1, 2))
     @dataclass
     class C(ArgparseDataclass):
-        vals: List[XY]
+        vals: list[XY]
     with pytest.raises(ValueError, match='list of XY not allowed'):
         _ = C.make_parser()
     # optional type OK
@@ -1118,14 +1118,14 @@ def test_default_help():
 def test_optional_list():
     @dataclass
     class DC1(ArgparseDataclass):
-        strings: Optional[List[str]] = field(default=None, metadata={'nargs': '*'})
+        strings: Optional[list[str]] = field(default=None, metadata={'nargs': '*'})
     assert DC1.from_cli_args([]) == DC1(None)
     assert DC1.from_cli_args(['--strings']) == DC1([])
     assert DC1.from_cli_args(['--strings', 'abc']) == DC1(['abc'])
     assert DC1.from_cli_args(['--strings', 'abc', 'def']) == DC1(['abc', 'def'])
     @dataclass
     class DC2(ArgparseDataclass):
-        strings: Optional[List[str]] = field(default=None, metadata={'nargs': '+'})
+        strings: Optional[list[str]] = field(default=None, metadata={'nargs': '+'})
     assert DC2.from_cli_args([]) == DC2(None)
     check_invalid_args(DC2, ['--strings'], 'expected at least one argument')
     assert DC2.from_cli_args(['--strings', 'abc']) == DC2(['abc'])

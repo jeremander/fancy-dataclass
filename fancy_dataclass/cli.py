@@ -1,8 +1,10 @@
 from argparse import Action, ArgumentParser, HelpFormatter, Namespace, _ArgumentGroup, _MutuallyExclusiveGroup
+import builtins
+from collections.abc import Sequence
 from contextlib import suppress
 from dataclasses import MISSING, fields
 from enum import IntEnum
-from typing import Any, Callable, ClassVar, Dict, List, Literal, Optional, Sequence, Tuple, Type, TypeVar, Union, cast, get_args, get_origin
+from typing import Any, Callable, ClassVar, Literal, Optional, TypeVar, Union, cast, get_args, get_origin
 
 from typing_extensions import Self, TypeGuard
 
@@ -19,7 +21,7 @@ ArgParser = Union[ArgumentParser, _ArgumentGroup]
 # HELPER FUNCTIONS #
 ####################
 
-def _get_parser_group_name(settings: 'ArgparseDataclassFieldSettings', name: str) -> Optional[Tuple[str, bool]]:
+def _get_parser_group_name(settings: 'ArgparseDataclassFieldSettings', name: str) -> Optional[tuple[str, bool]]:
     if settings.group:
         if settings.exclusive_group:
             raise ValueError(f'{name!r} specifies both group and exclusive_group: must choose only one')
@@ -84,8 +86,8 @@ class ArgparseDataclassSettings(MixinSettings):
     - `version`: if set, expose a `--version` argument displaying the version automatically (see [`argparse`](https://docs.python.org/3/library/argparse.html#action) docs)
         - If `prog` is set, displays the program name and the version, otherwise just the version.
     - `default_help`: if set to `True`, includes each field's default value in its help string (this can be overridden by the field-level `default_help` flag)"""
-    parser_class: Type[ArgumentParser] = ArgumentParser
-    formatter_class: Optional[Type[HelpFormatter]] = None
+    parser_class: type[ArgumentParser] = ArgumentParser
+    formatter_class: Optional[type[HelpFormatter]] = None
     help_descr: Optional[str] = None
     help_descr_brief: Optional[str] = None
     command_name: Optional[str] = None
@@ -134,7 +136,7 @@ class ArgparseDataclassFieldSettings(DocFieldSettings):
     - If `required` is specified in the metadata, this will take precedence over the default behavior above."""
     type: Optional[Union[type, Callable[[Any], Any]]] = None  # can be used to define custom constructor
     args: Optional[Union[str, Sequence[str]]] = None
-    action: Optional[Union[str, Type[Action]]] = None
+    action: Optional[Union[str, builtins.type[Action]]] = None
     nargs: Optional[Union[str, int]] = None
     const: Optional[Any] = None
     choices: Optional[Sequence[Any]] = None
@@ -175,7 +177,7 @@ class ArgparseDataclass(DataclassMixin):
             cls.__settings__.command_name = camel_case_to_kebab_case(cls.__name__)
 
     @classmethod
-    def __post_dataclass_wrap__(cls, wrapped_cls: Type[Self]) -> None:
+    def __post_dataclass_wrap__(cls, wrapped_cls: type[Self]) -> None:
         subcommand = None
         names = set()
         for fld in fields(wrapped_cls):  # type: ignore[arg-type]
@@ -210,7 +212,7 @@ class ArgparseDataclass(DataclassMixin):
         Returns:
             Name of the subcommand, if a subcommand field exists, and `None` otherwise"""
         if self.subcommand_field_name is not None:
-            tp: Type[ArgparseDataclass] = type(getattr(self, self.subcommand_field_name))
+            tp: type[ArgparseDataclass] = type(getattr(self, self.subcommand_field_name))
             return tp.__settings__.command_name
         return None
 
@@ -231,19 +233,19 @@ class ArgparseDataclass(DataclassMixin):
         return brief
 
     @classmethod
-    def parser_kwargs(cls) -> Dict[str, Any]:
+    def parser_kwargs(cls) -> dict[str, Any]:
         """Gets keyword arguments that will be passed to the top-level argument parser.
 
         Returns:
             Keyword arguments passed upon construction of the `ArgumentParser`"""
-        kwargs: Dict[str, Any] = {'description': cls._parser_description()}
+        kwargs: dict[str, Any] = {'description': cls._parser_description()}
         for key in ['formatter_class', 'prog']:
             if (val := getattr(cls.__settings__, key)) is not None:
                 kwargs[key] = val
         return kwargs
 
     @classmethod
-    def _parser_argument_kwarg_names(cls) -> List[str]:
+    def _parser_argument_kwarg_names(cls) -> list[str]:
         """Gets keyword argument names that will be passed when adding arguments to the argument parser.
 
         Returns:
@@ -275,7 +277,7 @@ class ArgparseDataclass(DataclassMixin):
             name: Name of the argument to configure"""
         def is_nested(tp: type) -> TypeGuard[ArgparseDataclass]:
             return issubclass_safe(tp, ArgparseDataclass)
-        kwargs: Dict[str, Any] = {}
+        kwargs: dict[str, Any] = {}
         fld = cls.__dataclass_fields__[name]  # type: ignore[attr-defined]
         meta = fld.metadata
         settings = cls._field_settings(fld).adapt_to(ArgparseDataclassFieldSettings)
@@ -500,7 +502,7 @@ class ArgparseDataclass(DataclassMixin):
         return parser
 
     @classmethod
-    def args_to_dict(cls, args: Namespace) -> Dict[str, Any]:
+    def args_to_dict(cls, args: Namespace) -> dict[str, Any]:
         """Converts a [`Namespace`](https://docs.python.org/3/library/argparse.html#argparse.Namespace) object to a dict that can be converted to the dataclass type.
 
         Override this to enable custom behavior.
@@ -587,7 +589,7 @@ class ArgparseDataclass(DataclassMixin):
         pass
 
     @classmethod
-    def from_cli_args(cls, arg_list: Optional[List[str]] = None) -> Self:
+    def from_cli_args(cls, arg_list: Optional[list[str]] = None) -> Self:
         """Constructs and configures an argument parser, then parses the given command-line arguments and uses them to construct an instance of the class.
 
         Args:
@@ -620,7 +622,7 @@ class CLIDataclass(ArgparseDataclass):
         raise NotImplementedError
 
     @classmethod
-    def main(cls, arg_list: Optional[List[str]] = None) -> None:
+    def main(cls, arg_list: Optional[list[str]] = None) -> None:
         """Executes the following procedures in sequence:
 
         1. Constructs a new argument parser.

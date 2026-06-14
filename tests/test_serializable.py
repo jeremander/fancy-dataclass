@@ -9,11 +9,11 @@ import math
 from pathlib import Path
 import re
 import sys
-from typing import Any, Dict, List, Literal, NamedTuple, Optional, Set, TypedDict, Union
+from typing import Annotated, Any, Literal, NamedTuple, Optional, TypedDict, Union
 
 import numpy as np
 import pytest
-from typing_extensions import Annotated, Doc
+from typing_extensions import Doc
 
 from fancy_dataclass.dict import DictDataclass
 from fancy_dataclass.json import JSONBaseDataclass, JSONDataclass, JSONSerializable
@@ -81,7 +81,7 @@ class DC2Sub(DC2):
 
 @dataclass
 class DC3(JSONDataclass):
-    list: List[int]
+    list: list[int]
 
 class MyObject:
     """This object is not JSON-serializable."""
@@ -159,7 +159,7 @@ class Color(Flag):
 
 @dataclass
 class DCColors(JSONDataclass):
-    colors: List[Color]
+    colors: list[Color]
 
 @dataclass
 class DCRange(JSONDataclass):
@@ -209,11 +209,11 @@ class DCFloat(JSONDataclass):
 
 @dataclass
 class DCList(JSONDataclass):
-    vals: List[DCAny]
+    vals: list[DCAny]
 
 @dataclass
 class DCListOptional(JSONDataclass):
-    vals: List[Optional[int]]
+    vals: list[Optional[int]]
 
 @dataclass
 class DCNumpy(JSONDataclass, suppress_defaults=False):
@@ -632,7 +632,7 @@ class TestJSON(TestDict):
         assert obj.to_json_string() == '[1, 2, 3]'
         @dataclass
         class MyDC1(JSONBaseDataclass, store_type='off', suppress_defaults=False):
-            xs: Set[int] = field(default_factory=lambda: {1, 2, 3})
+            xs: set[int] = field(default_factory=lambda: {1, 2, 3})
         @dataclass
         class MyDC2(MyDC1):
             @classmethod
@@ -734,7 +734,7 @@ class TestTOML(TestDict):
             ...
         @dataclass
         class DCOuter0(TOMLDataclass):
-            inner: Dict[str, DCInner0]
+            inner: dict[str, DCInner0]
         obj = DCOuter0({'key': DCInner0()})
         self._test_serialize_round_trip(obj, tmp_path)
         assert obj.to_toml_string() == '[inner.key]\n'
@@ -743,7 +743,7 @@ class TestTOML(TestDict):
         assert obj.to_toml_string() == '\n[inner.key1]\n\n[inner.key2]\n'
         @dataclass
         class DCOuter01(TOMLDataclass):
-            inner: Annotated[Dict[str, DCInner0], Doc('An inner field')]
+            inner: Annotated[dict[str, DCInner0], Doc('An inner field')]
         obj = DCOuter01({'key': DCInner0()})
         self._test_serialize_round_trip(obj, tmp_path)
         assert obj.to_toml_string() == '\n# An inner field\n[inner.key]\n'
@@ -755,7 +755,7 @@ class TestTOML(TestDict):
             x: int = 5
         @dataclass
         class DCOuter1(TOMLDataclass):
-            inner: Dict[str, DCInner1]
+            inner: dict[str, DCInner1]
         obj = DCOuter1({'key': DCInner1()})
         self._test_serialize_round_trip(obj, tmp_path)
         assert obj.to_toml_string() == '[inner.key]\nx = 5\n'
@@ -788,7 +788,7 @@ class TestTOML(TestDict):
         assert obj.to_toml_string() == '# a string\nstring = "abc"\n# a flag\nflag = false\n\n# nested object\n[nested]\na = 1\n# b value\nb = 2\n# c value\nc = 3\n# d value\nd = 4\n# Comment Line 1\n# Comment Line 2\ne = 5\n# Comment Line 1\n# Comment Line 2\n# \t\n# \n# Comment Line 3\nf = 6\n'
         @dataclass
         class DCList(TOMLDataclass):
-            vals: Annotated[List[int], Doc('a list')]
+            vals: Annotated[list[int], Doc('a list')]
         obj = DCList([1, 2, 3])
         self._test_serialize_round_trip(obj, tmp_path)
         assert obj.to_toml_string() == '# a list\nvals = [1, 2, 3]\n'

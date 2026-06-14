@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 import re
-from typing import ClassVar, List, Optional, Union
+from typing import ClassVar, Optional, Union
 
 import pytest
 
@@ -180,14 +180,14 @@ def test_repeat_option_name():
     # ordinary list value, so list multiple values directly
     @dataclass
     class DC1(SubprocessDataclass, exec='prog'):
-        my_arg: List[int]
+        my_arg: list[int]
     assert DC1([]).get_args() == ['prog']
     assert DC1([1]).get_args() == ['prog', '--my-arg', '1']
     assert DC1([1, 2]).get_args() == ['prog', '--my-arg', '1', '2']
     # repeat_option_name=True, so repeat the option name multiple times
     @dataclass
     class DC2(SubprocessDataclass, exec='prog'):
-        my_arg: List[int] = field(metadata={'repeat_option_name': True})
+        my_arg: list[int] = field(metadata={'repeat_option_name': True})
     assert DC2([]).get_args() == ['prog']
     assert DC2([1]).get_args() == ['prog', '--my-arg', '1']
     assert DC2([1, 2]).get_args() == ['prog', '--my-arg', '1', '--my-arg', '2']
@@ -195,7 +195,7 @@ def test_repeat_option_name():
     with pytest.raises(ValueError, match=r'cannot repeat option name for positional field \(subprocess_positional=True\)'):
         @dataclass
         class DC3(SubprocessDataclass, exec='prog'):
-            my_arg: List[int] = field(metadata={'subprocess_positional': True, 'repeat_option_name': True})
+            my_arg: list[int] = field(metadata={'subprocess_positional': True, 'repeat_option_name': True})
 
 def test_class_var():
     """Tests behavior of ClassVar fields."""

@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
 import pickle
-from typing import Dict
 import warnings
 
 import numpy as np
@@ -23,7 +22,7 @@ class _Example(SQLDataclass):
     c: str
     d: datetime
     e: np.ndarray
-    f: Dict[str, int]
+    f: dict[str, int]
     g: Obj
 
 @register()
