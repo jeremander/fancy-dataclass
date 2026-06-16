@@ -364,7 +364,7 @@ class ArgparseDataclass(DataclassMixin):
             kwargs['required'] = settings.required
         has_default = 'default' in kwargs
         default = kwargs.get('default')
-        if fld.type is bool:  # use boolean flag instead of an argument
+        if tp is bool:  # use boolean flag instead of an argument
             action = settings.action or 'store_true'
             kwargs['action'] = action
             if isinstance(action, str) and (action not in ['store_true', 'store_false']):

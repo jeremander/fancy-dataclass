@@ -18,13 +18,15 @@ Types of changes:
 
 ## [0.11.0]
 
+2026-06-16
+
 ### Added
 
 - `ArgparseDataclass`: can now use `Annotated`/`Doc` pattern (see [PEP 727](https://peps.python.org/pep-0727/)) as alternative means to specify `--help` text for dataclass fields.
 
 ### Removed
 
-- Support for Python 3.8.
+- Dropped support for Python 3.8.
 
 ## [0.10.2]
 
