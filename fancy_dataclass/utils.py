@@ -144,10 +144,7 @@ def type_is_optional(tp: type) -> bool:
         True if the type is Optional"""
     origin_type = get_origin(tp)
     args = get_args(tp)
-    union_types: list[Any] = [Union]
-    if hasattr(types, 'UnionType'):  # Python >= 3.10
-        union_types.append(types.UnionType)  # novermin
-    return (origin_type in union_types) and (type(None) in args)
+    return (origin_type in _UNION_TYPES) and (type(None) in args)
 
 def all_subclasses(cls: type[T]) -> list[type[T]]:
     """Gets all subclasses of a given class, including the class itself.

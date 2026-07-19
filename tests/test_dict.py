@@ -1,5 +1,6 @@
 from dataclasses import InitVar, dataclass, field, make_dataclass
 import re
+import sys
 from typing import Annotated, ClassVar, Optional
 
 import pytest
@@ -665,3 +666,35 @@ def test_alias():
     with pytest.raises(ValueError, match=re.escape("'x' field (alias 'y') is required")):
         _ = MyDC.from_dict({'x': 4})
     assert MyDC.from_dict({'x': 4, 'y': 3}) == obj
+
+def test_typealias():
+    """Tests a field whose type is defined as a type alias."""
+    classes = []
+    # plain type alias
+    IntAlias1 = int
+    @dataclass
+    class MyDC1(DictDataclass):
+        x: IntAlias1  # type: ignore[valid-type]
+    classes.append(MyDC1)
+    if sys.version_info >= (3, 10):
+        from typing import TypeAlias  # novermin
+        # TypeAlias
+        IntAlias2: TypeAlias = int
+        @dataclass
+        class MyDC2(DictDataclass):
+            x: IntAlias2
+        classes.append(MyDC2)
+    if sys.version_info >= (3, 12):
+        # 'type' keyword
+        # type IntAlias3 = int
+        # NOTE: ruff won't parse the line above without specifying version 3.12+, so simulate it as follows:
+        import typing
+        IntAlias3 = typing.TypeAliasType('IntAlias3', int)  # novermin
+        @dataclass
+        class MyDC3(DictDataclass):
+            x: IntAlias3
+        classes.append(MyDC3)
+    for cls in classes:
+        obj = cls(1)
+        assert obj.to_dict() == {'x': 1}
+        assert cls.from_dict(obj.to_dict()) == obj

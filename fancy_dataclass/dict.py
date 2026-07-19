@@ -3,6 +3,7 @@ from collections.abc import Iterable
 from contextlib import suppress
 import dataclasses
 from dataclasses import Field, InitVar
+import typing
 from typing import Any, ClassVar, Literal, Optional, TypeVar, _TypedDictMeta, get_args, get_origin  # type: ignore[attr-defined]
 import warnings
 
@@ -18,6 +19,8 @@ T = TypeVar('T', bound=DataclassMixin)
 AnyDict = dict[str, Any]
 # mode for storing data type in dict
 StoreTypeMode = Literal['auto', 'off', 'name', 'qualname']
+# Python 3.12+ wraps types defined as aliases with 'type' keyword in TypeAliasType
+_TYPE_ALIAS_TYPE = getattr(typing, 'TypeAliasType', None)
 
 
 @dataclass_kw_only()
@@ -261,6 +264,9 @@ class DictDataclass(DataclassMixin):
         ttp = type(tp)
         if ttp is _AnnotatedAlias:  # Annotated: just ignore the annotation
             return convert_val(get_args(tp)[0], val)
+        if (_TYPE_ALIAS_TYPE is not None) and (ttp is _TYPE_ALIAS_TYPE):
+            # Python 3.12 'type' keyword wraps the type in a TypeAliasType
+            return cls._from_dict_value(tp.__value__, val)  # type: ignore[attr-defined]
         if issubclass_safe(tp, list):
             # class may inherit from List[T], so get the parent class
             assert hasattr(tp, '__orig_bases__')
