@@ -72,7 +72,7 @@ dependencies = [
 
 [tool.hatch.envs.lint.scripts]
 # linting
-run-ruff = "ruff check"
+run-ruff = "ruff check {args:fancy_dataclass tests}"
 # ensure compatibility with minimum Python version
 run-vermin = "vermin {args:.}"
 # type-checking

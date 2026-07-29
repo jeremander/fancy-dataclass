@@ -16,9 +16,14 @@ Types of changes:
 
 ## [Unreleased]
 
+## [0.11.1]
+
+2026-07-29
+
 ### Fixed
 
 - Ensure `DictDataclass` can convert values whose types are Python 3.12 type aliases.
+- Ensure `ConfigDataclass` can load from a file even if nested dataclasses do not inherit from `DictDataclass` ([#7]).
 
 ## [0.11.0]
 
@@ -422,7 +427,8 @@ Types of changes:
     - `SQLDataclass`: SQL persistence via `sqlalchemy`
     - `SubprocessDataclass`: call out to another program via `subprocess`
 
-[unreleased]: https://github.com/jeremander/fancy-dataclass/compare/v0.11.0...HEAD
+[unreleased]: https://github.com/jeremander/fancy-dataclass/compare/v0.11.1...HEAD
+[0.11.1]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.11.1
 [0.11.0]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.11.0
 [0.10.2]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.10.2
 [0.10.1]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.10.1
@@ -454,6 +460,7 @@ Types of changes:
 [#3]: https://github.com/jeremander/fancy-dataclass/issues/3
 [#4]: https://github.com/jeremander/fancy-dataclass/issues/4
 [#5]: https://github.com/jeremander/fancy-dataclass/issues/5
+[#7]: https://github.com/jeremander/fancy-dataclass/issues/7
 
 <br>
 
