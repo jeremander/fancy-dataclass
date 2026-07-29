@@ -87,11 +87,22 @@ def test_inner_plain(tmpdir):
     with Outer(Inner(x=5)).as_config():
         assert Outer.get_config().inner.x == 5
     assert Outer.get_config().inner.x == 4
+    with pytest.raises(AttributeError, match="has no attribute 'to_dict'"):
+        _ = inner.to_dict()
+    inner = Inner()
+    cfg = Outer(inner)
+    cfg_dict = cfg.to_dict()
+    assert cfg_dict == {'inner': inner, 'y': 'a'}
+    assert Outer.from_dict(cfg_dict) == cfg
+    d = {'inner': {'x': 1}, 'y': 'a'}
+    assert cfg_dict != d
+    with pytest.raises(TypeConversionError, match="could not convert {'x': 1}"):
+        _ = Outer.from_dict(d)
     toml_str = 'y = "a"\n[inner]\nx = 1\n'
     cfg_path = tmpdir / 'test.toml'
     Path(cfg_path).write_text(toml_str)
-    with pytest.raises(TypeConversionError, match="could not convert {'x': 1}"):
-        _ = Outer.load_config(cfg_path)
+    # can load from config file even though nested Inner class is *not* a DictDataclass
+    assert Outer.load_config(cfg_path) == cfg
 
 def test_dict_config(tmpdir):
     """Tests behavior of DictConfig."""
