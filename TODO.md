@@ -4,11 +4,10 @@
 
 ## v0.12.0
 
-- Remove deprecated things
 - Documentation
   - Dataclass mixins/settings
     - For now, `dataclass` decorator is required
-    - Note purpose of `flattened=True` (good for tabular data like CSV/SQL)
+    - Note purpose of `flatten=True` (good for tabular data like CSV/SQL)
     - Advanced: how to handle name collisions in settings for multiple inheritance (e.g. `ArgparseDataclass`/`SubprocessDataclass`)
     - Emphasize type conversions are only to/from dict, not general constructors (this is a difference from `pydantic`).
   - JSON

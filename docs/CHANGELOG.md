@@ -16,6 +16,11 @@ Types of changes:
 
 ## [Unreleased]
 
+### Removed
+
+- `DictDataclass`
+    - Removed deprecated class settings, `flattened` and `strict`.
+
 ## [0.11.1]
 
 2026-07-29

@@ -14,7 +14,6 @@ from typing import (  # type: ignore[attr-defined]
     get_args,
     get_origin,
 )
-import warnings
 
 from typing_extensions import Self, _AnnotatedAlias
 
@@ -63,9 +62,7 @@ class DictDataclassSettings(MixinSettings):
     suppress_defaults: bool = True
     suppress_none: bool = False
     store_type: StoreTypeMode = 'auto'
-    flattened: Optional[bool] = None  # DEPRECATED
     flatten: bool = False
-    strict: Optional[bool] = None  # DEPRECATED
     allow_extra_fields: bool = True
     validate: bool = True
 
@@ -74,20 +71,6 @@ class DictDataclassSettings(MixinSettings):
         if self.store_type not in get_args(StoreTypeMode):
             raise ValueError(f'invalid value {self.store_type!r} for store_type mode')
         self._store_type = self.store_type  # stores the value where 'auto' has been resolved from base class
-        if self.flattened is not None:
-            warnings.warn(
-                f"'flattened' is a deprecated field for {self.__class__.__name__}, use 'flatten' instead",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            self.flatten = self.flattened
-        if self.strict is not None:
-            warnings.warn(
-                f"'strict' is a deprecated field for {self.__class__.__name__}, use 'allow_extra_fields' instead",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            self.allow_extra_fields = not self.strict
 
     def should_store_type(self) -> bool:
         """Returns `True` if the type should be stored (qualified or unqualified) in the output dict."""
