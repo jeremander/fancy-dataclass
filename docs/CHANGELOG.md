@@ -19,6 +19,7 @@ Types of changes:
 ### Fixed
 
 - Ensure `DictDataclass` can convert values whose types are Python 3.12 type aliases.
+- Ensure `ConfigDataclass` can load from a file even if nested dataclasses do not inherit from `DictDataclass` ([#7]).
 
 ## [0.11.0]
 
@@ -454,6 +455,7 @@ Types of changes:
 [#3]: https://github.com/jeremander/fancy-dataclass/issues/3
 [#4]: https://github.com/jeremander/fancy-dataclass/issues/4
 [#5]: https://github.com/jeremander/fancy-dataclass/issues/5
+[#7]: https://github.com/jeremander/fancy-dataclass/issues/7
 
 <br>
 
