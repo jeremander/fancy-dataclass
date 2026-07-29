@@ -1,14 +1,16 @@
 from abc import ABC, abstractmethod
 from collections.abc import Iterator
 from contextlib import contextmanager
-import json
+from dataclasses import is_dataclass, make_dataclass
 from pathlib import Path
 from typing import Any, ClassVar, Optional
 
 from typing_extensions import Self
 
-from fancy_dataclass.dict import AnyDict, DictDataclass
-from fancy_dataclass.utils import AnyPath
+from fancy_dataclass.dict import DictDataclass
+from fancy_dataclass.mixin import DataclassMixin
+from fancy_dataclass.serialize import FileSerializable
+from fancy_dataclass.utils import AnyPath, coerce_to_dataclass, dataclass_type_map, get_dataclass_fields
 
 
 class Config:
@@ -67,22 +69,18 @@ class FileConfig(Config, ABC):
             The newly loaded global configurations"""
 
 
-def _load_dict(path: AnyPath) -> AnyDict:
+def _get_dataclass_type_for_path(path: AnyPath) -> type[FileSerializable]:
     p = Path(path)
     if not p.suffix:
         raise ValueError(f'filename {p} has no extension')
     ext_lower = p.suffix.lower()
-    if ext_lower not in ['.json', '.toml']:
-        raise ValueError(f'unknown config file extension {p.suffix!r}')
-    with open(p) as f:
-        if ext_lower == '.json':
-            d = json.load(f)
-        elif ext_lower == '.toml':
-            import tomlkit as tk
-            d = tk.load(f)
-    if not isinstance(d, dict):
-        raise ValueError('loaded JSON is not a dict')
-    return d
+    if ext_lower == '.json':
+        from fancy_dataclass.json import JSONDataclass
+        return JSONDataclass
+    if ext_lower == '.toml':
+        from fancy_dataclass.toml import TOMLDataclass
+        return TOMLDataclass
+    raise ValueError(f'unknown config file extension {p.suffix!r}')
 
 
 class ConfigDataclass(DictDataclass, FileConfig, suppress_defaults=False, store_type='off'):
@@ -95,9 +93,24 @@ class ConfigDataclass(DictDataclass, FileConfig, suppress_defaults=False, store_
     - TOML
     """
 
+    @staticmethod
+    def _wrap_config_dataclass(mixin_cls: type[DataclassMixin], cls: type['ConfigDataclass']) -> type[DataclassMixin]:
+        """Recursively wraps a DataclassMixin class around a ConfigDataclass so that nested dataclass fields inherit from the same mixin."""
+        def _wrap(tp: type) -> type:
+            if is_dataclass(tp):
+                wrapped_cls = mixin_cls.wrap_dataclass(tp)
+                field_data = [(fld.name, fld.type, fld) for fld in get_dataclass_fields(tp, include_all=True)]
+                return make_dataclass(tp.__name__, field_data, bases=wrapped_cls.__bases__, namespace=dict(wrapped_cls.__dict__))
+            return tp
+        return _wrap(dataclass_type_map(cls, _wrap))  # type: ignore[arg-type]
+
     @classmethod
     def load_config(cls, path: AnyPath) -> Self:  # noqa: D102
-        cfg = cls.from_dict(_load_dict(path))
+        # cfg = cls.from_dict(_load_dict(path))
+        tp = _get_dataclass_type_for_path(path)
+        new_cls: type[FileSerializable] = ConfigDataclass._wrap_config_dataclass(tp, cls)  # type: ignore[arg-type, assignment]
+        with open(path) as fp:
+            cfg: Self = coerce_to_dataclass(cls, new_cls._from_file(fp))
         cfg.update_config()
         return cfg
 
@@ -116,7 +129,9 @@ class DictConfig(FileConfig, dict[Any, Any]):
 
     @classmethod
     def load_config(cls, path: AnyPath) -> Self:  # noqa: D102
-        cfg = cls(_load_dict(path))
+        tp = _get_dataclass_type_for_path(path)
+        with open(path) as fp:
+            cfg = cls(tp._text_file_to_dict(fp))  # type: ignore[attr-defined]
         cfg.update_config()
         return cfg
 
