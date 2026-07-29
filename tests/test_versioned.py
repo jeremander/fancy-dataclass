@@ -10,7 +10,14 @@ import pytest
 
 from fancy_dataclass.json import JSONDataclass
 from fancy_dataclass.utils import MissingRequiredFieldError, fully_qualified_class_name
-from fancy_dataclass.versioned import _VERSIONED_DATACLASS_REGISTRY, Version, VersionedDataclass, _VersionedDataclassGroup, _VersionedDataclassRegistry, version
+from fancy_dataclass.versioned import (
+    _VERSIONED_DATACLASS_REGISTRY,
+    Version,
+    VersionedDataclass,
+    _VersionedDataclassGroup,
+    _VersionedDataclassRegistry,
+    version,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -229,7 +236,9 @@ def test_versioned_dataclass_registry():
         ...
     A_v2 = A
     reg.register_class(A_v2, 2)
-    assert reg.groups_by_name == {'A': _VersionedDataclassGroup('A', {Version(1): A_v1, Version(2): A_v2}, {A_v1: Version(1), A_v2: Version(2)})}
+    assert reg.groups_by_name == {
+        'A': _VersionedDataclassGroup('A', {Version(1): A_v1, Version(2): A_v2}, {A_v1: Version(1), A_v2: Version(2)}),
+    }
     assert reg.get_class('A', version=1) is A_v1
     assert reg.get_class('A', version=2) is A_v2
     assert reg.get_class('A', version=None) is A_v2
@@ -255,7 +264,9 @@ def test_global_versioned_dataclass_registry():
     class A:
         ...
     A_v5 = A
-    assert reg.groups_by_name == {'A': _VersionedDataclassGroup('A', {Version(0): A_v0, Version(5): A_v5}, {A_v0: Version(0), A_v5: Version(5)})}
+    assert reg.groups_by_name == {
+        'A': _VersionedDataclassGroup('A', {Version(0): A_v0, Version(5): A_v5}, {A_v0: Version(0), A_v5: Version(5)}),
+    }
     assert reg.get_class('A', version=5) is A_v5
     assert reg.get_class('A') is A_v5
     # simulate importing from a module

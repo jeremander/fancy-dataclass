@@ -7,7 +7,8 @@ from fancy_dataclass.func import func_dataclass
 
 
 def test_func_dataclass():
-    """Tests the func_dataclass decorator which constructs a new dataclass type from a function with default arguments."""
+    """Tests the func_dataclass decorator which constructs a new dataclass type from a function with
+    default arguments."""
     # no args
     def return_123() -> int:
         return 123

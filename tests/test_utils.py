@@ -6,7 +6,16 @@ from typing import Any, ClassVar, Optional, Union
 import pytest
 from pytest import param
 
-from fancy_dataclass.utils import _is_instance, _is_subtype, camel_case_to_kebab_case, coerce_to_dataclass, get_dataclass_fields, merge_dataclasses, snake_case_to_camel_case, type_is_optional
+from fancy_dataclass.utils import (
+    _is_instance,
+    _is_subtype,
+    camel_case_to_kebab_case,
+    coerce_to_dataclass,
+    get_dataclass_fields,
+    merge_dataclasses,
+    snake_case_to_camel_case,
+    type_is_optional,
+)
 
 
 try:

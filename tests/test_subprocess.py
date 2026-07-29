@@ -44,13 +44,21 @@ def test_executable():
     with pytest.raises(ValueError, match='no executable identified for use with DC4 instance'):
         obj.run_subprocess()
     # multiple exec fields
-    with pytest.raises(TypeError, match=re.escape("cannot have more than one field with 'exec' flag set to True (already set executable to prog1)")):
+    with pytest.raises(
+        TypeError,
+        match=re.escape(
+            "cannot have more than one field with 'exec' flag set to True (already set executable to prog1)"
+        ),
+    ):
         @dataclass
         class DC5(SubprocessDataclass):
             prog1: ClassVar[str] = field(metadata={'exec': True})
             prog2: str = field(metadata={'exec': True})
     # exec in both class settings and field
-    with pytest.raises(TypeError, match = re.escape("cannot set field's 'exec' flag to True (class already set executable to prog1)")):
+    with pytest.raises(
+        TypeError,
+        match=re.escape("cannot set field's 'exec' flag to True (class already set executable to prog1)"),
+    ):
         @dataclass
         class DC6(SubprocessDataclass, exec='prog1'):
             prog2: str = field(metadata={'exec': True})
@@ -77,7 +85,9 @@ def test_option():
         ff: int
         g: int = field(metadata={'option_name': None})
         hh: int = field(metadata={'option_name': None})
-    assert DC1(1, 2, 3, 4, 5, 6, 7, 8).get_args() == ['prog', '-a', '1', '--b', '2', '-c', '3', '--dd', '4', '-e', '5', '--ff', '6', '-g', '7', '--hh', '8']
+    assert DC1(1, 2, 3, 4, 5, 6, 7, 8).get_args() == [
+        'prog', '-a', '1', '--b', '2', '-c', '3', '--dd', '4', '-e', '5', '--ff', '6', '-g', '7', '--hh', '8'
+    ]
     # option_name without dashes
     @dataclass
     class DC2(SubprocessDataclass, exec='prog'):
@@ -138,7 +148,8 @@ def test_positional():
 
 def test_exclusion():
     """Tests the subprocess_exclude flag."""
-    # NOTE: for now we do not error if other subprocess-related fields are set in conjunction with subprocess_exclude=True, but this flag takes priority over all else.
+    # NOTE: for now we do not error if other subprocess-related fields are set in conjunction with
+    # subprocess_exclude=True, but this flag takes priority over all else.
     @dataclass
     class DC1(SubprocessDataclass, exec='prog'):
         a: int = field(metadata={'subprocess_exclude': True})
@@ -192,7 +203,10 @@ def test_repeat_option_name():
     assert DC2([1]).get_args() == ['prog', '--my-arg', '1']
     assert DC2([1, 2]).get_args() == ['prog', '--my-arg', '1', '--my-arg', '2']
     # not allowed with positional arg
-    with pytest.raises(ValueError, match=r'cannot repeat option name for positional field \(subprocess_positional=True\)'):
+    with pytest.raises(
+        ValueError,
+        match=r'cannot repeat option name for positional field \(subprocess_positional=True\)',
+    ):
         @dataclass
         class DC3(SubprocessDataclass, exec='prog'):
             my_arg: list[int] = field(metadata={'subprocess_positional': True, 'repeat_option_name': True})

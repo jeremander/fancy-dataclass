@@ -16,7 +16,8 @@ from fancy_dataclass.utils import AnyPath, coerce_to_dataclass, dataclass_type_m
 class Config:
     """Base class for storing a collection of configurations.
 
-    Subclasses may store a class attribute, `_config`, with the current global configurations, which can be retrieved or updated by the user."""
+    Subclasses may store a class attribute, `_config`, with the current global configurations, which can be retrieved
+    or updated by the user."""
 
     _config: ClassVar[Optional[Self]] = None
 
@@ -95,12 +96,18 @@ class ConfigDataclass(DictDataclass, FileConfig, suppress_defaults=False, store_
 
     @staticmethod
     def _wrap_config_dataclass(mixin_cls: type[DataclassMixin], cls: type['ConfigDataclass']) -> type[DataclassMixin]:
-        """Recursively wraps a DataclassMixin class around a ConfigDataclass so that nested dataclass fields inherit from the same mixin."""
+        """Recursively wraps a DataclassMixin class around a ConfigDataclass so that nested dataclass fields inherit
+        from the same mixin."""
         def _wrap(tp: type) -> type:
             if is_dataclass(tp):
                 wrapped_cls = mixin_cls.wrap_dataclass(tp)
                 field_data = [(fld.name, fld.type, fld) for fld in get_dataclass_fields(tp, include_all=True)]
-                return make_dataclass(tp.__name__, field_data, bases=wrapped_cls.__bases__, namespace=dict(wrapped_cls.__dict__))
+                return make_dataclass(
+                    tp.__name__,
+                    field_data,
+                    bases=wrapped_cls.__bases__,
+                    namespace=dict(wrapped_cls.__dict__),
+                )
             return tp
         return _wrap(dataclass_type_map(cls, _wrap))  # type: ignore[arg-type]
 
@@ -118,7 +125,8 @@ class ConfigDataclass(DictDataclass, FileConfig, suppress_defaults=False, store_
 class DictConfig(FileConfig, dict[Any, Any]):
     """A collection of configurations, stored as a Python dict.
 
-    To impose a type schema on the configurations, use [`ConfigDataclass`][fancy_dataclass.config.ConfigDataclass] instead.
+    To impose a type schema on the configurations, use [`ConfigDataclass`][fancy_dataclass.config.ConfigDataclass]
+    instead.
 
     The configurations can be loaded from a file, the type of which will be inferred from its extension.
     Supported file types are:

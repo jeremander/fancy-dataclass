@@ -13,7 +13,20 @@ from pathlib import Path
 import re
 import sys
 import types
-from typing import IO, TYPE_CHECKING, Any, Callable, ClassVar, Optional, TypeVar, Union, cast, get_args, get_origin, get_type_hints
+from typing import (
+    IO,
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    ClassVar,
+    Optional,
+    TypeVar,
+    Union,
+    cast,
+    get_args,
+    get_origin,
+    get_type_hints,
+)
 
 from typing_extensions import TypeGuard, _AnnotatedAlias, dataclass_transform
 
@@ -181,7 +194,8 @@ def issubclass_safe(type1: type, type2: type) -> bool:
 def _is_subtype(tp1: type, tp2: type) -> bool:
     """Checks if one type is a subtype of the other.
 
-    This attempts to be somewhat more flexible than `issubclass` in that it will handle compound types like `List[...]`."""
+    This attempts to be somewhat more flexible than `issubclass` in that it will handle compound types
+    like `List[...]`."""
     # TODO: make this more complete
     if tp2 is Any:
         return True
@@ -204,7 +218,8 @@ def _is_subtype(tp1: type, tp2: type) -> bool:
 def _is_instance(obj: Any, tp: type) -> bool:
     """Checks if the given object is an instance of the given type.
 
-    This attempts to be somewhat more flexible than `isinstance` in that it will handle compound types like `List[...]`."""
+    This attempts to be somewhat more flexible than `isinstance` in that it will handle compound types
+    like `List[...]`."""
     # TODO: make this more complete
     if tp is Any:
         return True
@@ -216,7 +231,10 @@ def _is_instance(obj: Any, tp: type) -> bool:
         return isinstance(obj, origin) and all(_is_instance(val, base_type) for val in obj)
     if origin is dict:
         (key_type, val_type) = get_args(tp)
-        return isinstance(obj, dict) and all(_is_instance(key, key_type) and _is_instance(val, val_type) for (key, val) in obj.items())
+        return (
+            isinstance(obj, dict)
+            and all(_is_instance(key, key_type) and _is_instance(val, val_type) for (key, val) in obj.items())
+        )
     if origin is type:
         return isinstance(obj, type) and issubclass_safe(obj, get_args(tp)[0])
     if origin is collections.abc.Callable:
@@ -426,7 +444,10 @@ def coerce_to_dataclass(cls: type[T], obj: object) -> T:
                         if is_dataclass_type(val_type):
                             val = type(val)({key: coerce_to_dataclass(val_type, elt) for (key, elt) in val.items()})
                     elif issubclass(origin_type, tuple):
-                        val = type(val)(coerce_to_dataclass(tp, elt) if is_dataclass_type(tp) else elt for (tp, elt) in zip(get_args(fld.type), val))
+                        val = type(val)(
+                            coerce_to_dataclass(tp, elt) if is_dataclass_type(tp) else elt
+                            for (tp, elt) in zip(get_args(fld.type), val)
+                        )
                     else:
                         (elt_type,) = get_args(fld.type)
                         if is_dataclass_type(elt_type):
@@ -468,7 +489,12 @@ def dataclass_type_map(cls: type['DataclassInstance'], func: Callable[[type], ty
 # MERGING #
 ###########
 
-def merge_dataclasses(*classes: type, cls_name: str = '_', bases: Optional[tuple[type, ...]] = None, allow_duplicates: bool = False) -> type:
+def merge_dataclasses(
+    *classes: type,
+    cls_name: str = '_',
+    bases: Optional[tuple[type, ...]] = None,
+    allow_duplicates: bool = False,
+) -> type:
     """Merges multiple dataclasses together into a single dataclass whose fields have been combined.
     This preserves `ClassVar`s but does not recursively merge subfields.
 

@@ -14,8 +14,14 @@ R = TypeVar('R', covariant=True)
 Bases = Union[type, tuple[type, ...]]
 
 
-def _func_dataclass(func: Callable[[Any], Any], method_name: str = '__call__', cls_name: Optional[str] = None, bases: tuple[type, ...] = ()) -> type:
-    """Wraps a function into a new dataclass type with a single method whose positional arguments (other than self) are equivalent to that of the given function, and whose kwargs are dataclass parameters.
+def _func_dataclass(
+    func: Callable[[Any], Any],
+    method_name: str = '__call__',
+    cls_name: Optional[str] = None,
+    bases: tuple[type, ...] = (),
+) -> type:
+    """Wraps a function into a new dataclass type with a single method whose positional arguments (other than self) are
+    equivalent to that of the given function, and whose kwargs are dataclass parameters.
 
     Args:
         func: Function to convert to a dataclass
@@ -59,15 +65,31 @@ class _FuncDataclass(Protocol[P, R]):
 
 
 @overload
-def func_dataclass(func: Callable[P, R], method_name: Literal['__call__'] = '__call__', cls_name: Optional[str] = None, bases: Bases = ()) -> type[_FuncDataclass[P, R]]:
+def func_dataclass(
+    func: Callable[P, R],
+    method_name: Literal['__call__'] = '__call__',
+    cls_name: Optional[str] = None,
+    bases: Bases = (),
+) -> type[_FuncDataclass[P, R]]:
     ...
 
 @overload
-def func_dataclass(func: Callable[P, R], method_name: str = '__call__', cls_name: Optional[str] = None, bases: Bases = ()) -> type:
+def func_dataclass(
+    func: Callable[P, R],
+    method_name: str = '__call__',
+    cls_name: Optional[str] = None,
+    bases: Bases = (),
+) -> type:
     ...
 
-def func_dataclass(func: Callable[[Any], Any], method_name: str = '__call__', cls_name: Optional[str] = None, bases: Bases = ()) -> type:
-    """Wraps a function into a new dataclass type with a single method whose positional arguments (other than self) are equivalent to that of the given function, and whose kwargs are dataclass parameters.
+def func_dataclass(
+    func: Callable[[Any], Any],
+    method_name: str = '__call__',
+    cls_name: Optional[str] = None,
+    bases: Bases = (),
+) -> type:
+    """Wraps a function into a new dataclass type with a single method whose positional arguments (other than self)
+    are equivalent to that of the given function, and whose kwargs are dataclass parameters.
 
     Args:
         func: Function to convert to a dataclass

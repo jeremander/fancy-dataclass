@@ -13,7 +13,8 @@ from fancy_dataclass.utils import AnyIO, AnyPath, TypeConversionError
 
 
 def to_dict_value_basic(val: Any) -> Any:
-    """Converts an arbitrary value with a basic data type to an appropriate form for serializing to typical file formats (JSON, TOML).
+    """Converts an arbitrary value with a basic data type to an appropriate form for serializing to typical file
+    formats (JSON, TOML).
 
     Args:
         val: Value with basic data type
@@ -308,7 +309,8 @@ class TextFileSerializable(TextSerializable, BinaryFileSerializable):
 
 
 class DictFileSerializableDataclass(DictDataclass, TextFileSerializable):
-    """Mixin class for a [`DictDataclass`][fancy_dataclass.dict.DictDataclass] capable of serializing its dict representation to some type of file.
+    """Mixin class for a [`DictDataclass`][fancy_dataclass.dict.DictDataclass] capable of serializing its dict
+    representation to some type of file.
 
     Examples include JSON and TOML."""
 

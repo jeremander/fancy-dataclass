@@ -28,7 +28,8 @@ class SubprocessDataclassFieldSettings(FieldSettings):
     - `exec`: if `True`, use this field as the name of the executable, rather than an argument
     - `option_name`: command-line option name for this field
         - If a string, use this as the option name, prepending with one or two dashes if not provided
-        - If `None`, use the field name prefixed by one dash (if single letter) or two dashes, with underscores replaced by dashes
+        - If `None`, use the field name prefixed by one dash (if single letter) or two dashes, with underscores
+        replaced by dashes
         - If the field type is `bool`, will provide the argument as a flag if the value is `True`, and omit it otherwise
     - `subprocess_exclude`:
         - If `True`, exclude this field in the subprocess args
@@ -49,9 +50,12 @@ class SubprocessDataclassFieldSettings(FieldSettings):
 
 
 class SubprocessDataclass(DataclassMixin):
-    """Mixin class providing a means of converting dataclass fields to command-line arguments that can be used to make a [subprocess](https://docs.python.org/3/library/subprocess.html) call.
+    """Mixin class providing a means of converting dataclass fields to command-line arguments that can be used to make a
+    [subprocess](https://docs.python.org/3/library/subprocess.html) call.
 
-    Per-field settings can be passed into the `metadata` argument of each `dataclasses.field`. See [`SubprocessDataclassFieldSettings`][fancy_dataclass.subprocess.SubprocessDataclassFieldSettings] for the full list of settings."""
+    Per-field settings can be passed into the `metadata` argument of each `dataclasses.field`.
+    See [`SubprocessDataclassFieldSettings`][fancy_dataclass.subprocess.SubprocessDataclassFieldSettings] for the
+    full list of settings."""
 
     __settings_type__ = SubprocessDataclassSettings
     __settings__ = SubprocessDataclassSettings()
@@ -66,9 +70,14 @@ class SubprocessDataclass(DataclassMixin):
             fld_settings = cls._field_settings(fld).adapt_to(SubprocessDataclassFieldSettings)
             if fld_settings.exec:
                 if cls_exec_field is not None:
-                    raise TypeError(f"cannot set field's 'exec' flag to True (class already set executable to {cls_exec_field})")
+                    raise TypeError(
+                        f"cannot set field's 'exec' flag to True (class already set executable to {cls_exec_field})"
+                    )
                 if exec_field is not None:
-                    raise TypeError(f"cannot have more than one field with 'exec' flag set to True (already set executable to {exec_field})")
+                    raise TypeError(
+                        "cannot have more than one field with 'exec' flag set to True "
+                        f"(already set executable to {exec_field})"
+                    )
                 exec_field = fld.name
             if fld_settings.option_name == '':
                 raise ValueError('empty string not allowed for option_name')
@@ -167,7 +176,8 @@ class SubprocessDataclass(DataclassMixin):
         By default, this obtains the name of the executable as follows:
 
         1. If the class settings specify an `exec` member, uses that.
-        2. Otherwise, returns the value of the first dataclass field whose `exec` metadata flag is set to `True`, and `None` otherwise.
+        2. Otherwise, returns the value of the first dataclass field whose `exec` metadata flag is set to `True`,
+        and `None` otherwise.
 
         Returns:
             Name of the executable to run

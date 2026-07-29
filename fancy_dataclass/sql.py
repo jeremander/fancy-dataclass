@@ -59,7 +59,8 @@ class SQLDataclassFieldSettings(FieldSettings):
     Each field may define a `metadata` dict containing any of the following entries:
 
     - `sql`: if `True`, include this field as a table column (default `True`)
-    - `column`: dict of keyword arguments passed to the [`Column`](https://docs.sqlalchemy.org/en/20/core/metadata.html#sqlalchemy.schema.Column) constructor"""
+    - `column`: dict of keyword arguments passed to the
+    [`Column`](https://docs.sqlalchemy.org/en/20/core/metadata.html#sqlalchemy.schema.Column) constructor"""
     sql: bool = True
     column: Optional[dict[str, Any]] = None
 
@@ -67,11 +68,14 @@ class SQLDataclassFieldSettings(FieldSettings):
 class SQLDataclass(DataclassMixin):
     """A dataclass backed by a SQL table using the [sqlalchemy](https://www.sqlalchemy.org) ORM.
 
-    Per-field settings can be passed into the `metadata` argument of each `dataclasses.field`. See [`SQLDataclassFieldSettings`][fancy_dataclass.sql.SQLDataclassFieldSettings] for the full list of settings.
+    Per-field settings can be passed into the `metadata` argument of each `dataclasses.field`.
+    See [`SQLDataclassFieldSettings`][fancy_dataclass.sql.SQLDataclassFieldSettings] for the full list of settings.
 
     All dataclass fields will correspond to SQL columns unless their metadata is marked with `sql=False`.
 
-    Each field may also contain a `"column"` entry in its `metadata` dict. This will provide optional keyword arguments to be passed to sqlalchemy's [`Column`](https://docs.sqlalchemy.org/en/20/core/metadata.html#sqlalchemy.schema.Column) constructor.
+    Each field may also contain a `"column"` entry in its `metadata` dict. This will provide optional keyword arguments
+    to be passed to sqlalchemy's
+    [`Column`](https://docs.sqlalchemy.org/en/20/core/metadata.html#sqlalchemy.schema.Column) constructor.
 
     Some types are invalid for SQL columns; if such a type occurs, a `TypeError` will be raised."""
 
@@ -108,7 +112,10 @@ class SQLDataclass(DataclassMixin):
         return cols
 
 
-def register(reg: Reg = DEFAULT_REGISTRY, extra_cols: Optional[dict[str, Column[Any]]] = None) -> Callable[[type[SQLDataclass]], type[SQLDataclass]]:
+def register(
+    reg: Reg = DEFAULT_REGISTRY,
+    extra_cols: Optional[dict[str, Column[Any]]] = None,
+) -> Callable[[type[SQLDataclass]], type[SQLDataclass]]:
     """Decorator that registers a sqlalchemy table for a [`SQLDataclass`][fancy_dataclass.sql.SQLDataclass].
 
     Args:

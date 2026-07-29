@@ -297,7 +297,10 @@ class TestDataclassMixin:
             d: Annotated[int, 'd'] = 4  # string not wrapped in a Doc
             e: Annotated[int, Doc('bad'), Doc('e')] = 5  # multiple Docs (per PEP 727, use the last one)
             f: Annotated[int, Doc(6)] = 6  # non-string Doc (currently permitted)
-            g: Annotated[int, Doc('g1')] = field(default=7, metadata={'doc': 'g2'})  # both Doc and metadata (latter takes precedence)
+            g: Annotated[int, Doc('g1')] = field(
+                default=7,
+                metadata={'doc': 'g2'},
+            )  # both Doc and metadata (latter takes precedence)
             # stringized annotations:
             # avoid evaluating them since that would occur at import time
             h: "Annotated[int, Doc('h')]" = 8

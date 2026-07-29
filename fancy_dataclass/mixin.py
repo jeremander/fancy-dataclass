@@ -4,7 +4,13 @@ from typing import Any, ClassVar, Optional, TypeVar
 from typing_extensions import Self
 
 from fancy_dataclass.settings import FieldSettings, MixinSettings
-from fancy_dataclass.utils import check_dataclass, get_dataclass_fields, get_subclass_with_name, merge_dataclasses, obj_class_name
+from fancy_dataclass.utils import (
+    check_dataclass,
+    get_dataclass_fields,
+    get_subclass_with_name,
+    merge_dataclasses,
+    obj_class_name,
+)
 
 
 T = TypeVar('T')
@@ -12,7 +18,8 @@ T = TypeVar('T')
 _orig_process_class = dataclasses._process_class  # type: ignore[attr-defined]
 
 def _process_class(cls: type, *args: Any) -> type:
-    """Overrides `dataclasses._process_class` to activate a special `__post_dataclass_wrap__` classmethod after the `dataclasses.dataclass` decorator wraps a class."""
+    """Overrides `dataclasses._process_class` to activate a special `__post_dataclass_wrap__` classmethod after the
+    `dataclasses.dataclass` decorator wraps a class."""
     cls = _orig_process_class(cls, *args)
     for tp in cls.mro()[::-1]:
         # call __post_dataclass_wrap__ on all base classes to deal with multiple inheritance
@@ -20,7 +27,8 @@ def _process_class(cls: type, *args: Any) -> type:
             tp.__post_dataclass_wrap__(cls)
     return cls
 
-# monkey-patch dataclasses._process_class with this function so that any DataclassMixin will be able to activate its post-wrap hook
+# monkey-patch dataclasses._process_class with this function so that any DataclassMixin will be able to activate its
+# post-wrap hook
 dataclasses._process_class = _process_class  # type: ignore[attr-defined]
 
 
@@ -30,7 +38,8 @@ dataclasses._process_class = _process_class  # type: ignore[attr-defined]
 
 def _configure_mixin_settings(cls: type['DataclassMixin'], allow_duplicates: bool = False, **kwargs: Any) -> None:
     """Sets up a `DataclassMixin`'s settings (at definition time), given inheritance kwargs."""
-    # get user-specified settings (need to use __dict__ here rather than direct access, which inherits parent class's value)
+    # get user-specified settings (need to use __dict__ here rather than direct access,
+    # which inherits parent class's value)
     stype = cls.__dict__.get('__settings_type__')
     settings = cls.__dict__.get('__settings__')
     cls.__settings_kwargs__ = {}
@@ -43,7 +52,11 @@ def _configure_mixin_settings(cls: type['DataclassMixin'], allow_duplicates: boo
                 if len(stypes) == 1:
                     stype = stypes[0]
                 else:
-                    stype = merge_dataclasses(*stypes, cls_name='MiscDataclassSettings', allow_duplicates=allow_duplicates)
+                    stype = merge_dataclasses(
+                        *stypes,
+                        cls_name='MiscDataclassSettings',
+                        allow_duplicates=allow_duplicates,
+                    )
             except TypeError as e:
                 raise TypeError(f'error merging base class settings for {cls.__name__}: {e}') from e
             # inherit kwargs from the parent classes, with earlier ones in the inheritance list taking priority
@@ -106,9 +119,12 @@ def _check_field_settings(cls: type['DataclassMixin']) -> None:
 class DataclassMixin:
     """Mixin class for adding some kind functionality to a dataclass.
 
-    For example, this could provide features for conversion to/from JSON ([`JSONDataclass`][fancy_dataclass.json.JSONDataclass]), the ability to construct CLI argument parsers ([`ArgparseDataclass`][fancy_dataclass.cli.ArgparseDataclass]), etc.
+    For example, this could provide features for conversion to/from JSON
+    ([`JSONDataclass`][fancy_dataclass.json.JSONDataclass]), the ability to construct CLI argument parsers
+    ([`ArgparseDataclass`][fancy_dataclass.cli.ArgparseDataclass]), etc.
 
-    This mixin also provides a [`wrap_dataclass`][fancy_dataclass.mixin.DataclassMixin.wrap_dataclass] decorator which can be used to wrap an existing dataclass type into one that provides the mixin's functionality."""
+    This mixin also provides a [`wrap_dataclass`][fancy_dataclass.mixin.DataclassMixin.wrap_dataclass] decorator which
+    can be used to wrap an existing dataclass type into one that provides the mixin's functionality."""
 
     __settings_type__: ClassVar[Optional[type[MixinSettings]]] = None
     __settings__: ClassVar[Optional[MixinSettings]] = None
@@ -119,20 +135,29 @@ class DataclassMixin:
     def __init_subclass__(cls, **kwargs: Any) -> None:
         """When inheriting from this class, you may pass various keyword arguments after the list of base classes.
 
-        If the base class has a `__settings_type__` class attribute (subclass of [`MixinSettings`][fancy_dataclass.settings.MixinSettings]), that class will be instantiated with the provided arguments and stored as a `__settings__` attribute on the subclass. These settings can be used to customize the behavior of the subclass.
+        If the base class has a `__settings_type__` class attribute (subclass of
+        [`MixinSettings`][fancy_dataclass.settings.MixinSettings]), that class will be instantiated with the provided
+        arguments and stored as a `__settings__` attribute on the subclass.
+        These settings can be used to customize the behavior of the subclass.
 
-        Additionally, the mixin may set the `__field_settings_type__` class attribute to indicate the type (subclass of [`FieldSettings`][fancy_dataclass.settings.FieldSettings]) that should be used for field settings, which are extracted from each field's `metadata` dict."""
+        Additionally, the mixin may set the `__field_settings_type__` class attribute to indicate the type
+        (subclass of [`FieldSettings`][fancy_dataclass.settings.FieldSettings]) that should be used for field settings,
+        which are extracted from each field's `metadata` dict."""
         super().__init_subclass__()
         _configure_mixin_settings(cls, **kwargs)
         _configure_field_settings_type(cls)
 
     @classmethod
     def __post_dataclass_wrap__(cls, wrapped_cls: type[Self]) -> None:
-        """A hook that is called after the [`dataclasses.dataclass`](https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass) decorator is applied to the mixin subclass.
+        """A hook that is called after the
+        [`dataclasses.dataclass`](https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass) decorator
+        is applied to the mixin subclass.
 
         This can be used, for instance, to validate the dataclass fields at definition time.
 
-        NOTE: this function should be _idempotent_, meaning it can be called multiple times with the same effect. This is because it will be called for every base class of the `dataclass`-wrapped class, which may result in duplicate calls.
+        NOTE: this function should be _idempotent_, meaning it can be called multiple times with the same effect.
+        This is because it will be called for every base class of the `dataclass`-wrapped class, which may result in
+        duplicate calls.
 
         Args:
             wrapped_cls: Class wrapped by the `dataclass` decorator"""

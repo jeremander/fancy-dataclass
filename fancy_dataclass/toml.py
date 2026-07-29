@@ -6,7 +6,12 @@ import tomlkit as tk
 from typing_extensions import Self
 
 from fancy_dataclass.dict import AnyDict, DictDataclassFieldSettings, DictDataclassSettings
-from fancy_dataclass.serialize import DictFileSerializableDataclass, TextFileSerializable, from_dict_value_basic, to_dict_value_basic
+from fancy_dataclass.serialize import (
+    DictFileSerializableDataclass,
+    TextFileSerializable,
+    from_dict_value_basic,
+    to_dict_value_basic,
+)
 from fancy_dataclass.utils import AnyIO, dataclass_kw_only
 
 
@@ -25,10 +30,12 @@ class NoneProxy(tk.items.Item):
 class TOMLDataclassSettings(DictDataclassSettings):
     """Class-level settings for the [`TOMLDataclass`][fancy_dataclass.toml.TOMLDataclass] mixin.
 
-    In addition to the settings inherited from [`DictDataclassSettings`][fancy_dataclass.dict.DictDataclassSettings], the following options may be set:
+    In addition to the settings inherited from [`DictDataclassSettings`][fancy_dataclass.dict.DictDataclassSettings],
+    the following options may be set:
 
     - `comment`: string that will be displayed as a top-level comment in the serialized TOML
-    - `doc_as_comment`: if `True`, use the class's docstring as a top-level comment (this is overridden if `comment` is set)"""
+    - `doc_as_comment`: if `True`, use the class's docstring as a top-level comment (this is overridden if `comment`
+    is set)"""
     comment: Optional[str] = None
     doc_as_comment: bool = False
 
@@ -97,7 +104,11 @@ class TOMLDataclass(DictFileSerializableDataclass, TOMLSerializable, suppress_de
             return obj.body if hasattr(obj, 'body') else obj.value.body
         def _fix_element(obj: Any) -> Any:
             if isinstance(obj, dict):
-                tbl: Union[tk.toml_document.TOMLDocument, tk.items.Table] = tk.document() if isinstance(obj, tk.toml_document.TOMLDocument) else tk.table()
+                tbl: Union[tk.toml_document.TOMLDocument, tk.items.Table] = (
+                    tk.document()
+                    if isinstance(obj, tk.toml_document.TOMLDocument)
+                    else tk.table()
+                )
                 container = _get_body(obj)
                 for (i, (key, val)) in enumerate(container):
                     if isinstance(val, NoneProxy):  # show key with empty value, commented

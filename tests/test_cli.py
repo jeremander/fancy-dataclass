@@ -44,15 +44,25 @@ def check_invalid_args(cls, args, match=None):
 class DC1(CLIDataclass):
     """An example of CLIDataclass."""
     required_string: str = field(metadata={'args': ['required_string'], 'help': 'a required string'})
-    input_file: str = field(metadata={'args': ['-i', '--input-file'], 'help': 'input file', 'metavar': 'INFILE', 'group': 'IO arguments'})
-    output_file: str = field(metadata={'args': ['-o', '--output-file'], 'help': 'output file', 'metavar': 'OUTFILE', 'group': 'IO arguments'})
+    input_file: str = field(
+        metadata={'args': ['-i', '--input-file'], 'help': 'input file', 'metavar': 'INFILE', 'group': 'IO arguments'}
+    )
+    output_file: str = field(
+        metadata={'args': ['-o', '--output-file'], 'help': 'output file', 'metavar': 'OUTFILE', 'group': 'IO arguments'}
+    )
     choice: str = field(default='a', metadata={'choices': ['a', 'b', 'c'], 'help': 'one of three choices'})
-    optional: str = field(default='default', metadata={'nargs': '?', 'const': 'unspecified', 'help': 'optional argument'})
+    optional: str = field(
+        default='default',
+        metadata={'nargs': '?', 'const': 'unspecified', 'help': 'optional argument'},
+    )
     flag: bool = field(default=False, metadata={'help': 'activate flag'})
     extra_items: list[str] = field(default_factory=list, metadata={'nargs': '*', 'help': 'list of extra items'})
     x: int = field(default=7, metadata={'help': 'x value', 'group': 'numeric arguments', 'default_help': True})
     y: float = field(default=3.14, metadata={'help': 'y value', 'group': 'numeric arguments'})
-    pair: tuple[int, int] = field(default=(0, 0), metadata={'nargs': 2, 'metavar': ('FIRST', 'SECOND'), 'help': 'pair of integers', 'group': 'numeric arguments'})
+    pair: tuple[int, int] = field(
+        default=(0, 0),
+        metadata={'nargs': 2, 'metavar': ('FIRST', 'SECOND'), 'help': 'pair of integers', 'group': 'numeric arguments'},
+    )
     ignored_value: str = field(default='ignored', metadata={'args': [], 'parse_exclude': True})
 
     @classmethod
@@ -63,7 +73,8 @@ class DC1(CLIDataclass):
         print(self)
 
 def test_argparse_dataclass_help():
-    """Tests equivalence of argparse-generated help string between an ArgparseDataclass and building the parser manually."""
+    """Tests equivalence of argparse-generated help string between an ArgparseDataclass and building the parser
+    manually."""
     parser = ArgumentParser(description=DC1.__doc__, formatter_class=ArgumentDefaultsHelpFormatter)
     parser.add_argument('required_string', help='a required string')
     io_group = parser.add_argument_group('IO arguments')
@@ -76,7 +87,14 @@ def test_argparse_dataclass_help():
     num_group = parser.add_argument_group('numeric arguments')
     num_group.add_argument('-x', type=int, default=7, help='x value (default: 7)')
     num_group.add_argument('-y', type=float, default=3.14, help='y value')
-    num_group.add_argument('--pair', type=int, nargs=2, default=(0, 0), metavar=('FIRST', 'SECOND'), help='pair of integers')
+    num_group.add_argument(
+        '--pair',
+        type=int,
+        nargs=2,
+        default=(0, 0),
+        metavar=('FIRST', 'SECOND'),
+        help='pair of integers',
+    )
     dc1_parser = DC1.make_parser()
     assert parser.format_help() == dc1_parser.format_help()
 
@@ -97,16 +115,70 @@ def test_cli_dataclass_parse_valid(capsys):
         assert captured.out.rstrip() == str(obj)
         sys.argv[1:] = argv
     args = ['positional_arg', '-i', 'my_input', '-o', 'my_output']
-    obj = DC1(required_string='positional_arg', input_file='my_input', output_file='my_output', choice='a', optional='default', extra_items=[], x=7, y=3.14, pair=(0,0), ignored_value='ignored')
+    obj = DC1(
+        required_string='positional_arg',
+        input_file='my_input',
+        output_file='my_output',
+        choice='a',
+        optional='default',
+        extra_items=[],
+        x=7,
+        y=3.14,
+        pair=(0,0),
+        ignored_value='ignored',
+    )
     _check_equivalent(args, obj)
-    args = ['positional_arg', '-x', '100', '-i', 'my_input', '-o', 'my_output', '--choice', 'b', '--flag', '--optional', '--extra-items', '1', '2', '3']
-    obj = DC1(required_string='positional_arg', input_file='my_input', output_file='my_output', choice='b', flag=True, optional='unspecified', extra_items=['1', '2', '3'], x=100, y=3.14, pair=(0,0), ignored_value='ignored')
+    args = [
+        'positional_arg', '-x', '100', '-i', 'my_input', '-o', 'my_output', '--choice', 'b', '--flag', '--optional',
+        '--extra-items', '1', '2', '3',
+    ]
+    obj = DC1(
+        required_string='positional_arg',
+        input_file='my_input',
+        output_file='my_output',
+        choice='b',
+        flag=True,
+        optional='unspecified',
+        extra_items=['1', '2', '3'],
+        x=100,
+        y=3.14,
+        pair=(0,0),
+        ignored_value='ignored',
+    )
     _check_equivalent(args, obj)
-    args = ['positional_arg', '-x', '100', '-i', 'my_input', '-o', 'my_output', '--choice', 'b', '--optional', 'thing', '--extra-items', '1', '2', '3']
-    obj = DC1(required_string='positional_arg', input_file='my_input', output_file='my_output', choice='b', optional='thing', extra_items=['1', '2', '3'], x=100, y=3.14, pair=(0,0), ignored_value='ignored')
+    args = [
+        'positional_arg', '-x', '100', '-i', 'my_input', '-o', 'my_output', '--choice', 'b', '--optional', 'thing',
+        '--extra-items', '1', '2', '3',
+    ]
+    obj = DC1(
+        required_string='positional_arg',
+        input_file='my_input',
+        output_file='my_output',
+        choice='b',
+        optional='thing',
+        extra_items=['1', '2', '3'],
+        x=100,
+        y=3.14,
+        pair=(0,0),
+        ignored_value='ignored',
+    )
     _check_equivalent(args, obj)
-    args = ['positional_arg', '-x', '100', '-i', 'my_input', '-o', 'my_output', '--optional', '--extra-items', '1', '2', '3', '--pair', '10', '20']
-    obj = DC1(required_string='positional_arg', input_file='my_input', output_file='my_output', choice='a', optional='unspecified', extra_items=['1', '2', '3'], x=100, y=3.14, pair=(10,20), ignored_value='ignored')
+    args = [
+        'positional_arg', '-x', '100', '-i', 'my_input', '-o', 'my_output', '--optional',
+        '--extra-items', '1', '2', '3', '--pair', '10', '20',
+    ]
+    obj = DC1(
+        required_string='positional_arg',
+        input_file='my_input',
+        output_file='my_output',
+        choice='a',
+        optional='unspecified',
+        extra_items=['1', '2', '3'],
+        x=100,
+        y=3.14,
+        pair=(10, 20),
+        ignored_value='ignored',
+    )
     _check_equivalent(args, obj)
 
 def test_cli_dataclass_parse_invalid():
@@ -669,7 +741,11 @@ def test_subcommand(capsys):
     assert DCSub4.subcommand_dest_name == '_subcommand_DCSub4'
     assert DCSub4(Sub1(1, 2), 1).subcommand_name == 'sub1'
     help_str = DCSub4.make_parser().format_help()
-    assert re.search(r'positional arguments:.+x\s+x value\s+subcommand\s+sub1\s+first subcommand\s+option.+-y Y', help_str, re.DOTALL)
+    assert re.search(
+        r'positional arguments:.+x\s+x value\s+subcommand\s+sub1\s+first subcommand\s+option.+-y Y',
+        help_str,
+        re.DOTALL,
+    )
     check_invalid_args(DCSub4, [], 'the following arguments are required: x, subcommand')
     check_invalid_args(DCSub4, ['5'], 'the following arguments are required: subcommand')
     check_invalid_args(DCSub4, ['sub1', '-h'], "invalid int value: 'sub1'")
@@ -688,7 +764,14 @@ def test_subcommand(capsys):
     assert DCSub5(Sub1(1, 2)).subcommand_name == 'sub1'
     assert DCSub5(Sub2(1, 2)).subcommand_name == 'my-subcommand'
     help_str = DCSub5.make_parser().format_help()
-    assert re.search(r'positional arguments:.+choose a subcommand\s+sub1\s+first subcommand\s+my-subcommand\s+second subcommand.+-x X', help_str, re.DOTALL)
+    assert re.search(
+        (
+            r'positional arguments:.+choose a subcommand\s+sub1\s+first subcommand'
+            r'\s+my-subcommand\s+second subcommand.+-x X'
+        ),
+        help_str,
+        re.DOTALL,
+    )
     for args in [[], ['-x', '5']]:
         check_invalid_args(DCSub5, args, 'the following arguments are required: subcommand')
     check_invalid_args(DCSub5, ['sub1'], 'required: x1, y1')

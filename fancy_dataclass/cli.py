@@ -10,7 +10,15 @@ from typing_extensions import Self, TypeGuard
 
 from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.settings import DocFieldSettings, MixinSettings
-from fancy_dataclass.utils import camel_case_to_kebab_case, check_dataclass, dataclass_kw_only, eval_type_str, get_annotations, issubclass_safe, type_is_optional
+from fancy_dataclass.utils import (
+    camel_case_to_kebab_case,
+    check_dataclass,
+    dataclass_kw_only,
+    eval_type_str,
+    get_annotations,
+    issubclass_safe,
+    type_is_optional,
+)
 
 
 T = TypeVar('T')
@@ -75,17 +83,25 @@ class ArgparseDataclassSettings(MixinSettings):
 
     Subclasses of `ArgparseDataclass` may set the following fields as keyword arguments during inheritance:
 
-    - `parser_class`: subclass of [`argparse.ArgumentParser`](https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser) to use for argument parsing
-    - `formatter_class`: subclass of [`argparse.HelpFormatter`](https://docs.python.org/3/library/argparse.html#formatter-class) to use for customizing the help output
+    - `parser_class`: subclass of
+    [`argparse.ArgumentParser`](https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser) to use for
+    argument parsing
+    - `formatter_class`: subclass of
+    [`argparse.HelpFormatter`](https://docs.python.org/3/library/argparse.html#formatter-class) to use for
+    customizing the help output
     - `help_descr`: string to use for the help description, which is displayed when `--help` is passed to the parser
         - If `None`, the class's docstring will be used by default.
-    - `help_descr_brief`: string to use for the *brief* help description, which is used when the class is used as a *subcommand* entry. This is the text that appears in the menu of subcommands, which is often briefer than the main description.
+    - `help_descr_brief`: string to use for the *brief* help description, which is used when the class is used as a
+    *subcommand* entry. This is the text that appears in the menu of subcommands, which is often briefer than the
+    main description.
         - If `None`, the class's docstring will be used by default (lowercased).
     - `command_name`: when this class is used to define a subcommand, the name of that subcommand
     - `prog`: name of the program to display when using the `%(prog)` format specifier
-    - `version`: if set, expose a `--version` argument displaying the version automatically (see [`argparse`](https://docs.python.org/3/library/argparse.html#action) docs)
+    - `version`: if set, expose a `--version` argument displaying the version automatically
+    (see [`argparse`](https://docs.python.org/3/library/argparse.html#action) docs)
         - If `prog` is set, displays the program name and the version, otherwise just the version.
-    - `default_help`: if set to `True`, includes each field's default value in its help string (this can be overridden by the field-level `default_help` flag)"""
+    - `default_help`: if set to `True`, includes each field's default value in its help string (this can be overridden
+    by the field-level `default_help` flag)"""
     parser_class: type[ArgumentParser] = ArgumentParser
     formatter_class: Optional[type[HelpFormatter]] = None
     help_descr: Optional[str] = None
@@ -109,24 +125,31 @@ class ArgparseDataclassFieldSettings(DocFieldSettings):
     - `const`: constant value required by some action/nargs combinations
     - `choices`: list of possible inputs allowed
     - `help`: help string
-        - Another way to specify the `help` is to use the `Annotated`/`Doc` pattern on the field (see [PEP 727](https://peps.python.org/pep-0727/))
+        - Another way to specify the `help` is to use the `Annotated`/`Doc` pattern on the field (see
+        [PEP 727](https://peps.python.org/pep-0727/))
     - `dest`: name of destination variable (only needed to avoid field name collisions when nesting `ArgparseDataclass`)
     - `metavar`: name for the argument in usage messages
     - `required`: whether the option is required
-    - `group`: name of the [argument group](https://docs.python.org/3/library/argparse.html#argument-groups) in which to put the argument
+    - `group`: name of the [argument group](https://docs.python.org/3/library/argparse.html#argument-groups) in which
+    to put the argument
         - The group will be created if it does not already exist in the parser
-    - `exclusive_group`: name of the [mutually exclusive](https://docs.python.org/3/library/argparse.html#mutual-exclusion) argument group in which to put the argument
+    - `exclusive_group`: name of the
+    [mutually exclusive](https://docs.python.org/3/library/argparse.html#mutual-exclusion) argument group in which to
+    put the argument
         - The group will be created if it does not already exist in the parser
-    - `subcommand`: boolean flag marking this field as a [subcommand](https://docs.python.org/3/library/argparse.html#sub-commands)
+    - `subcommand`: boolean flag marking this field as a
+    [subcommand](https://docs.python.org/3/library/argparse.html#sub-commands)
     - `parse_exclude`: boolean flag indicating that the field should not be included in the parser
     - `default_help`: boolean flag indicating the field's default value (if present) should be shown in the help
         - If `None`, falls back on the class-level `default_help` flag
 
-    Note that these line up closely with the usual options that can be passed to [`ArgumentParser.add_argument`](https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser.add_argument).
+    Note that these line up closely with the usual options that can be passed to
+    [`ArgumentParser.add_argument`](https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser.add_argument).
 
     **Positional arguments vs. options**:
 
-    - If a field explicitly lists arguments in the `args` metadata field, the argument will be an option if the first listed argument starts with a dash; otherwise it will be a positional argument.
+    - If a field explicitly lists arguments in the `args` metadata field, the argument will be an option if the first
+    listed argument starts with a dash; otherwise it will be a positional argument.
         - If it is an option but specifies no default value, it will be a required option.
     - If `args` are absent, the field will be:
         - A boolean flag if its type is `bool`
@@ -151,11 +174,15 @@ class ArgparseDataclassFieldSettings(DocFieldSettings):
 
 
 class ArgparseDataclass(DataclassMixin):
-    """Mixin class providing a means of setting up an [`argparse`](https://docs.python.org/3/library/argparse.html) parser with the dataclass fields, and then converting the namespace of parsed arguments into an instance of the class.
+    """Mixin class providing a means of setting up an [`argparse`](https://docs.python.org/3/library/argparse.html)
+    parser with the dataclass fields, and then converting the namespace of parsed arguments into an instance of
+    the class.
 
     The parser's argument names and types will be derived from the dataclass's fields.
 
-    Per-field settings can be passed into the `metadata` argument of each `dataclasses.field`. See [`ArgparseDataclassFieldSettings`][fancy_dataclass.cli.ArgparseDataclassFieldSettings] for the full list of settings."""
+    Per-field settings can be passed into the `metadata` argument of each `dataclasses.field`.
+    See [`ArgparseDataclassFieldSettings`][fancy_dataclass.cli.ArgparseDataclassFieldSettings] for the full list
+    of settings."""
 
     __settings_type__ = ArgparseDataclassSettings
     __settings__ = ArgparseDataclassSettings()
@@ -189,7 +216,9 @@ class ArgparseDataclass(DataclassMixin):
                 tp = cast(type, fld.type)
                 if issubclass_safe(tp, ArgparseDataclass):
                     continue
-                err = TypeError(f'invalid subcommand field {fld.name!r}, type must be an ArgparseDataclass or Union thereof')
+                err = TypeError(
+                    f'invalid subcommand field {fld.name!r}, type must be an ArgparseDataclass or Union thereof'
+                )
                 if get_origin(tp) == Union:
                     tp_args = [arg for arg in get_args(tp) if (arg is not type(None))]
                     for arg in tp_args:
@@ -201,7 +230,9 @@ class ArgparseDataclass(DataclassMixin):
                         names.add(name)
                     continue
                 raise err
-            raise TypeError(f'multiple fields ({subcommand} and {fld.name}) are registered as subcommands, at most one is allowed')
+            raise TypeError(
+                f'multiple fields ({subcommand} and {fld.name}) are registered as subcommands, at most one is allowed'
+            )
         # store the name of the subcommand field as a class attribute
         cls.subcommand_field_name = subcommand
 
@@ -306,7 +337,10 @@ class ArgparseDataclass(DataclassMixin):
                 elif issubclass_safe(origin_type, list) or issubclass_safe(origin_type, tuple):
                     for arg in tp_args:
                         if is_nested(arg):
-                            name = f'list of {arg.__name__}' if issubclass_safe(origin_type, list) else f'tuple with {arg}'  # type: ignore[attr-defined]
+                            if issubclass_safe(origin_type, list):
+                                name = f'list of {arg.__name__}'  # type: ignore[attr-defined]
+                            else:
+                                name = f'tuple with {arg}'
                             raise ValueError(f'{name} not allowed in ArgparseDataclass parser')
                 tp = tp_args[0]
                 if get_origin(tp) == Literal:  # Optional[Literal[...]]: unwrap to Literal[...]
@@ -371,7 +405,9 @@ class ArgparseDataclass(DataclassMixin):
                 raise ValueError(f'invalid action {action!r} for boolean flag field {name!r}')
             if default is not None:
                 if (action != 'store_false') == default:
-                    raise ValueError(f'cannot use default value of {default} for action {action!r} with boolean flag field {name!r}')
+                    raise ValueError(
+                        f'cannot use default value of {default} for action {action!r} with boolean flag field {name!r}'
+                    )
             for key in ('type', 'required'):
                 with suppress(KeyError):
                     kwargs.pop(key)
@@ -400,8 +436,9 @@ class ArgparseDataclass(DataclassMixin):
         if (result := _get_parser_group_name(settings, fld.name)) is not None:
             # add argument to the group instead of the main parser
             (group_name, is_exclusive) = result
+            group: Optional[Union[_ArgumentGroup, _MutuallyExclusiveGroup]]
             if is_exclusive:
-                group: Optional[Union[_ArgumentGroup, _MutuallyExclusiveGroup]] = _get_parser_exclusive_group(parser, group_name)
+                group = _get_parser_exclusive_group(parser, group_name)
             else:
                 group = _get_parser_group(parser, group_name)
             if not group:  # group not found, so create it
@@ -466,7 +503,8 @@ class ArgparseDataclass(DataclassMixin):
     def configure_parser(cls, parser: Union[ArgumentParser, _ArgumentGroup]) -> None:
         """Configures an argument parser by adding the appropriate arguments.
 
-        By default, this will simply call [`configure_argument`][fancy_dataclass.cli.ArgparseDataclass.configure_argument] for each dataclass field.
+        By default, this will simply call
+        [`configure_argument`][fancy_dataclass.cli.ArgparseDataclass.configure_argument] for each dataclass field.
 
         Args:
             parser: `ArgumentParser` to configure"""
@@ -482,7 +520,10 @@ class ArgparseDataclass(DataclassMixin):
                 if subcommand is None:
                     subcommand = name
                 else:
-                    raise ValueError(f'multiple fields ({subcommand!r} and {fld.name!r}) registered as subcommands, at most one is allowed')
+                    raise ValueError(
+                        f'multiple fields ({subcommand!r} and {fld.name!r}) registered as subcommands, '
+                        'at most one is allowed'
+                    )
             else:
                 field_names.append(name)
         if subcommand is not None:
@@ -503,7 +544,8 @@ class ArgparseDataclass(DataclassMixin):
 
     @classmethod
     def args_to_dict(cls, args: Namespace) -> dict[str, Any]:
-        """Converts a [`Namespace`](https://docs.python.org/3/library/argparse.html#argparse.Namespace) object to a dict that can be converted to the dataclass type.
+        """Converts a [`Namespace`](https://docs.python.org/3/library/argparse.html#argparse.Namespace) object to a
+        dict that can be converted to the dataclass type.
 
         Override this to enable custom behavior.
 
@@ -572,7 +614,11 @@ class ArgparseDataclass(DataclassMixin):
                     kwargs[name] = tuple(d[name])
                 else:
                     kwargs[name] = d[name]
-            elif type_is_optional(cast(type, fld.type)) and (fld.default == MISSING) and (fld.default_factory == MISSING):
+            elif (
+                type_is_optional(cast(type, fld.type))
+                and (fld.default == MISSING)
+                and (fld.default_factory == MISSING)
+            ):
                 # positional optional argument with no default: fill in None
                 kwargs[name] = None
         return cls(**kwargs)
@@ -590,7 +636,8 @@ class ArgparseDataclass(DataclassMixin):
 
     @classmethod
     def from_cli_args(cls, arg_list: Optional[list[str]] = None) -> Self:
-        """Constructs and configures an argument parser, then parses the given command-line arguments and uses them to construct an instance of the class.
+        """Constructs and configures an argument parser, then parses the given command-line arguments and uses them to
+        construct an instance of the class.
 
         Args:
             arg_list: List of arguments as strings (if `None`, uses `sys.argv`)
@@ -604,7 +651,8 @@ class ArgparseDataclass(DataclassMixin):
 
 
 class CLIDataclass(ArgparseDataclass):
-    """This subclass of [`ArgparseDataclass`][fancy_dataclass.cli.ArgparseDataclass] allows the user to execute arbitrary program logic using the parsed arguments as input.
+    """This subclass of [`ArgparseDataclass`][fancy_dataclass.cli.ArgparseDataclass] allows the user to execute
+    arbitrary program logic using the parsed arguments as input.
 
     Subclasses should override the `run` method to implement custom behavior."""
 
@@ -613,7 +661,8 @@ class CLIDataclass(ArgparseDataclass):
 
         Subclasses should implement this to provide custom behavior.
 
-        If the class has a subcommand defined, and it is an instance of `CLIDataclass`, the default implementation of `run` will be to call the subcommand's own implementation."""
+        If the class has a subcommand defined, and it is an instance of `CLIDataclass`, the default implementation of
+        `run` will be to call the subcommand's own implementation."""
         # delegate to the subcommand's `run` method, if it exists
         if self.subcommand_field_name:
             val = getattr(self, self.subcommand_field_name)

@@ -42,7 +42,6 @@ lint.ignore = [
     "D407",
     "D413",  # blank line after last section
     "D415",  # first line ending with punctuation
-    "E501",  # line length
     "E731",  # assign lambda expression
     "PT001",  # use of pytest.fixture (with no parens)
     "PT013",  # use simple import of pytest
@@ -59,7 +58,7 @@ lint.exclude = [
     "scripts/*",
 ]
 
-line-length = 320
+line-length = 120
 
 [lint.per-file-ignores]
 "__init__.py" = ["D104", "F401"]

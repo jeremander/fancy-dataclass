@@ -8,7 +8,12 @@ from typing import IO, Any, cast, get_args, get_origin
 from typing_extensions import Self
 
 from fancy_dataclass.dict import AnyDict
-from fancy_dataclass.serialize import DictFileSerializableDataclass, TextFileSerializable, from_dict_value_basic, to_dict_value_basic
+from fancy_dataclass.serialize import (
+    DictFileSerializableDataclass,
+    TextFileSerializable,
+    from_dict_value_basic,
+    to_dict_value_basic,
+)
 from fancy_dataclass.utils import AnyIO, TypeConversionError, issubclass_safe
 
 
@@ -122,8 +127,15 @@ class JSONDataclass(DictFileSerializableDataclass, JSONSerializable):
         # this is because resolving the type from a dict may be ambiguous
         if getattr(cls.__settings__, 'store_type', None) == 'auto':
             for base in cls.mro():
-                if (base not in [cls, JSONDataclass]) and issubclass(base, JSONDataclass) and (not issubclass(base, JSONBaseDataclass)):
-                    raise TypeError("when subclassing a JSONDataclass, you must set store_type to a value other than 'auto', or subclass JSONBaseDataclass instead")
+                if (
+                    (base not in [cls, JSONDataclass])
+                    and issubclass(base, JSONDataclass)
+                    and (not issubclass(base, JSONBaseDataclass))
+                ):
+                    raise TypeError(
+                        "when subclassing a JSONDataclass, you must set store_type to a value other than 'auto', or "
+                        "subclass JSONBaseDataclass instead"
+                    )
 
     @classmethod
     def _to_json_value(cls, obj: Self) -> Any:
@@ -161,7 +173,8 @@ class JSONDataclass(DictFileSerializableDataclass, JSONSerializable):
     def _from_dict_value(cls, tp: type, val: Any) -> Any:
         # customize behavior for JSONSerializable
         origin_type = get_origin(tp)
-        if (origin_type is None) and issubclass_safe(tp, tuple) and isinstance(val, dict) and hasattr(tp, '_fields'):  # namedtuple
+        if (origin_type is None) and issubclass_safe(tp, tuple) and isinstance(val, dict) and hasattr(tp, '_fields'):
+            # namedtuple
             try:
                 vals = []
                 for key in tp._fields:
@@ -173,11 +186,17 @@ class JSONDataclass(DictFileSerializableDataclass, JSONSerializable):
                 raise TypeConversionError(tp, val) from e
         if origin_type is dict:  # decode keys to be valid JSON
             (keytype, valtype) = get_args(tp)
-            return {cls.json_key_decoder(cls._from_dict_value(keytype, k)): cls._from_dict_value(valtype, v) for (k, v) in val.items()}
+            return {
+                cls.json_key_decoder(cls._from_dict_value(keytype, k)): cls._from_dict_value(valtype, v)
+                for (k, v) in val.items()
+            }
         return super()._from_dict_value(tp, val)
 
 
 class JSONBaseDataclass(JSONDataclass, store_type='qualname'):
-    """This class should be used in place of [`JSONDataclass`][fancy_dataclass.json.JSONDataclass] when you intend to inherit from the class.
+    """This class should be used in place of [`JSONDataclass`][fancy_dataclass.json.JSONDataclass] when you intend to
+    inherit from the class.
 
-    When converting a subclass to a dict with [`to_dict`][fancy_dataclass.dict.DictDataclass.to_dict], it will store the subclass's fully qualified type in the `type` field. It will also resolve this type when calling [`from_dict`][fancy_dataclass.dict.DictDataclass.from_dict]."""
+    When converting a subclass to a dict with [`to_dict`][fancy_dataclass.dict.DictDataclass.to_dict], it will store
+    the subclass's fully qualified type in the `type` field. It will also resolve this type when calling
+    [`from_dict`][fancy_dataclass.dict.DictDataclass.from_dict]."""

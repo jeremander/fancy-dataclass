@@ -19,7 +19,7 @@ classifiers = [
 dependencies = [
   "sqlalchemy >= 2.0",
   "tomlkit >= 0.15.1",
-  "typing_extensions >= 4.13"
+  "typing_extensions >= 4.13",
 ]
 
 [project.urls]
@@ -102,7 +102,7 @@ python = ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
 [tool.hatch.envs.badge]
 dependencies = [
   "coverage",
-  "genbadge[tests,coverage]"
+  "genbadge[tests,coverage]",
 ]
 
 [tool.hatch.envs.badge.scripts]
@@ -177,7 +177,7 @@ addopts = "--verbose --cov=fancy_dataclass"
 based_on_style = "pep8"
 blank_lines_between_top_level_imports_and_variables = 2
 coalesce_brackets = true
-column_limit = 10000
+column_limit = 120
 dedent_closing_brackets = true
 space_between_ending_comma_and_closing_bracket = false
 spaces_around_power_operator = true

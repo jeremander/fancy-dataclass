@@ -4,14 +4,34 @@ from contextlib import suppress
 import dataclasses
 from dataclasses import Field, InitVar
 import typing
-from typing import Any, ClassVar, Literal, Optional, TypeVar, _TypedDictMeta, get_args, get_origin  # type: ignore[attr-defined]
+from typing import (  # type: ignore[attr-defined]
+    Any,
+    ClassVar,
+    Literal,
+    Optional,
+    TypeVar,
+    _TypedDictMeta,
+    get_args,
+    get_origin,
+)
 import warnings
 
 from typing_extensions import Self, _AnnotatedAlias
 
 from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.settings import DocFieldSettings, MixinSettings
-from fancy_dataclass.utils import MissingRequiredFieldError, TypeConversionError, check_dataclass, dataclass_field_type, dataclass_kw_only, fully_qualified_class_name, get_dataclass_fields, issubclass_safe, obj_class_name, type_is_union
+from fancy_dataclass.utils import (
+    MissingRequiredFieldError,
+    TypeConversionError,
+    check_dataclass,
+    dataclass_field_type,
+    dataclass_kw_only,
+    fully_qualified_class_name,
+    get_dataclass_fields,
+    issubclass_safe,
+    obj_class_name,
+    type_is_union,
+)
 
 
 T = TypeVar('T', bound=DataclassMixin)
@@ -36,7 +56,8 @@ class DictDataclassSettings(MixinSettings):
         - `off`: do not store the type
         - `name`: store the type name
         - `qualname`: store the fully qualified type name (easiest way to resolve the type from the dict)
-    - `flatten`: if `True`, [`DictDataclass`][fancy_dataclass.dict.DictDataclass] subfields will be merged together with the main fields (provided there are no name collisions); otherwise, they are nested
+    - `flatten`: if `True`, [`DictDataclass`][fancy_dataclass.dict.DictDataclass] subfields will be merged together
+    with the main fields (provided there are no name collisions); otherwise, they are nested
     - `allow_extra_fields`: if `False`, raise an error when converting from a dict if unknown fields are present
     - `validate`: if `True`, attempt to validate data when converting from a dict"""
     suppress_defaults: bool = True
@@ -54,10 +75,18 @@ class DictDataclassSettings(MixinSettings):
             raise ValueError(f'invalid value {self.store_type!r} for store_type mode')
         self._store_type = self.store_type  # stores the value where 'auto' has been resolved from base class
         if self.flattened is not None:
-            warnings.warn(f"'flattened' is a deprecated field for {self.__class__.__name__}, use 'flatten' instead", DeprecationWarning, stacklevel=2)
+            warnings.warn(
+                f"'flattened' is a deprecated field for {self.__class__.__name__}, use 'flatten' instead",
+                DeprecationWarning,
+                stacklevel=2,
+            )
             self.flatten = self.flattened
         if self.strict is not None:
-            warnings.warn(f"'strict' is a deprecated field for {self.__class__.__name__}, use 'allow_extra_fields' instead", DeprecationWarning, stacklevel=2)
+            warnings.warn(
+                f"'strict' is a deprecated field for {self.__class__.__name__}, use 'allow_extra_fields' instead",
+                DeprecationWarning,
+                stacklevel=2,
+            )
             self.allow_extra_fields = not self.strict
 
     def should_store_type(self) -> bool:
@@ -72,12 +101,16 @@ class DictDataclassFieldSettings(DocFieldSettings):
     Each field may define a `metadata` dict containing any of the following entries:
 
     - `suppress`: flag to suppress this field in the dict representation, unconditionally
-        - Note: if the field is a class variable, it is excluded by default; you can set `suppress=False` to force the field's inclusion.
+        - Note: if the field is a class variable, it is excluded by default; you can set `suppress=False` to force the
+        field's inclusion.
         - Note: if set, this will override both `suppress_default` and `suppress_none` (see below)
-    - `suppress_default`: flag to suppress this field in the dict if it matches its default value (overrides class-level `suppress_defaults`)
-    - `suppress_none`: flag to suppress this field in the dict if its value is `None` (overrides class-level `suppress_none`)
+    - `suppress_default`: flag to suppress this field in the dict if it matches its default value (overrides
+    class-level `suppress_defaults`)
+    - `suppress_none`: flag to suppress this field in the dict if its value is `None`
+    (overrides class-level `suppress_none`)
     - `alias`: alternate name to use for the field, both when converting to and from a dict key
-    - `flatten`: if set to `True` or `False` and the field is a `DictDataclass`, determines whether to merge subfields into the outer dataclass (this overrides the class-level `flatten` setting)
+    - `flatten`: if set to `True` or `False` and the field is a `DictDataclass`, determines whether to merge subfields
+    into the outer dataclass (this overrides the class-level `flatten` setting)
     - `doc`: a text description of the field, which may be used when generating schemas or serializing the data"""
     suppress: Optional[bool] = None
     suppress_default: Optional[bool] = None
@@ -89,9 +122,12 @@ class DictDataclassFieldSettings(DocFieldSettings):
 class DictDataclass(DataclassMixin):
     """Mixin class for dataclasses that can be converted to and from a Python dict.
 
-    A subclass may configure settings by using [`DictDataclassSettings`][fancy_dataclass.dict.DictDataclassSettings] fields as keyword arguments when inheriting from `DictDataclass`.
+    A subclass may configure settings by using [`DictDataclassSettings`][fancy_dataclass.dict.DictDataclassSettings]
+    fields as keyword arguments when inheriting from `DictDataclass`.
 
-    Per-field settings can be passed into the `metadata` argument of each `dataclasses.field`. See [`DictDataclassFieldSettings`][fancy_dataclass.dict.DictDataclassFieldSettings] for the full list of settings."""
+    Per-field settings can be passed into the `metadata` argument of each `dataclasses.field`.
+    See [`DictDataclassFieldSettings`][fancy_dataclass.dict.DictDataclassFieldSettings] for the
+    full list of settings."""
 
     __settings_type__ = DictDataclassSettings
     __settings__ = DictDataclassSettings()
@@ -114,7 +150,9 @@ class DictDataclass(DataclassMixin):
         if wrapped_cls.__settings__.should_store_type():
             for fld in dataclasses.fields(wrapped_cls):  # type: ignore[arg-type]
                 if fld.name == 'type':
-                    raise TypeError(f"'type' is a reserved dict field for {cls.__name__}, cannot be used as dataclass field")
+                    raise TypeError(
+                        f"'type' is a reserved dict field for {cls.__name__}, cannot be used as dataclass field"
+                    )
         # prevent field name collisions when using 'alias' setting
         field_names = set()
         for fld in dataclasses.fields(wrapped_cls):  # type: ignore[arg-type]
@@ -155,7 +193,8 @@ class DictDataclass(DataclassMixin):
     def _to_dict_value_basic(cls, val: Any) -> Any:
         """Converts a value with a basic type to a form appropriate for dict values.
 
-        By default this will return the original value. Subclasses may override the behavior, e.g. to perform custom type coercion."""
+        By default this will return the original value. Subclasses may override the behavior, e.g. to perform
+        custom type coercion."""
         return val
 
     @classmethod
@@ -190,7 +229,10 @@ class DictDataclass(DataclassMixin):
             val = getattr(self, name)
             if (not full) and (settings.suppress is None):
                 # suppress None if field specifies it (falling back on class setting)
-                if (val is None) and (class_suppress_none if (settings.suppress_none is None) else settings.suppress_none):
+                if (
+                    (val is None) and
+                    (class_suppress_none if (settings.suppress_none is None) else settings.suppress_none)
+                ):
                     continue
                 # suppress default if field specifies it (falling back on class setting)
                 if (class_suppress_defaults if (settings.suppress_default is None) else settings.suppress_default):
@@ -235,7 +277,8 @@ class DictDataclass(DataclassMixin):
     def _from_dict_value_basic(cls, tp: type, val: Any) -> Any:
         """Given a basic type and a value, attempts to convert the value to the given type.
 
-        By default this will return the original value. Subclasses may override the behavior, e.g. to perform custom validation or type coercion."""
+        By default this will return the original value. Subclasses may override the behavior, e.g. to perform custom
+        validation or type coercion."""
         if cls.__settings__.validate and (not isinstance(val, tp)):  # validate type
             raise TypeConversionError(tp, val)
         # NOTE: alternatively, we could coerce to the type
@@ -335,7 +378,8 @@ class DictDataclass(DataclassMixin):
 
     @classmethod
     def _get_field_key_map(cls) -> dict[str, list[str]]:
-        """Gets a dict mapping from field names to the list of corresponding keys to be consumed when converting from a dict."""
+        """Gets a dict mapping from field names to the list of corresponding keys to be consumed when converting from
+        a dict."""
         flattened_field_names = cls._get_flattened_field_names()
         field_key_map: dict[str, list[str]] = defaultdict(list)
         for fld in get_dataclass_fields(cls, include_all=True):
@@ -353,7 +397,8 @@ class DictDataclass(DataclassMixin):
 
     @classmethod
     def dataclass_args_from_dict(cls, d: AnyDict) -> AnyDict:
-        """Given a dict of arguments, performs type conversion and/or validity checking, then returns a new dict that can be passed to the class's constructor."""
+        """Given a dict of arguments, performs type conversion and/or validity checking, then returns a new dict that
+        can be passed to the class's constructor."""
         check_dataclass(cls)
         kwargs = {}
         bases = cls.mro()

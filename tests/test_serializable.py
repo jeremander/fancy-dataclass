@@ -436,7 +436,11 @@ class TestJSON(TestDict):
 
     @pytest.mark.parametrize(['obj', 'd', 'err'], [
         (DCLiteral(1), {'lit': 1}, None),
-        (DCLiteral('b'), {'lit': 'b'}, (True, ValueError, re.escape("could not convert 'b' to type \"typing.Literal['a', 1]\""))),
+        (
+            DCLiteral('b'),
+            {'lit': 'b'},
+            (True, ValueError, re.escape("could not convert 'b' to type \"typing.Literal['a', 1]\"")),
+        ),
     ])
     def test_literal(self, obj, d, err):
         self._test_dict_convert(obj, d, err)
@@ -486,7 +490,11 @@ class TestJSON(TestDict):
         (DCUntypedNamedTuple(UntypedNamedTuple(3, 'a')), {'t': {'x': 3, 'y': 'a'}}, None),
         (DCTypedNamedTuple(TypedNamedTuple(3, 'a')), {'t': {'x': 3, 'y': 'a'}}, None),
         # invalid NamedTuple field (validation occurs on from_dict)
-        (DCTypedNamedTuple(TypedNamedTuple(3, 4)), {'t': {'x': 3, 'y': 4}}, (True, ValueError, "could not convert 4 to type 'str'")),
+        (
+            DCTypedNamedTuple(TypedNamedTuple(3, 4)),
+            {'t': {'x': 3, 'y': 4}},
+            (True, ValueError, "could not convert 4 to type 'str'"),
+        ),
     ])
     def test_namedtuple(self, obj, d, err):
         self._test_dict_convert(obj, d, err)
@@ -536,7 +544,9 @@ class TestJSON(TestDict):
             pass
         assert MyDC2.__settings__._store_type == 'qualname'
         # TODO: forbid local types?
-        assert MyDC2().to_dict() == {'type': 'tests.test_serializable.TestJSON.test_subclass_json_dataclass.<locals>.MyDC2'}
+        assert MyDC2().to_dict() == {
+            'type': 'tests.test_serializable.TestJSON.test_subclass_json_dataclass.<locals>.MyDC2',
+        }
         @dataclass
         class MyBaseDC(JSONBaseDataclass):
             pass
@@ -776,7 +786,10 @@ class TestTOML(TestDict):
             f: Annotated[int, Doc('Comment Line 1\nComment Line 2\n\t\n\nComment Line 3')] = 6
         obj = DCDoc()
         self._test_serialize_round_trip(obj, tmp_path)
-        assert obj.to_toml_string() == 'a = 1\n# b value\nb = 2\n# c value\nc = 3\n# d value\nd = 4\n# Comment Line 1\n# Comment Line 2\ne = 5\n# Comment Line 1\n# Comment Line 2\n# \t\n#\n# Comment Line 3\nf = 6\n'
+        assert obj.to_toml_string() == (
+            'a = 1\n# b value\nb = 2\n# c value\nc = 3\n# d value\nd = 4\n# Comment Line 1\n# Comment Line 2\ne = 5\n'
+            '# Comment Line 1\n# Comment Line 2\n# \t\n#\n# Comment Line 3\nf = 6\n'
+        )
         @dataclass
         class DCDocOuter(TOMLDataclass):
             string: Annotated[str, Doc('a string')] = 'abc'
@@ -785,7 +798,11 @@ class TestTOML(TestDict):
         obj = DCDocOuter()
         self._test_serialize_round_trip(obj, tmp_path)
         # NOTE: nested gets moved to the end, to prevent parsing ambiguity
-        assert obj.to_toml_string() == '# a string\nstring = "abc"\n# a flag\nflag = false\n\n# nested object\n[nested]\na = 1\n# b value\nb = 2\n# c value\nc = 3\n# d value\nd = 4\n# Comment Line 1\n# Comment Line 2\ne = 5\n# Comment Line 1\n# Comment Line 2\n# \t\n#\n# Comment Line 3\nf = 6\n'
+        assert obj.to_toml_string() == (
+            '# a string\nstring = "abc"\n# a flag\nflag = false\n\n# nested object\n[nested]\na = 1\n# b value\nb = 2\n'
+            '# c value\nc = 3\n# d value\nd = 4\n# Comment Line 1\n# Comment Line 2\ne = 5\n# Comment Line 1\n'
+            '# Comment Line 2\n# \t\n#\n# Comment Line 3\nf = 6\n'
+        )
         @dataclass
         class DCList(TOMLDataclass):
             vals: Annotated[list[int], Doc('a list')]

@@ -2,8 +2,9 @@
 
 # TODO
 
-## v0.10.1
+## v0.12.0
 
+- Remove deprecated things
 - Documentation
   - Dataclass mixins/settings
     - For now, `dataclass` decorator is required

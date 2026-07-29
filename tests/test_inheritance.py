@@ -6,7 +6,16 @@ from typing import Optional
 
 import pytest
 
-from fancy_dataclass import ArgparseDataclass, ConfigDataclass, DictDataclass, JSONBaseDataclass, JSONDataclass, SQLDataclass, SubprocessDataclass, TOMLDataclass
+from fancy_dataclass import (
+    ArgparseDataclass,
+    ConfigDataclass,
+    DictDataclass,
+    JSONBaseDataclass,
+    JSONDataclass,
+    SQLDataclass,
+    SubprocessDataclass,
+    TOMLDataclass,
+)
 from fancy_dataclass.cli import ArgparseDataclassSettings
 from fancy_dataclass.dict import DictDataclassSettings
 from fancy_dataclass.mixin import DataclassMixin, MixinSettings
@@ -185,13 +194,36 @@ def test_cli_subprocess_dataclass(tmpdir):
     class DC2(DC1, SubprocessDataclass):
         prog: str = field(default='prog', metadata={'exec': True})
         # ensure the positional arg is positional for both argument parsing *and* subprocess output
-        required_string: str = field(metadata={'args': ['required_string'], 'subprocess_positional': True, 'help': 'a required string'})
+        required_string: str = field(
+            metadata={'args': ['required_string'], 'subprocess_positional': True, 'help': 'a required string'},
+        )
         # ensure the ignored value is excluded from both argument parsing *and* subprocess output
-        ignored_value: str = field(default='ignored', metadata={'args': [], 'parse_exclude': True, 'subprocess_exclude': True})
+        ignored_value: str = field(
+            default='ignored',
+            metadata={'args': [], 'parse_exclude': True, 'subprocess_exclude': True},
+        )
     prog = str(tmpdir / 'prog.py')
-    dc2 = DC2(required_string='positional', input_file='my_input', output_file='my_output', choice='a', optional='default', flag=True, extra_items=[], x=7, y=3.14, pair=(0,0), ignored_value='ignored', prog = prog)
-    assert dc2.get_args() == [prog, 'positional', '--input-file', 'my_input', '--output-file', 'my_output', '--choice', 'a', '--optional', 'default', '--flag', '-x', '7', '-y', '3.14', '--pair', '0', '0']
-    assert dc2.get_args(suppress_defaults=True) == [prog, 'positional', '--input-file', 'my_input', '--output-file', 'my_output', '--flag']
+    dc2 = DC2(
+        required_string='positional',
+        input_file='my_input',
+        output_file='my_output',
+        choice='a',
+        optional='default',
+        flag=True,
+        extra_items=[],
+        x=7,
+        y=3.14,
+        pair=(0,0),
+        ignored_value='ignored',
+        prog=prog,
+    )
+    assert dc2.get_args() == [
+        prog, 'positional', '--input-file', 'my_input', '--output-file', 'my_output', '--choice', 'a', '--optional',
+        'default', '--flag', '-x', '7', '-y', '3.14', '--pair', '0', '0',
+    ]
+    assert dc2.get_args(suppress_defaults=True) == [
+        prog, 'positional', '--input-file', 'my_input', '--output-file', 'my_output', '--flag',
+    ]
     # create a script to run the CLIDataclass
     dc1 = coerce_to_dataclass(DC1, dc2)
     with open(prog, 'w') as f:
@@ -224,7 +256,8 @@ def test_toml_json_dataclass():
         x: int
         y: Optional[int] = None
     obj = DC1(1)
-    # NOTE: this is hacky and should probably be fixed, but at present the dict representation for TOMLDataclass must contain NoneProxy, which is not directly JSON serializable
+    # NOTE: this is hacky and should probably be fixed, but at present the dict representation for TOMLDataclass must
+    # contain NoneProxy, which is not directly JSON serializable
     assert obj.to_dict() == {'x': 1, 'y': NoneProxy()}
     assert obj.to_toml_string() == 'x = 1\n# y = \n'
     assert obj.to_json_string() == '{"x": 1, "y": null}'
