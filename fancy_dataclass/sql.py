@@ -119,7 +119,7 @@ def register(
     """Decorator that registers a sqlalchemy table for a [`SQLDataclass`][fancy_dataclass.sql.SQLDataclass].
 
     Args:
-        reg: sqlalchemy registry for mapping the class to a SQL table
+        reg: `sqlalchemy` registry for mapping the class to a SQL table
         extra_cols: Additional columns (beyond the dataclass fields) to be stored in the table
 
     Returns:

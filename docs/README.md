@@ -20,6 +20,7 @@ By inspecting dataclasses' type annotations, it is possible to endow them with s
 - *SQL persistence*: define SQL tables, and save/load objects from a database
 - *CLI parsing*: parse command-line arguments and store their values in a dataclass, then use them to execute your main program logic
 - *Subprocess calls*: generate command-line arguments to be passed to another program
+- *Version management*: assign numbers to different versions of the same data type
 
 `fancy_dataclass` borrows ideas from other excellent libraries such as [`marshmallow`](https://marshmallow.readthedocs.io/en/stable/), [`pydantic`](https://docs.pydantic.dev/latest), and [`argparse_dataclass`](https://github.com/mivade/argparse_dataclass), while aiming to be as lightweight as possible in terms of its dependencies and learning curve.
 

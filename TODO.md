@@ -5,23 +5,14 @@
 ## v0.12.0
 
 - Documentation
-  - Dataclass mixins/settings
-    - For now, `dataclass` decorator is required
+  - Dict
     - Note purpose of `flatten=True` (good for tabular data like CSV/SQL)
-    - Advanced: how to handle name collisions in settings for multiple inheritance (e.g. `ArgparseDataclass`/`SubprocessDataclass`)
     - Emphasize type conversions are only to/from dict, not general constructors (this is a difference from `pydantic`).
-  - JSON
-  - TOML
   - CLI
   - SQL
     - Primary key (default `_id`)
     - Relationships
   - Subprocess
-  - Config
-  - Defining new mixins (what dunders need to be set)
-    - Top-level settings, field-level settings
-    - Collisions
-      - Colliding `FieldSettings` and custom adapters
 
 ## Future
 
