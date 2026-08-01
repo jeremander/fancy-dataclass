@@ -59,6 +59,10 @@ jobs:
           hatch run lint:run-ruff
       - name: Python compatibility (vermin)
         run: hatch run lint:run-vermin
+      - name: Type-check (pyrefly)
+        run: |
+          hatch run lint:pyrefly --version
+          hatch run lint:run-pyrefly
       - name: Type-check (mypy)
         run: |
           hatch run lint:mypy --version
