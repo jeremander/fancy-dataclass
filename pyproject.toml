@@ -182,3 +182,26 @@ dedent_closing_brackets = true
 space_between_ending_comma_and_closing_bracket = false
 spaces_around_power_operator = true
 split_all_top_level_comma_separated_values = true
+
+[tool.pyrefly]
+preset = "legacy"
+
+[[tool.pyrefly.sub-config]]
+matches = "fancy_dataclass/cli.py"
+
+[tool.pyrefly.sub-config.errors]
+missing-attribute = "ignore"
+
+[[tool.pyrefly.sub-config]]
+matches = "fancy_dataclass/dict.py"
+
+[tool.pyrefly.sub-config.errors]
+missing-attribute = "ignore"
+missing-module-attribute = "ignore"
+
+[[tool.pyrefly.sub-config]]
+matches = "tests/**/*"
+
+[tool.pyrefly.sub-config.errors]
+bad-argument-type = "ignore"
+invalid-annotation = "ignore"

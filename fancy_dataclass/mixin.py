@@ -87,7 +87,7 @@ def _configure_mixin_settings(cls: type['DataclassMixin'], allow_duplicates: boo
                 raise TypeError(f'redundant specification of field {name!r} for {cls.__name__}')
             d[name] = getattr(settings, name)
     if stype is not None:
-        cls.__settings__ = stype(**d)
+        cls.__settings__ = stype(**d)  # pyrefly: ignore[bad-assignment]
 
 def _configure_field_settings_type(cls: type['DataclassMixin']) -> None:
     """Sets up the __field_settings_type__ attribute on a `DataclassMixin` subclass at definition time.

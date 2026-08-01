@@ -60,10 +60,10 @@ class _VersionedDataclassGroup:
     """Represents a collection of [`VersionedDataclass`][fancy_dataclass.versioned.VersionedDataclass] subclasses with
     the same name but different versions."""
     name: str
-    class_by_version: dict[Version, type['VersionedDataclass']] = field(
+    class_by_version: dict[Version, type['VersionedDataclass']] = field(  # pyrefly: ignore[bad-assignment]
         default_factory=WeakValueDictionary  # type: ignore[arg-type]
     )
-    version_by_class: dict[type['VersionedDataclass'], Version] = field(
+    version_by_class: dict[type['VersionedDataclass'], Version] = field(  # pyrefly: ignore[bad-assignment]
         default_factory=WeakKeyDictionary  # type: ignore[arg-type]
     )
 
@@ -167,6 +167,7 @@ class VersionedDataclass(DictDataclass):
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(allow_duplicates=True, **kwargs)
+        assert hasattr(cls.__settings__, 'version')
         version: Optional[AnyVersion] = getattr(cls, 'version', cls.__settings__.version)
         if version is None:
             raise TypeError(f'must supply a valid version for class {cls.__name__!r}')
@@ -184,6 +185,7 @@ class VersionedDataclass(DictDataclass):
     def _field_settings(cls, fld: Field) -> FieldSettings:  # type: ignore[type-arg]
         """Gets the class-specific FieldSettings extracted from the metadata stored on a Field object."""
         settings = cast(DictDataclassFieldSettings, super()._field_settings(fld))
+        assert hasattr(cls.__settings__, 'suppress_version')
         if (fld.name == 'version') and (cls.__settings__.suppress_version is False):
             # do not suppress version field if class-level suppress_version=False
             settings.suppress = False

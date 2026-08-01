@@ -3,6 +3,8 @@ from io import IOBase
 from typing import IO, Any, Optional, Union
 
 import tomlkit as tk
+import tomlkit.items
+import tomlkit.toml_document
 from typing_extensions import Self
 
 from fancy_dataclass.dict import AnyDict, DictDataclassFieldSettings, DictDataclassSettings
@@ -12,15 +14,16 @@ from fancy_dataclass.serialize import (
     from_dict_value_basic,
     to_dict_value_basic,
 )
+from fancy_dataclass.settings import MixinSettings
 from fancy_dataclass.utils import AnyIO, dataclass_kw_only
 
 
-class NoneProxy(tk.items.Item):
+class NoneProxy(tomlkit.items.Item):
     """Sentinel class taking the place of None when constructing tomlkit documents.
     These will be removed before serialization."""
 
     def __init__(self) -> None:  # noqa: D107
-        super().__init__(tk.items.Trivia())
+        super().__init__(tomlkit.items.Trivia())
 
     def __eq__(self, other: Any) -> bool:
         return (other is None) or isinstance(other, NoneProxy)
@@ -104,9 +107,9 @@ class TOMLDataclass(DictFileSerializableDataclass, TOMLSerializable, suppress_de
             return obj.body if hasattr(obj, 'body') else obj.value.body
         def _fix_element(obj: Any) -> Any:
             if isinstance(obj, dict):
-                tbl: Union[tk.toml_document.TOMLDocument, tk.items.Table] = (
+                tbl: Union[tomlkit.toml_document.TOMLDocument, tomlkit.items.Table] = (
                     tk.document()
-                    if isinstance(obj, tk.toml_document.TOMLDocument)
+                    if isinstance(obj, tomlkit.toml_document.TOMLDocument)
                     else tk.table()
                 )
                 container = _get_body(obj)
@@ -115,7 +118,7 @@ class TOMLDataclass(DictFileSerializableDataclass, TOMLSerializable, suppress_de
                         tbl.add(tk.comment(f'{key} = '))
                     else:
                         tbl.add(key, _fix_element(val))
-                        if (i > 0) and isinstance(val, dict) and isinstance(container[i - 1][1], tk.items.Comment):
+                        if (i > 0) and isinstance(val, dict) and isinstance(container[i - 1][1], tomlkit.items.Comment):
                             # move newline above comment preceding a table
                             body = _get_body(tbl)
                             comment = body[-2][1]
@@ -140,6 +143,7 @@ class TOMLDataclass(DictFileSerializableDataclass, TOMLSerializable, suppress_de
     @classmethod
     def _top_level_comments(cls) -> Optional[list[str]]:
         """Returns a list of top-level comments to place before all of the fields in the TOML output."""
+        assert isinstance(cls.__settings__, MixinSettings)
         settings = cls.__settings__.adapt_to(TOMLDataclassSettings)
         comment = None
         if settings.comment is not None:
@@ -176,7 +180,7 @@ class TOMLDataclass(DictFileSerializableDataclass, TOMLSerializable, suppress_de
                         tbl.add(tk.nl())
                     pair_iter = val.body if isinstance(val, tk.TOMLDocument) else val.items()
                     for pair in pair_iter:
-                        tbl.add(*pair)
+                        tbl.add(*pair)  # pyrefly: ignore[no-matching-overload]
                     val = tbl
                 doc.add(key, val)
         return doc

@@ -285,7 +285,7 @@ class TestDict:
     """Unit tests for DictDataclass."""
 
     base_cls = DictDataclass
-    ext: str = None
+    ext: Optional[str] = None
 
     def _convert_dataclass(self, tp):
         """Converts a dataclass type to have the desired base class."""

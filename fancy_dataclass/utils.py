@@ -473,12 +473,14 @@ def dataclass_type_map(cls: type['DataclassInstance'], func: Callable[[type], ty
         if origin_type and (not _is_instance(fld.type, _AnnotatedAlias)) and issubclass_safe(origin_type, Iterable):
             if issubclass(origin_type, dict):
                 (key_type, val_type) = get_args(fld.type)
-                tp = origin_type[key_type, _map_func(val_type)]
+                tp = origin_type[key_type, _map_func(val_type)]  # pyrefly: ignore[unsupported-operation]
             elif issubclass(origin_type, tuple):
-                tp = origin_type[tuple([_map_func(elt_type) for elt_type in get_args(fld.type)])]
+                tp = origin_type[  # pyrefly: ignore[unsupported-operation]
+                    tuple([_map_func(elt_type) for elt_type in get_args(fld.type)])
+                ]
             else:
                 (elt_type,) = get_args(fld.type)
-                tp = origin_type[_map_func(elt_type)]
+                tp = origin_type[_map_func(elt_type)]  # pyrefly: ignore[unsupported-operation]
         else:
             tp = _map_func(fld.type)  # type: ignore[arg-type]
         field_data.append((fld.name, tp, new_fld))

@@ -63,6 +63,7 @@ class SubprocessDataclass(DataclassMixin):
 
     @classmethod
     def __post_dataclass_wrap__(cls, wrapped_cls: type[Self]) -> None:
+        assert hasattr(wrapped_cls.__settings__, 'exec')
         cls_exec_field = wrapped_cls.__settings__.exec
         # make sure there is at most one exec field
         exec_field = None
@@ -188,6 +189,7 @@ class SubprocessDataclass(DataclassMixin):
             if isinstance(val, str):
                 return val
             raise ValueError(f'executable is {val} (must be a string)')
+        assert hasattr(self.__settings__, 'exec')
         if self.__settings__.exec:
             return _check_type(self.__settings__.exec)
         for fld in get_dataclass_fields(self, include_all=True):
