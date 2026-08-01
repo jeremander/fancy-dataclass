@@ -37,7 +37,7 @@ def to_dict_value_basic(val: Any) -> Any:
         if isinstance(val, Integral):
             return int(val)
         if isinstance(val, float):
-            return float(val)
+            return float(val)  # pyrefly: ignore[unnecessary-type-conversion]
     return val
 
 def from_dict_value_basic(tp: type, val: Any) -> Any:

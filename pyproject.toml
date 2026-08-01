@@ -65,6 +65,7 @@ dependencies = [
   "mypy>=1.16",
   "numpy",
   "py-gadzooks>=0.2.9",
+  "pyrefly",
   "pytest",
   "ruff>=0.15",
   "vermin>=1.6",
@@ -77,11 +78,12 @@ run-ruff = "ruff check {args:fancy_dataclass tests}"
 run-vermin = "vermin {args:.}"
 # type-checking
 run-mypy = "mypy --install-types --non-interactive {args:fancy_dataclass tests}"
+run-pyrefly = "pyrefly check {args:fancy_dataclass tests}"
 # print info about lines of code
 run-loc-summarize = "gadzooks loc-summarize fancy_dataclass"
 # print out formatter diffs
 run-format = "gadzooks check-format {args:fancy_dataclass} --formatter yapf --ignore-patterns '\\s*'"
-all = ["run-ruff", "run-vermin", "run-mypy", "run-loc-summarize"]
+all = ["run-ruff", "run-vermin", "run-pyrefly", "run-mypy", "run-loc-summarize"]
 
 [tool.hatch.envs.test]
 dependencies = [
@@ -185,6 +187,9 @@ split_all_top_level_comma_separated_values = true
 
 [tool.pyrefly]
 preset = "legacy"
+
+[tool.pyrefly.errors]
+deprecated = "ignore"
 
 [[tool.pyrefly.sub-config]]
 matches = "fancy_dataclass/cli.py"
