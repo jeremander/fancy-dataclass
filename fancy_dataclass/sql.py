@@ -1,10 +1,21 @@
 from dataclasses import MISSING, dataclass, fields
 from datetime import datetime
-from typing import Annotated, Any, Callable, ClassVar, Optional, TypeVar, Union, cast, get_args, get_origin
+from typing import (
+    Annotated,
+    Any,
+    Callable,
+    ClassVar,
+    Optional,
+    TypeVar,
+    Union,
+    cast,
+    get_args,
+    get_origin,
+)
 
 from sqlalchemy import Boolean, Column, DateTime, Integer, LargeBinary, Numeric, PickleType, String, Table
 import sqlalchemy.orm
-from typing_extensions import TypeAlias
+from typing_extensions import TypeAlias, dataclass_transform
 
 from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.settings import FieldSettings
@@ -61,6 +72,7 @@ class SQLDataclassFieldSettings(FieldSettings):
     - `sql`: if `True`, include this field as a table column (default `True`)
     - `column`: dict of keyword arguments passed to the
     [`Column`](https://docs.sqlalchemy.org/en/20/core/metadata.html#sqlalchemy.schema.Column) constructor"""
+
     sql: bool = True
     column: Optional[dict[str, Any]] = None
 
@@ -112,6 +124,7 @@ class SQLDataclass(DataclassMixin):
         return cols
 
 
+@dataclass_transform()
 def register(
     reg: Reg = DEFAULT_REGISTRY,
     extra_cols: Optional[dict[str, Column[Any]]] = None,
@@ -130,15 +143,18 @@ def register(
         safe_dict_update(cols, cls.get_columns())
         if extra_cols:
             safe_dict_update(cols, extra_cols)
-        primary_key = next((name for (name, col) in cols.items() if col.primary_key), None)
-        if primary_key is None:
+        primary_keys = [name for (name, col) in cols.items() if col.primary_key]
+        if primary_keys:  # ensure primary keys come first
+            new_cols = {}
+            for key in primary_keys:
+                new_cols[key] = cols.pop(key)
+            new_cols.update(cols)
+            cols = new_cols
+        else:
             if '_id' in cols:
                 raise ValueError(f'no primary key found for {cls.__name__!r}')
             # add an auto-incrementing primary key with '_id' column
             cols = {'_id': Column('_id', Integer, primary_key=True, autoincrement=True), **cols}
-        else:  # ensure primary key is the first column
-            col = cols.pop(primary_key)
-            cols = {primary_key: col, **cols}
         cls.__table__ = Table(cls.__name__, reg.metadata, *cols.values())
         return reg.mapped(cls)
     return _orm_table
