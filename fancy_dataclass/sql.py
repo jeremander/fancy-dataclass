@@ -52,6 +52,7 @@ def get_column_type(tp: type) -> type:
     return PickleType
 
 def _get_base_type_for_field_type(field_type: Any) -> type:
+    """Unwraps a compound type wrapping a base type."""
     origin = get_origin(field_type)
     if origin:  # compound type
         if origin in [Annotated, Union]:  # use the type of the first argument
@@ -71,10 +72,13 @@ class SQLDataclassFieldSettings(FieldSettings):
 
     - `sql`: if `True`, include this field as a table column (default `True`)
     - `column`: dict of keyword arguments passed to the
-    [`Column`](https://docs.sqlalchemy.org/en/20/core/metadata.html#sqlalchemy.schema.Column) constructor"""
+    [`Column`](https://docs.sqlalchemy.org/en/20/core/metadata.html#sqlalchemy.schema.Column) constructor
+    - `sql_type`: a SQLAlchemy column type to be used for this field
+    """
 
     sql: bool = True
     column: Optional[dict[str, Any]] = None
+    sql_type: Optional[type] = None
 
 
 class SQLDataclass(DataclassMixin):
@@ -106,10 +110,13 @@ class SQLDataclass(DataclassMixin):
             # nullable = False
             if not settings.sql:  # skip fields whose 'sql' setting is False
                 continue
+            column_type = settings.sql_type
             field_type = _get_base_type_for_field_type(fld.type)
-            if issubclass_safe(field_type, SQLDataclass):  # nested SQLDataclass
+            if (column_type is None) and issubclass_safe(field_type, SQLDataclass):  # nested SQLDataclass
                 cols.update(field_type.get_columns())  # type: ignore[attr-defined]
             else:
+                if column_type is None:
+                    column_type = get_column_type(field_type)
                 # TODO: making columns non-nullable seems to break things for nested SQLDataclasses
                 # column_kwargs = {'nullable' : nullable}
                 column_kwargs = {}
@@ -119,7 +126,6 @@ class SQLDataclass(DataclassMixin):
                     column_kwargs['default'] = fld.default_factory
                 # get additional keyword arguments from 'column' section of metadata, if present
                 column_kwargs.update(settings.column or {})
-                column_type = get_column_type(field_type)
                 cols[fld.name] = Column(fld.name, column_type, **column_kwargs)
         return cols
 
