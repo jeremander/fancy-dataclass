@@ -25,7 +25,7 @@ AnyVersion = Union[int, Sequence[int], str, 'Version']
 class Version(tuple[int, ...]):
     """Class representing a version as a tuple of integers."""
 
-    def __new__(cls, version: AnyVersion) -> 'Version':
+    def __new__(cls, version: AnyVersion) -> 'Version':  # noqa: PYI034
         """Constructs a `Version` from a single integer, tuple of integers, or `.`-separated version string."""
         err = ValueError(f'invalid version {version!r}')
         if isinstance(version, Version):
@@ -221,11 +221,11 @@ class VersionedDataclass(DictDataclass):
 
     @classmethod
     def _get_type_from_dict(cls, d: AnyDict) -> type[Self]:
-        cls = super()._get_type_from_dict(d)
+        tp = super()._get_type_from_dict(d)
         if (version := d.get('version')) is not None:
             # use the dict-specified version
-            return cls.get_class_with_version(version=version)  # type: ignore[return-value]
-        return cls
+            return tp.get_class_with_version(version=version)  # type: ignore[return-value]
+        return tp
 
     def migrate(self, version: Optional[AnyVersion] = None) -> 'VersionedDataclass':
         """Migrates the object to a class corresponding to a (possibly different) version of this class, if possible.

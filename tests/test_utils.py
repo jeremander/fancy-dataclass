@@ -72,7 +72,7 @@ def test_camel_case_to_kebab_case(camel, kebab):
     (int, False),
     (type(None), False),
     (Optional[int], True),
-    (Optional[Optional[int]], True),
+    (Optional[Optional[int]], True),  # noqa: PYI016
     (Union[int, Optional[float]], True),
     (Union[Optional[float], int], True),
     (Optional[type(None)], False),  # Optional[NoneType] -> NoneType

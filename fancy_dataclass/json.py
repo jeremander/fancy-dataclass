@@ -149,7 +149,7 @@ class JSONDataclass(DictFileSerializableDataclass, JSONSerializable):
     def _text_file_to_dict(cls, fp: IO[str], **kwargs: Any) -> AnyDict:
         d = json.load(fp, **kwargs)
         if not isinstance(d, dict):
-            raise ValueError('loaded JSON is not a dict')
+            raise TypeError('loaded JSON is not a dict')
         return d
 
     @classmethod

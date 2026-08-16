@@ -43,7 +43,7 @@ dependencies = [
   "mkdocs-gen-files",
   "mkdocs-literate-nav",
   "py-gadzooks >= 0.2.8",
-  "ruff >= 0.15",
+  "ruff >= 0.16",
 ]
 
 [tool.hatch.envs.doc.scripts]
@@ -67,7 +67,7 @@ dependencies = [
   "py-gadzooks>=0.2.9",
   "pyrefly",
   "pytest",
-  "ruff>=0.15",
+  "ruff>=0.16",
   "vermin>=1.6",
 ]
 

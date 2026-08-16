@@ -302,8 +302,7 @@ def get_subclass_with_name(cls: type[T], name: str) -> type[T]:
         subcls_name = fully_qualified_class_name(subcls) if fully_qualified else subcls.__name__
         if subcls_name == name:
             return subcls
-    else:
-        raise ValueError(f'{name} is not a known subclass of {cls.__name__}')
+    raise ValueError(f'{name} is not a known subclass of {cls.__name__}')
 
 # DATACLASS
 

@@ -87,9 +87,8 @@ class SubprocessDataclass(DataclassMixin):
                     raise ValueError('cannot specify a field option_name when subprocess_positional=True')
                 if fld_settings.repeat_option_name:
                     raise ValueError('cannot repeat option name for positional field (subprocess_positional=True)')
-            if fld_settings.subprocess_flag:
-                if fld.type is not bool:
-                    raise ValueError('cannot use subprocess_flag=True when the field type is not bool')
+            if fld_settings.subprocess_flag and (fld.type is not bool):
+                raise ValueError('cannot use subprocess_flag=True when the field type is not bool')
 
     def get_arg(self, name: str, suppress_defaults: bool = False) -> list[str]:
         """Gets the command-line arguments for the given dataclass field.
@@ -232,4 +231,4 @@ class SubprocessDataclass(DataclassMixin):
         executable = self.get_executable()
         if not executable:
             raise ValueError(f'no executable identified for use with {obj_class_name(self)} instance')
-        return subprocess.run(self.get_args(), **kwargs)
+        return subprocess.run(self.get_args(), **kwargs)  # noqa: PLW1510

@@ -25,7 +25,7 @@ class NoneProxy(tomlkit.items.Item):
     def __init__(self) -> None:  # noqa: D107
         super().__init__(tomlkit.items.Trivia())
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         return (other is None) or isinstance(other, NoneProxy)
 
 

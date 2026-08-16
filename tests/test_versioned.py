@@ -276,14 +276,14 @@ class A(VersionedDataclass, version=1):
     ...
     """
     mod1 = ModuleType('mod1')
-    exec(src1, mod1.__dict__)
+    exec(src1, mod1.__dict__)  # noqa: S102
     A_v1 = reg.get_class('A', 1)
     assert issubclass(A_v1, VersionedDataclass)
     assert A_v1.__module__ == 'mod1'
     assert fully_qualified_class_name(A_v1) == 'mod1.A'
     mod2 = ModuleType('mod2')
     with pytest.raises(TypeError, match="class already registered with name 'A', version 1: mod2.A"):
-        exec(src1, mod2.__dict__)
+        exec(src1, mod2.__dict__)  # noqa: S102
     src2 = """
 from dataclasses import dataclass
 from fancy_dataclass.versioned import version
@@ -292,7 +292,7 @@ from fancy_dataclass.versioned import version
 class A:
     ...
     """
-    exec(src2, mod2.__dict__)
+    exec(src2, mod2.__dict__)  # noqa: S102
     A_v2 = reg.get_class('A', 2)
     assert issubclass(A_v2, VersionedDataclass)
     assert A_v2.__module__ == 'mod2'

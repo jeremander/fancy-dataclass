@@ -120,7 +120,7 @@ if sys.version_info[:2] < (3, 10):
 else:
     @dataclass
     class DCBarUnion(JSONDataclass):  # novermin
-        x: int | str
+        x: int | str  # noqa: FA102
 
 @dataclass
 class DCLiteral(JSONDataclass):
@@ -217,8 +217,8 @@ class DCListOptional(JSONDataclass):
 
 @dataclass
 class DCNumpy(JSONDataclass, suppress_defaults=False):
-    num_int: np.int64 = np.int64(1)
-    num_float: np.float64 = np.float64(1)
+    num_int: np.int64 = np.int64(1)  # noqa: RUF009
+    num_float: np.float64 = np.float64(1)  # noqa: RUF009
     arr_int: np.ndarray = field(default_factory=lambda: np.ones(3, dtype=np.int64))
     arr_float: np.ndarray = field(default_factory=lambda: np.ones(3, dtype=np.float64))
 
@@ -356,7 +356,7 @@ class TestDict:
 
     def _test_serialize_convert(self, obj, s, err):
         """Tests that an object gets serialized to the expected string and back."""
-        (tp, obj) = self._coerce_object(obj)
+        (_, obj) = self._coerce_object(obj)
         ext = self.ext
         (fwd_ok, fwd_ctx, bwd_ctx) = self._get_conversion_contexts(err)
         with fwd_ctx:

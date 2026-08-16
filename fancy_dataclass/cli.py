@@ -54,7 +54,7 @@ def _get_parser_exclusive_group(parser: ArgParser, name: str) -> Optional[_Mutua
 
 def _add_exclusive_group(parser: ArgParser, group_name: str, required: bool) -> _MutuallyExclusiveGroup:
     if isinstance(parser, _MutuallyExclusiveGroup):
-        raise ValueError('nested exclusive groups are not allowed')
+        raise ValueError('nested exclusive groups are not allowed')  # noqa: TRY004
     group = parser.add_mutually_exclusive_group()
     # store the parent parser's set of dests on the group itself
     group._dests = parser._dests  # type: ignore
@@ -65,7 +65,7 @@ def _add_exclusive_group(parser: ArgParser, group_name: str, required: bool) -> 
 
 def _add_group(parser: ArgParser, group_name: str, **group_kwargs: Any) -> _ArgumentGroup:
     if isinstance(parser, _ArgumentGroup):
-        raise ValueError('nested argument groups are not allowed')
+        raise ValueError('nested argument groups are not allowed')  # noqa: TRY004
     kwargs = {key: val for (key, val) in group_kwargs.items() if (key in ['title', 'description'])}
     group = parser.add_argument_group(group_name, **kwargs)
     # store the parent parser's set of dests on the group itself
@@ -259,8 +259,7 @@ class ArgparseDataclass(DataclassMixin):
             brief = cls._parser_description()
             if brief:
                 brief = brief[0].lower() + brief[1:]
-                if brief.endswith('.'):
-                    brief = brief[:-1]
+                brief = brief.removesuffix('.')
         return brief
 
     @classmethod
@@ -403,11 +402,10 @@ class ArgparseDataclass(DataclassMixin):
             kwargs['action'] = action
             if isinstance(action, str) and (action not in ['store_true', 'store_false']):
                 raise ValueError(f'invalid action {action!r} for boolean flag field {name!r}')
-            if default is not None:
-                if (action != 'store_false') == default:
-                    raise ValueError(
-                        f'cannot use default value of {default} for action {action!r} with boolean flag field {name!r}'
-                    )
+            if (default is not None) and ((action != 'store_false') == default):
+                raise ValueError(
+                    f'cannot use default value of {default} for action {action!r} with boolean flag field {name!r}'
+                )
             for key in ('type', 'required'):
                 with suppress(KeyError):
                     kwargs.pop(key)
@@ -568,9 +566,8 @@ class ArgparseDataclass(DataclassMixin):
                 val = getattr(args, dest)
                 # check that Literal value matches one of the allowed values
                 # TODO: let general-purpose validation mixin handle this post-init?
-                if get_origin(tp) == Literal:
-                    if not any(val == arg for arg in get_args(tp)):
-                        raise ValueError(f'invalid value {val!r} for type {tp}')
+                if (get_origin(tp) == Literal) and (not any(val == arg for arg in get_args(tp))):
+                    raise ValueError(f'invalid value {val!r} for type {tp}')
             else:  # argument not present
                 continue
             if is_nested_field:  # merge in nested ArgparseDataclass
@@ -632,7 +629,6 @@ class ArgparseDataclass(DataclassMixin):
         Args:
             parser: `ArgumentParser` used to parse arguments
             args: `Namespace` containing parsed arguments"""
-        pass
 
     @classmethod
     def from_cli_args(cls, arg_list: Optional[list[str]] = None) -> Self:

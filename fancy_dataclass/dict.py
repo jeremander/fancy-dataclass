@@ -339,7 +339,7 @@ class DictDataclass(DataclassMixin):
                 try:
                     # NB: will resolve to the first valid type in the Union
                     return convert_val(subtype, val)
-                except Exception:
+                except Exception:  # noqa: BLE001, S112
                     continue
         elif origin_type == Literal:
             if any((val == arg) for arg in args):

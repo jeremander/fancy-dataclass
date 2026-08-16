@@ -9,7 +9,7 @@ from fancy_dataclass.utils import snake_case_to_camel_case
 
 
 P = ParamSpec('P')
-R = TypeVar('R', covariant=True)
+R_co = TypeVar('R_co', covariant=True)
 
 Bases = Union[type, tuple[type, ...]]
 
@@ -55,27 +55,27 @@ def _func_dataclass(
     return make_dataclass(cls_name, field_data, bases=bases, namespace=namespace)
 
 
-class _FuncDataclass(Protocol[P, R]):
+class _FuncDataclass(Protocol[P, R_co]):
     """Protocol type designating a callable function with positional args.
 
     This is for use in static type checking and need not be subclassed directly."""
 
-    def __call__(self, *args: P.args) -> R:  # type: ignore[valid-type]
+    def __call__(self, *args: P.args) -> R_co:  # type: ignore[valid-type]
         ...
 
 
 @overload
 def func_dataclass(
-    func: Callable[P, R],
+    func: Callable[P, R_co],
     method_name: Literal['__call__'] = '__call__',
     cls_name: Optional[str] = None,
     bases: Bases = (),
-) -> type[_FuncDataclass[P, R]]:
+) -> type[_FuncDataclass[P, R_co]]:
     ...
 
 @overload
 def func_dataclass(
-    func: Callable[P, R],
+    func: Callable[P, R_co],
     method_name: str = '__call__',
     cls_name: Optional[str] = None,
     bases: Bases = (),

@@ -2,8 +2,6 @@ target-version = "py39"
 
 # rules to include
 
-lint.select = ["E", "F"]
-
 lint.extend-select = [
     "A",  # builtins
     "ANN",  # annotations
@@ -11,6 +9,8 @@ lint.extend-select = [
     "C",  # mccabe (complexity)
     "C4",  # comprehensions
     "D",  # docstrings
+    "E",  # pycodestyle
+    "F",  # pyflakes
     "I",  # isort (import order)
     "ICN",  # import conventions
     "PT",  # pytest style
@@ -30,7 +30,6 @@ lint.ignore = [
     "D100",  # module-level docstring
     "D105",  # magic method docstring
     "D203",  # blank line before class docstring
-    # "D204",  # blank line after class docstring
     "D205",  # blank line between summary and description
     "D208",  # extra indentation in docstring
     "D209",  # newline before closing quotes
@@ -43,13 +42,13 @@ lint.ignore = [
     "D413",  # blank line after last section
     "D415",  # first line ending with punctuation
     "E731",  # assign lambda expression
+    "FA100",  # future annotation possible
     "PT001",  # use of pytest.fixture (with no parens)
     "PT013",  # use simple import of pytest
     "PTH123",  # Path.open instead of regular open
     "RET501",  # return None
     "UP007",  # | instead of Union
 ]
-# ignore = ["B019", "E203", "E251", "E301", "E302", "E305", "E306", "E501", "E722", "E731", "E741", "W292", "W391"]
 
 # paths to exclude
 lint.exclude = [
@@ -64,7 +63,12 @@ line-length = 120
 "__init__.py" = ["D104", "F401"]
 "fancy_dataclass/json.py" = ["A005"]
 "fancy_dataclass/subprocess.py" = ["A005"]
-"tests/*" = ["ANN", "D"]
+"tests/*" = [
+    "ANN",
+    "D",
+    "DTZ005",
+    "DTZ007",
+]
 
 [lint.flake8-pytest-style]
 parametrize-names-type = "list"
