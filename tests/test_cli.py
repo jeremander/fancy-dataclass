@@ -1,5 +1,5 @@
 import argparse
-from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, HelpFormatter, _SubParsersAction
+from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, HelpFormatter, Namespace, _SubParsersAction
 from dataclasses import dataclass, field
 import re
 import sys
@@ -412,12 +412,24 @@ def test_string_field_annotations():
     @dataclass
     class DCInner(ArgparseDataclass):
         a: 'str' = 'a'
+    assert DCInner.args_to_dict(Namespace()) == {}
+    assert DCInner.from_cli_args([]) == DCInner('a')
+    assert DCInner.args_to_dict(Namespace(a='b')) == {'a': 'b'}
+    assert DCInner.from_cli_args(['-a', 'b']) == DCInner('b')
+    @dataclass
+    class DCOuter(ArgparseDataclass):
+        inner: 'DCInner' = field(default_factory=DCInner)
+    assert DCOuter.args_to_dict(Namespace()) == {}
+    assert DCOuter.from_cli_args([]) == DCOuter(DCInner('a'))
+    assert DCOuter.args_to_dict(Namespace(a='b')) == {'a': 'b'}
+    assert DCOuter.from_cli_args(['-a', 'b']) == DCOuter(DCInner('b'))
     @dataclass
     class DCOuter(ArgparseDataclass):
         x: 'int'
         flag: 'bool' = False
         val: 'Optional[str]' = None
         inner: 'Optional[DCInner]' = None
+    assert DCOuter.args_to_dict(Namespace(x=5, a='b')) == {'x': 5, 'a': 'b'}
     obj = DCOuter.from_cli_args(['5', '--val', 'abc', '-a', 'b'])
     assert obj.x == 5
     assert obj.flag is False
@@ -425,7 +437,7 @@ def test_string_field_annotations():
     assert isinstance(obj.inner, DCInner)
     assert obj.inner.a == 'b'
     @dataclass
-    class DCInnerSub(DCInner):
+    class DCInnerSub(DCInner):  # subclass of DCInner
         b: 'str' = 'b'
     @dataclass
     class DCOuter(ArgparseDataclass):

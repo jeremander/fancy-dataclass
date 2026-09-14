@@ -16,6 +16,14 @@ Types of changes:
 
 ## [Unreleased]
 
+## [0.12.0]
+
+2026-09-14
+
+### Added
+
+- `sql_type` field setting for `SQLDataclass` fields, allowing user to specify exact SQLAlchemy column type.
+
 ### Removed
 
 - `DictDataclass`
@@ -432,7 +440,8 @@ Types of changes:
     - `SQLDataclass`: SQL persistence via `sqlalchemy`
     - `SubprocessDataclass`: call out to another program via `subprocess`
 
-[unreleased]: https://github.com/jeremander/fancy-dataclass/compare/v0.11.1...HEAD
+[unreleased]: https://github.com/jeremander/fancy-dataclass/compare/v0.12.0...HEAD
+[0.12.0]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.12.0
 [0.11.1]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.11.1
 [0.11.0]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.11.0
 [0.10.2]: https://github.com/jeremander/fancy-dataclass/releases/tag/v0.10.2

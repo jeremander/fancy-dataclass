@@ -556,8 +556,14 @@ class ArgparseDataclass(DataclassMixin):
         d = {}
         for fld in fields(cls):  # type: ignore[arg-type]
             is_nested_field = False
-            tp = cast(type, fld.type)
+            if isinstance(fld.type, str):
+                tp = eval_type_str(fld.type)
+            else:
+                tp = cast(type, fld.type)
             dest = fld.metadata.get('dest', fld.name)
+            is_optional = type_is_optional(tp)
+            if is_optional:
+                tp = get_args(tp)[0]
             if issubclass_safe(tp, ArgparseDataclass):
                 # recursively gather arguments for nested ArgparseDataclass
                 val = tp.args_to_dict(args)  # type: ignore[attr-defined]
@@ -566,7 +572,7 @@ class ArgparseDataclass(DataclassMixin):
                 val = getattr(args, dest)
                 # check that Literal value matches one of the allowed values
                 # TODO: let general-purpose validation mixin handle this post-init?
-                if (get_origin(tp) == Literal) and (not any(val == arg for arg in get_args(tp))):
+                if (not is_optional) and (get_origin(tp) == Literal) and (not any(val == arg for arg in get_args(tp))):
                     raise ValueError(f'invalid value {val!r} for type {tp}')
             else:  # argument not present
                 continue
