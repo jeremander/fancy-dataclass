@@ -10,8 +10,6 @@
     - Describe *all* settings and field settings.
       - Note purpose of `flatten=True` (good for tabular data like CSV/SQL)
     - Emphasize type conversions are only to/from dict, not general constructors (this is a difference from `pydantic`).
-  - JSON
-    - Example to/from file.
   - CLI
   - SQL
     - Primary key (default `_id`)

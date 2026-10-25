@@ -27,7 +27,7 @@ class Person(JSONDataclass):
     awards: Optional[list[str]] = None
 ```
 
-Convert to/from a JSON string.
+Convert to/from a JSON string or file.
 
 ```python
 >>> person = Person(
@@ -37,8 +37,8 @@ Convert to/from a JSON string.
     hobbies=['reading', 'juggling', 'cycling']
 )
 
+# convert to a JSON string and back
 >>> json_string = person.to_json_string(indent=2)
-
 >>> print(json_string)
 {
   "name": "John Doe",
@@ -50,9 +50,15 @@ Convert to/from a JSON string.
     "cycling"
   ]
 }
+>>> person2 = Person.from_json_string(json_string)
+>>> person2 == person
+True
 
->>> new_person = Person.from_json_string(json_string)
->>> person == new_person
+# convert to a JSON file and back
+>>> json_path = 'person.json'
+>>> person.save(json_path)
+>>> person3 = Person.load(json_path)
+>>> person3 == person
 True
 ```
 
