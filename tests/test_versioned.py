@@ -384,7 +384,7 @@ def test_migrate() -> None:
     assert isinstance(a4.migrate(version=2), A2)
     assert a4.migrate(version=2) == A2(4, 'a')
     for ver in [4, None]:
-        assert a4.migrate(version=ver) is a4
+        assert a4.migrate(version=ver) is a4  # type: ignore[union-attr]
     # remove required field
     @version(5)
     @dataclass

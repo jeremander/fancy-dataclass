@@ -99,7 +99,7 @@ def test_argparse_dataclass_help() -> None:
     dc1_parser = DC1.make_parser()
     assert parser.format_help() == dc1_parser.format_help()
 
-def test_cli_dataclass_parse_valid(capsys: pytest.CaptureFixture) -> None:
+def test_cli_dataclass_parse_valid(capsys: pytest.CaptureFixture[str]) -> None:
     """Tests that an CLIDataclass properly parses command-line arguments."""
     def _check_equivalent(args: list[str], obj: CLIDataclass) -> None:
         # take args directly
@@ -499,7 +499,7 @@ def test_nested_name_collision() -> None:
         inner2: DCInner2 = field(default_factory=DCInner2)
     help_str = DCOuter.make_parser().format_help()
     assert re.search(r'.*--x1\s+X1\s+--x2\s+X2.*', help_str)
-    assert DCOuter.from_cli_args(['--x1', '5', '--x2', '6']) == DCOuter(DCInner1(5), DCInner2(6))
+    assert DCOuter.from_cli_args(['--x1', '5', '--x2', '6']) == DCOuter(DCInner1(5), DCInner2(6))  # type: ignore[arg-type]
 
 def test_positional() -> None:
     """Tests positional argument."""
@@ -709,7 +709,7 @@ def test_nested() -> None:
     with pytest.raises(ValueError, match='union type .+ not allowed'):
         _ = H.make_parser()
 
-def test_subcommand(capsys: pytest.CaptureFixture) -> None:
+def test_subcommand(capsys: pytest.CaptureFixture[str]) -> None:
     """Tests the behavior of subcommands."""
     @dataclass
     class Sub1(CLIDataclass):
@@ -871,7 +871,7 @@ def test_subcommand(capsys: pytest.CaptureFixture) -> None:
     p = DCSub12.make_parser()
     assert p.formatter_class is ArgumentDefaultsHelpFormatter
     # subparser adopts parent's formatter_class by default
-    assert p._subparsers._actions[1].choices['sub7'].formatter_class is ArgumentDefaultsHelpFormatter  # type: ignore[attr-defined]
+    assert p._subparsers._actions[1].choices['sub7'].formatter_class is ArgumentDefaultsHelpFormatter  # type: ignore[index, union-attr]
     @dataclass
     class Sub8(ArgparseDataclass, formatter_class=HelpFormatter):
         ...
@@ -880,7 +880,7 @@ def test_subcommand(capsys: pytest.CaptureFixture) -> None:
         sub: Sub8 = field(metadata={'subcommand': True})
     p = DCSub13.make_parser()
     assert p.formatter_class is ArgumentDefaultsHelpFormatter
-    assert p._subparsers._actions[1].choices['sub8'].formatter_class is HelpFormatter  # type: ignore[attr-defined]
+    assert p._subparsers._actions[1].choices['sub8'].formatter_class is HelpFormatter  # type: ignore[index, union-attr]
 
 def test_boolean_flag() -> None:  # novermin
     """Tests the behavior of boolean fields in an ArgparseDataclass."""
@@ -954,12 +954,12 @@ def test_type_metadata() -> None:
     class DCTypeMismatch(ArgparseDataclass):
         x: int = field(default=1, metadata={'type': str})
     assert DCTypeMismatch.from_cli_args([]).x == 1
-    assert DCTypeMismatch.from_cli_args(['-x', '1']).x == '1'
+    assert DCTypeMismatch.from_cli_args(['-x', '1']).x == '1'  # type: ignore[comparison-overlap]
     @dataclass
     class DCTypeCallable(ArgparseDataclass):
         x: int = field(metadata={'type': lambda x: int(x) + 1})
     assert DCTypeCallable.from_cli_args(['1']).x == 2
-    def positive_int(s):
+    def positive_int(s: str) -> int:
         x = int(s)
         if x < 0:
             raise ValueError('negative number')
@@ -1147,9 +1147,9 @@ def test_optional_subcommand() -> None:
         with pytest.raises(ValueError, match="'sub' field cannot set required=False"):
             _ = G.make_parser()
 
-def test_subcommand_run(capsys: pytest.CaptureFixture) -> None:
+def test_subcommand_run(capsys: pytest.CaptureFixture[str]) -> None:
     class CLIDC(CLIDataclass):
-        def run(self):
+        def run(self) -> None:
             print('abc')
     @dataclass
     class X(CLIDC):
@@ -1166,7 +1166,7 @@ def test_subcommand_run(capsys: pytest.CaptureFixture) -> None:
     A.main(['x'])
     assert capsys.readouterr().out.strip() == 'abc'
 
-def test_version(capsys: pytest.CaptureFixture) -> None:
+def test_version(capsys: pytest.CaptureFixture[str]) -> None:
     # display version
     @dataclass
     class DCV1(ArgparseDataclass, version=1):

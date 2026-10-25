@@ -84,7 +84,7 @@ example_cols = [
 ])
 def test_schema(cls: type, columns: list[tuple[str, type]]) -> None:
     """Tests the column types of various SQLDataclasses."""
-    actual_columns = [(col.name, col.type) for col in cls.__table__.columns]
+    actual_columns = [(col.name, col.type) for col in cls.__table__.columns]  # type: ignore[attr-defined]
     assert len(actual_columns) == len(columns)
     for ((name1, tp1), (name2, tp2)) in zip(actual_columns, columns):
         assert name1 == name2

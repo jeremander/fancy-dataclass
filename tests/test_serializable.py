@@ -9,11 +9,11 @@ import math
 from pathlib import Path
 import re
 import sys
-from typing import Annotated, Any, Literal, NamedTuple, Optional, TypedDict, TypeVar, Union
+from typing import IO, Annotated, Any, Literal, NamedTuple, Optional, TypedDict, TypeVar, Union
 
 import numpy as np
 import pytest
-from typing_extensions import Doc
+from typing_extensions import Doc, Self
 
 from fancy_dataclass.dict import DictDataclass, DictDataclassSettings
 from fancy_dataclass.json import JSONBaseDataclass, JSONDataclass, JSONSerializable
@@ -52,7 +52,7 @@ def _convert_json_dataclass(cls: type[T], new_cls: type[DictDataclass]) -> type[
         return tp
     tp = _convert(dataclass_type_map(cls, _convert))  # type: ignore[arg-type]
     assert issubclass(tp, DictDataclass)
-    tp.__eq__ = cls.__eq__  # type: ignore[assignment]
+    tp.__eq__ = cls.__eq__  # type: ignore[method-assign]
     tp.__settings__ = cls.__settings__
     return tp
 
@@ -317,7 +317,7 @@ class TestDict:
             assert 'type' not in obj.to_dict()
         assert tp.from_dict(obj.to_dict()) == obj
 
-    def _get_conversion_contexts(self, err: Optional[ErrInfo]):
+    def _get_conversion_contexts(self, err: Optional[ErrInfo]) -> tuple[bool, Any, Any]:
         if err is None:
             return (True, nullcontext(), nullcontext())
         (fwd_ok, errtype, match) = err
@@ -514,7 +514,7 @@ class TestJSON(TestDict):
             (True, ValueError, "could not convert 4 to type 'str'"),
         ),
     ])
-    def test_namedtuple(self, obj: DictDataclass, d: dict[str, Any], err: Optional[ErrInfo]):
+    def test_namedtuple(self, obj: DictDataclass, d: dict[str, Any], err: Optional[ErrInfo]) -> None:
         self._test_dict_convert(obj, d, err)
 
     def test_any(self) -> None:
@@ -528,7 +528,7 @@ class TestJSON(TestDict):
         assert obj1 != obj2
 
     def test_subclass_json_dataclass(self) -> None:
-        def _remove_type(d):
+        def _remove_type(d: dict[str, Any]) -> dict[str, Any]:
             return {key: val for (key, val) in d.items() if (key != 'type')}
         obj = DC1Sub(3, 4.7, 'abc')
         obj1 = DC1Sub.from_dict(obj.to_dict())
@@ -656,13 +656,13 @@ class TestJSON(TestDict):
                 return super().default(o)
         class MyClass(JSONSerializable):
             @classmethod
-            def _to_json_value(cls, obj):
+            def _to_json_value(cls, obj: Self) -> Any:
                 return {1, 2, 3}
             @classmethod
-            def _from_text_file(cls, fp, **kwargs):
+            def _from_text_file(cls, fp: IO[str], **kwargs: Any) -> Self:
                 return cls()
             @classmethod
-            def json_encoder(cls):
+            def json_encoder(cls) -> type[JSONEncoder]:
                 return MyEncoder
         obj = MyClass()
         assert obj.to_json_string() == '[1, 2, 3]'
@@ -672,7 +672,7 @@ class TestJSON(TestDict):
         @dataclass
         class MyDC2(MyDC1):
             @classmethod
-            def json_encoder(cls):
+            def json_encoder(cls) -> type[JSONEncoder]:
                 return MyEncoder
         obj1 = MyDC1()
         assert obj1.to_dict() == {'xs': {1, 2, 3}}
@@ -694,9 +694,10 @@ class TestTOML(TestDict):
 
     def _convert_dataclass(self, tp: type) -> type:
         tp = _convert_json_dataclass(tp, self.base_cls)
-        assert isinstance(tp.__settings__, DictDataclassSettings)
-        tp.__settings__.suppress_defaults = False
-        tp.__settings__.store_type = tp.__settings__._store_type = 'off'
+        settings = tp.__settings__  # type: ignore[attr-defined]
+        assert isinstance(settings, DictDataclassSettings)
+        settings.suppress_defaults = False
+        settings.store_type = settings._store_type = 'off'
         return tp
 
     @pytest.mark.parametrize('obj', TEST_JSON)
@@ -739,7 +740,7 @@ class TestTOML(TestDict):
         # NOTE: round-trip is violated because null value is omitted and default is non-null
         (DCOptionalDefault(None), '# x = \n', (True, AssertionError, '==')),
     ])
-    def test_optional(self, obj: object, s: str, err: Optional[ErrInfo]):
+    def test_optional(self, obj: object, s: str, err: Optional[ErrInfo]) -> None:
         """Tests behavior of Optional types with TOML conversion."""
         self._test_serialize_convert(obj, s, err)
 

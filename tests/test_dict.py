@@ -120,8 +120,9 @@ def test_make_dataclass() -> None:
     """Tests behavior of make_dataclass."""
     # with type annotations
     dc = make_dataclass('TestDataclass', [('a', int), ('b', str)], bases=(DictDataclass,))
+    assert issubclass(dc, DictDataclass)
     obj = dc.from_dict({'a': 3, 'b': 'b'})
-    assert isinstance(obj, dc)
+    assert isinstance(obj, dc)  # pyrefly: ignore[invalid-argument]
     _test_dict_round_trip(obj, {'a': 3, 'b': 'b'})
     with pytest.raises(ValueError, match="could not convert 4 to type 'str'"):
         _ = dc.from_dict({'a': 3, 'b': 4})
@@ -129,6 +130,7 @@ def test_make_dataclass() -> None:
         _ = dc.from_dict({'a': '3.7', 'b': 'b'})
     # no type annotations
     dc = make_dataclass('TestDataclass', ['a', 'b'], bases=(DictDataclass,))
+    assert issubclass(dc, DictDataclass)
     obj = dc.from_dict({'a': 3, 'b': 'b'})
     _test_dict_round_trip(obj)
     obj = dc.from_dict({'a': '3.7', 'b': 'b'})
@@ -321,19 +323,19 @@ def test_allow_extra_fields() -> None:
     class OuterStrictInnerStrict(DictDataclass, allow_extra_fields=False):
         z: InnerStrict
     for cls in [OuterLaxInnerLax, OuterLaxInnerStrict, OuterStrictInnerLax, OuterStrictInnerStrict]:
-        inner_cls = cls.__dataclass_fields__['z'].type
-        assert cls.from_dict({'z': {'x': 1}}) == cls(inner_cls())
+        inner_cls = cls.__dataclass_fields__['z'].type  # type: ignore[attr-defined]
+        assert cls.from_dict({'z': {'x': 1}}) == cls(inner_cls())  # type: ignore[attr-defined]
     for cls in [OuterLaxInnerLax, OuterStrictInnerLax]:
-        inner_cls = cls.__dataclass_fields__['z'].type
+        inner_cls = cls.__dataclass_fields__['z'].type  # type: ignore[attr-defined]
         assert cls.from_dict({'z': {'y': 1}}) == cls(inner_cls())
     for cls in [OuterLaxInnerStrict, OuterStrictInnerStrict]:
-        inner_cls = cls.__dataclass_fields__['z'].type
+        inner_cls = cls.__dataclass_fields__['z'].type  # type: ignore[attr-defined]
         for d in [{'y': 1}, {'x': 1, 'y': 1}]:
             with pytest.raises(ValueError, match=re.escape(f"unknown dict fields for {inner_cls.__name__}: ['y']")):
                 _ = cls.from_dict({'z': d})
     for cls in [OuterStrictInnerLax, OuterStrictInnerStrict]:
         with pytest.raises(ValueError, match=re.escape(f"unknown dict fields for {cls.__name__}: ['extra']")):
-            _ = cls.from_dict({'z': {'x': 1}, 'extra': None})
+            _ = cls.from_dict({'z': {'x': 1}, 'extra': None})  # type: ignore[attr-defined]
 
 def test_store_type_setting() -> None:
     """Tests behavior of the store_type setting."""
@@ -505,7 +507,7 @@ def test_suppress_required_field() -> None:
     class DCSuppressRequired(DictDataclass):
         x: int = field(metadata={'suppress': True})
     with pytest.raises(TypeError, match='missing 1 required positional argument'):
-        _ = DCSuppressRequired()  # type: ignore[arg-type]
+        _ = DCSuppressRequired()  # type: ignore[call-arg]
     obj = DCSuppressRequired(1)
     assert obj.to_dict() == {}
     with pytest.raises(MissingRequiredFieldError, match="'x' field is required"):
@@ -560,10 +562,10 @@ def test_suppress_none() -> None:
     class DC(DictDataclass):
         x: Optional[int] = 1
         y: Optional[int] = field(default=2, metadata={'suppress_none': True})
-    obj = DC(None, None)
+    obj = DC(None, None)  # type: ignore[call-arg]
     assert obj.to_dict() == {'x': None}
     assert obj.to_dict(full=True) == {'x': None, 'y': None}
-    assert DC.from_dict({}) == DC(1, 2)
+    assert DC.from_dict({}) == DC(1, 2)  # type: ignore[call-arg]
     # field-level overrides class level
     @dataclass
     class DC(DictDataclass, suppress_none=True):
@@ -595,7 +597,7 @@ def test_suppress_none() -> None:
     @dataclass
     class DC(DictDataclass, suppress_none=True):
         x: int
-    assert DC(None).to_dict() == {}  # type: ignore[arg-type]
+    assert DC(None).to_dict() == {}  # pyrefly: ignore[bad-argument-type]
 
 def test_class_var() -> None:
     """Tests the behavior of ClassVars."""
@@ -672,8 +674,8 @@ def test_alias() -> None:
     @dataclass
     class MyDC(DictDataclass):
         x: int = field(metadata={'alias': 'y'})
-    obj = MyDC(3)
-    assert obj == MyDC(x=3)
+    obj = MyDC(3)  # type: ignore[call-arg]
+    assert obj == MyDC(x=3)  # type: ignore[call-arg]
     assert obj.to_dict() == {'y': 3}
     assert MyDC.from_dict(obj.to_dict()) == obj
     with pytest.raises(ValueError, match=re.escape("'x' field (alias 'y') is required")):
@@ -708,6 +710,6 @@ def test_typealias() -> None:
             x: IntAlias3
         classes.append(MyDC3)
     for cls in classes:
-        obj = cls(1)  # type: ignore[arg-type]
+        obj = cls(1)  # type: ignore[call-arg]
         assert obj.to_dict() == {'x': 1}
         assert cls.from_dict(obj.to_dict()) == obj

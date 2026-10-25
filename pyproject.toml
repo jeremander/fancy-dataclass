@@ -62,13 +62,13 @@ pre-publish = [
 
 [tool.hatch.envs.lint]
 dependencies = [
-  "mypy>=1.16",
+  "mypy >= 2.4",
   "numpy",
-  "py-gadzooks>=0.2.9",
-  "pyrefly",
+  "py-gadzooks >= 0.2.9",
+  "pyrefly >= 1.4",
   "pytest",
-  "ruff>=0.16",
-  "vermin>=1.6",
+  "ruff >= 0.16",
+  "vermin >= 1.6",
 ]
 
 [tool.hatch.envs.lint.scripts]
@@ -132,68 +132,32 @@ exclude_lines = [
 [tool.commitizen]
 tag_format = "v$major.$minor.$patch"
 
-[tool.mypy]
-# exclude = ["docs/", "scripts/", "site/", "tmp.*"]
-exclude = ["docs/", "scripts/", "site/", "tmp.*", "tests/*"]
-warn_unused_configs = true
-strict = true
-
-# [[tool.mypy.overrides]]
-# module = "tests.*"
-# strict = false
-# disable_error_code = ["no-redef"]
-# disable_error_code = ["arg-type", "attr-defined", "call-arg", "comparison-overlap", "no-redef", "no-untyped-call", "no-untyped-def", "type-arg"]
-
-# [[tool.mypy.overrides]]
-# module = "tests.test_cli"
-# disable_error_code = ["assignment", "index", "operator", "union-attr"]
-
-# [[tool.mypy.overrides]]
-# module = "tests.test_config"
-# disable_error_code = ["index", "misc", "union-attr"]
-
-# [[tool.mypy.overrides]]
-# module = "tests.test_dict"
-# disable_error_code = ["assignment", "misc"]
-
-# [[tool.mypy.overrides]]
-# module = "tests.test_inheritance"
-# disable_error_code = ["assignment", "misc"]
-
-# [[tool.mypy.overrides]]
-# module = "tests.test_mixin"
-# disable_error_code = ["assignment", "call-overload", "has-type", "misc", "union-attr"]
-
-# [[tool.mypy.overrides]]
-# module = "tests.test_serializable"
-# disable_error_code = ["assignment", "misc"]
-
-# [[tool.mypy.overrides]]
-# module = "tests.test_subprocess"
-# disable_error_code = ["assignment", "misc"]
-
-[[tool.mypy.overrides]]
-module = "tests.test_subprocess"
-disable_error_code = ["assignment"]
-
-[[tool.mypy.overrides]]
-module = "tests.test_versioned"
-disable_error_code = ["arg-type", "attr-defined", "call-arg", "comparison-overlap", "no-redef"]
-
 [tool.pytest.ini_options]
 addopts = "--verbose --cov=fancy_dataclass"
 
-[tool.yapf]
-# NOTE: we'd like to disable vertical whitespace adjustment,
-# but there appears to be no way to do that
-based_on_style = "pep8"
-blank_lines_between_top_level_imports_and_variables = 2
-coalesce_brackets = true
-column_limit = 120
-dedent_closing_brackets = true
-space_between_ending_comma_and_closing_bracket = false
-spaces_around_power_operator = true
-split_all_top_level_comma_separated_values = true
+[tool.mypy]
+# exclude = ["docs/", "scripts/", "site/", "tmp.*"]
+exclude = ["docs/", "scripts/", "site/", "tmp.*"]
+warn_unused_configs = true
+strict = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+allow_redefinition = true
+disable_error_code = ["no-redef"]
+# disable_error_code = ["arg-type", "attr-defined", "call-arg", "comparison-overlap", "no-redef", "no-untyped-call", "no-untyped-def", "type-arg"]
+
+[[tool.mypy.overrides]]
+module = "tests.test_cli"
+disable_error_code = ["attr-defined", "call-arg",  "method-assign"]
+
+[[tool.mypy.overrides]]
+module = "tests.test_inheritance"
+disable_error_code = ["misc"]
+
+[[tool.mypy.overrides]]
+module = "tests.test_versioned"
+disable_error_code = ["arg-type", "attr-defined", "call-arg", "comparison-overlap"]
 
 [tool.pyrefly]
 preset = "default"
@@ -225,3 +189,15 @@ matches = "tests/test_versioned.py"
 
 [tool.pyrefly.sub-config.errors]
 missing-attribute = "ignore"
+
+[tool.yapf]
+# NOTE: we'd like to disable vertical whitespace adjustment,
+# but there appears to be no way to do that
+based_on_style = "pep8"
+blank_lines_between_top_level_imports_and_variables = 2
+coalesce_brackets = true
+column_limit = 120
+dedent_closing_brackets = true
+space_between_ending_comma_and_closing_bracket = false
+spaces_around_power_operator = true
+split_all_top_level_comma_separated_values = true

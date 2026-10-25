@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import ClassVar, Optional
 
 import pytest
+from typing_extensions import Self
 
 from fancy_dataclass import (
     ArgparseDataclass,
@@ -18,7 +19,8 @@ from fancy_dataclass import (
 )
 from fancy_dataclass.cli import ArgparseDataclassSettings
 from fancy_dataclass.dict import DictDataclassSettings
-from fancy_dataclass.mixin import DataclassMixin, MixinSettings
+from fancy_dataclass.mixin import DataclassMixin
+from fancy_dataclass.settings import MixinSettings
 from fancy_dataclass.subprocess import SubprocessDataclassSettings
 from fancy_dataclass.toml import NoneProxy
 from fancy_dataclass.utils import coerce_to_dataclass
@@ -65,7 +67,7 @@ def test_all_inheritance() -> None:
         cls = mixin_cls.wrap_dataclass(cls, store_type='qualname')
     assert issubclass(cls, DC)
     mro = cls.mro()
-    obj = cls(5)
+    obj = cls(5)  # type: ignore[call-arg]
     for mixin_cls in DEFAULT_MIXINS:
         assert mixin_cls in mro
         assert isinstance(obj, mixin_cls)
@@ -104,14 +106,14 @@ def test_post_dataclass_wrap() -> None:
         val: ClassVar[int]
         val1: ClassVar[int]
         @classmethod
-        def __post_dataclass_wrap__(cls, wrapped_cls):
+        def __post_dataclass_wrap__(cls, wrapped_cls: type[Self]) -> None:
             wrapped_cls.val = 1
             wrapped_cls.val1 = 1
     class Mixin2(DataclassMixin):
         val: ClassVar[int]
         val2: ClassVar[int]
         @classmethod
-        def __post_dataclass_wrap__(cls, wrapped_cls):
+        def __post_dataclass_wrap__(cls, wrapped_cls: type[Self]) -> None:
             wrapped_cls.val = 2
             wrapped_cls.val2 = 2
     @dataclass
@@ -147,7 +149,7 @@ def test_settings_field_collision() -> None:
         class DC3(DC1, DC2):
             ...
     class DC4(DC1, DC2):
-        __settings_type__ = Settings2
+        __settings_type__ = Settings2  # type: ignore[assignment]
 
 def test_json_toml() -> None:
     """Tests inheritance from both JSONDataclass and TOMLDataclass."""
@@ -164,7 +166,9 @@ def test_json_toml() -> None:
     obj2 = TOMLJSONDC(dt)
     for obj in [obj1, obj2]:
         assert isinstance(obj.to_dict()['dt'], datetime)
+        assert isinstance(obj, JSONDataclass)
         assert obj.to_json_string() == json_str
+        assert isinstance(obj, TOMLDataclass)
         assert obj.to_toml_string() == toml_str
     # first class in inheritance list takes priority for saving/loading
     with StringIO() as sio:

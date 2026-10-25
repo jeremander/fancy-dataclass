@@ -2,7 +2,7 @@ from dataclasses import astuple, dataclass, field, fields, is_dataclass
 from typing import Annotated, ClassVar
 
 import pytest
-from typing_extensions import Doc
+from typing_extensions import Doc, Self
 
 from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.settings import DocFieldSettings, FieldSettings, MixinSettings
@@ -18,7 +18,7 @@ def test_field_settings() -> None:
         pass
     with pytest.raises(TypeError, match='MyFieldSettings1 is not a dataclass'):
         _ = MyFieldSettings1.from_field(fld_pos)
-    MyFieldSettings1 = dataclass(MyFieldSettings1)
+    MyFieldSettings1 = dataclass(MyFieldSettings1)  # type: ignore[misc]
     # extra metadata is ignored
     assert MyFieldSettings1.from_field(fld_pos) == MyFieldSettings1()
     @dataclass
@@ -53,7 +53,7 @@ class TestDataclassMixin:
         class MyMixin(DataclassMixin):
             _my_value: int
             @classmethod
-            def __post_dataclass_wrap__(cls, wrapped_cls) -> None:
+            def __post_dataclass_wrap__(cls, wrapped_cls: type[Self]) -> None:
                 wrapped_cls._my_value = 123
         assert not hasattr(MyMixin, '_my_value')
         # method triggers when wrapped into a dataclass
@@ -123,11 +123,11 @@ class TestDataclassMixin:
         @dataclass
         class MyDC(MyMixinReq):
             ...
-        assert MyDC.__settings__ == MySettingsReq(enhanced=False)
+        assert MyDC.__settings__ == MySettingsReq(enhanced=False)  # type: ignore[comparison-overlap]
         @dataclass
         class MyDC(MyMixinReq):
             __settings__ = None
-        assert MyDC.__settings__ == MySettingsReq(enhanced=False)
+        assert MyDC.__settings__ == MySettingsReq(enhanced=False)  # type: ignore[comparison-overlap]
 
     def test_settings_invalid(self) -> None:
         """Tests error conditions for DataclassMixin settings."""
@@ -157,7 +157,7 @@ class TestDataclassMixin:
         with pytest.raises(TypeError, match="missing 1 required positional argument: 'enhanced'"):
             @dataclass
             class MyDC3(MyMixinReq):
-                __settings__ = None
+                __settings__ = None  # type: ignore[assignment]
         with pytest.raises(TypeError, match="settings for MyDC4 missing expected field 'enhanced'"):
             @dataclass
             class MyDC4(MyMixin):
@@ -175,7 +175,7 @@ class TestDataclassMixin:
         with pytest.raises(TypeError, match='NonDCSettings is not a dataclass'):
             @dataclass
             class MyDC6(MyMixin):
-                __settings_type__ = NonDCSettings
+                __settings_type__ = NonDCSettings  # type: ignore[assignment]
         # __settings__ attribute conflicts with inheritance kwargs
         with pytest.raises(TypeError, match="redundant specification of field 'enhanced' for MyDC7"):
             @dataclass
@@ -206,8 +206,9 @@ class TestDataclassMixin:
             d: int = 5
         class Mixin4(DataclassMixin):
             __settings_type__ = Settings4
-        def _check_stype(cls, field_names):
+        def _check_stype(cls: type[DataclassMixin], field_names: list[str]) -> None:
             assert [fld.name for fld in get_dataclass_fields(cls.__settings_type__)] == field_names
+            assert isinstance(cls.__settings_type__, type)
             assert isinstance(cls.__settings__, cls.__settings_type__)
         @dataclass
         class DC1(Mixin1):
@@ -216,7 +217,7 @@ class TestDataclassMixin:
         assert isinstance(DC1.__settings__, Settings1)
         assert DC1.__settings__.a == 1
         @dataclass
-        class DC2(Mixin1, Mixin2, Mixin3):
+        class DC2(Mixin1, Mixin2, Mixin3):  # type: ignore[misc]
             ...
         assert isinstance(DC2.__settings_type__, type)
         assert DC2.__settings_type__.__name__ == 'MiscDataclassSettings'
