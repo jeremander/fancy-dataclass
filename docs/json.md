@@ -27,36 +27,6 @@ class Person(JSONDataclass):
     awards: Optional[list[str]] = None
 ```
 
-Convert to/from a Python dict.
-
-```python
->>> person = Person(
-    name='John Doe',
-    age=47,
-    height=71.5,
-    hobbies=['reading', 'juggling', 'cycling']
-)
-
-# default values are suppressed by default
->>> person.to_dict()
-{'name': 'John Doe',
- 'age': 47,
- 'height': 71.5,
- 'hobbies': ['reading', 'juggling', 'cycling']}
-
-# include all the values
->>> person.to_dict(full=True)
-{'name': 'John Doe',
- 'age': 47,
- 'height': 71.5,
- 'hobbies': ['reading', 'juggling', 'cycling'],
- 'awards': None}
-
->>> new_person = Person.from_dict(person.to_dict())
->>> new_person == person
-True
-```
-
 Convert to/from a JSON string.
 
 ```python
@@ -88,97 +58,13 @@ True
 
 ## Details
 
-`JSONDataclass` inherits from [`DictDataclass`][fancy_dataclass.dict.DictDataclass], which can be used to convert dataclasses to/from Python dicts via [`to_dict`][fancy_dataclass.dict.DictDataclass.to_dict] and [`from_dict`][fancy_dataclass.dict.DictDataclass.from_dict]. You may use `DictDataclass` if you do not need to interact with JSON serialized data.
+`JSONDataclass` inherits from [`DictDataclass`][fancy_dataclass.dict.DictDataclass], which can be used to convert dataclasses to/from Python dicts via [`to_dict`][fancy_dataclass.dict.DictDataclass.to_dict] and [`from_dict`][fancy_dataclass.dict.DictDataclass.from_dict]. You may use `DictDataclass` directly if you do not need to interact with JSON serialized data.
 
-### Class and Field Settings
+For details on configuring `JSONDataclass`, see the [dict conversion](dict.md) page.
 
-You may customize the behavior of a `JSONDataclass` subclass by passing keyword arguments upon inheritance (see [mixin class settings](mixin.md#class-settings)). See [`DictDataclassSettings`][fancy_dataclass.dict.DictDataclassSettings] for the full list of settings. For field-specific settings, see [`DictDataclassFieldSettings`][fancy_dataclass.dict.DictDataclassFieldSettings].
+### Type Labels and Inheritance
 
-#### Suppressing Defaults
-
-One setting, `suppress_defaults`, is set to `True` by default. This will suppress fields in an output `dict` or JSON whose values match the class's default value. While this is often helpful to keep the output smaller in size, it is sometimes better to be explicit. To override this behavior, you can set `suppress_defaults=False`.
-
-```python
-@dataclass
-class A(JSONDataclass):
-    x: int = 5
-
-@dataclass
-class B(JSONDataclass, suppress_defaults=False):
-    x: int = 5
-
-print(A().to_json_string())
-{}
-
-print(B().to_json_string())
-{"x": 5}
-```
-
-#### Suppressing Null Values
-
-You can suppress fields with null values by supplying `suppress_none=True`:
-
-```python
-@dataclass
-class C(JSONDataclass, suppress_none=True):
-    x: Optional[int]
-
-print(C(1).to_json_string()
-{"x": 1}
-
-print(C(None).to_json_string()
-{}
-
-```
-
-You can be more fine-grained about handling the output behavior of specific fields by setting flags in their [field settings](mixin.md#field-settings):
-
-- Setting `suppress_default` to `False` or `True` will override the class setting at the field level.
-- Setting `suppress_none` to `False` or `True` will override the class setting at the field level.
-- Setting `suppress` to `False` or `True` will force inclusion or exclusion of the field, regardless of `suppress_defaults` or `suppress_none` settings.
-
-#### Including Types in Output
-
-Another setting of note is `store_type`. This relates to type inference when loading an object from a `dict` or JSON blob. Suppose you have a class like:
-
-```python
-@dataclass
-class Circle(JSONDataclass):
-    radius: float
-```
-
-Converting a `Circle` object to a JSON string:
-
-```python3
-print(Circle(3).to_json_string())
-{"radius": 3}
-```
-
-This may be undesirable, since the output does not make it clear what type of thing it is. To include the type in the output, you may set `store_type='name'`:
-
-```python
-@dataclass
-class Circle(JSONDataclass, store_type='name'):
-    radius: float
-
-print(Circle(3).to_json_string())
-{"type": "Circle", "radius": 3}
-```
-
-Sometimes it is better to store the fully qualified type name instead. You can do this by setting `store_type` to `'qualname'`:
-
-```python
-@dataclass
-class Circle(JSONDataclass, store_type='qualname'):
-    radius: float
-
-print(Circle(3).to_json_string())
-{"type": "my_module.Circle", "radius": 3}
-```
-
-(Here, `my_module` is the name of the module in which `Circle` is defined.)
-
-Setting `store_type='qualname'` is particularly useful when dealing with inheritance hierarchies. For example, if you try:
+When dealing with inheritance hierarchies of `JSONDataclass` objects, it is important to [store the type name](dict.md#including-types-in-output) in the JSON output. For example, if you try:
 
 ```python
 
@@ -191,7 +77,7 @@ class Circle(Shape):
     radius: float
 ```
 
-This will raise the following error: `TypeError: when subclassing a JSONDataclass, you must set store_type to a value other than 'auto', or subclass JSONBaseDataclass instead`. This is saying that when you subclass `JSONDataclass`, you _must_ explicitly override `store_type` (preferably with `'qualname'`, to prevent type ambiguity when converting back from JSON). An alternative to setting `store_type` is subclassing `JSONBaseDataclass` instead of `JSONDataclass`. This will set `store_type` to `'qualname'` automatically.
+This will raise the following error: `TypeError: when subclassing a JSONDataclass, you must set store_type to a value other than 'auto', or subclass JSONBaseDataclass instead`. This is saying that when you subclass `JSONDataclass`, you _must_ explicitly override `store_type` (preferably with `'qualname'`, to prevent type ambiguity when converting back from JSON). An alternative to setting `store_type` is subclassing [`JSONBaseDataclass`][fancy_dataclass.json.JSONBaseDataclass] instead of `JSONDataclass`. This will set `store_type` to `'qualname'` automatically.
 
 Let's see why this is useful:
 

@@ -29,6 +29,11 @@
   font-weight: bold;
 }
 
+.md-typeset a > code,
+.content a > code {
+  color: inherit;
+}
+
 .md-content h1 {
   color: #303030;
   font-weight: bold;
