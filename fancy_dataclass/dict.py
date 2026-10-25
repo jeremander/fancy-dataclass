@@ -15,7 +15,7 @@ from typing import (  # type: ignore[attr-defined]
     get_origin,
 )
 
-from typing_extensions import Self, _AnnotatedAlias
+from typing_extensions import Self, TypeAlias, _AnnotatedAlias
 
 from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.settings import DocFieldSettings, MixinSettings
@@ -35,9 +35,9 @@ from fancy_dataclass.utils import (
 
 T = TypeVar('T', bound=DataclassMixin)
 
-AnyDict = dict[str, Any]
+AnyDict: TypeAlias = dict[str, Any]
 # mode for storing data type in dict
-StoreTypeMode = Literal['auto', 'off', 'name', 'qualname']
+StoreTypeMode: TypeAlias = Literal['auto', 'off', 'name', 'qualname']
 # Python 3.12+ wraps types defined as aliases with 'type' keyword in TypeAliasType
 _TYPE_ALIAS_TYPE = getattr(typing, 'TypeAliasType', None)
 

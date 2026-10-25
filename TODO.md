@@ -2,14 +2,14 @@
 
 # TODO
 
-- For `DataclassMixin`, make the dunders non-optional?
-- Give specific subclasses annotations for their `__settings__`?
-
-## v0.12.0
+## v0.12.1
 
 - Documentation
+  - Switch to ProperDocs?
   - Dict
-    - Note purpose of `flatten=True` (good for tabular data like CSV/SQL)
+    - Distinguish this page from the JSON/TOML pages.
+    - Describe *all* settings and field settings.
+      - Note purpose of `flatten=True` (good for tabular data like CSV/SQL)
     - Emphasize type conversions are only to/from dict, not general constructors (this is a difference from `pydantic`).
   - CLI
   - SQL

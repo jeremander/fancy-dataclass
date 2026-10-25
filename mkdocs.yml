@@ -41,6 +41,7 @@ markdown_extensions:
 nav:
   - README.md
   - Dataclass mixins: mixin.md
+  - Python dict conversion: dict.md
   - JSON conversion: json.md
   - TOML conversion: toml.md
   - Version management: versioned.md
@@ -54,3 +55,4 @@ nav:
 
 watch:
   - fancy_dataclass
+  - docs
