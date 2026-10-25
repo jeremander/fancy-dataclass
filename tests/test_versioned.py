@@ -26,7 +26,7 @@ def _clear_registry() -> None:
     _VERSIONED_DATACLASS_REGISTRY.clear()
 
 
-def test_versioned_dataclass():
+def test_versioned_dataclass() -> None:
     """Tests behavior of VersionedDataclass."""
     # explicit version attribute
     class A(VersionedDataclass):
@@ -87,13 +87,13 @@ def test_versioned_dataclass():
     i = I()
     assert i.version == '3.7'
 
-def test_missing_version():
+def test_missing_version() -> None:
     """Tests what happens when the version field is missing."""
     with pytest.raises(TypeError, match="must supply a valid version for class 'A'"):
         class A(VersionedDataclass):
             ...
 
-def test_invalid_version():
+def test_invalid_version() -> None:
     """Tests what happens when the version field is an invalid value."""
     with pytest.raises(TypeError, match="invalid version 1.0 for class 'A'"):
         class A(VersionedDataclass, version=1.0):
@@ -111,7 +111,7 @@ def test_invalid_version():
         class A(VersionedDataclass, version=None):
             ...
 
-def test_set_version():
+def test_set_version() -> None:
     """Tests what happens when trying to set the 'version' attribute."""
     class A(VersionedDataclass, version=1):
         ...
@@ -123,18 +123,20 @@ def test_set_version():
         a.version = 3  # type: ignore[misc]
     assert a.to_dict() == {'version': 2}
 
-def test_version_decorator():
+def test_version_decorator() -> None:
     """Tests behavior of the `version` decorator."""
     @version(1)
     @dataclass
     class A:
         ...
+    assert issubclass(A, VersionedDataclass)
     a = A()
     assert a.to_dict() == {'version': 1}
     @version(1, suppress_version=True)
     @dataclass
     class B:
         ...
+    assert issubclass(B, VersionedDataclass)
     b = B()
     assert b.to_dict() == {}
     with pytest.raises(TypeError, match='C is not a dataclass'):
@@ -142,18 +144,19 @@ def test_version_decorator():
         class C:
             ...
     with pytest.raises(TypeError, match="missing 1 required positional argument: 'version'"):
-        @version()
+        @version()  # pyrefly: ignore[missing-argument]
         @dataclass
         class D:
             ...
 
-def test_from_dict_same_version():
+def test_from_dict_same_version() -> None:
     """Tests behavior of `from_dict` when the version is consistent."""
     @version(1)
     @dataclass
     class A:
         x: str
     a = A('a')
+    assert issubclass(A, VersionedDataclass)
     assert A.from_dict({'version': 1, 'x': 'a'}) == a
     assert A.from_dict({'x': 'a'}) == a
     # missing required field
@@ -165,7 +168,7 @@ def test_from_dict_same_version():
     assert A.from_dict({'version': 1, 'x': 'a', 'y': 5}) == a
     assert A.from_dict({'x': 'a', 'y': 5}) == a
 
-def test_versioned_dataclass_group():
+def test_versioned_dataclass_group() -> None:
     """Tests behavior of `_VersionedDataclassGroup`."""
     group = _VersionedDataclassGroup('A')
     assert group.name == 'A'
@@ -178,7 +181,7 @@ def test_versioned_dataclass_group():
     class A:
         ...
     with pytest.raises(TypeError, match='class must be a subclass of VersionedDataclass'):
-        group.register_class(A, 1)
+        group.register_class(A, 1)  # pyrefly: ignore[bad-argument-type]
     # register class with the wrong name
     class B(VersionedDataclass, version=1):
         ...
@@ -187,6 +190,7 @@ def test_versioned_dataclass_group():
     class A(VersionedDataclass, version=1):
         ...
     A_v1 = A
+    assert issubclass(A_v1, VersionedDataclass)
     group.register_class(A_v1, 1)
     assert group.class_by_version == {(1,): A_v1}
     assert group.version_by_class == {A_v1: (1,)}
@@ -214,7 +218,7 @@ def test_versioned_dataclass_group():
     with pytest.raises(ValueError, match="no class registered with name 'A', version 3"):
         _ = group.get_class(3)
 
-def test_versioned_dataclass_registry():
+def test_versioned_dataclass_registry() -> None:
     """Tests behavior of `_VersionedDataclassRegistry`."""
     reg = _VersionedDataclassRegistry()
     assert reg.groups_by_name == {}
@@ -222,7 +226,7 @@ def test_versioned_dataclass_registry():
         with pytest.raises(ValueError, match="no class registered with name 'A'"):
             reg.get_class('A', version=ver)
     with pytest.raises(TypeError, match='class must be a subclass of VersionedDataclass'):
-        reg.register_class(int, 1)
+        reg.register_class(int, 1)  # pyrefly: ignore[bad-argument-type]
     class A(VersionedDataclass, version=-1):
         ...
     A_v1 = A
@@ -243,7 +247,7 @@ def test_versioned_dataclass_registry():
     assert reg.get_class('A', version=2) is A_v2
     assert reg.get_class('A', version=None) is A_v2
 
-def test_global_versioned_dataclass_registry():
+def test_global_versioned_dataclass_registry() -> None:
     """Tests behavior of the global `_VERSIONED_DATACLASS_REGISTRY`."""
     reg = _VERSIONED_DATACLASS_REGISTRY
     assert reg.groups_by_name == {}
@@ -264,6 +268,7 @@ def test_global_versioned_dataclass_registry():
     class A:
         ...
     A_v5 = A
+    assert issubclass(A_v5, VersionedDataclass)
     assert reg.groups_by_name == {
         'A': _VersionedDataclassGroup('A', {Version(0): A_v0, Version(5): A_v5}, {A_v0: Version(0), A_v5: Version(5)}),
     }
@@ -298,7 +303,7 @@ class A:
     assert A_v2.__module__ == 'mod2'
     assert fully_qualified_class_name(A_v2) == 'mod2.A'
 
-def test_alternate_version_types():
+def test_alternate_version_types() -> None:
     """Tests duplication checking of versions with different types."""
     class A(VersionedDataclass, version=1):
         ...
@@ -325,7 +330,7 @@ def test_alternate_version_types():
         class A(VersionedDataclass, version='1.0'):
             ...
 
-def test_migrate():
+def test_migrate() -> None:
     """Tests migration behavior."""
     @version(1)
     @dataclass
@@ -395,7 +400,7 @@ def test_migrate():
     with pytest.raises(ValueError, match="no class registered with name 'A', version 6"):
         _ = a5.migrate(version=6)
 
-def test_migrate_nested():
+def test_migrate_nested() -> None:
     """Tests migration of nested VersionedDataclass types."""
     @version(1)
     @dataclass
@@ -427,7 +432,7 @@ def test_migrate_nested():
     assert isinstance(obj12.inner, Inner2)
     assert obj12 == obj2
 
-def test_from_dict():
+def test_from_dict() -> None:
     """Tests behavior of `VersionedDataclass.from_dict`."""
     @version(1)
     @dataclass
@@ -467,7 +472,7 @@ def test_from_dict():
         assert A1.from_dict(d2, migrate=True) == A1(x=2, y='b')
         # NOTE: type of y is wrong after migration
         # TODO: error if this happens during migration? Or just do general validation.
-        assert A1.from_dict(d3, migrate=True) == A1(x=3, y=123)
+        assert A1.from_dict(d3, migrate=True) == A1(x=3, y=123)  # pyrefly: ignore[bad-argument-type]
     A1.__settings__.allow_extra_fields = True
     assert A1.from_dict({'version': 1, 'x': 1, 'z': 7.0}, migrate=True) == A1(x=1, y='a')
     A1.__settings__.allow_extra_fields = False
@@ -476,15 +481,15 @@ def test_from_dict():
     for allow_extra in [False, True]:
         A2.__settings__.allow_extra_fields = allow_extra
         assert A2.from_dict(d2, migrate=True) == a2
-        assert A2.from_dict(d1, migrate=True) == A2(x=1, y='a', z=3.14)
-        assert A2.from_dict(d3, migrate=True) == A2(x=3, y=123)
+        assert A2.from_dict(d1, migrate=True) == A2(x=1, y='a', z=3.14)  # pyrefly: ignore[bad-argument-type]
+        assert A2.from_dict(d3, migrate=True) == A2(x=3, y=123)  # pyrefly: ignore[bad-argument-type]
     for allow_extra in [False, True]:
         A3.__settings__.allow_extra_fields = allow_extra
         assert A3.from_dict(d3, migrate=True) == a3
-        assert A3.from_dict(d1, migrate=True) == A3(x=1, y='a')
-        assert A3.from_dict(d2, migrate=True) == A3(x=2, y='b')
+        assert A3.from_dict(d1, migrate=True) == A3(x=1, y='a')  # pyrefly: ignore[bad-argument-type]
+        assert A3.from_dict(d2, migrate=True) == A3(x=2, y='b')  # pyrefly: ignore[bad-argument-type]
 
-def test_json():
+def test_json() -> None:
     """Tests behavior of JSON conversion."""
     @version(1)
     @dataclass
@@ -516,7 +521,7 @@ def test_json():
     with pytest.raises(ValueError, match="no class registered with name 'A', version 3"):
         _ = A1.from_json_string(json.dumps(d))
 
-def test_refs():
+def test_refs() -> None:
     """Tests that weak references to classes in the global version registry are dropped as expected."""
     @version(1)
     @dataclass

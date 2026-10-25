@@ -6,7 +6,7 @@ import pytest
 from fancy_dataclass.func import func_dataclass
 
 
-def test_func_dataclass():
+def test_func_dataclass() -> None:
     """Tests the func_dataclass decorator which constructs a new dataclass type from a function with
     default arguments."""
     # no args
@@ -41,8 +41,8 @@ def test_func_dataclass():
     assert ConcatLists()() == []
     assert ConcatLists([1, 2, 3])() == [1, 2, 3]
     obj3 = ConcatLists([1, 2], [3])
-    assert obj3.x == [1, 2]
-    assert obj3.y == [3]
+    assert obj3.x == [1, 2]  # type: ignore[attr-defined]
+    assert obj3.y == [3]  # type: ignore[attr-defined]
     assert obj3() == [1, 2, 3]
     # arg and kwarg
     def append_list(x: list[int], y: list[int] = []) -> list[int]:
@@ -73,19 +73,20 @@ def test_func_dataclass():
     assert hasattr(Square, '__call__')  # constructor exists
     obj4 = Square()
     assert not hasattr(obj4, '__call__')
-    assert obj4.func(5) == 25
+    assert obj4.func(5) == 25  # type: ignore[attr-defined]
     # explicit base class
     @dataclass
     class Base:
         y: str = 'abc'
         def square_twice(self, x: int) -> int:
-            return self(self(x))  # type: ignore
+            return self(self(x))  # type: ignore[no-any-return, operator]
     SquareTwice = func_dataclass(square, bases=(Base,))
     obj5 = SquareTwice()
-    assert issubclass(SquareTwice, Base)
     assert isinstance(obj5, SquareTwice)
-    assert obj5.y == 'abc'
+    assert issubclass(SquareTwice, Base)
+    assert obj5.y == 'abc'  # type: ignore[attr-defined]
     assert obj5(5) == 25
+    assert isinstance(obj5, Base)
     assert obj5.square_twice(3) == 81
     obj6 = SquareTwice('')
     assert obj6.y == ''

@@ -1,27 +1,28 @@
 import argparse
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, HelpFormatter, Namespace, _SubParsersAction
+from collections.abc import Callable
 from dataclasses import dataclass, field
 import re
 import sys
-from typing import Annotated, Any, Literal, Optional, Union
+from typing import Annotated, Any, Literal, NoReturn, Optional, Union
 
 import pytest
 from typing_extensions import Doc
 
-from fancy_dataclass.cli import ArgparseDataclass, CLIDataclass
+from fancy_dataclass.cli import ArgparseDataclass, ArgparseDataclassSettings, CLIDataclass
 from fancy_dataclass.versioned import Version
 
 
-def _fix_parser(parser):
+def _fix_parser(parser: ArgumentParser) -> ArgumentParser:
     """Prevent parser from issuing SystemExit, and instead have it issue ValueError."""
-    def _error(msg):
-        raise ValueError(msg)
-    def _print_help(parser):
-        def _raise_help():
+    def _error(message: str) -> NoReturn:
+        raise ValueError(message)
+    def _print_help(parser: ArgumentParser) -> Callable[..., None]:
+        def _raise_help() -> NoReturn:
             raise ValueError(parser.format_help())
         return _raise_help
-    def _exit(status=0, message=None):
-        def _raise_exit(status=0, message=None):
+    def _exit(parser: ArgumentParser) -> Any:
+        def _raise_exit(status: int = 0, message: Optional[str] = None) -> NoReturn:
             raise ValueError(f'exit with status {status}: {message}')
         return _raise_exit
     parser.error = _error
@@ -33,7 +34,7 @@ def _fix_parser(parser):
                 _fix_parser(subparser)
     return parser
 
-def check_invalid_args(cls, args, match=None):
+def check_invalid_args(cls: type[ArgparseDataclass], args: Optional[list[str]], match: Optional[str] = None) -> None:
     assert match, 'must provide an error pattern'
     parser = _fix_parser(cls.make_parser())
     with pytest.raises(ValueError, match=re.compile(match, re.DOTALL)):
@@ -72,7 +73,7 @@ class DC1(CLIDataclass):
     def run(self) -> None:
         print(self)
 
-def test_argparse_dataclass_help():
+def test_argparse_dataclass_help() -> None:
     """Tests equivalence of argparse-generated help string between an ArgparseDataclass and building the parser
     manually."""
     parser = ArgumentParser(description=DC1.__doc__, formatter_class=ArgumentDefaultsHelpFormatter)
@@ -98,9 +99,9 @@ def test_argparse_dataclass_help():
     dc1_parser = DC1.make_parser()
     assert parser.format_help() == dc1_parser.format_help()
 
-def test_cli_dataclass_parse_valid(capsys):
+def test_cli_dataclass_parse_valid(capsys: pytest.CaptureFixture) -> None:
     """Tests that an CLIDataclass properly parses command-line arguments."""
-    def _check_equivalent(args, obj):
+    def _check_equivalent(args: list[str], obj: CLIDataclass) -> None:
         # take args directly
         obj1 = DC1.from_cli_args(args)
         assert obj1 == obj
@@ -181,7 +182,7 @@ def test_cli_dataclass_parse_valid(capsys):
     )
     _check_equivalent(args, obj)
 
-def test_cli_dataclass_parse_invalid():
+def test_cli_dataclass_parse_invalid() -> None:
     """Tests that a CLIDataclass errors on invalid command-line arguments."""
     # missing required option
     args = ['positional_arg', '-i', 'my_input']
@@ -199,7 +200,7 @@ def test_cli_dataclass_parse_invalid():
     args = ['positional_arg', '-i', 'my_input', '-o', 'my_output', '--choice', 'd']
     check_invalid_args(DC1, args, "invalid choice: 'd'")
 
-def test_argparse_options():
+def test_argparse_options() -> None:
     """Tests the behavior of various argparse options."""
     # explicit positional argument
     @dataclass
@@ -348,7 +349,7 @@ def test_argparse_options():
         x: int = field(default=1, metadata={'args': ['-x'], 'required': True})
     check_invalid_args(DC24, [], 'required: -x')
 
-def test_choices():
+def test_choices() -> None:
     """Tests how choices and Literal-typed fields are handled (including with compound types)."""
     @dataclass
     class DC1(ArgparseDataclass):
@@ -407,7 +408,7 @@ def test_choices():
     with pytest.raises(ValueError, match='union type .* not allowed'):
         _ = DC8.make_parser()
 
-def test_string_field_annotations():
+def test_string_field_annotations() -> None:
     """Tests what happens when ArgparseDataclass field annotations are strings."""
     @dataclass
     class DCInner(ArgparseDataclass):
@@ -445,7 +446,7 @@ def test_string_field_annotations():
     obj = DCOuter.from_cli_args(['-a', 'x', '-b', 'y'])
     assert obj == DCOuter(inner=DCInnerSub(a='x', b='y'))
 
-def test_nested_name_collision():
+def test_nested_name_collision() -> None:
     """Tests what happens when name collisions occur with nested ArgparseDataclasses."""
     # name collision between inner and outer dataclass
     @dataclass
@@ -500,7 +501,7 @@ def test_nested_name_collision():
     assert re.search(r'.*--x1\s+X1\s+--x2\s+X2.*', help_str)
     assert DCOuter.from_cli_args(['--x1', '5', '--x2', '6']) == DCOuter(DCInner1(5), DCInner2(6))
 
-def test_positional():
+def test_positional() -> None:
     """Tests positional argument."""
     @dataclass
     class DCPos(ArgparseDataclass):
@@ -510,7 +511,7 @@ def test_positional():
     assert DCPos.from_cli_args(['a']) == DCPos('a')
     check_invalid_args(DCPos, ['--pos-arg', 'a'], 'unrecognized arguments: --pos-arg')
 
-def test_groups():
+def test_groups() -> None:
     """Tests the behavior of groups and nested groups."""
     # basic group
     @dataclass
@@ -519,6 +520,7 @@ def test_groups():
         x: int = field(metadata={'group': 'xy group'})
         y: int = field(default=2, metadata={'help': 'y value', 'group': 'xy group'})
     help_str = DCGroup1.make_parser().format_help()
+    assert isinstance(DCGroup1.__doc__, str)
     assert DCGroup1.__doc__ in help_str
     assert re.search(r'xy group:\s+x\s+-y Y\s+y value', help_str)
     assert DCGroup1.from_cli_args(['1']) == DCGroup1(1, 2)
@@ -533,6 +535,7 @@ def test_groups():
         """Docstring for DCGroup2."""
         xy: DCGroupXY = field(metadata={'help': 'group for x and y', 'group': 'xy group'})
     help_str = DCGroup2.make_parser().format_help()
+    assert isinstance(DCGroup2.__doc__, str)
     assert DCGroup2.__doc__ in help_str
     assert re.search(r'xy group:\s+Docstring for DCGroupXY\.\s+x\s+-y Y\s+y value', help_str)
     assert DCGroup2.from_cli_args(['1']).xy == DCGroupXY(1, 2)
@@ -558,7 +561,7 @@ def test_groups():
     assert re.search('wxy group', help_str)
     assert re.search(r'w\s+w value\s+x\s+-y Y\s+y value', help_str)
 
-def test_exclusive_groups():
+def test_exclusive_groups() -> None:
     """Tests the behavior of exclusive groups and nested exclusive groups."""
     # basic exclusive group
     @dataclass
@@ -567,6 +570,7 @@ def test_exclusive_groups():
         x: int = field(default=1, metadata={'exclusive_group': 'xy group'})
         y: int = field(default=2, metadata={'help': 'y value', 'exclusive_group': 'xy group'})
     help_str = DCExcGroup1.make_parser().format_help()
+    assert isinstance(DCExcGroup1.__doc__, str)
     assert DCExcGroup1.__doc__ in help_str
     assert re.search(r'-x X\s+-y Y\s+y value', help_str)
     # exclusive group does not appear as a distinct group in the help
@@ -644,7 +648,7 @@ def test_exclusive_groups():
     with pytest.raises(ValueError, match='nested argument groups are not allowed'):
         _ = DCExcGroup8.make_parser()
 
-def test_nested():
+def test_nested() -> None:
     """Tests the behavior of nested ArgparseDataclasses."""
     @dataclass
     class X(ArgparseDataclass):
@@ -705,7 +709,7 @@ def test_nested():
     with pytest.raises(ValueError, match='union type .+ not allowed'):
         _ = H.make_parser()
 
-def test_subcommand(capsys):
+def test_subcommand(capsys: pytest.CaptureFixture) -> None:
     """Tests the behavior of subcommands."""
     @dataclass
     class Sub1(CLIDataclass):
@@ -714,6 +718,7 @@ def test_subcommand(capsys):
         y1: int
         def run(self) -> None:
             print(self.__class__.__name__)
+    assert isinstance(Sub1.__settings__, ArgparseDataclassSettings)
     assert Sub1.__settings__.command_name == 'sub1'
     assert Sub1.subcommand_field_name is None
     assert Sub1(1, 2).subcommand_name is None
@@ -722,9 +727,10 @@ def test_subcommand(capsys):
         """Second subcommand"""
         x2: int
         y2: str = 'abc'
+    assert isinstance(Sub2.__settings__, ArgparseDataclassSettings)
     assert Sub2.__settings__.command_name == 'my-subcommand'
     assert Sub2.subcommand_field_name is None
-    assert Sub2(1, 2).subcommand_name is None
+    assert Sub2(1, 2).subcommand_name is None  # type: ignore[arg-type]
     # multiple subcommands not allowed
     with pytest.raises(TypeError, match='multiple fields .* registered as subcommands'):
         @dataclass
@@ -748,6 +754,7 @@ def test_subcommand(capsys):
         # NOTE: this must be provided *before* the subcommand, since those get processed last
         x: int = field(metadata={'help': 'x value'})
         y: int = 2
+    assert isinstance(DCSub4.__settings__, ArgparseDataclassSettings)
     assert DCSub4.__settings__.command_name == 'dc-sub4'
     assert DCSub4.subcommand_field_name == 'sub1'
     assert DCSub4.subcommand_dest_name == '_subcommand_DCSub4'
@@ -771,10 +778,11 @@ def test_subcommand(capsys):
     class DCSub5(CLIDataclass):
         sub: Union[Sub1, Sub2] = field(metadata={'subcommand': True, 'help': 'choose a subcommand'})
         x: int = 1
+    assert isinstance(DCSub5.__settings__, ArgparseDataclassSettings)
     assert DCSub5.__settings__.command_name == 'dc-sub5'
     assert DCSub5.subcommand_field_name == 'sub'
     assert DCSub5(Sub1(1, 2)).subcommand_name == 'sub1'
-    assert DCSub5(Sub2(1, 2)).subcommand_name == 'my-subcommand'
+    assert DCSub5(Sub2(1, 2)).subcommand_name == 'my-subcommand'  # type: ignore[arg-type]
     help_str = DCSub5.make_parser().format_help()
     assert re.search(
         (
@@ -863,7 +871,7 @@ def test_subcommand(capsys):
     p = DCSub12.make_parser()
     assert p.formatter_class is ArgumentDefaultsHelpFormatter
     # subparser adopts parent's formatter_class by default
-    assert p._subparsers._actions[1].choices['sub7'].formatter_class is ArgumentDefaultsHelpFormatter
+    assert p._subparsers._actions[1].choices['sub7'].formatter_class is ArgumentDefaultsHelpFormatter  # type: ignore[attr-defined]
     @dataclass
     class Sub8(ArgparseDataclass, formatter_class=HelpFormatter):
         ...
@@ -872,9 +880,9 @@ def test_subcommand(capsys):
         sub: Sub8 = field(metadata={'subcommand': True})
     p = DCSub13.make_parser()
     assert p.formatter_class is ArgumentDefaultsHelpFormatter
-    assert p._subparsers._actions[1].choices['sub8'].formatter_class is HelpFormatter
+    assert p._subparsers._actions[1].choices['sub8'].formatter_class is HelpFormatter  # type: ignore[attr-defined]
 
-def test_boolean_flag():  # novermin
+def test_boolean_flag() -> None:  # novermin
     """Tests the behavior of boolean fields in an ArgparseDataclass."""
     @dataclass
     class DCFlagDefaultFalse(ArgparseDataclass):
@@ -925,7 +933,7 @@ def test_boolean_flag():  # novermin
         with pytest.raises(ValueError, match='cannot use default value of True'):
             _ = DCBooleanOptionalActionTrue.make_parser()
 
-def test_count_action():
+def test_count_action() -> None:
     """Tests the 'count' action of a field."""
     @dataclass
     class DCCount(ArgparseDataclass):
@@ -940,7 +948,7 @@ def test_count_action():
     with pytest.raises(ValueError, match="invalid action 'count' for boolean flag field 'verbose'"):
         _ = DCCountBool.make_parser()
 
-def test_type_metadata():
+def test_type_metadata() -> None:
     """Tests the behavior of using the "type" entry in the field metadata."""
     @dataclass
     class DCTypeMismatch(ArgparseDataclass):
@@ -963,7 +971,7 @@ def test_type_metadata():
     check_invalid_args(DCTypeCallable, ['a'], "invalid positive_int value: 'a'")
     check_invalid_args(DCTypeCallable, ['-1'], "invalid positive_int value: '-1'")
 
-def test_nested_subcommand_name_collision():
+def test_nested_subcommand_name_collision() -> None:
     """Tests what happens when there are duplicate field names across subcommands."""
     # nested fields have duplicate names, but it's OK since subcommands are mutually exclusive
     @dataclass
@@ -1020,7 +1028,7 @@ def test_nested_subcommand_name_collision():
     assert DCOuter.from_cli_args(['sub2', '-y', '5']) == DCOuter(Sub2(y=5), y=0)
     assert DCOuter.from_cli_args(['-y', '1', 'sub2', '-y', '5']) == DCOuter(Sub2(y=5), y=1)
 
-def test_doubly_nested_subcommand():
+def test_doubly_nested_subcommand() -> None:
     """Tests behavior of a doubly nested subcommand."""
     @dataclass
     class DC00(ArgparseDataclass, command_name='cmd00'):
@@ -1053,7 +1061,7 @@ def test_doubly_nested_subcommand():
     assert DCDouble.from_cli_args(['cmd0', 'cmd00']) == DCDouble(DC0(DC00()))
     assert DCDouble.from_cli_args(['cmd1', 'cmd10']) == DCDouble(DC1(DC10()))
 
-def test_optional_subcommand():
+def test_optional_subcommand() -> None:
     """Tests behavior of optional subcommands."""
     @dataclass
     class X(ArgparseDataclass):
@@ -1139,7 +1147,7 @@ def test_optional_subcommand():
         with pytest.raises(ValueError, match="'sub' field cannot set required=False"):
             _ = G.make_parser()
 
-def test_subcommand_run(capsys):
+def test_subcommand_run(capsys: pytest.CaptureFixture) -> None:
     class CLIDC(CLIDataclass):
         def run(self):
             print('abc')
@@ -1158,7 +1166,7 @@ def test_subcommand_run(capsys):
     A.main(['x'])
     assert capsys.readouterr().out.strip() == 'abc'
 
-def test_version(capsys):
+def test_version(capsys: pytest.CaptureFixture) -> None:
     # display version
     @dataclass
     class DCV1(ArgparseDataclass, version=1):
@@ -1180,7 +1188,7 @@ def test_version(capsys):
     check_invalid_args(DCV3, ['--version'], 'exit with status 0')
     assert capsys.readouterr().out.strip() == '3.7'
 
-def test_default_help():
+def test_default_help() -> None:
     @dataclass
     class DCInvalid(ArgparseDataclass):
         x: int = field(metadata={'help': 'required int', 'default_help': True})
@@ -1210,7 +1218,7 @@ def test_default_help():
         r = re.compile(r'\s*' + pattern)
         assert any(r.fullmatch(line) for line in lines)
 
-def test_optional_list():
+def test_optional_list() -> None:
     @dataclass
     class DC1(ArgparseDataclass):
         strings: Optional[list[str]] = field(default=None, metadata={'nargs': '*'})
@@ -1226,7 +1234,7 @@ def test_optional_list():
     assert DC2.from_cli_args(['--strings', 'abc']) == DC2(['abc'])
     assert DC2.from_cli_args(['--strings', 'abc', 'def']) == DC2(['abc', 'def'])
 
-def test_annotated_doc():
+def test_annotated_doc() -> None:
     """Tests that Annotated/Doc gives rise to a help string."""
     # display version
     @dataclass

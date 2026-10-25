@@ -15,7 +15,7 @@ from fancy_dataclass.toml import TOMLDataclass
 from fancy_dataclass.utils import TypeConversionError
 
 
-def test_config_dataclass():
+def test_config_dataclass() -> None:
     """Tests behavior of ConfigDataclass."""
     @dataclass
     class MyConfig(ConfigDataclass):
@@ -32,10 +32,11 @@ def test_config_dataclass():
     cfg2.y = 'b'
     assert cfg2 != cfg
     with cfg2.as_config():
-        assert MyConfig.get_config() is cfg2
+        cfg3 = MyConfig.get_config()
+        assert cfg3 is cfg2
         # updating instance field affects the global config
         cfg2.y = 'c'
-        assert MyConfig.get_config().y == 'c'
+        assert cfg3.y == 'c'
     assert MyConfig.get_config() == cfg
     MyConfig.clear_config()
     assert MyConfig.get_config() is None
@@ -59,9 +60,11 @@ def test_config_dataclass():
     cfg2.update_config()
     assert MyConfig.get_config() != outer.inner
     assert MyConfig.get_config() is cfg2
-    assert OuterConfig.get_config().inner == outer.inner
+    outer_cfg = OuterConfig.get_config()
+    assert isinstance(outer_cfg, OuterConfig)
+    assert outer_cfg.inner == outer.inner
 
-def test_inner_plain(tmpdir):
+def test_inner_plain(tmp_path: Path) -> None:
     """Tests nested dataclass where the inner dataclass is a regular dataclass, not a ConfigDataclass."""
     @dataclass
     class Inner:
@@ -70,25 +73,29 @@ def test_inner_plain(tmpdir):
     class Outer(ConfigDataclass):
         inner: Inner
         y: str = 'a'
+    def get_outer_config() -> Outer:
+        cfg = Outer.get_config()
+        assert cfg is not None
+        return cfg
     assert Outer.get_config() is None
     cfg = Outer(Inner())
     cfg.update_config()
     assert Outer.get_config() is cfg
     cfg.inner.x = 2
-    assert Outer.get_config().inner.x == 2
+    assert get_outer_config().inner.x == 2
     inner = cfg.inner
     inner.x = 3
-    assert Outer.get_config().inner.x == 3
+    assert get_outer_config().inner.x == 3
     inner_copy = deepcopy(inner)
     inner_copy.x = 4
-    assert Outer.get_config().inner.x == 3
+    assert get_outer_config().inner.x == 3
     cfg.inner = inner_copy
-    assert Outer.get_config().inner.x == 4
+    assert get_outer_config().inner.x == 4
     with Outer(Inner(x=5)).as_config():
-        assert Outer.get_config().inner.x == 5
-    assert Outer.get_config().inner.x == 4
+        assert get_outer_config().inner.x == 5
+    assert get_outer_config().inner.x == 4
     with pytest.raises(AttributeError, match="has no attribute 'to_dict'"):
-        _ = inner.to_dict()
+        _ = inner.to_dict()  # type: ignore[attr-defined]
     inner = Inner()
     cfg = Outer(inner)
     cfg_dict = cfg.to_dict()
@@ -99,12 +106,12 @@ def test_inner_plain(tmpdir):
     with pytest.raises(TypeConversionError, match="could not convert {'x': 1}"):
         _ = Outer.from_dict(d)
     toml_str = 'y = "a"\n[inner]\nx = 1\n'
-    cfg_path = tmpdir / 'test.toml'
+    cfg_path = tmp_path / 'test.toml'
     Path(cfg_path).write_text(toml_str)
     # can load from config file even though nested Inner class is *not* a DictDataclass
     assert Outer.load_config(cfg_path) == cfg
 
-def test_dict_config(tmpdir):
+def test_dict_config(tmp_path: Path) -> None:
     """Tests behavior of DictConfig."""
     assert DictConfig.get_config() is None
     class MyConfig(DictConfig):
@@ -115,7 +122,9 @@ def test_dict_config(tmpdir):
     cfg.update_config()
     assert MyConfig.get_config() is cfg
     cfg['a'] = 1
-    assert MyConfig.get_config()['a'] == 1
+    new_cfg = MyConfig.get_config()
+    assert new_cfg is cfg
+    assert new_cfg['a'] == 1
     cfg2 = MyConfig()
     with cfg2.as_config():
         assert MyConfig.get_config() is cfg2
@@ -124,7 +133,7 @@ def test_dict_config(tmpdir):
     cfg2.update_config()
     assert MyConfig.get_config() is cfg2
 
-def test_json(tmpdir):
+def test_json(tmp_path: Path) -> None:
     """Tests JSON conversion of ConfigDataclass."""
     dt = datetime.now()
     @dataclass
@@ -138,7 +147,7 @@ def test_json(tmpdir):
     class JSONConfig3(JSONConfig1, JSONDataclass):
         ...
     JSONConfig4 = JSONDataclass.wrap_dataclass(JSONConfig1)
-    outfile = tmpdir / 'test.json'
+    outfile = tmp_path / 'test.json'
     obj1 = JSONConfig1()
     obj2 = JSONConfig2()
     obj3 = JSONConfig3()
@@ -154,8 +163,10 @@ def test_json(tmpdir):
     with open(outfile) as f:
         assert json.load(f) == d_json
     for obj in [obj1, obj2, obj3, obj4]:
-        assert obj.y == dt
-        assert type(obj).load_config(outfile) == obj
+        assert obj.y == dt  # type: ignore[attr-defined]
+        tp = type(obj)
+        assert issubclass(tp, ConfigDataclass)
+        assert tp.load_config(outfile) == obj
     for obj in [obj3, obj4]:
         with open(outfile) as f:
             assert type(obj).from_json(f) == obj
@@ -174,7 +185,7 @@ def test_json(tmpdir):
     outer = OuterConfig.load_config(outfile)
     assert outer.inner.y == dt
 
-def test_toml(tmpdir):
+def test_toml(tmp_path: Path) -> None:
     """Tests TOML conversion of ConfigDataclass."""
     dt = datetime.now()
     @dataclass
@@ -185,7 +196,7 @@ def test_toml(tmpdir):
     @dataclass
     class TOMLConfig2(TOMLConfig1, TOMLDataclass):
         ...
-    outfile = tmpdir / 'test.toml'
+    outfile = tmp_path / 'test.toml'
     obj1 = TOMLConfig1()
     obj2 = TOMLConfig2()
     d = {'x': inf, 'y': dt, 'z': None}
@@ -201,19 +212,19 @@ def test_toml(tmpdir):
     with open(outfile) as f:
         assert TOMLConfig2.from_toml(f) == obj2
 
-def test_load_config(tmpdir):
+def test_load_config(tmp_path: Path) -> None:
     """Tests config file loading."""
     @dataclass
     class MyConfig(ConfigDataclass):
         ...
     cfg = MyConfig()
-    outfile = tmpdir / 'test'
+    outfile = tmp_path / 'test'
     with pytest.raises(ValueError, match='has no extension'):
         _ = MyConfig.load_config(outfile)
-    outfile = tmpdir / 'test.fake'
+    outfile = tmp_path / 'test.fake'
     with pytest.raises(ValueError, match="unknown config file extension '.fake'"):
         _ = MyConfig.load_config(outfile)
-    outfile = tmpdir / 'test.json'
+    outfile = tmp_path / 'test.json'
     with pytest.raises(FileNotFoundError, match='No such file or directory'):
         _ = MyConfig.load_config(outfile)
     Path(outfile).touch()
@@ -229,7 +240,7 @@ def test_load_config(tmpdir):
         json.dump({'x': 5}, f)
     # extra keys are ignored when loading
     assert MyConfig.load_config(outfile) == cfg
-    outfile = tmpdir / 'test.toml'
+    outfile = tmp_path / 'test.toml'
     Path(outfile).touch()
     # empty file is valid TOML
     assert MyConfig.load_config(outfile) == cfg
@@ -240,6 +251,6 @@ def test_load_config(tmpdir):
     class MyDictConfig(DictConfig):
         ...
     for filename in ['test.json', 'test.toml']:
-        dict_cfg = MyDictConfig.load_config(tmpdir / filename)
+        dict_cfg = MyDictConfig.load_config(tmp_path / filename)
         assert dict(dict_cfg) == {'x': 5}
         assert str(dict_cfg) == "MyDictConfig({'x': 5})"

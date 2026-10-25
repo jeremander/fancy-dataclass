@@ -1,12 +1,12 @@
 from dataclasses import InitVar, dataclass, field, make_dataclass
 import re
 import sys
-from typing import Annotated, ClassVar, Optional
+from typing import Annotated, Any, ClassVar, Optional
 
 import pytest
 from typing_extensions import Doc
 
-from fancy_dataclass.dict import DictDataclass
+from fancy_dataclass.dict import DictDataclass, DictDataclassSettings
 from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.utils import MissingRequiredFieldError
 
@@ -59,21 +59,21 @@ class DCSuppress2(DictDataclass, suppress_defaults=True):
     y: int = field(default=2, metadata={'suppress': True})
     z: int = field(default=3, metadata={'suppress': False})
 
-def test_field_key_map():
+def test_field_key_map() -> None:
     assert NestedComponentA._get_field_key_map() == {'a1': ['a1'], 'a2': ['a2']}
     assert NestedComponentB._get_field_key_map() == {'b1': ['b1'], 'b2': ['b2']}
     assert NestedComposedAB._get_field_key_map() == {'comp_a': ['comp_a'], 'comp_b': ['comp_b']}
     assert NestedList._get_field_key_map() == {'comps': ['comps']}
     assert FlattenedComposedAB._get_field_key_map() == {'comp_a': ['a1', 'a2'], 'comp_b': ['b1', 'b2']}
 
-def _test_dict_round_trip(obj, d=None):
+def _test_dict_round_trip(obj: DictDataclass, d: Optional[dict[str, Any]] = None) -> None:
     if d is None:
         d = obj.to_dict()
     else:
         assert obj.to_dict() == d
     assert type(obj).from_dict(d) == obj
 
-def test_init_var():
+def test_init_var() -> None:
     """Tests that InitVar fields are suppressed from the dict."""
     @dataclass
     class DC1(DictDataclass):
@@ -98,25 +98,25 @@ def test_init_var():
     assert obj.y == 2
     _test_dict_round_trip(obj, {'x': 1})
 
-def test_composition_nested():
+def test_composition_nested() -> None:
     """Tests behavior of nested components."""
     obj = NestedComposedAB(NestedComponentA(3, 4.5), NestedComponentB('b', [1, 2, 3]))
     d = {'comp_a' : {'a1' : 3, 'a2' : 4.5}, 'comp_b' : {'b1' : 'b', 'b2' : [1, 2, 3]}}
     _test_dict_round_trip(obj, d)
 
-def test_composition_flattened():
+def test_composition_flattened() -> None:
     """Tests behavior of flattened components."""
     obj = FlattenedComposedAB(FlattenedComponentA(3, 4.5), FlattenedComponentB('b', [1, 2, 3]))
     d = {'a1' : 3, 'a2' : 4.5, 'b1' : 'b', 'b2' : [1, 2, 3]}
     _test_dict_round_trip(obj, d)
 
-def test_nested_list():
+def test_nested_list() -> None:
     """Tests a list of nested DictDataclasses."""
     obj = NestedList([NestedComponentA(1, 2.0), NestedComponentA(3, 4.0)])
     d = {'comps': [{'a1': 1, 'a2': 2.0}, {'a1': 3, 'a2': 4.0}]}
     _test_dict_round_trip(obj, d)
 
-def test_make_dataclass():
+def test_make_dataclass() -> None:
     """Tests behavior of make_dataclass."""
     # with type annotations
     dc = make_dataclass('TestDataclass', [('a', int), ('b', str)], bases=(DictDataclass,))
@@ -134,7 +134,7 @@ def test_make_dataclass():
     obj = dc.from_dict({'a': '3.7', 'b': 'b'})
     _test_dict_round_trip(obj)
 
-def test_wrap_dataclass():
+def test_wrap_dataclass() -> None:
     """Tests behavior of wrap_dataclass."""
     class WrappedDataclass(DataclassMixin):
         pass
@@ -144,7 +144,7 @@ def test_wrap_dataclass():
     obj = WrappedCompA(3, 4.7)
     _test_dict_round_trip(obj, {'a1': 3, 'a2': 4.7})
 
-def test_type_field():
+def test_type_field() -> None:
     """Tests behavior of the 'type' field in a DictDataclass's output dict."""
     @dataclass
     class DC1(DictDataclass):
@@ -157,7 +157,7 @@ def test_type_field():
     @dataclass
     class DC3(DictDataclass, store_type='qualname'):
         x: int
-    obj: object = DC3(1)
+    obj = DC3(1)
     d = obj.to_dict()
     assert d == {'type': 'tests.test_dict.test_type_field.<locals>.DC3', 'x': 1}
     _test_dict_round_trip(obj, d)
@@ -208,7 +208,7 @@ def test_type_field():
     obj = DC10(1)
     _test_dict_round_trip(obj)
 
-def test_flatten_class_setting():
+def test_flatten_class_setting() -> None:
     """Tests the flatten=True class setting for DictDataclass."""
     @dataclass
     class DC(DictDataclass):
@@ -262,7 +262,7 @@ def test_flatten_class_setting():
     with pytest.raises(ValueError, match="duplicate field name or alias 'a'"):
         _ = obj.to_dict()
 
-def test_flatten_field_setting():
+def test_flatten_field_setting() -> None:
     """Tests the flatten=True field setting for DictDataclass."""
     @dataclass
     class A:
@@ -294,7 +294,7 @@ def test_flatten_field_setting():
         b: B = field(metadata={'flatten': False})
     _test_dict_round_trip(DC5(B(1)), {'b': {'x': 1}})
 
-def test_allow_extra_fields():
+def test_allow_extra_fields() -> None:
     """Tests behavior of allow_extra_fields=False for DictDataclass."""
     @dataclass
     class InnerLax(DictDataclass):
@@ -335,7 +335,7 @@ def test_allow_extra_fields():
         with pytest.raises(ValueError, match=re.escape(f"unknown dict fields for {cls.__name__}: ['extra']")):
             _ = cls.from_dict({'z': {'x': 1}, 'extra': None})
 
-def test_store_type_setting():
+def test_store_type_setting() -> None:
     """Tests behavior of the store_type setting."""
     # invalid mode
     with pytest.raises(ValueError, match="invalid value 'fake' for store_type mode"):
@@ -349,26 +349,31 @@ def test_store_type_setting():
     @dataclass
     class DC3(DC2):
         ...
+    assert isinstance(DC3.__settings__, DictDataclassSettings)
     assert DC3.__settings__.store_type == 'auto'
     assert DC3.__settings__._store_type == 'off'
     assert DC3.__settings__.should_store_type() is False
     @dataclass
     class DC4(DC2, store_type='auto'):
         ...
+    assert isinstance(DC4.__settings__, DictDataclassSettings)
     assert DC4.__settings__.store_type == 'auto'
     assert DC4.__settings__._store_type == 'off'
     @dataclass
     class DC5(DC2, store_type='name'):
         ...
+    assert isinstance(DC5.__settings__, DictDataclassSettings)
     assert DC5.__settings__.store_type == 'name'
     assert DC5.__settings__.should_store_type() is True
     @dataclass
     class DC6(DC5):
         ...
+    assert isinstance(DC6.__settings__, DictDataclassSettings)
     assert DC6.__settings__.store_type == 'name'
     @dataclass
     class DC7(DC5, store_type='off'):
         ...
+    assert isinstance(DC7.__settings__, DictDataclassSettings)
     assert DC7.__settings__.store_type == 'off'
     # other base class won't interfere
     class OtherClass:
@@ -376,6 +381,7 @@ def test_store_type_setting():
     @dataclass
     class DC8(OtherClass, DC5):
         ...
+    assert isinstance(DC8.__settings__, DictDataclassSettings)
     assert DC8.__settings__.store_type == 'name'
     # multiple inheritance with conflicting settings (uses MRO)
     class DC9(DictDataclass, store_type='qualname'):
@@ -383,22 +389,26 @@ def test_store_type_setting():
     @dataclass
     class DC10(DC5, DC9):
         ...
+    assert isinstance(DC10.__settings__, DictDataclassSettings)
     assert DC10.__settings__.store_type == 'name'
     @dataclass
     class DC11(DC9, DC5):
         ...
+    assert isinstance(DC11.__settings__, DictDataclassSettings)
     assert DC11.__settings__._store_type == 'qualname'
     # multiple inheritance where one is 'auto'
     # DC9 takes priority since it both has a kwarg and comes first
     @dataclass
     class DC12(DC9, DC2):
         ...
+    assert isinstance(DC12.__settings__, DictDataclassSettings)
     assert DC12.__settings__.store_type == 'qualname'
     assert DC12.__settings__._store_type == 'qualname'
     # DC9 had an explicit kwarg set, so this takes priority over DC2's default despite coming second
     @dataclass
     class DC13(DC2, DC9):
         ...
+    assert isinstance(DC13.__settings__, DictDataclassSettings)
     assert DC13.__settings__.store_type == 'qualname'
     assert DC13.__settings__._store_type == 'qualname'
     # DC4's kwarg takes priority over DC9's since it appears first,
@@ -406,6 +416,7 @@ def test_store_type_setting():
     @dataclass
     class DC14(DC4, DC9):
         ...
+    assert isinstance(DC14.__settings__, DictDataclassSettings)
     assert DC14.__settings__.store_type == 'auto'
     assert DC14.__settings__._store_type == 'qualname'
     @dataclass
@@ -415,10 +426,11 @@ def test_store_type_setting():
     @dataclass
     class DC16(DC4, DC15):
         ...
+    assert isinstance(DC16.__settings__, DictDataclassSettings)
     assert DC16.__settings__.store_type == 'auto'
     assert DC16.__settings__._store_type == 'off'
 
-def test_store_type_with_flatten():
+def test_store_type_with_flatten() -> None:
     """Tests behavior of the store_type setting when combined with flatten=True."""
     @dataclass
     class DC1(DictDataclass, store_type='name'):
@@ -465,7 +477,7 @@ def test_store_type_with_flatten():
     with pytest.raises(ValueError, match='Inner2 is not a known subclass of Outer22'):
         _ = Outer22.from_dict({'type': 'Inner2', 'x': 1})
 
-def test_suppress_field():
+def test_suppress_field() -> None:
     """Tests behavior of setting the 'suppress' option on a field."""
     obj = DCSuppress()
     d = {'x': 1, 'z': 3}
@@ -487,24 +499,25 @@ def test_suppress_field():
     assert obj2.to_dict(full=True) == d
     assert DCSuppress2.from_dict(d).y == 2
 
-def test_suppress_required_field():
+def test_suppress_required_field() -> None:
     """Tests that a required field with suppress=True cannot create a valid dict."""
     @dataclass
     class DCSuppressRequired(DictDataclass):
         x: int = field(metadata={'suppress': True})
     with pytest.raises(TypeError, match='missing 1 required positional argument'):
-        _ = DCSuppressRequired()
+        _ = DCSuppressRequired()  # type: ignore[arg-type]
     obj = DCSuppressRequired(1)
     assert obj.to_dict() == {}
     with pytest.raises(MissingRequiredFieldError, match="'x' field is required"):
         _ = DCSuppressRequired.from_dict({})
     _ = DCSuppressRequired.from_dict({'x': 1})
 
-def test_suppress_defaults():
+def test_suppress_defaults() -> None:
     """Tests behavior of the suppress_defaults option, both at the class level and the field level."""
     @dataclass
     class DC(DictDataclass):
         x: int = 1
+    assert isinstance(DC.__settings__, DictDataclassSettings)
     assert DC.__settings__.suppress_defaults is True
     obj = DC()
     assert obj.to_dict() == {}
@@ -531,7 +544,7 @@ def test_suppress_defaults():
     assert obj.to_dict() == {}
     assert obj.to_dict(full=True) == {'x': 1}
 
-def test_suppress_none():
+def test_suppress_none() -> None:
     """Tests behavior of the suppress_none option, both at the class level and the field level."""
     # class-level suppress_none
     @dataclass
@@ -582,9 +595,9 @@ def test_suppress_none():
     @dataclass
     class DC(DictDataclass, suppress_none=True):
         x: int
-    assert DC(None).to_dict() == {}
+    assert DC(None).to_dict() == {}  # type: ignore[arg-type]
 
-def test_class_var():
+def test_class_var() -> None:
     """Tests the behavior of ClassVars."""
     @dataclass
     class MyDC1(DictDataclass):
@@ -639,7 +652,7 @@ def test_class_var():
     assert obj.to_dict() == {'x': 2}  # no longer equals default
     assert obj.to_dict(full=True) == {'x': 2}
 
-def test_alias():
+def test_alias() -> None:
     """Tests the 'alias' field setting for DictDataclass."""
     with pytest.raises(TypeError, match="duplicate field name or alias 'y'"):
         @dataclass
@@ -667,9 +680,9 @@ def test_alias():
         _ = MyDC.from_dict({'x': 4})
     assert MyDC.from_dict({'x': 4, 'y': 3}) == obj
 
-def test_typealias():
+def test_typealias() -> None:
     """Tests a field whose type is defined as a type alias."""
-    classes = []
+    classes: list[type[DictDataclass]] = []
     # plain type alias
     IntAlias1 = int
     @dataclass
@@ -695,6 +708,6 @@ def test_typealias():
             x: IntAlias3
         classes.append(MyDC3)
     for cls in classes:
-        obj = cls(1)
+        obj = cls(1)  # type: ignore[arg-type]
         assert obj.to_dict() == {'x': 1}
         assert cls.from_dict(obj.to_dict()) == obj

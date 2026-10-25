@@ -455,7 +455,7 @@ class ArgparseDataclass(DataclassMixin):
             if (not required) and (not has_default):
                 raise ValueError(f'{name!r} field cannot set required=False with no default value')
             subparsers = parser.add_subparsers(dest=dest, required=required, help=settings.help, metavar='subcommand')
-            tp_args = (tp,) if (origin_type is None) else tp_args
+            tp_args = (tp,) if (origin_type is None) else tp_args  # pyrefly: ignore[unbound-name]
             for arg in tp_args:
                 assert issubclass_safe(arg, ArgparseDataclass)
                 descr_brief = arg._parser_description_brief()

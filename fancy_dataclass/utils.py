@@ -19,16 +19,18 @@ from typing import (
     Any,
     Callable,
     ClassVar,
+    ForwardRef,
     Optional,
     TypeVar,
     Union,
+    _SpecialForm,
     cast,
     get_args,
     get_origin,
     get_type_hints,
 )
 
-from typing_extensions import TypeGuard, _AnnotatedAlias, dataclass_transform
+from typing_extensions import TypeAlias, TypeGuard, _AnnotatedAlias, dataclass_transform
 
 
 if TYPE_CHECKING:
@@ -37,8 +39,10 @@ if TYPE_CHECKING:
 
 T = TypeVar('T')
 
-AnyPath = Union[str, Path]
-AnyIO = Union[IO[str], IO[bytes]]
+AnyPath: TypeAlias = Union[str, Path]
+AnyIO: TypeAlias = Union[IO[str], IO[bytes]]
+TypeLike: TypeAlias = Union[type, _SpecialForm, ForwardRef, _AnnotatedAlias]
+DataclassType: TypeAlias = type['DataclassInstance']
 
 
 ###############
@@ -136,7 +140,7 @@ def safe_dict_update(d1: dict[str, Any], d2: dict[str, Any]) -> None:
 
 _UNION_TYPES = [Union, types.UnionType] if hasattr(types, 'UnionType') else [Union]  # novermin
 
-def type_is_union(tp: type) -> bool:
+def type_is_union(tp: TypeLike) -> bool:
     """Determines if a type is a Union type.
 
     Args:
@@ -147,7 +151,7 @@ def type_is_union(tp: type) -> bool:
     origin_type = get_origin(tp)
     return origin_type in _UNION_TYPES
 
-def type_is_optional(tp: type) -> bool:
+def type_is_optional(tp: TypeLike) -> bool:
     """Determines if a type is an Optional type.
 
     Args:
@@ -314,7 +318,7 @@ def dataclass_kw_only(**kwargs: Any) -> Callable[[type[T]], type[T]]:
         return partial(dataclass, kw_only=True)
     return dataclass
 
-def check_dataclass(cls: type) -> TypeGuard[type['DataclassInstance']]:
+def check_dataclass(cls: type) -> TypeGuard[DataclassType]:
     """Checks whether a given type is a dataclass, raising a `TypeError` otherwise.
 
     Args:
@@ -326,7 +330,7 @@ def check_dataclass(cls: type) -> TypeGuard[type['DataclassInstance']]:
         raise TypeError(f'{cls.__name__} is not a dataclass')
     return True
 
-def is_dataclass_type(cls: type) -> TypeGuard[type['DataclassInstance']]:
+def is_dataclass_type(cls: type) -> TypeGuard[DataclassType]:
     """Returns True if the given type is a dataclass.
 
     Args:
@@ -400,7 +404,7 @@ def eval_type_str(type_str: str) -> type:
             tp = eval(type_str, globs)
     return cast(type, tp)
 
-def dataclass_field_type(cls: type['DataclassInstance'], name: str) -> type:
+def dataclass_field_type(cls: DataclassType, name: str) -> type:
     """Given a dataclass type and field name, gets the dataclass field's type annotation.
 
     If the annotation is a string, resolves it to a type (see PEP 563, 649).
@@ -454,7 +458,7 @@ def coerce_to_dataclass(cls: type[T], obj: object) -> T:
             kwargs[fld.name] = val
     return cls(**kwargs)
 
-def dataclass_type_map(cls: type['DataclassInstance'], func: Callable[[type], type]) -> type['DataclassInstance']:
+def dataclass_type_map(cls: DataclassType, func: Callable[[type], type]) -> DataclassType:
     """Applies a type function to all dataclass field types, recursively through container types.
 
     Args:

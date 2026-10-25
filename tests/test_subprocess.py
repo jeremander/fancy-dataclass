@@ -7,7 +7,7 @@ import pytest
 from fancy_dataclass.subprocess import SubprocessDataclass
 
 
-def test_executable():
+def test_executable() -> None:
     """Tests retrieval of the executable name."""
     # executable in field
     @dataclass
@@ -17,7 +17,7 @@ def test_executable():
     assert obj.get_executable() == 'myprog'
     assert obj.get_args() == ['myprog']
     # non-string executable
-    obj = DC1(1)
+    obj = DC1(1)  # type: ignore[arg-type]
     with pytest.raises(ValueError, match=re.escape('executable is 1 (must be a string)')):
         _ = obj.get_executable()
     # executable in ClassVar field
@@ -72,7 +72,7 @@ def test_executable():
     assert obj.get_executable() == 'myprog'
     assert obj.get_args() == ['myprog', '-x', '3', '--yy', '4.7']
 
-def test_option():
+def test_option() -> None:
     """Tests behavior of the subprocess options."""
     @dataclass
     class DC1(SubprocessDataclass, exec='prog'):
@@ -118,7 +118,7 @@ def test_option():
         a: Optional[int] = None
     assert DC6().get_args() == ['prog']
 
-def test_positional():
+def test_positional() -> None:
     """Tests behavior of subprocess positional arguments."""
     @dataclass
     class DC1(SubprocessDataclass, exec='prog'):
@@ -146,7 +146,7 @@ def test_positional():
         class DC5(SubprocessDataclass, exec='prog'):
             a: int = field(metadata={'option_name': '-a', 'subprocess_positional': True})
 
-def test_exclusion():
+def test_exclusion() -> None:
     """Tests the subprocess_exclude flag."""
     # NOTE: for now we do not error if other subprocess-related fields are set in conjunction with
     # subprocess_exclude=True, but this flag takes priority over all else.
@@ -158,7 +158,7 @@ def test_exclusion():
         d: int = field(metadata={'subprocess_exclude': True, 'repeat_option_name': True})
     assert DC1(1, 2, 3, 4).get_args() == ['prog']
 
-def test_boolean_flag():
+def test_boolean_flag() -> None:
     """Tests a boolean field being treated as an on/off flag."""
     @dataclass
     class DC1(SubprocessDataclass, exec='prog'):
@@ -186,7 +186,7 @@ def test_boolean_flag():
         class DC5(SubprocessDataclass, exec='prog'):
             val: int = field(metadata={'subprocess_flag': True})
 
-def test_repeat_option_name():
+def test_repeat_option_name() -> None:
     """Tests behavior of the `repeat_option_name` field setting."""
     # ordinary list value, so list multiple values directly
     @dataclass
@@ -211,7 +211,7 @@ def test_repeat_option_name():
         class DC3(SubprocessDataclass, exec='prog'):
             my_arg: list[int] = field(metadata={'subprocess_positional': True, 'repeat_option_name': True})
 
-def test_class_var():
+def test_class_var() -> None:
     """Tests behavior of ClassVar fields."""
     @dataclass
     class DC1(SubprocessDataclass, exec='prog'):
@@ -230,7 +230,7 @@ def test_class_var():
         c: ClassVar[int] = field(default=3, metadata={'option_name': 'option', 'subprocess_exclude': False})
     assert DC2().get_args() == ['prog', '-a', '1', '2', '--option', '3']
 
-def test_nested():
+def test_nested() -> None:
     """Tests a nested SubprocessDataclass field."""
     @dataclass
     class DC1(SubprocessDataclass):
@@ -277,7 +277,7 @@ def test_nested():
     with pytest.raises(ValueError, match='no executable identified for use with DC8 instance'):
         obj.run_subprocess()
 
-def test_union():
+def test_union() -> None:
     """Tests fields with a union type."""
     @dataclass
     class DC1(SubprocessDataclass, exec='prog'):
@@ -303,5 +303,5 @@ def test_union():
     @dataclass
     class DC4(SubprocessDataclass, exec='prog'):
         inner: Union[Inner1, int]
-    assert DC3(Inner1(1)).get_args() == ['prog', '-a', '1']
-    assert DC3(1).get_args() == ['prog', '--inner', '1']
+    assert DC4(Inner1(1)).get_args() == ['prog', '-a', '1']
+    assert DC4(1).get_args() == ['prog', '--inner', '1']

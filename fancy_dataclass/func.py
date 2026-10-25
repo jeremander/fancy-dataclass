@@ -1,11 +1,11 @@
 from collections.abc import Sequence
-from dataclasses import field, make_dataclass
+from dataclasses import Field, field, make_dataclass
 from inspect import getfullargspec
-from typing import Any, Callable, Literal, Optional, Protocol, TypeVar, Union, overload
+from typing import Any, Callable, ClassVar, Literal, Optional, Protocol, TypeVar, Union, overload
 
 from typing_extensions import ParamSpec
 
-from fancy_dataclass.utils import snake_case_to_camel_case
+from fancy_dataclass.utils import DataclassType, snake_case_to_camel_case
 
 
 P = ParamSpec('P')
@@ -19,7 +19,7 @@ def _func_dataclass(
     method_name: str = '__call__',
     cls_name: Optional[str] = None,
     bases: tuple[type, ...] = (),
-) -> type:
+) -> DataclassType:
     """Wraps a function into a new dataclass type with a single method whose positional arguments (other than self) are
     equivalent to that of the given function, and whose kwargs are dataclass parameters.
 
@@ -60,6 +60,11 @@ class _FuncDataclass(Protocol[P, R_co]):
 
     This is for use in static type checking and need not be subclassed directly."""
 
+    __dataclass_fields__: ClassVar[dict[str, Field[Any]]]
+
+    def __init__(self, *args: Any, **kwargs: P.kwargs) -> None:  # type: ignore[valid-type]
+        ...
+
     def __call__(self, *args: P.args) -> R_co:  # type: ignore[valid-type]
         ...
 
@@ -79,7 +84,7 @@ def func_dataclass(
     method_name: str = '__call__',
     cls_name: Optional[str] = None,
     bases: Bases = (),
-) -> type:
+) -> DataclassType:
     ...
 
 def func_dataclass(
@@ -87,7 +92,7 @@ def func_dataclass(
     method_name: str = '__call__',
     cls_name: Optional[str] = None,
     bases: Bases = (),
-) -> type:
+) -> DataclassType:
     """Wraps a function into a new dataclass type with a single method whose positional arguments (other than self)
     are equivalent to that of the given function, and whose kwargs are dataclass parameters.
 

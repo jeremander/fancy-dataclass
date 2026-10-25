@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from io import StringIO
 from pathlib import Path
-from typing import Optional
+from typing import ClassVar, Optional
 
 import pytest
 
@@ -19,6 +19,7 @@ from fancy_dataclass import (
 from fancy_dataclass.cli import ArgparseDataclassSettings
 from fancy_dataclass.dict import DictDataclassSettings
 from fancy_dataclass.mixin import DataclassMixin, MixinSettings
+from fancy_dataclass.subprocess import SubprocessDataclassSettings
 from fancy_dataclass.toml import NoneProxy
 from fancy_dataclass.utils import coerce_to_dataclass
 
@@ -31,19 +32,20 @@ TEST_DIR = Path(__file__).parent
 PKG_DIR = TEST_DIR.parent
 
 
-def test_multiple_inheritance():
+def test_multiple_inheritance() -> None:
     """Tests inheritance from multiple DataclassMixins."""
     @dataclass
     class DC1(ArgparseDataclass, JSONDataclass):
         x: int
     assert JSONDataclass.__settings_type__ is DictDataclassSettings
+    assert DC1.__settings_type__ is not None
     assert issubclass(DC1.__settings_type__, DictDataclassSettings)
     assert issubclass(DC1.__settings_type__, ArgparseDataclassSettings)
     # alternatively, add in mixins dynamically with wrap_dataclass
     @dataclass
     class DC2:
         x: int
-    DC2 = JSONDataclass.wrap_dataclass(ArgparseDataclass.wrap_dataclass(DC2))
+    DC2 = JSONDataclass.wrap_dataclass(ArgparseDataclass.wrap_dataclass(DC2))  # type: ignore[assignment]
     for cls in [DC1, DC2]:
         mro = cls.mro()
         assert mro.index(ArgparseDataclass) < mro.index(JSONDataclass)
@@ -53,7 +55,7 @@ def test_multiple_inheritance():
         assert obj.to_json_string() == '{"x": 5}'
         _ = obj.make_parser().format_help()
 
-def test_all_inheritance():
+def test_all_inheritance() -> None:
     """Tests a class that inherits from all the default DataclassMixins."""
     @dataclass
     class DC:
@@ -61,13 +63,14 @@ def test_all_inheritance():
     cls = DC
     for mixin_cls in DEFAULT_MIXINS:
         cls = mixin_cls.wrap_dataclass(cls, store_type='qualname')
+    assert issubclass(cls, DC)
     mro = cls.mro()
     obj = cls(5)
     for mixin_cls in DEFAULT_MIXINS:
         assert mixin_cls in mro
         assert isinstance(obj, mixin_cls)
 
-def test_invalid_inheritance():
+def test_invalid_inheritance() -> None:
     """Tests invalid inheritance (e.g. parent class before its subclass)."""
     # this order works
     @dataclass
@@ -95,14 +98,18 @@ def test_invalid_inheritance():
     assert issubclass(DC2, DC1)
     assert DC2 is not DC1
 
-def test_post_dataclass_wrap():
+def test_post_dataclass_wrap() -> None:
     """Tests behavior of `__post_dataclass_wrap__` with multiple inheritance."""
     class Mixin1(DataclassMixin):
+        val: ClassVar[int]
+        val1: ClassVar[int]
         @classmethod
         def __post_dataclass_wrap__(cls, wrapped_cls):
             wrapped_cls.val = 1
             wrapped_cls.val1 = 1
     class Mixin2(DataclassMixin):
+        val: ClassVar[int]
+        val2: ClassVar[int]
         @classmethod
         def __post_dataclass_wrap__(cls, wrapped_cls):
             wrapped_cls.val = 2
@@ -118,7 +125,7 @@ def test_post_dataclass_wrap():
     assert DC12.val1 == 1
     assert DC12.val2 == 2
 
-def test_settings_field_collision():
+def test_settings_field_collision() -> None:
     """Tests multiple inheritance from `MixinSettings` classes with overlapping field names."""
     @dataclass
     class Settings1(MixinSettings):
@@ -142,7 +149,7 @@ def test_settings_field_collision():
     class DC4(DC1, DC2):
         __settings_type__ = Settings2
 
-def test_json_toml():
+def test_json_toml() -> None:
     """Tests inheritance from both JSONDataclass and TOMLDataclass."""
     dt = datetime.strptime('2024-01-01', '%Y-%m-%d')
     json_str = '{"dt": "2024-01-01T00:00:00"}'
@@ -173,7 +180,7 @@ def test_json_toml():
         sio.seek(0)
         assert type(obj2).load(sio) == obj2
 
-def test_argparse_subprocess_dataclass():
+def test_argparse_subprocess_dataclass() -> None:
     """Tests inheritance from both ArgparseDataclass and SubprocessDataclass."""
     # no name collision in field settings, so inheritance works OK
     class ArgparseSubprocessDC(ArgparseDataclass, SubprocessDataclass):
@@ -188,7 +195,7 @@ def test_argparse_subprocess_dataclass():
     assert DC1(1, 2, 3, 4).get_args(suppress_defaults=True) == ['prog']
     assert DC1.from_cli_args(['--a-value', '1', '-b', '2', '-c', '3', '--name1', '4']) == DC1(1, 2, 3, 4)
 
-def test_cli_subprocess_dataclass(tmpdir):
+def test_cli_subprocess_dataclass(tmp_path: Path) -> None:
     """Tests subclassing both CLIDataclass and SubprocessDataclass."""
     @dataclass
     class DC2(DC1, SubprocessDataclass):
@@ -202,7 +209,7 @@ def test_cli_subprocess_dataclass(tmpdir):
             default='ignored',
             metadata={'args': [], 'parse_exclude': True, 'subprocess_exclude': True},
         )
-    prog = str(tmpdir / 'prog.py')
+    prog = str(tmp_path / 'prog.py')
     dc2 = DC2(
         required_string='positional',
         input_file='my_input',
@@ -238,7 +245,7 @@ DC1.main()""", file=f)
     res = dc2.run_subprocess(capture_output=True, text=True)
     assert res.stdout.rstrip() == str(dc1)
 
-def test_config_json_dataclass():
+def test_config_json_dataclass() -> None:
     """Tests subclassing both ConfigDataclass and JSONDataclass."""
     @dataclass
     class DC1(ConfigDataclass, JSONBaseDataclass):
@@ -249,7 +256,7 @@ def test_config_json_dataclass():
         y: int
     assert DC2.from_dict({'x': 1, 'y': 2}) == DC2(1, 2)
 
-def test_toml_json_dataclass():
+def test_toml_json_dataclass() -> None:
     """Tests subclassing both TOMLDataclass and JSONDataclass."""
     @dataclass
     class DC1(TOMLDataclass, JSONDataclass):
@@ -262,48 +269,59 @@ def test_toml_json_dataclass():
     assert obj.to_toml_string() == 'x = 1\n# y = \n'
     assert obj.to_json_string() == '{"x": 1, "y": null}'
 
-def test_json_argparse_dataclass():
+def test_json_argparse_dataclass() -> None:
     """Tests subclassing both JSONDataclass and ArgparseDataclass."""
     @dataclass
     class DC1(JSONDataclass, ArgparseDataclass, prog='prog'):
         pass
+    assert isinstance(DC1.__settings__, ArgparseDataclassSettings)
     assert DC1.__settings__.prog == 'prog'
     @dataclass
     class DC2(ArgparseDataclass, prog='prog'):
         pass
+    assert isinstance(DC2.__settings__, ArgparseDataclassSettings)
     assert DC2.__settings__.prog == 'prog'
     @dataclass
     class DC3(JSONDataclass, DC2):
         pass
+    assert isinstance(DC3.__settings__, ArgparseDataclassSettings)
     assert DC3.__settings__.prog == 'prog'
     @dataclass
     class DC4(JSONDataclass, DC2, prog='new-prog'):
         pass
+    assert isinstance(DC4.__settings__, ArgparseDataclassSettings)
     assert DC4.__settings__.prog == 'new-prog'
     @dataclass
     class DC5(ArgparseDataclass, JSONDataclass, prog='prog'):
         pass
+    assert isinstance(DC5.__settings__, ArgparseDataclassSettings)
     assert DC5.__settings__.prog == 'prog'
     @dataclass
     class DC6(JSONBaseDataclass, ArgparseDataclass, prog='prog'):
         pass
+    assert isinstance(DC6.__settings__, ArgparseDataclassSettings)
     assert DC6.__settings__.prog == 'prog'
     @dataclass
     class DC7(ArgparseDataclass, JSONBaseDataclass, prog='prog'):
         pass
+    assert isinstance(DC7.__settings__, ArgparseDataclassSettings)
     assert DC7.__settings__.prog == 'prog'
 
-def test_json_subprocess_dataclass():
+def test_json_subprocess_dataclass() -> None:
     """Tests subclassing both JSONDataclass and SubprocessDataclass."""
     @dataclass
     class DC1(JSONDataclass, SubprocessDataclass):
         pass
+    assert isinstance(DC1.__settings__, DictDataclassSettings)
     assert DC1.__settings__._store_type == 'off'
+    assert isinstance(DC1.__settings__, SubprocessDataclassSettings)
     assert DC1.__settings__.exec is None
     @dataclass
     class DC2(SubprocessDataclass, JSONDataclass):
         pass
+    assert isinstance(DC2.__settings__, DictDataclassSettings)
     assert DC2.__settings__._store_type == 'off'
+    assert isinstance(DC2.__settings__, SubprocessDataclassSettings)
     assert DC2.__settings__.exec is None
     @dataclass
     class DC(JSONBaseDataclass):
@@ -311,15 +329,21 @@ def test_json_subprocess_dataclass():
     @dataclass
     class DC3(DC, SubprocessDataclass):
         pass
+    assert isinstance(DC3.__settings__, DictDataclassSettings)
     assert DC3.__settings__._store_type == 'qualname'
+    assert isinstance(DC3.__settings__, SubprocessDataclassSettings)
     assert DC3.__settings__.exec is None
     @dataclass
     class DC4(SubprocessDataclass, DC):
         pass
+    assert isinstance(DC4.__settings__, DictDataclassSettings)
     assert DC4.__settings__._store_type == 'qualname'
+    assert isinstance(DC4.__settings__, SubprocessDataclassSettings)
     assert DC4.__settings__.exec is None
     @dataclass
     class DC5(SubprocessDataclass, DC, store_type='off', exec='prog'):
         pass
+    assert isinstance(DC5.__settings__, DictDataclassSettings)
     assert DC5.__settings__._store_type == 'off'
+    assert isinstance(DC5.__settings__, SubprocessDataclassSettings)
     assert DC5.__settings__.exec == 'prog'

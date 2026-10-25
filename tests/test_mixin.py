@@ -1,4 +1,4 @@
-from dataclasses import astuple, dataclass, field, fields
+from dataclasses import astuple, dataclass, field, fields, is_dataclass
 from typing import Annotated, ClassVar
 
 import pytest
@@ -9,7 +9,7 @@ from fancy_dataclass.settings import DocFieldSettings, FieldSettings, MixinSetti
 from fancy_dataclass.utils import get_dataclass_fields
 
 
-def test_field_settings():
+def test_field_settings() -> None:
     """Tests the FieldSettings class."""
     fld_empty = field()
     fld_pos = field(metadata={'positive': True})
@@ -48,9 +48,10 @@ class MySettingsReq(MixinSettings):
 class TestDataclassMixin:
     """Tests the DataclassMixin class."""
 
-    def test_post_dataclass_wrap_hook(self):
+    def test_post_dataclass_wrap_hook(self) -> None:
         """Tests the __post_dataclass_wrap__ hook."""
         class MyMixin(DataclassMixin):
+            _my_value: int
             @classmethod
             def __post_dataclass_wrap__(cls, wrapped_cls) -> None:
                 wrapped_cls._my_value = 123
@@ -61,7 +62,7 @@ class TestDataclassMixin:
         assert MyMixin2.__name__ == 'MyMixin'
         assert MyMixin2._my_value == 123
 
-    def test_settings_valid(self):
+    def test_settings_valid(self) -> None:
         """Tests the settings instantiation mechanism of DataclassMixin."""
         class MyMixin(DataclassMixin):
             pass
@@ -128,7 +129,7 @@ class TestDataclassMixin:
             __settings__ = None
         assert MyDC.__settings__ == MySettingsReq(enhanced=False)
 
-    def test_settings_invalid(self):
+    def test_settings_invalid(self) -> None:
         """Tests error conditions for DataclassMixin settings."""
         class MyMixin(DataclassMixin):
             pass
@@ -160,14 +161,14 @@ class TestDataclassMixin:
         with pytest.raises(TypeError, match="settings for MyDC4 missing expected field 'enhanced'"):
             @dataclass
             class MyDC4(MyMixin):
-                __settings__ = 1
+                __settings__ = 1  # type: ignore[assignment]
         # set settings to a regular class
         class NonDCSettings:
             pass
         with pytest.raises(TypeError, match='invalid settings type NonDCSettings for MyDC5'):
             @dataclass
             class MyDC5(MyMixin):
-                __settings_type__ = NonDCSettings
+                __settings_type__ = NonDCSettings  # type: ignore[assignment]
         # set settings to a non-dataclass subclass of MixinSettings
         class NonDCSettings(MixinSettings):
             pass
@@ -181,7 +182,7 @@ class TestDataclassMixin:
             class MyDC7(MyMixinReq, enhanced=False):
                 __settings__ = MySettingsReq(enhanced=True)
 
-    def test_settings_merged(self):
+    def test_settings_merged(self) -> None:
         """Tests merging of settings when subclassing multiple DataclassMixins."""
         @dataclass
         class Settings1(MixinSettings):
@@ -212,17 +213,21 @@ class TestDataclassMixin:
         class DC1(Mixin1):
             ...
         _check_stype(DC1, ['a'])
+        assert isinstance(DC1.__settings__, Settings1)
         assert DC1.__settings__.a == 1
         @dataclass
         class DC2(Mixin1, Mixin2, Mixin3):
             ...
+        assert isinstance(DC2.__settings_type__, type)
         assert DC2.__settings_type__.__name__ == 'MiscDataclassSettings'
         _check_stype(DC2, ['a', 'b', 'c'])
+        assert is_dataclass(DC2.__settings__)
         assert astuple(DC2.__settings__) == (1, 2, 3)
         @dataclass
         class DC3(Mixin1, Mixin2, Mixin3):
             __settings_type__ = None
         _check_stype(DC3, ['a', 'b', 'c'])
+        assert is_dataclass(DC3.__settings__)
         assert astuple(DC3.__settings__) == (1, 2, 3)
         @dataclass
         class DC4(Mixin1, Mixin2, Mixin3):
@@ -234,6 +239,7 @@ class TestDataclassMixin:
         @dataclass
         class DC5(Mixin1, Mixin2, Mixin3, a=100):
             ...
+        assert is_dataclass(DC5.__settings__)
         assert astuple(DC5.__settings__) == (100, 2, 3)
         with pytest.raises(TypeError, match="unknown settings field 'a' for DC6"):
             @dataclass
@@ -242,6 +248,7 @@ class TestDataclassMixin:
         @dataclass
         class DC7(Mixin1, Mixin2, Mixin3, b=100):
             __settings_type__ = Settings2
+        assert is_dataclass(DC7.__settings__)
         assert astuple(DC7.__settings__) == (100, 3)
         # custom settings type that accommodates all the base classes' fields
         @dataclass
@@ -267,7 +274,7 @@ class TestDataclassMixin:
             class DC11(Mixin2, Mixin4):
                 ...
 
-    def test_replace(self):
+    def test_replace(self) -> None:
         """Tests the `_replace` method."""
         @dataclass
         class DC12(DataclassMixin):
@@ -276,7 +283,7 @@ class TestDataclassMixin:
         obj = DC12(1)
         assert obj._replace(b=2) == DC12(2)
         # no type-checking occurs
-        assert obj._replace(b='b') == DC12('b')
+        assert obj._replace(b='b') == DC12('b')  # type: ignore[arg-type]
         # replace a non-field
         with pytest.raises(TypeError, match="'c' is not a valid field for DC12"):
             _ = obj._replace(c=3)
@@ -284,7 +291,7 @@ class TestDataclassMixin:
         with pytest.raises(TypeError, match="'a' is not a valid field for DC12"):
             _ = obj._replace(a=3)
 
-    def test_doc_settings(self):
+    def test_doc_settings(self) -> None:
         """Tests DocFieldSettings."""
         @dataclass
         class DocMixin(DataclassMixin):
@@ -310,7 +317,9 @@ class TestDataclassMixin:
             j: Annotated['int', Doc('j')] = 10
         docs = {}
         for fld in fields(DC1):
-            docs[fld.name] = DC1._field_settings(fld).doc
+            fld_settings = DC1._field_settings(fld)
+            assert isinstance(fld_settings, DocFieldSettings)
+            docs[fld.name] = fld_settings.doc
         assert docs == {
             'a': None,
             'b': 'b',

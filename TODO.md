@@ -2,6 +2,9 @@
 
 # TODO
 
+- For `DataclassMixin`, make the dunders non-optional?
+- Give specific subclasses annotations for their `__settings__`?
+
 ## v0.12.0
 
 - Documentation

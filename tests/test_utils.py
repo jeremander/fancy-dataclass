@@ -36,7 +36,7 @@ except ImportError:  # Python < 3.10
     ('_', ''),
     ('__', ''),
 ])
-def test_snake_case_to_camel_case(snake, camel):
+def test_snake_case_to_camel_case(snake: str, camel: str) -> None:
     """Tests conversion of snake case to camel case."""
     assert snake_case_to_camel_case(snake) == camel
 
@@ -64,7 +64,7 @@ def test_snake_case_to_camel_case(snake, camel):
     ('a1bc', 'a1bc'),
     ('a1Bc', 'a1-bc'),
 ])
-def test_camel_case_to_kebab_case(camel, kebab):
+def test_camel_case_to_kebab_case(camel: str, kebab: str) -> None:
     """Tests conversion of camel case to kebab case."""
     assert camel_case_to_kebab_case(camel) == kebab
 
@@ -78,11 +78,11 @@ def test_camel_case_to_kebab_case(camel, kebab):
     (Optional[type(None)], False),  # Optional[NoneType] -> NoneType
     (list[Optional[int]], False),
 ])
-def test_type_is_optional(tp, is_optional):
+def test_type_is_optional(tp: Any, is_optional: bool) -> None:
     assert type_is_optional(tp) == is_optional
 
 @pytest.mark.skipif(sys.version_info[:2] < (3, 10), reason='Py3.10 union type')
-def test_type_is_optional_py310():  # novermin
+def test_type_is_optional_py310() -> None:  # novermin
     assert type_is_optional(int | None)
     assert type_is_optional(None | int)
     assert type_is_optional(None | int | str)
@@ -120,7 +120,7 @@ def test_type_is_optional_py310():  # novermin
     (ClassVar[bool], ClassVar[int], True),
     (ClassVar[int], ClassVar[str], False),
 ])
-def test_check_is_subtype(tp1, tp2, output):
+def test_check_is_subtype(tp1: Any, tp2: Any, output: bool) -> None:
     """Tests the _is_subtype helper function."""
     assert _is_subtype(tp1, tp2) is output
 
@@ -157,11 +157,11 @@ def test_check_is_subtype(tp1, tp2, output):
     (None, Sequence[int], False),
     ((1, 2), Optional[Union[int, Sequence[int]]], True),
 ])
-def test_check_isinstance(obj, tp, output):
+def test_check_isinstance(obj: Any, tp: Any, output: bool) -> None:
     """Tests the _is_instance helper function."""
     assert _is_instance(obj, tp) is output
 
-def test_coerce_to_dataclass():
+def test_coerce_to_dataclass() -> None:
     """Tests behavior of `coerce_to_dataclass`."""
     @dataclass
     class DC1:
@@ -178,7 +178,7 @@ def test_coerce_to_dataclass():
     assert coerce_to_dataclass(DC1, obj1) == obj1
     obj2 = coerce_to_dataclass(DC2, obj1)
     assert isinstance(obj2, DC2)
-    assert obj1 != obj2
+    assert obj1 != obj2  # type: ignore[comparison-overlap]
     assert obj2 == DC2(1, 2)
     obj3 = coerce_to_dataclass(DC3, obj1)
     assert isinstance(obj3, DC3)
@@ -340,23 +340,23 @@ class TestMerge:
         # ([H, GG], ['g3', 'g4', 'g1', 'g2']),
         ([X, X3], ['x', 'y', 'x1', 'x2']),
     ])
-    def test_merge_valid(self, classes, field_names):
+    def test_merge_valid(self, classes: list[type[Any]], field_names: list[str]) -> None:
         """Merges dataclass types together and checks the resulting fields match what we expect."""
         cls = merge_dataclasses(*classes)
         assert cls.__name__ == '_'  # default name
         actual_field_names = [fld.name for fld in get_dataclass_fields(cls, include_all=True)]
         assert actual_field_names == field_names
 
-    def test_merge_invalid(self):
+    def test_merge_invalid(self) -> None:
         """Tests error conditions for merge_dataclasses."""
         with pytest.raises(TypeError, match='must be called with a dataclass type or instance'):
-            _ = merge_dataclasses(None)
+            _ = merge_dataclasses(None)  # type: ignore[arg-type]
         class NonDC:
             pass
         with pytest.raises(TypeError, match='duplicate base class D'):
             _ = merge_dataclasses(D, D)
         with pytest.raises(TypeError, match='must be called with a dataclass type or instance'):
-            _ = merge_dataclasses(NonDC())
+            _ = merge_dataclasses(NonDC())  # type: ignore[arg-type]
         with pytest.raises(TypeError, match="duplicate field name 'g1'"):
             _ = merge_dataclasses(G, H)
         with pytest.raises(TypeError, match="duplicate field name 'g2' with mismatched types"):
@@ -366,7 +366,7 @@ class TestMerge:
         X3 = merge_dataclasses(X, X2, allow_duplicates=True)
         assert [fld.name for fld in get_dataclass_fields(X3, include_all=True)] == ['x', 'y']
 
-    def test_merge_inheritance(self):
+    def test_merge_inheritance(self) -> None:
         @dataclass
         class DC1:
             x: int
@@ -389,7 +389,7 @@ class TestMerge:
         @dataclass
         class DC6(DC1):
             w: int
-        def get_names(cls):
+        def get_names(cls: type) -> list[str]:
             return [fld.name for fld in get_dataclass_fields(cls)]
         with pytest.raises(TypeError, match="duplicate field name 'x'"):
             _ = merge_dataclasses(DC1, DC1_1)

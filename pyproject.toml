@@ -133,42 +133,52 @@ exclude_lines = [
 tag_format = "v$major.$minor.$patch"
 
 [tool.mypy]
-exclude = ["docs/", "scripts/", "site/", "tmp.*"]
+# exclude = ["docs/", "scripts/", "site/", "tmp.*"]
+exclude = ["docs/", "scripts/", "site/", "tmp.*", "tests/*"]
 warn_unused_configs = true
 strict = true
 
-[[tool.mypy.overrides]]
-module = "tests.*"
-strict = false
-disable_error_code = ["arg-type", "attr-defined", "call-arg", "comparison-overlap", "no-redef", "no-untyped-call", "no-untyped-def", "type-arg"]
+# [[tool.mypy.overrides]]
+# module = "tests.*"
+# strict = false
+# disable_error_code = ["no-redef"]
+# disable_error_code = ["arg-type", "attr-defined", "call-arg", "comparison-overlap", "no-redef", "no-untyped-call", "no-untyped-def", "type-arg"]
 
-[[tool.mypy.overrides]]
-module = "tests.test_cli"
-disable_error_code = ["assignment", "index", "operator", "union-attr"]
+# [[tool.mypy.overrides]]
+# module = "tests.test_cli"
+# disable_error_code = ["assignment", "index", "operator", "union-attr"]
 
-[[tool.mypy.overrides]]
-module = "tests.test_config"
-disable_error_code = ["index", "misc", "union-attr"]
+# [[tool.mypy.overrides]]
+# module = "tests.test_config"
+# disable_error_code = ["index", "misc", "union-attr"]
 
-[[tool.mypy.overrides]]
-module = "tests.test_dict"
-disable_error_code = ["assignment", "misc"]
+# [[tool.mypy.overrides]]
+# module = "tests.test_dict"
+# disable_error_code = ["assignment", "misc"]
 
-[[tool.mypy.overrides]]
-module = "tests.test_inheritance"
-disable_error_code = ["assignment", "misc"]
+# [[tool.mypy.overrides]]
+# module = "tests.test_inheritance"
+# disable_error_code = ["assignment", "misc"]
 
-[[tool.mypy.overrides]]
-module = "tests.test_mixin"
-disable_error_code = ["assignment", "call-overload", "has-type", "misc", "union-attr"]
+# [[tool.mypy.overrides]]
+# module = "tests.test_mixin"
+# disable_error_code = ["assignment", "call-overload", "has-type", "misc", "union-attr"]
 
-[[tool.mypy.overrides]]
-module = "tests.test_serializable"
-disable_error_code = ["assignment", "misc"]
+# [[tool.mypy.overrides]]
+# module = "tests.test_serializable"
+# disable_error_code = ["assignment", "misc"]
+
+# [[tool.mypy.overrides]]
+# module = "tests.test_subprocess"
+# disable_error_code = ["assignment", "misc"]
 
 [[tool.mypy.overrides]]
 module = "tests.test_subprocess"
-disable_error_code = ["assignment", "misc"]
+disable_error_code = ["assignment"]
+
+[[tool.mypy.overrides]]
+module = "tests.test_versioned"
+disable_error_code = ["arg-type", "attr-defined", "call-arg", "comparison-overlap", "no-redef"]
 
 [tool.pytest.ini_options]
 addopts = "--verbose --cov=fancy_dataclass"
@@ -186,7 +196,7 @@ spaces_around_power_operator = true
 split_all_top_level_comma_separated_values = true
 
 [tool.pyrefly]
-preset = "legacy"
+preset = "default"
 
 [tool.pyrefly.errors]
 deprecated = "ignore"
@@ -205,8 +215,13 @@ missing-attribute = "ignore"
 missing-module-attribute = "ignore"
 
 [[tool.pyrefly.sub-config]]
-matches = "tests/**/*"
+matches = "tests/test_utils.py"
 
 [tool.pyrefly.sub-config.errors]
-bad-argument-type = "ignore"
 invalid-annotation = "ignore"
+
+[[tool.pyrefly.sub-config]]
+matches = "tests/test_versioned.py"
+
+[tool.pyrefly.sub-config.errors]
+missing-attribute = "ignore"
