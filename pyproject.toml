@@ -36,25 +36,25 @@ path = "fancy_dataclass/__init__.py"
 
 [tool.hatch.envs.doc]
 dependencies = [
-  "mkdocs",
   "mkdocs-autorefs",
   "mkdocs-material",
   "mkdocstrings[python] >= 1.0",
   "mkdocs-gen-files",
   "mkdocs-literate-nav",
+  "properdocs >= 1.6",
   "py-gadzooks >= 0.2.8",
   "ruff >= 0.16",
 ]
 
 [tool.hatch.envs.doc.scripts]
 # build docs to site/ directory
-build = "mkdocs build --clean --strict --no-directory-urls {args}"
+build = "properdocs build --clean --strict --no-directory-urls {args}"
 # check whether input docs have changed
 check = "gadzooks build-docs --src-docs docs --check-only {args}"
 # serve docs on development server
-serve = "mkdocs serve"
+serve = "properdocs serve"
 # build docs for Readthedocs
-deploy = "mkdocs build --site-dir $READTHEDOCS_OUTPUT/html"
+deploy = "properdocs build --site-dir $READTHEDOCS_OUTPUT/html"
 # validate version string, CHANGELOG, Git tag, etc.
 pre-publish = [
   "cat docs/.changelog-version-regex.txt | xargs gadzooks check-version --check-tag --dist-dir dist --changelog docs/CHANGELOG.md --changelog-version-regex",
