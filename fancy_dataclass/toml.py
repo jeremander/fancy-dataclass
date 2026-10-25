@@ -186,14 +186,14 @@ class TOMLDataclass(DictFileSerializableDataclass, TOMLSerializable, suppress_de
         return doc
 
     @classmethod
-    def _from_dict_value(cls, tp: type, val: Any) -> Any:
+    def _from_dict_value(cls, tp: type, val: Any, validate: bool) -> Any:
         if isinstance(val, NoneProxy):
             return None
-        return super()._from_dict_value(tp, val)
+        return super()._from_dict_value(tp, val, validate)
 
     @classmethod
-    def _from_dict_value_basic(cls, tp: type, val: Any) -> Any:
-        return super()._from_dict_value_basic(tp, from_dict_value_basic(tp, val))
+    def _from_dict_value_basic(cls, tp: type, val: Any, validate: bool) -> Any:
+        return super()._from_dict_value_basic(tp, from_dict_value_basic(tp, val), validate)
 
     @classmethod
     def _get_missing_value(cls, fld: Field) -> Any:  # type: ignore[type-arg]

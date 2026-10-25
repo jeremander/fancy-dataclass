@@ -1,5 +1,6 @@
 from abc import abstractmethod
 from datetime import datetime
+from functools import partial
 from io import IOBase, StringIO
 import json
 from json import JSONEncoder
@@ -164,15 +165,16 @@ class JSONDataclass(DictFileSerializableDataclass, JSONSerializable):
         return super()._to_dict_value(val, full)
 
     @classmethod
-    def _from_dict_value_basic(cls, tp: type, val: Any) -> Any:
+    def _from_dict_value_basic(cls, tp: type, val: Any, validate: bool) -> Any:
         if issubclass(tp, datetime):
-            return tp.fromisoformat(val) if isinstance(val, str) else val
-        return super()._from_dict_value_basic(tp, from_dict_value_basic(tp, val))
+            val = tp.fromisoformat(val) if isinstance(val, str) else val
+        return super()._from_dict_value_basic(tp, from_dict_value_basic(tp, val), validate)
 
     @classmethod
-    def _from_dict_value(cls, tp: type, val: Any) -> Any:
+    def _from_dict_value(cls, tp: type, val: Any, validate: bool) -> Any:
         # customize behavior for JSONSerializable
         origin_type = get_origin(tp)
+        convert_val = partial(cls._from_dict_value, validate=validate)
         if (origin_type is None) and issubclass_safe(tp, tuple) and isinstance(val, dict) and hasattr(tp, '_fields'):
             # namedtuple
             try:
@@ -180,17 +182,17 @@ class JSONDataclass(DictFileSerializableDataclass, JSONSerializable):
                 for key in tp._fields:
                     # if NamedTuple's types are annotated, check them
                     valtype = getattr(tp, '__annotations__', {}).get(key)
-                    vals.append(val[key] if (valtype is None) else cls._from_dict_value(valtype, val[key]))
+                    vals.append(val[key] if (valtype is None) else convert_val(valtype, val[key]))
                 return tp(*vals)
             except KeyError as e:
                 raise TypeConversionError(tp, val) from e
         if origin_type is dict:  # decode keys to be valid JSON
             (keytype, valtype) = get_args(tp)
             return {
-                cls.json_key_decoder(cls._from_dict_value(keytype, k)): cls._from_dict_value(valtype, v)
+                cls.json_key_decoder(convert_val(keytype, k)): convert_val(valtype, v)
                 for (k, v) in val.items()
             }
-        return super()._from_dict_value(tp, val)
+        return super()._from_dict_value(tp, val, validate)
 
 
 class JSONBaseDataclass(JSONDataclass, store_type='qualname'):

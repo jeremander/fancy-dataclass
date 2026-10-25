@@ -5,10 +5,6 @@
 ## v0.12.1
 
 - Documentation
-  - Dict
-    - Describe *all* settings and field settings.
-      - Note purpose of `flatten=True` (good for tabular data like CSV/SQL)
-    - For `validate`, emphasize type conversions are only to/from dict, not general constructors (this is a difference from `pydantic`).
   - CLI
   - SQL
     - Primary key (default `_id`)

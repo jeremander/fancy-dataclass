@@ -3,6 +3,7 @@ from collections.abc import Iterable
 from contextlib import suppress
 import dataclasses
 from dataclasses import Field, InitVar
+from functools import partial
 import typing
 from typing import (  # type: ignore[attr-defined]
     Any,
@@ -94,12 +95,15 @@ class DictDataclassFieldSettings(DocFieldSettings):
     - `alias`: alternate name to use for the field, both when converting to and from a dict key
     - `flatten`: if set to `True` or `False` and the field is a `DictDataclass`, determines whether to merge subfields
     into the outer dataclass (this overrides the class-level `flatten` setting)
+    - `validate`: If set to `True` or `False`, overrides the class-level `validate` flag for whether to validate the
+    field upon conversion from a dict value
     - `doc`: a text description of the field, which may be used when generating schemas or serializing the data"""
     suppress: Optional[bool] = None
     suppress_default: Optional[bool] = None
     suppress_none: Optional[bool] = None
     alias: Optional[str] = None
     flatten: Optional[bool] = None
+    validate: Optional[bool] = None
 
 
 class DictDataclass(DataclassMixin):
@@ -257,28 +261,23 @@ class DictDataclass(DataclassMixin):
         return tp.from_dict(val)
 
     @classmethod
-    def _from_dict_value_basic(cls, tp: type, val: Any) -> Any:
+    def _from_dict_value_basic(cls, tp: type, val: Any, validate: bool) -> Any:
         """Given a basic type and a value, attempts to convert the value to the given type.
+
+        If `validate` is `True`, applies stricter validation, erroring if the value is not valid.
 
         By default this will return the original value. Subclasses may override the behavior, e.g. to perform custom
         validation or type coercion."""
-        if cls.__settings__.validate and (not isinstance(val, tp)):  # validate type
+        if validate and (not isinstance(val, tp)):
             raise TypeConversionError(tp, val)
-        # NOTE: alternatively, we could coerce to the type
-        # if val is None:  # do not coerce None
-        #     raise TypeConversionError(tp, val)
-        # try:
-        #     return tp(val)  # type: ignore[call-arg]
-        # except TypeError as e:
-        #     raise TypeConversionError(tp, val) from e
         return val
 
     @classmethod
-    def _from_dict_value(cls, tp: type, val: Any) -> Any:
+    def _from_dict_value(cls, tp: type, val: Any, validate: bool) -> Any:
         """Given a type and a value, attempts to convert the value to the given type."""
         def err() -> TypeConversionError:
             return TypeConversionError(tp, val)
-        convert_val = cls._from_dict_value
+        convert_val = partial(cls._from_dict_value, validate=validate)
         if tp is type(None):
             if val is None:
                 return None
@@ -292,7 +291,7 @@ class DictDataclass(DataclassMixin):
             return convert_val(get_args(tp)[0], val)
         if (_TYPE_ALIAS_TYPE is not None) and (ttp is _TYPE_ALIAS_TYPE):
             # Python 3.12 'type' keyword wraps the type in a TypeAliasType
-            return cls._from_dict_value(tp.__value__, val)  # type: ignore[attr-defined]
+            return cls._from_dict_value(tp.__value__, val, validate)  # type: ignore[attr-defined]
         if issubclass_safe(tp, list):
             # class may inherit from List[T], so get the parent class
             assert hasattr(tp, '__orig_bases__')
@@ -314,12 +313,12 @@ class DictDataclass(DataclassMixin):
             if issubclass(tp, dict):
                 if ttp is _TypedDictMeta:  # validate TypedDict fields
                     anns = tp.__annotations__
-                    if cls.__settings__.validate and ((not isinstance(val, dict)) or (set(anns) != set(val))):
+                    if validate and ((not isinstance(val, dict)) or (set(anns) != set(val))):
                         raise err()
                     return {key: convert_val(valtype, val[key]) for (key, valtype) in anns.items()}
                 return tp(val)
             # basic data type
-            return cls._from_dict_value_basic(tp, val)
+            return cls._from_dict_value_basic(tp, val, validate)
         # compound data type
         args = get_args(tp)
         if origin_type is list:
@@ -379,6 +378,12 @@ class DictDataclass(DataclassMixin):
         return field_key_map
 
     @classmethod
+    def _should_validate_field(cls, fld: Field) -> bool:  # type: ignore[type-arg]
+        """Returns True if the value for the given field should be validated."""
+        settings = cls._field_settings(fld).adapt_to(DictDataclassFieldSettings)
+        return cls.__settings__.validate if (settings.validate is None) else settings.validate
+
+    @classmethod
     def dataclass_args_from_dict(cls, d: AnyDict) -> AnyDict:
         """Given a dict of arguments, performs type conversion and/or validity checking, then returns a new dict that
         can be passed to the class's constructor."""
@@ -407,7 +412,8 @@ class DictDataclass(DataclassMixin):
                     for base in bases:
                         with suppress(AttributeError, KeyError):
                             field_type = dataclass_field_type(base, fld.name)
-                            kwargs[fld.name] = cls._from_dict_value(field_type, d[key])
+                            validate = cls._should_validate_field(fld)
+                            kwargs[fld.name] = cls._from_dict_value(field_type, d[key], validate)
                             consumed_keys.add(key)
                             break
                     else:
