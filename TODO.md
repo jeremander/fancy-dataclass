@@ -6,10 +6,9 @@
 
 - Documentation
   - Dict
-    - Distinguish this page from the JSON/TOML pages.
     - Describe *all* settings and field settings.
       - Note purpose of `flatten=True` (good for tabular data like CSV/SQL)
-    - Emphasize type conversions are only to/from dict, not general constructors (this is a difference from `pydantic`).
+    - For `validate`, emphasize type conversions are only to/from dict, not general constructors (this is a difference from `pydantic`).
   - CLI
   - SQL
     - Primary key (default `_id`)

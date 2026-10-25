@@ -76,10 +76,10 @@ class A(DictDataclass):
 class B(DictDataclass, suppress_defaults=False):
     x: int = 5
 
-print(A().to_dict())
+>>> print(A().to_dict())
 {}
 
-print(B().to_dict())
+>>> print(B().to_dict())
 {'x': 5}
 ```
 
@@ -89,13 +89,13 @@ You can suppress fields with null values by supplying `suppress_none=True`:
 
 ```python
 @dataclass
-class C(DictDataclass, suppress_none=True):
+class A(DictDataclass, suppress_none=True):
     x: Optional[int]
 
-print(C(1).to_dict())
+>>> print(A(1).to_dict())
 {'x': 1}
 
-print(C(None).to_dict())
+>>> print(A(None).to_dict())
 {}
 ```
 
@@ -118,7 +118,7 @@ class Circle(DictDataclass):
 Converting a `Circle` object to a Python dict:
 
 ```python
-print(Circle(3).to_dict())
+>>> print(Circle(3).to_dict())
 {'radius': 3}
 ```
 
@@ -129,7 +129,7 @@ This may be undesirable, since the output does not make it clear what type of th
 class Circle(DictDataclass, store_type='name'):
     radius: float
 
-print(Circle(3).to_dict())
+>>> print(Circle(3).to_dict())
 {'type': 'Circle', 'radius': 3}
 ```
 
@@ -140,8 +140,154 @@ Sometimes it is better to store the fully qualified type name instead. You can d
 class Circle(DictDataclass, store_type='qualname'):
     radius: float
 
-print(Circle(3).to_dict())
+>>> print(Circle(3).to_dict())
 {'type': 'my_module.Circle', 'radius': 3}
 ```
 
 Here, `my_module` is the name of the module in which `Circle` is defined.
+
+#### Nested `DictDataclass` fields
+
+The default behavior when nested `DictDataclass` fields are present is to recursively convert them to dicts, preserving the nesting:
+
+```python
+@dataclass
+class Inner(DictDataclass):
+    x: int
+
+@dataclass
+class Outer(DictDataclass):
+    inner: Inner
+    y: int
+
+>>> outer = Outer(inner=Inner(x=1), y=2)
+>>> print(outer.to_dict())
+{'inner': {'x': 1}, 'y': 2}
+```
+
+In some cases, you may want to "flatten" or merge together the nested fields with the outer fields. To set this behavior for all nested fields, use `flatten=True` in the outer class's settings:
+
+```python
+@dataclass
+class Outer(DictDataclass, flatten=True):
+    inner: Inner
+    y: int
+
+>>> outer = Outer(inner=Inner(x=1), y=2)
+>>> print(outer.to_dict())
+{'x': 1, 'y': 2}
+```
+
+Or to specify an individual field to flatten, use the field-level setting instead:
+
+```python
+@dataclass
+class Outer(DictDataclass):
+    inner: Inner = field(metadata={'flatten': True})
+    y: int
+
+>>> outer = Outer(inner=Inner(x=1), y=2)
+>>> print(outer.to_dict())
+{'x': 1, 'y': 2}
+```
+
+#### Field Aliases
+
+Each field is permitted to have an *alias*, which is an alternate name for the key when it is converted to a dict. To specify an alias, use the `alias` field setting:
+
+```python
+@dataclass
+class Item(DictDataclass):
+    my_field: int = field(metadata={'alias': 'myField'})
+
+>>> item = Item(my_field=123)
+>>> print(item.to_dict())
+{'myField': 123}
+>>> item2 = Item.from_dict({'myField': 123})
+>>> item2 == item
+True
+# NOTE: the alias is the only recognized key
+>>> item3 = Item.from_dict({'my_field': 123})
+MissingRequiredFieldError: 'my_field' field (alias 'myField') is required
+```
+
+At this time, `alias` only supports a single alias, and this is the only dict key that is recognized by `from_dict`. In the future it is possible that multiple aliases will be supported.
+
+Also, an error will occur immediately upon class construction if any alias conflicts with another:
+
+```python
+@dataclass
+class Item(DictDataclass):
+    x: int
+    y: int = field(metadata={'alias': 'x'})
+
+TypeError: duplicate field name or alias 'x'
+```
+
+#### Extra Fields
+
+When converting to a `DictDataclass` from a dict with `from_dict`, by default, extra fields which are not specified among the dataclass fields are *ignored*:
+
+```python
+@dataclass
+class A(DictDataclass):
+    a: int
+
+>>> obj = A.from_dict({'a': 1})
+>>> print(obj)
+A(a=1)
+
+>>> obj = A.from_dict({'a': 1, 'b': 2})
+>>> print(obj)
+A(a=1)
+```
+
+To be stricter about this and forbid such extra fields, set `allow_extra_fields=False`.
+
+```python
+@dataclass
+class A(DictDataclass, allow_extra_fields=False):
+    a: int
+
+>>> obj = A.from_dict({'a': 1})
+>>> print(obj)
+A(a=1)
+
+>>> obj = A.from_dict({'a': 1, 'b': 2})
+ValueError: unknown dict fields for A: ['b']
+```
+
+#### Field Validation
+
+Another thing `to_dict` does by default is *runtime validation* of each dataclass field. At present, this is very rudimentary (it can be thought of as something like an `isinstance` check of each field type, though a bit more general). As an example:
+
+```python
+@dataclass
+class A(DictDataclass):
+    x: int
+
+# NOTE: validation does *not* occur during normal construction
+>>> obj = A('1')
+# validation also does not occur when converting *to* a dict
+>>> d = obj.to_dict()
+>>> print(d)
+{'a': '1'}
+# validation does occur when converting *from* a dict
+>>> obj2 = A.from_dict(d)
+TypeConversionError: could not convert '1' to type 'int'
+```
+
+To disable the runtime type-checking, set `validate=False`.
+
+```python
+@dataclass
+class A(DictDataclass, validate=False):
+    x: int
+
+>>> obj = A('1')
+>>> d = obj.to_dict()
+# now validation will be skipped
+>>> obj2 = A.from_dict(d)
+>>> print(obj2)
+A(x='1')
+```

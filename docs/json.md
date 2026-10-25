@@ -107,10 +107,10 @@ class Rectangle(Shape):
 Now you can use the base class, `Shape`, to convert from different subtypes:
 
 ```python
-shape_dicts = [{"type": "Circle", "radius": 3}, {"type": "Rectangle", "length": 3, "width": 5}]
-shapes = [Shape.from_dict(d) for d in shape_dicts]
+>>> shape_dicts = [{"type": "Circle", "radius": 3}, {"type": "Rectangle", "length": 3, "width": 5}]
+>>> shapes = [Shape.from_dict(d) for d in shape_dicts]
 
-print(shapes)
+>>> print(shapes)
 [Circle(radius=3.0), Rectangle(length=3.0, width=5.0)]
 ```
 
