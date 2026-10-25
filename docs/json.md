@@ -64,11 +64,13 @@ True
 
 ## Details
 
-`JSONDataclass` inherits from [`DictDataclass`][fancy_dataclass.dict.DictDataclass], which can be used to convert dataclasses to/from Python dicts via [`to_dict`][fancy_dataclass.dict.DictDataclass.to_dict] and [`from_dict`][fancy_dataclass.dict.DictDataclass.from_dict]. You may use `DictDataclass` directly if you do not need to interact with JSON serialized data.
+`JSONDataclass` inherits from [`DictDataclass`][fancy_dataclass.dict.DictDataclass], which can be used to convert dataclasses to/from Python dicts via [`to_dict`][fancy_dataclass.dict.DictDataclass.to_dict] and [`from_dict`][fancy_dataclass.dict.DictDataclass.from_dict]. You may use `DictDataclass` directly if you do not need to interact with JSON serialized data. See [Python dict conversion](dict.md) for more details.
 
-For details on configuring `JSONDataclass`, see the [dict conversion](dict.md) page.
+### Class and Field Settings
 
-### Type Labels and Inheritance
+The class and field settings for `JSONDataclass` are identical to those for `DictDataclass`. See [here](dict.md#class-and-field-settings) for a description of the settings.
+
+#### Type Labels and Inheritance
 
 When dealing with inheritance hierarchies of `JSONDataclass` objects, it is important to [store the type name](dict.md#including-types-in-output) in the JSON output. For example, if you try:
 

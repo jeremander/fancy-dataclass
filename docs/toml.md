@@ -29,8 +29,7 @@ Save data to a TOML file.
 
 ```python
 >>> db_config = Database(server='192.168.1.1', ports=[8001, 8001, 8002])
->>> with open('db_config.toml', 'w') as f:
-        db_config.to_toml(f)
+>>> db_config.save('db_config.toml')
 ```
 
 View the TOML file `db_config.toml`:
@@ -45,21 +44,20 @@ enabled = true
 Load the data from a TOML file:
 
 ```python
->>> with open('db_config.toml') as f:
-        db_config = Database.from_toml(f)
+>>> db_config = Database.load('db_config.toml')
 >>> print(db_config)
 Database(server='192.168.1.1', ports=[8001, 8001, 8002], connection_max=5000, enabled=True)
 ```
 
 ## Details
 
-`TOMLDataclass` inherits from [`DictDataclass`][fancy_dataclass.dict.DictDataclass], which can be used to convert dataclasses to/from Python dicts via [`to_dict`][fancy_dataclass.dict.DictDataclass.to_dict] and [`from_dict`][fancy_dataclass.dict.DictDataclass.from_dict]. You may use `DictDataclass` if you do not need to interact with TOML serialized data.
+`TOMLDataclass` inherits from [`DictDataclass`][fancy_dataclass.dict.DictDataclass], which can be used to convert dataclasses to/from Python dicts via [`to_dict`][fancy_dataclass.dict.DictDataclass.to_dict] and [`from_dict`][fancy_dataclass.dict.DictDataclass.from_dict]. You may use `DictDataclass` directly if you do not need to interact with TOML serialized data. See [Python dict conversion](dict.md) for more details.
 
 ### Class and Field Settings
 
-The class and field settings for `TOMLDataclass` are identical to those for [`JSONDataclass`](json.md#class-and-field-settings). See [`DictDataclassSettings`][fancy_dataclass.dict.DictDataclassSettings] for the list of class settings, and [`DictDataclassFieldSettings`][fancy_dataclass.dict.DictDataclassFieldSettings] for the list of field-specific settings.
+The class and field settings for `TOMLDataclass` are identical to those for `DictDataclass`. See [here](dict.md#class-and-field-settings) for a description of the settings.
 
-TOML is intended as more of a configuration format than a data storage format. Consequently, unlike `JSONDataclass`, `TOMLDataclass` does not suppress default field values in its output by default. To opt into this behavior, you can set the class setting `suppress_defaults=True`.
+TOML is intended as more of a configuration format than a data storage format. Consequently, `TOMLDataclass` does *not* [suppress default field values](dict.md#suppressing-defaults) in its output by default. To opt into this behavior, you can set the class setting `suppress_defaults=True`.
 
 #### Field Comments
 
@@ -85,7 +83,7 @@ height = 30
 
 !!! note
 
-    You can also use the `Annotated`/`Doc` syntax (PEP 727) to specify field comments. See [`DocFieldSettings`][fancy_dataclass.settings.DocFieldSettings].
+    You can also use the `Annotated`/`Doc` syntax ([PEP 727](https://peps.python.org/pep-0727/)) to specify field comments. See [`DocFieldSettings`][fancy_dataclass.settings.DocFieldSettings].
 
 #### Top-level Comments
 
