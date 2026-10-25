@@ -22,6 +22,7 @@
 - `alias` metadata field for dict conversion
   - Should this be bidirectional? Or separate fields for each direction? [pydantic](https://docs.pydantic.dev/latest/concepts/alias/) provides both.
   - https://github.com/jeremander/fancy-dataclass/issues/5
+  - Simple approach would be to allow the value to be a list and have the first alias be "primary" (the one used for serialization), and have them be in descending priority order for consumption.
 - `PromptDataclass` to prompt user for each value type
   - Be able to supply validator functions
   - Specify behavior on error (bail or loop)

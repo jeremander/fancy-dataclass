@@ -8,7 +8,7 @@ from typing_extensions import Doc
 
 from fancy_dataclass.dict import DictDataclass, DictDataclassSettings
 from fancy_dataclass.mixin import DataclassMixin
-from fancy_dataclass.utils import MissingRequiredFieldError
+from fancy_dataclass.utils import MissingRequiredFieldError, TypeConversionError
 
 
 @dataclass
@@ -713,3 +713,58 @@ def test_typealias() -> None:
         obj = cls(1)  # type: ignore[call-arg]
         assert obj.to_dict() == {'x': 1}
         assert cls.from_dict(obj.to_dict()) == obj
+
+@pytest.mark.parametrize('class_validate', [False, True])
+@pytest.mark.parametrize('field_validate', [None, False, True])
+def test_validate_basic(class_validate: bool, field_validate: Optional[bool]) -> None:
+    """Tests the `validate` field and class settings."""
+    @dataclass
+    class DC(DictDataclass, validate=class_validate):
+        x: int = field(metadata={'validate': field_validate})
+    obj = DC(x=1)
+    assert obj.x == 1
+    d = obj.to_dict()
+    assert d == {'x': 1}
+    assert DC.from_dict(d) == obj
+    # validation does not occur in constructor
+    obj = DC(x='1')  # type: ignore[arg-type]
+    assert obj.x == '1'  # type: ignore[comparison-overlap]
+    d = obj.to_dict()
+    assert d == {'x': '1'}
+    validate = class_validate if (field_validate is None) else field_validate
+    if validate:
+        with pytest.raises(TypeConversionError, match="could not convert '1' to type 'int'"):
+            _ = DC.from_dict(d)
+    else:
+        assert DC.from_dict(d) == obj
+
+def test_validate_nested() -> None:
+    """Tests the `validate` flagg for a nested DictDataclass."""
+    @dataclass
+    class Inner(DictDataclass, validate=True):
+        x: int
+    @dataclass
+    class OuterNoValidate(DictDataclass, validate=False):
+        inner: Inner
+    @dataclass
+    class OuterValidate(DictDataclass, validate=True):
+        inner: Inner
+    d = {'inner': {'x': 1}}
+    for cls in [OuterNoValidate, OuterValidate]:
+        assert cls.from_dict(d) == cls(Inner(1))
+    d = {'inner': {'x': '1'}}
+    for cls in [OuterNoValidate, OuterValidate]:
+        with pytest.raises(TypeConversionError, match="could not convert '1' to type 'int'"):
+            _ = cls.from_dict(d)
+    d = {'inner': 123}
+    for cls in [OuterNoValidate, OuterValidate]:
+        with pytest.raises(TypeConversionError, match="could not convert 123 to type 'dict'"):
+            _ = cls.from_dict(d)
+    inner = object()
+    d = {'inner': inner}
+    for cls in [OuterNoValidate, OuterValidate]:
+        with pytest.raises(TypeConversionError, match="could not convert .* to type 'dict'"):
+            _ = cls.from_dict(d)
+    d = {'inner': Inner('1')}  # type: ignore[arg-type]
+    for cls in [OuterNoValidate, OuterValidate]:
+        assert cls.from_dict(d) == cls(Inner('1'))  # type: ignore[arg-type]

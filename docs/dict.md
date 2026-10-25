@@ -291,3 +291,11 @@ class A(DictDataclass, validate=False):
 >>> print(obj2)
 A(x='1')
 ```
+
+This can also be set at the field level:
+
+```python
+@dataclass
+class A(DictDataclass):
+    x: int = field(metadata={'validate': False})
+```

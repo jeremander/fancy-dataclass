@@ -257,6 +257,8 @@ class DictDataclass(DataclassMixin):
     def _from_dict_value_convertible(tp: type['DictDataclass'], val: Any) -> Any:
         if isinstance(val, tp):  # already converted from a dict
             return val
+        if not isinstance(val, dict):
+            raise TypeConversionError(dict, val)
         # otherwise, convert from a dict
         return tp.from_dict(val)
 
