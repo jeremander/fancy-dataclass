@@ -217,7 +217,7 @@ class SubprocessDataclass(DataclassMixin):
             args.insert(0, executable)
         return args
 
-    def run_subprocess(self, **kwargs: Any) -> subprocess.CompletedProcess:  # type: ignore[type-arg]
+    def run_subprocess(self, **kwargs: Any) -> subprocess.CompletedProcess[Any]:
         """Executes the full subprocess command corresponding to the dataclass parameters.
 
         Args:
