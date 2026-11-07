@@ -90,7 +90,7 @@ class SubprocessDataclass(DataclassMixin):
             if fld_settings.subprocess_flag and (fld.type is not bool):
                 raise ValueError('cannot use subprocess_flag=True when the field type is not bool')
 
-    def get_arg(self, name: str, suppress_defaults: bool = False) -> list[str]:
+    def get_arg(self, name: str, *, suppress_defaults: bool = False) -> list[str]:
         """Gets the command-line arguments for the given dataclass field.
 
         Args:
@@ -176,8 +176,8 @@ class SubprocessDataclass(DataclassMixin):
         By default, this obtains the name of the executable as follows:
 
         1. If the class settings specify an `exec` member, uses that.
-        2. Otherwise, returns the value of the first dataclass field whose `exec` metadata flag is set to `True`,
-        and `None` otherwise.
+        2. Otherwise, returns the value of the first dataclass field whose `exec` metadata flag is set to `True` (only
+        one is permitted), and `None` otherwise.
 
         Returns:
             Name of the executable to run
