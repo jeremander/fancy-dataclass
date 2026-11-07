@@ -52,12 +52,23 @@ While the approach above is recommended in complex situations, `fancy_dataclass`
 from fancy_dataclass import func_dataclass
 
 
-# def train_neural_network(...)
+def train_neural_network(
+    input_data: list,
+    num_layers: int = 3,
+    neurons_per_layer: int = 128,
+    num_iterations: int = 1000,
+    learning_rate: float = 0.1,
+    verbose: bool = False,
+) -> None:
+    ...
 
 # wrap the function into a dataclass
 TrainNeuralNetwork = func_dataclass(train_neural_network, method_name='train')
 
+# parameters for class construction match the keyword arguments of the function
 trainer = TrainNeuralNetwork(num_layers=5, verbose=True)
+
+# inputs to the method are the positional arguments of the function
 model = trainer.train(input_data)
 ```
 
@@ -69,9 +80,6 @@ Another advantage to this approach is that you can supply one or more base class
 
 ```python
 from fancy_dataclass import JSONDataclass, func_dataclass
-
-
-# def train_neural_network(...)
 
 # wrap the function into a JSON-serializable dataclass
 TrainNeuralNetwork = func_dataclass(train_neural_network, bases=JSONDataclass)
@@ -95,3 +103,5 @@ Output:
 ```
 
 This makes it easy to define a single class that can both run your function logic and serialize its own parameters.
+
+⚠️ Unfortunately `func_dataclass` does not work seamlessly with static type checkers like `mypy`. The keyword parameters _will_ be properly recognized for the class constructor, but the method indicated by `method_name` will not be recognized unless it is the default (`__call__`). Other methods provided from `bases` are also not recognized, since the `func_dataclass` creates a class dynamically.
