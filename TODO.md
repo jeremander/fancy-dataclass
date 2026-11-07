@@ -9,17 +9,23 @@
   - SQL
     - Primary key (default `_id`)
     - Relationships
-  - Subprocess
 
 ## Future
 
-- `from_dict` in the case where custom `__init__` doesn't line up with dataclass fields?
 - General-purpose validator mixin? `ValidatedDataclass`?
   - Does type-checking post-init, with ability to supply custom validation functions
   - Have most other mixins inherit from this?
   - Interaction with `validate=True` in `DictDataclass`?
     - Simplest would be to deprecate/remove *all* validation features from here.
     - Alternatively could keep this flag, and have the class inherit from `ValidatedDataclass` if it's set.
+- Field metadata
+  - Field converters
+    - https://github.com/jeremander/fancy-dataclass/issues/2
+  - PEP 712 (`converter` argument for dataclass fields), was rejected
+  - Can implement it by hooking `__post_init__` with `__init_subclass__`, using `object.__setattr__` to set fields to converted values (even for frozen dataclass)
+  - Allow `Annotated` as an alternative to `field.metadata`
+    - Esp. with `Doc`: this could auto-populate JSON schema, argparse description
+  - `BinaryDataclass`?
 - `alias` metadata field for dict conversion
   - Should this be bidirectional? Or separate fields for each direction? [pydantic](https://docs.pydantic.dev/latest/concepts/alias/) provides both.
   - https://github.com/jeremander/fancy-dataclass/issues/5
@@ -42,14 +48,6 @@
       - or a function that takes a name and version and returns a bool
     - `get_version_registry`: return the global singleton registry
 - `JSON5Dataclass`?
-- Field metadata
-  - Field converters
-    - https://github.com/jeremander/fancy-dataclass/issues/2
-  - PEP 712 (`converter` argument for dataclass fields), was rejected
-  - Can implement it by hooking `__post_init__` with `__init_subclass__`, using `object.__setattr__` to set fields to converted values (even for frozen dataclass)
-  - Allow `Annotated` as an alternative to `field.metadata`
-    - Esp. with `Doc`: this could auto-populate JSON schema, argparse description
-  - `BinaryDataclass`?
 - Tiered configs?
 - Improve `mkdocs` documentation
   - Auto-generate per-field descriptions via PEP 727?

@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from dataclasses import MISSING
 import subprocess
 from typing import Any, ClassVar, Optional, get_origin
@@ -15,9 +16,11 @@ class SubprocessDataclassSettings(MixinSettings):
 
     Subclasses of `SubprocessDataclass` may set the following fields as keyword arguments during inheritance:
 
-    - `exec`: name of command-line executable to call"""
+    - `exec`: name of command-line executable to call
+    - `extra_args`: list of additional arguments to pass after all of the field-derived arguments"""
 
     exec: Optional[str] = None
+    extra_args: Optional[Sequence[str]] = None
 
 
 @dataclass_kw_only()
@@ -38,7 +41,8 @@ class SubprocessDataclassFieldSettings(FieldSettings):
         - If `None` (default), exclude this field in the subprocess args if the field is a `ClassVar`
     - `subprocess_positional`: if `True`, make this a positional argument rather than an option
     - `subprocess_flag`: if `False` and the field type is `bool`, treat the field as a regular option rather than a flag
-    - `repeat_option_name`: if `True` and the field type is a list, repeat the option name for each list value
+    - `repeat_option_name`: if `True` and the field type is a list or tuple, repeat the option name for each seqeunce
+        value
         - Examples:
             - If `False` (default), generate `--my-option value1 value2 value3`
             - If `True`, generate `--my-option value1 --my-option value2 --my-option value3`"""
@@ -60,12 +64,11 @@ class SubprocessDataclass(DataclassMixin):
     full list of settings."""
 
     __settings_type__ = SubprocessDataclassSettings
-    __settings__ = SubprocessDataclassSettings()
+    __settings__: ClassVar[SubprocessDataclassSettings] = SubprocessDataclassSettings()
     __field_settings_type__ = SubprocessDataclassFieldSettings
 
     @classmethod
     def __post_dataclass_wrap__(cls, wrapped_cls: type[Self]) -> None:
-        assert hasattr(wrapped_cls.__settings__, 'exec')
         cls_exec_field = wrapped_cls.__settings__.exec
         # make sure there is at most one exec field
         exec_field = None
@@ -190,7 +193,6 @@ class SubprocessDataclass(DataclassMixin):
             if isinstance(val, str):
                 return val
             raise ValueError(f'executable is {val} (must be a string)')
-        assert hasattr(self.__settings__, 'exec')
         if self.__settings__.exec:
             return _check_type(self.__settings__.exec)
         for fld in get_dataclass_fields(self, include_all=True):
@@ -202,6 +204,7 @@ class SubprocessDataclass(DataclassMixin):
         args = []
         for fld in get_dataclass_fields(self, include_all=True):
             args += [arg for arg in self.get_arg(fld.name, suppress_defaults=suppress_defaults) if arg]
+        args += list(self.__settings__.extra_args or [])
         return args
 
     def get_args(self, suppress_defaults: bool = False) -> list[str]:

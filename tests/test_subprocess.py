@@ -72,6 +72,15 @@ def test_executable() -> None:
     assert obj.get_executable() == 'myprog'
     assert obj.get_args() == ['myprog', '-x', '3', '--yy', '4.7']
 
+def test_extra_args() -> None:
+    """Tests the extra_args setting."""
+    @dataclass
+    class DC(SubprocessDataclass, exec='prog', extra_args=['--arg', '-x']):
+        x: int
+    obj = DC(1)
+    assert obj.get_executable() == 'prog'
+    assert obj.get_args() == ['prog', '-x', '1', '--arg', '-x']
+
 def test_option() -> None:
     """Tests behavior of the subprocess options."""
     @dataclass

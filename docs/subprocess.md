@@ -70,8 +70,12 @@ total 0
 The [`SubprocessDataclass`][fancy_dataclass.subprocess.SubprocessDataclass] mixin provides the following useful methods automatically:
 
 - [`get_executable`][fancy_dataclass.subprocess.SubprocessDataclass.get_executable]: get the name of the executable to run in a subprocess
-- [`get_args`][fancy_dataclass.subprocess.SubprocessDataclass.get_args]: get the list of arguments to pass to the executable
+- [`get_args`][fancy_dataclass.subprocess.SubprocessDataclass.get_args]: get the list of arguments to pass to `subprocess.run` (with the executable as the first argument)
 - [`run_subprocess`][fancy_dataclass.subprocess.SubprocessDataclass.run_subprocess]: run the executable with arguments in a subprocess
+
+### Class and Field Settings
+
+You may customize the behavior of a `SubprocessDataclass` subclass by passing keyword arguments upon inheritance (see [mixin class settings](mixin.md#class-settings)). See [`SubprocessDataclassSettings`][fancy_dataclass.subprocess.SubprocessDataclassSettings] for the full list of settings. For field-specific settings, see [`SubprocessDataclassFieldSettings`][fancy_dataclass.subprocess.SubprocessDataclassFieldSettings].
 
 ### Executable Name
 
@@ -84,17 +88,27 @@ Case 1 is typically for when the executable name is constant, while Case 2 is fo
 
 ### Arguments
 
-The default implementation of `get_args` will aggregate the results of the [`get_arg`][fancy_dataclass.subprocess.SubprocessDataclass.get_arg] method called on each dataclass field. `get_arg`'s default behavior will use the field name as a CLI option name, prefixed with `-` if it is one character long and `--` otherwise, and replacing underscores in the field name with dashes. The *value* of the option will be a stringified version of the dataclass field's value.
+The default implementation of `get_args` will aggregate the results of the [`get_arg`][fancy_dataclass.subprocess.SubprocessDataclass.get_arg] method called on each dataclass field, followed by an additional list of arguments provided by the `extra_args` [class setting][fancy_dataclass.subprocess.SubprocessDataclassSettings].
+
+`get_arg`'s default behavior will use the field name as a CLI option name, prefixed with `-` if it is one character long and `--` otherwise, and replacing underscores in the field name with dashes. The *value* of the option will be a stringified version of the dataclass field's value.
 
 To override the default behavior of `get_arg`, you can:
 
 1. Override `get_arg` itself to provide custom logic.
 2. Set the `option_name` field setting to a specific name.
 
-If the type of the field is `bool`, it will be treated as an argument-less *flag* instead of an option.
+If the type of the field is `bool`, it will be treated as an argument-less *flag* instead of an option, unless the `subprocess_flag` field setting is set to `False`.
+
+If the type of the field is a sequence (like `list` or `tuple`), the sequence values will be listed out sequentially as subprocess arguments. If the `repeat_option` field setting is `True`, the argument name will be repeated for each successive value. For example, if the field is `my_arg: list[int]` and the value is `[1, 2, 3]`, the default command-line arguments will come out as
+
+```text
+--my-arg 1 2 3
+```
+
+With `repeat_option = True`, they become
+
+```text
+--my-arg 1 --my-arg 2 --my-arg 3
+```
 
 If the `subprocess_positional` field setting is `True`, the field name will not be used as an option string; instead the field value along will be used as a positional argument.
-
-### Class and Field Settings
-
-You may customize the behavior of a `SubprocessDataclass` subclass by passing keyword arguments upon inheritance (see [mixin class settings](mixin.md#class-settings)). See [`SubprocessDataclassSettings`][fancy_dataclass.subprocess.SubprocessDataclassSettings] for the full list of settings. For field-specific settings, see [`SubprocessDataclassFieldSettings`][fancy_dataclass.subprocess.SubprocessDataclassFieldSettings].
