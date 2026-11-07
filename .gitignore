@@ -13,3 +13,5 @@ fancy_dataclass/docs/assets/javascripts
 fancy_dataclass/docs/search
 fancy_dataclass/docs/sitemap.xml.gz
 .doc-checksum
+.vscode/
+.python-version

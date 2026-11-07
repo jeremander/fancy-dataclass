@@ -6,7 +6,7 @@ from numbers import Integral
 from pathlib import Path
 from typing import IO, Any, BinaryIO, Union, cast
 
-from typing_extensions import Self
+from typing_extensions import Self, override
 
 from fancy_dataclass.dict import AnyDict, DictDataclass
 from fancy_dataclass.utils import AnyIO, AnyPath, TypeConversionError
@@ -159,6 +159,7 @@ class BinaryFileSerializable(BinarySerializable, FileSerializable):
     Subclasses should override `_to_binary_file` and `_from_binary_file` to implement them."""
 
     @classmethod
+    @override
     def _file_mode_is_binary(cls) -> bool:
         return True
 
@@ -185,21 +186,25 @@ class BinaryFileSerializable(BinarySerializable, FileSerializable):
             The deserialized object"""
 
     @classmethod
+    @override
     def _to_bytes(cls, obj: object, **kwargs: Any) -> bytes:
         with BytesIO() as stream:
             cls._to_binary_file(cast(Self, obj), stream, **kwargs)
             return stream.getvalue()
 
     @classmethod
+    @override
     def _from_bytes(cls, b: bytes, **kwargs: Any) -> object:
         with BytesIO(b) as bio:
             return cls._from_binary_file(bio, **kwargs)
 
     @classmethod
+    @override
     def _to_file(cls, obj: Self, fp: AnyIO, **kwargs: Any) -> None:
         cls._to_binary_file(obj, cast(IO[bytes], fp), **kwargs)
 
     @classmethod
+    @override
     def _from_file(cls, fp: AnyIO, **kwargs: Any) -> Self:
         return cls._from_binary_file(cast(IO[bytes], fp), **kwargs)
 
@@ -234,11 +239,13 @@ class TextSerializable(BinarySerializable, ABC):
             The deserialized object"""
 
     @classmethod
+    @override
     def _to_bytes(cls, obj: object, **kwargs: Any) -> bytes:
         # by default, encode string as UTF-8
         return cls._to_string(cast(Self, obj), **kwargs).encode()
 
     @classmethod
+    @override
     def _from_bytes(cls, b: bytes, **kwargs: Any) -> object:
         # by default, decode bytes as UTF-8
         return cls._from_string(b.decode(), **kwargs)
@@ -250,6 +257,7 @@ class TextFileSerializable(TextSerializable, BinaryFileSerializable):
     Subclasses should override `_to_text_file` and `_from_text_file` to implement them."""
 
     @classmethod
+    @override
     def _file_mode_is_binary(cls) -> bool:
         return False
 
@@ -276,25 +284,30 @@ class TextFileSerializable(TextSerializable, BinaryFileSerializable):
             The deserialized object"""
 
     @classmethod
+    @override
     def _to_string(cls, obj: Self, **kwargs: Any) -> str:
         with StringIO() as stream:
             cls._to_text_file(obj, stream, **kwargs)
             return stream.getvalue()
 
     @classmethod
+    @override
     def _from_string(cls, s: str, **kwargs: Any) -> Self:
         with StringIO(s) as sio:
             return cls._from_text_file(sio, **kwargs)
 
     @classmethod
+    @override
     def _to_binary_file(cls, obj: Self, fp: IO[bytes], **kwargs: Any) -> None:
         fp.write(cls._to_bytes(obj, **kwargs))
 
     @classmethod
+    @override
     def _from_binary_file(cls, fp: IO[bytes], **kwargs: Any) -> Self:
         return cast(Self, cls._from_bytes(fp.read(), **kwargs))
 
     @classmethod
+    @override
     def _to_file(cls, obj: Self, fp: AnyIO, **kwargs: Any) -> None:
         if isinstance(fp, TextIOBase):
             cls._to_text_file(obj, fp, **kwargs)
@@ -302,6 +315,7 @@ class TextFileSerializable(TextSerializable, BinaryFileSerializable):
             cls._to_binary_file(obj, cast(BinaryIO, fp), **kwargs)
 
     @classmethod
+    @override
     def _from_file(cls, fp: AnyIO, **kwargs: Any) -> Self:
         if isinstance(fp, TextIOBase):
             return cls._from_text_file(fp, **kwargs)
@@ -325,6 +339,7 @@ class DictFileSerializableDataclass(DictDataclass, TextFileSerializable):
             kwargs: Keyword arguments"""
 
     @classmethod
+    @override
     def _to_text_file(cls, obj: Self, fp: IO[str], **kwargs: Any) -> None:
         # NOTE: by default, we pass all kwargs to `_dict_to_text_file` and none to `to_dict`
         return cls._dict_to_text_file(cls.to_dict(obj), fp, **kwargs)
@@ -342,6 +357,7 @@ class DictFileSerializableDataclass(DictDataclass, TextFileSerializable):
             A dict representation of the file"""
 
     @classmethod
+    @override
     def _from_text_file(cls, fp: IO[str], **kwargs: Any) -> Self:
         # explicit keyword arguments get passed to from_dict; variable kwargs get passed to _text_file_from_dict
         spec = getfullargspec(cls.from_dict)

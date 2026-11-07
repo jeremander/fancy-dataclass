@@ -6,7 +6,7 @@ import json
 from json import JSONEncoder
 from typing import IO, Any, cast, get_args, get_origin
 
-from typing_extensions import Self
+from typing_extensions import Self, override
 
 from fancy_dataclass.dict import AnyDict
 from fancy_dataclass.serialize import (
@@ -18,6 +18,10 @@ from fancy_dataclass.serialize import (
 from fancy_dataclass.utils import AnyIO, TypeConversionError, issubclass_safe
 
 
+####################
+# HELPER FUNCTIONS #
+####################
+
 def _dump_value_to_json(val: Any, fp: IO[str], encoder_cls: type[JSONEncoder], **kwargs: Any) -> None:
     kwargs = dict(kwargs)
     indent = kwargs.get('indent')
@@ -26,6 +30,10 @@ def _dump_value_to_json(val: Any, fp: IO[str], encoder_cls: type[JSONEncoder], *
     kwargs['cls'] = encoder_cls
     json.dump(val, fp, **kwargs)
 
+
+##########
+# MIXINS #
+##########
 
 class JSONSerializable(TextFileSerializable):
     """Mixin class enabling conversion of an object to/from JSON."""
@@ -136,14 +144,17 @@ class JSONDataclass(DictFileSerializableDataclass, JSONSerializable):
                     )
 
     @classmethod
+    @override
     def _to_json_value(cls, obj: Self) -> Any:
         return cls.to_dict(obj)
 
     @classmethod
+    @override
     def _dict_to_text_file(cls, d: AnyDict, fp: IO[str], **kwargs: Any) -> None:
         return _dump_value_to_json(d, fp, cls.json_encoder(), **kwargs)
 
     @classmethod
+    @override
     def _text_file_to_dict(cls, fp: IO[str], **kwargs: Any) -> AnyDict:
         d = json.load(fp, **kwargs)
         if not isinstance(d, dict):
@@ -151,10 +162,12 @@ class JSONDataclass(DictFileSerializableDataclass, JSONSerializable):
         return d
 
     @classmethod
+    @override
     def _to_dict_value_basic(cls, val: Any) -> Any:
         return to_dict_value_basic(val)
 
     @classmethod
+    @override
     def _to_dict_value(cls, val: Any, full: bool) -> Any:
         if isinstance(val, tuple) and hasattr(val, '_fields'):
             # if a namedtuple, render as a dict with named fields rather than a tuple
@@ -162,12 +175,14 @@ class JSONDataclass(DictFileSerializableDataclass, JSONSerializable):
         return super()._to_dict_value(val, full)
 
     @classmethod
+    @override
     def _from_dict_value_basic(cls, tp: type, val: Any, validate: bool) -> Any:
         if issubclass(tp, datetime):
             val = tp.fromisoformat(val) if isinstance(val, str) else val
         return super()._from_dict_value_basic(tp, from_dict_value_basic(tp, val), validate)
 
     @classmethod
+    @override
     def _from_dict_value(cls, tp: type, val: Any, validate: bool) -> Any:
         # customize behavior for JSONSerializable
         origin_type = get_origin(tp)

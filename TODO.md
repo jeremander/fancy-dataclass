@@ -4,7 +4,6 @@
 
 ## v0.12.1
 
-- Add override decorator?
 - Documentation
   - CLI
   - SQL
@@ -14,12 +13,13 @@
 
 ## Future
 
-- When subclassing `TOMLDataclass` and `JSONDataclass`, the `to_dict` representation includes `NoneProxy`, which cannot get JSON serialized and is not "truly" `None`.
-  - Current workaround is to make `NoneProxy` JSON-serializable, but this is a hack.
-- General-purpose validator mixin?
+- `from_dict` in the case where custom `__init__` doesn't line up with dataclass fields?
+- General-purpose validator mixin? `ValidatedDataclass`?
   - Does type-checking post-init, with ability to supply custom validation functions
   - Have most other mixins inherit from this?
-- `from_dict` in the case where custom `__init__` doesn't line up with dataclass fields?
+  - Interaction with `validate=True` in `DictDataclass`?
+    - Simplest would be to deprecate/remove *all* validation features from here.
+    - Alternatively could keep this flag, and have the class inherit from `ValidatedDataclass` if it's set.
 - `alias` metadata field for dict conversion
   - Should this be bidirectional? Or separate fields for each direction? [pydantic](https://docs.pydantic.dev/latest/concepts/alias/) provides both.
   - https://github.com/jeremander/fancy-dataclass/issues/5
@@ -57,9 +57,6 @@
 - Automatic JSON schema generation (see `pydantic`)
   - Borrow/use: https://github.com/Peter554/dc_schema/tree/master?tab=MIT-1-ov-file#readme
     - Attribution?
-- Validation
-  - More robust type validation when `validate=True` in `DictDataclass`
-  - `ValidatedDataclass` to validate at construction time?
 - More test coverage
   - More complex examples
   - Cover more data types (dynamically generate dataclass types)

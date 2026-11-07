@@ -7,7 +7,7 @@ from typing import IO, Any, Optional
 import tomlkit as tk
 import tomlkit.items
 import tomlkit.toml_document
-from typing_extensions import Self
+from typing_extensions import Self, override
 
 from fancy_dataclass.dict import AnyDict, DictDataclassFieldSettings, DictDataclassSettings
 from fancy_dataclass.serialize import (
@@ -70,6 +70,7 @@ class TOMLDataclassSettings(DictDataclassSettings):
     comment: Optional[str] = None
     doc_as_comment: bool = False
 
+    @override
     def __post_init__(self) -> None:
         super().__post_init__()
         # can use comment or doc_as_comment to specify top-level comment, but not both
@@ -174,14 +175,17 @@ class TOMLDataclass(DictFileSerializableDataclass, TOMLSerializable, suppress_de
         return tk.dump(cls._dict_to_document(d), fp, **kwargs)
 
     @classmethod
+    @override
     def _dict_to_text_file(cls, d: AnyDict, fp: IO[str], **kwargs: Any) -> None:
         return cls._dict_to_toml_file(d, fp, **kwargs)
 
     @classmethod
+    @override
     def _text_file_to_dict(cls, fp: IO[str], **kwargs: Any) -> AnyDict:
         return tk.load(fp)
 
     @classmethod
+    @override
     def _to_dict_value_basic(cls, val: Any) -> Any:
         return to_dict_value_basic(val)
 
@@ -201,21 +205,25 @@ class TOMLDataclass(DictFileSerializableDataclass, TOMLSerializable, suppress_de
         return comment.splitlines()
 
     @classmethod
+    @override
     def _from_dict_value_basic(cls, tp: type, val: Any, validate: bool) -> Any:
         return super()._from_dict_value_basic(tp, from_dict_value_basic(tp, val), validate)
 
     @classmethod
-    def _get_missing_value(cls, fld: Field) -> Any:  # type: ignore[type-arg]
+    @override
+    def _get_missing_value(cls, fld: Field[Any]) -> Any:
         # replace any missing required fields with a default of None
         return None
 
-    def to_toml(self, fp: IOBase, **kwargs: Any) -> None:  # noqa: D102
+    @override
+    def to_toml(self, fp: IOBase, **kwargs: Any) -> None:
         if not isinstance(fp, TextIOBase):
             fp = TextIOWrapper(fp, encoding='utf-8')  # type: ignore[type-var]
         return type(self)._dict_to_toml_file(self.to_dict(), fp, **kwargs)  # type: ignore[arg-type]
 
     @classmethod
-    def from_toml(cls, fp: AnyIO, **kwargs: Any) -> Self:  # noqa: D102
+    @override
+    def from_toml(cls, fp: AnyIO, **kwargs: Any) -> Self:
         if not isinstance(fp, TextIOBase):
             fp = TextIOWrapper(fp, encoding='utf-8')  # type: ignore[type-var]
         return cls._from_text_file(fp, **kwargs)

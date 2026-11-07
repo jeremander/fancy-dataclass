@@ -4,7 +4,7 @@ from dataclasses import Field, dataclass, field
 from typing import Any, Callable, ClassVar, Optional, TypeVar, Union, cast
 from weakref import WeakKeyDictionary, WeakValueDictionary
 
-from typing_extensions import Self
+from typing_extensions import Self, override
 
 from fancy_dataclass.dict import AnyDict, DictDataclass, DictDataclassFieldSettings, DictDataclassSettings
 from fancy_dataclass.settings import FieldSettings
@@ -182,7 +182,8 @@ class VersionedDataclass(DictDataclass):
         _VERSIONED_DATACLASS_REGISTRY.register_class(cls, version_tup)
 
     @classmethod
-    def _field_settings(cls, fld: Field) -> FieldSettings:  # type: ignore[type-arg]
+    @override
+    def _field_settings(cls, fld: Field[Any]) -> FieldSettings:
         """Gets the class-specific FieldSettings extracted from the metadata stored on a Field object."""
         settings = cast(DictDataclassFieldSettings, super()._field_settings(fld))
         assert hasattr(cls.__settings__, 'suppress_version')
@@ -205,6 +206,7 @@ class VersionedDataclass(DictDataclass):
             version: Version of the class to retrieve from the global registry (if `None`, use the latest)"""
         return _VERSIONED_DATACLASS_REGISTRY.get_class(cls.__name__, version=version)
 
+    @override
     def _to_dict(self, full: bool) -> AnyDict:
         d = super()._to_dict(full)
         if 'version' in d:  # ensure the 'version' key comes first in the ordering
@@ -212,6 +214,7 @@ class VersionedDataclass(DictDataclass):
         return d
 
     @classmethod
+    @override
     def dataclass_args_from_dict(cls, d: AnyDict) -> AnyDict:
         """Given a dict of arguments, performs type conversion and/or validity checking, then returns a new dict
         that can be passed to the class's constructor."""
@@ -220,6 +223,7 @@ class VersionedDataclass(DictDataclass):
         return super().dataclass_args_from_dict(d)
 
     @classmethod
+    @override
     def _get_type_from_dict(cls, d: AnyDict) -> type[Self]:
         tp = super()._get_type_from_dict(d)
         if (version := d.get('version')) is not None:
@@ -247,6 +251,7 @@ class VersionedDataclass(DictDataclass):
         return cls(**kwargs)
 
     @classmethod
+    @override
     def from_dict(cls, d: AnyDict, *, migrate: bool = False, **kwargs: Any) -> Self:
         """Constructs an object from a dictionary of fields.
 

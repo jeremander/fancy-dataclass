@@ -5,7 +5,7 @@ from dataclasses import is_dataclass, make_dataclass
 from pathlib import Path
 from typing import Any, ClassVar, Optional
 
-from typing_extensions import Self
+from typing_extensions import Self, override
 
 from fancy_dataclass.dict import DictDataclass
 from fancy_dataclass.mixin import DataclassMixin
@@ -112,8 +112,8 @@ class ConfigDataclass(DictDataclass, FileConfig, suppress_defaults=False, store_
         return _wrap(dataclass_type_map(cls, _wrap))  # type: ignore[arg-type]
 
     @classmethod
-    def load_config(cls, path: AnyPath) -> Self:  # noqa: D102
-        # cfg = cls.from_dict(_load_dict(path))
+    @override
+    def load_config(cls, path: AnyPath) -> Self:
         tp = _get_dataclass_type_for_path(path)
         new_cls: type[FileSerializable] = ConfigDataclass._wrap_config_dataclass(tp, cls)  # type: ignore[arg-type, assignment]
         with open(path) as fp:
@@ -136,7 +136,8 @@ class DictConfig(FileConfig, dict[Any, Any]):
     """
 
     @classmethod
-    def load_config(cls, path: AnyPath) -> Self:  # noqa: D102
+    @override
+    def load_config(cls, path: AnyPath) -> Self:
         tp = _get_dataclass_type_for_path(path)
         with open(path) as fp:
             cfg = cls(tp._text_file_to_dict(fp))  # type: ignore[attr-defined]

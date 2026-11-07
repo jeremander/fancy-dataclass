@@ -1,7 +1,7 @@
 from dataclasses import Field, fields
-from typing import Optional, TypeVar, cast, get_args
+from typing import Any, Optional, TypeVar, cast, get_args
 
-from typing_extensions import Doc, Self, _AnnotatedAlias
+from typing_extensions import Doc, Self, _AnnotatedAlias, override
 
 from fancy_dataclass.utils import _is_instance, check_dataclass, coerce_to_dataclass, dataclass_kw_only
 
@@ -55,14 +55,14 @@ class FieldSettings(DataclassAdaptable):
                 raise TypeError(f'expected type {fld.type} for field {fld.name!r}, got {type(val)}')
 
     @classmethod
-    def from_field(cls, field: Field) -> Self:  # type: ignore[type-arg]
+    def from_field(cls, fld: Field[Any]) -> Self:
         """Constructs a `FieldSettings` object from a
         [`dataclasses.Field`](https://docs.python.org/3/library/dataclasses.html#dataclasses.Field)'s metadata.
 
         Raises:
             TypeError: If any field has the wrong type"""
         assert check_dataclass(cls)
-        obj: Self = cls(**{key: val for (key, val) in field.metadata.items() if key in cls.__dataclass_fields__})  # type: ignore[assignment]
+        obj: Self = cls(**{key: val for (key, val) in fld.metadata.items() if key in cls.__dataclass_fields__})  # type: ignore[assignment]
         obj.type_check()
         return obj
 
@@ -82,10 +82,11 @@ class DocFieldSettings(FieldSettings):
     doc: Optional[str] = None
 
     @classmethod
-    def from_field(cls, field: Field) -> Self:  # type: ignore[type-arg]  # noqa: D102
-        settings = super().from_field(field)
+    @override
+    def from_field(cls, fld: Field[Any]) -> Self:
+        settings = super().from_field(fld)
         if settings.doc is None:
-            tp = None if isinstance(field.type, str) else field.type
+            tp = None if isinstance(fld.type, str) else fld.type
             if isinstance(tp, _AnnotatedAlias):
                 doc = next((arg for arg in get_args(tp)[::-1] if isinstance(arg, Doc)), None)
                 if doc:

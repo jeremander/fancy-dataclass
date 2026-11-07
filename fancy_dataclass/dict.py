@@ -354,7 +354,7 @@ class DictDataclass(DataclassMixin):
         raise err()
 
     @classmethod
-    def _get_missing_value(cls, fld: Field) -> Any:  # type: ignore[type-arg]
+    def _get_missing_value(cls, fld: Field[Any]) -> Any:
         settings = cls._field_settings(fld).adapt_to(DictDataclassFieldSettings)
         if settings.alias is None:
             raise MissingRequiredFieldError(fld.name)
@@ -380,7 +380,7 @@ class DictDataclass(DataclassMixin):
         return field_key_map
 
     @classmethod
-    def _should_validate_field(cls, fld: Field) -> bool:  # type: ignore[type-arg]
+    def _should_validate_field(cls, fld: Field[Any]) -> bool:
         """Returns True if the value for the given field should be validated."""
         settings = cls._field_settings(fld).adapt_to(DictDataclassFieldSettings)
         return cls.__settings__.validate if (settings.validate is None) else settings.validate

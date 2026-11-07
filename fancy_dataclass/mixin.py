@@ -164,10 +164,10 @@ class DataclassMixin:
         _check_field_settings(wrapped_cls)
 
     @classmethod
-    def _field_settings(cls, field: dataclasses.Field) -> FieldSettings:  # type: ignore[type-arg]
+    def _field_settings(cls, fld: dataclasses.Field[Any]) -> FieldSettings:
         """Gets the class-specific FieldSettings extracted from the metadata stored on a Field object."""
         stype = cls.__field_settings_type__ or FieldSettings
-        return stype.from_field(field)
+        return stype.from_field(fld)
 
     @classmethod
     def wrap_dataclass(cls: type[Self], tp: type[T], **kwargs: Any) -> type[Self]:
