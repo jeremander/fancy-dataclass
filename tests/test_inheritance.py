@@ -22,7 +22,6 @@ from fancy_dataclass.dict import DictDataclassSettings
 from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.settings import MixinSettings
 from fancy_dataclass.subprocess import SubprocessDataclassSettings
-from fancy_dataclass.toml import NoneProxy
 from fancy_dataclass.utils import coerce_to_dataclass
 
 from .test_cli import DC1
@@ -267,9 +266,7 @@ def test_toml_json_dataclass() -> None:
         x: int
         y: Optional[int] = None
     obj = DC1(1)
-    # NOTE: this is hacky and should probably be fixed, but at present the dict representation for TOMLDataclass must
-    # contain NoneProxy, which is not directly JSON serializable
-    assert obj.to_dict() == {'x': 1, 'y': NoneProxy()}
+    assert obj.to_dict() == {'x': 1, 'y': None}
     assert obj.to_toml_string() == 'x = 1\n# y = \n'
     assert obj.to_json_string() == '{"x": 1, "y": null}'
 

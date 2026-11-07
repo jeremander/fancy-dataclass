@@ -4,6 +4,7 @@
 
 ## v0.12.1
 
+- Add override decorator?
 - Documentation
   - CLI
   - SQL

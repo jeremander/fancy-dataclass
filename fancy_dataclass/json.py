@@ -43,12 +43,9 @@ class JSONSerializable(TextFileSerializable):
         """
         class Encoder(JSONEncoder):
             def default(self, o: Any) -> Any:
-                from fancy_dataclass.toml import NoneProxy
                 # special types
                 if isinstance(o, datetime):
                     return o.isoformat()
-                if isinstance(o, NoneProxy):
-                    return None
                 return JSONEncoder.default(self, o)
         return Encoder
 

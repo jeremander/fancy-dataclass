@@ -1,6 +1,8 @@
+from abc import abstractmethod
+from collections.abc import Iterable
 from dataclasses import Field
-from io import IOBase
-from typing import IO, Any, Optional, Union
+from io import IOBase, StringIO, TextIOBase, TextIOWrapper
+from typing import IO, Any, Optional
 
 import tomlkit as tk
 import tomlkit.items
@@ -15,19 +17,45 @@ from fancy_dataclass.serialize import (
     to_dict_value_basic,
 )
 from fancy_dataclass.settings import MixinSettings
-from fancy_dataclass.utils import AnyIO, dataclass_kw_only
+from fancy_dataclass.utils import AnyIO, dataclass_field_type, dataclass_kw_only, issubclass_safe
 
 
-class NoneProxy(tomlkit.items.Item):
-    """Sentinel class taking the place of None when constructing tomlkit documents.
-    These will be removed before serialization."""
+####################
+# HELPER FUNCTIONS #
+####################
 
-    def __init__(self) -> None:  # noqa: D107
-        super().__init__(tomlkit.items.Trivia())
+def _dict_to_toml_table(obj: AnyDict) -> tomlkit.items.Table:
+    # to preserve comments, must convert value from TOMLDocument to Table
+    tbl = tk.table()
+    pair_iter = obj.body if isinstance(obj, tk.TOMLDocument) else obj.items()
+    for pair in pair_iter:
+        tbl.add(*pair)  # pyrefly: ignore[no-matching-overload]
+    return tbl
 
-    def __eq__(self, other: object) -> bool:
-        return (other is None) or isinstance(other, NoneProxy)
+def _none_value_to_comment(key: str) -> tomlkit.items.Comment:
+    return tk.comment(f'{key} = ')
 
+def _make_toml_element(obj: Any) -> Any:
+    if isinstance(obj, dict):
+        tbl  = tk.table()
+        for (key, val) in obj.items():
+            if val is None:
+                tbl.add(_none_value_to_comment(key))
+                continue
+            tbl.add(key, _make_toml_element(val))
+        return tbl
+    if isinstance(obj, (tuple, list)):
+        return [_make_toml_element(elt) for elt in obj]
+    return obj
+
+def _add_comments_to_doc(comments: Iterable[tomlkit.items.Comment], doc: tk.TOMLDocument) -> None:
+    for comment in comments:
+        doc.add(comment)
+
+
+##########
+# MIXINS #
+##########
 
 @dataclass_kw_only()
 class TOMLDataclassSettings(DictDataclassSettings):
@@ -52,6 +80,7 @@ class TOMLDataclassSettings(DictDataclassSettings):
 class TOMLSerializable(TextFileSerializable):
     """Mixin class enabling conversion of an object to/from TOML."""
 
+    @abstractmethod
     def to_toml(self, fp: IOBase, **kwargs: Any) -> None:
         """Writes the object as TOML to a file-like object (text or binary).
         If binary, applies UTF-8 encoding.
@@ -59,7 +88,6 @@ class TOMLSerializable(TextFileSerializable):
         Args:
             fp: A writable file-like object
             kwargs: Keyword arguments"""
-        return TOMLDataclass._to_file(self, fp, **kwargs)  # type: ignore[arg-type]
 
     def to_toml_string(self, **kwargs: Any) -> str:
         """Converts the object into a TOML string.
@@ -69,9 +97,12 @@ class TOMLSerializable(TextFileSerializable):
 
         Returns:
             Object rendered as a TOML string"""
-        return TOMLDataclass._to_string(self, **kwargs)  # type: ignore[arg-type]
+        with StringIO() as stream:
+            self.to_toml(stream, **kwargs)
+            return stream.getvalue()
 
     @classmethod
+    @abstractmethod
     def from_toml(cls, fp: AnyIO, **kwargs: Any) -> Self:
         """Constructs an object from a TOML file-like object (text or binary).
 
@@ -81,7 +112,6 @@ class TOMLSerializable(TextFileSerializable):
 
         Returns:
             Converted object of this class"""
-        return cls._from_file(fp, **kwargs)
 
     @classmethod
     def from_toml_string(cls, s: str, **kwargs: Any) -> Self:
@@ -93,7 +123,8 @@ class TOMLSerializable(TextFileSerializable):
 
         Returns:
             Converted object of this class"""
-        return cls._from_string(s, **kwargs)
+        with StringIO(s) as sio:
+            return cls.from_toml(sio, **kwargs)
 
 
 class TOMLDataclass(DictFileSerializableDataclass, TOMLSerializable, suppress_defaults=False, store_type='off'):
@@ -102,35 +133,49 @@ class TOMLDataclass(DictFileSerializableDataclass, TOMLSerializable, suppress_de
     __settings_type__ = TOMLDataclassSettings
 
     @classmethod
+    def _dict_to_document(cls, d: AnyDict) -> tk.TOMLDocument:
+        def _is_nested(val: Any) -> bool:
+            return isinstance(val, (dict, list, tuple))
+        # sort so that nested sections come last
+        d = dict(sorted(d.items(), key=lambda pair: _is_nested(pair[1])))
+        doc = tk.document()
+        if (comments := cls._top_level_comments()) is not None:
+            for comment in comments:
+                doc.add(tk.comment(comment) if comment.strip() else tk.nl())
+            doc.add(tk.nl())
+        for (key, val) in d.items():
+            if not (fld := cls.__dataclass_fields__.get(key)):  # type: ignore[attr-defined]
+                continue
+            settings = cls._field_settings(fld).adapt_to(DictDataclassFieldSettings)
+            comment_elts = [tk.comment(line) for line in (settings.doc.splitlines() if settings.doc else [])]
+            if val is None:
+                _add_comments_to_doc(comment_elts, doc)
+                doc.add(_none_value_to_comment(key))
+                continue
+            tp = dataclass_field_type(cls, key)  # type: ignore[arg-type]
+            if issubclass_safe(tp, TOMLDataclass):
+                val = _dict_to_toml_table(tp._dict_to_document(val))  # type: ignore[attr-defined]
+            else:
+                val = _make_toml_element(val)
+            if isinstance(val, tomlkit.items.Table) and val and comment_elts:
+                if doc:
+                    # move newline above comment preceding a table
+                    comment_elts[0].trivia.comment = '\n' + comment_elts[0].trivia.comment
+                num_subdicts = sum(isinstance(subval, dict) for subval in val.values())
+                if num_subdicts <= 1:
+                    # remove blank line between comment and one-section table
+                    comment_elts[-1].trivia.trail = ''
+            _add_comments_to_doc(comment_elts, doc)
+            doc.add(key, val)
+        return doc
+
+    @classmethod
+    def _dict_to_toml_file(cls, d: AnyDict, fp: IO[str], **kwargs: Any) -> None:
+        return tk.dump(cls._dict_to_document(d), fp, **kwargs)
+
+    @classmethod
     def _dict_to_text_file(cls, d: AnyDict, fp: IO[str], **kwargs: Any) -> None:
-        def _get_body(obj: Any) -> Any:
-            return obj.body if hasattr(obj, 'body') else obj.value.body
-        def _fix_element(obj: Any) -> Any:
-            if isinstance(obj, dict):
-                tbl: Union[tomlkit.toml_document.TOMLDocument, tomlkit.items.Table] = (
-                    tk.document()
-                    if isinstance(obj, tomlkit.toml_document.TOMLDocument)
-                    else tk.table()
-                )
-                container = _get_body(obj)
-                for (i, (key, val)) in enumerate(container):
-                    if isinstance(val, NoneProxy):  # show key with empty value, commented
-                        tbl.add(tk.comment(f'{key} = '))
-                    else:
-                        tbl.add(key, _fix_element(val))
-                        if (i > 0) and isinstance(val, dict) and isinstance(container[i - 1][1], tomlkit.items.Comment):
-                            # move newline above comment preceding a table
-                            body = _get_body(tbl)
-                            comment = body[-2][1]
-                            val = body[-1][1]
-                            comment.trivia.indent = val.trivia.indent
-                            val.trivia.indent = ''
-                return tbl
-            if isinstance(obj, (tuple, list)):
-                return [_fix_element(elt) for elt in obj]
-            return obj
-        d = _fix_element(d)
-        tk.dump(d, fp, **kwargs)
+        return cls._dict_to_toml_file(d, fp, **kwargs)
 
     @classmethod
     def _text_file_to_dict(cls, fp: IO[str], **kwargs: Any) -> AnyDict:
@@ -155,42 +200,6 @@ class TOMLDataclass(DictFileSerializableDataclass, TOMLSerializable, suppress_de
         # each line must be its own comment
         return comment.splitlines()
 
-    def _to_dict(self, full: bool) -> AnyDict:
-        d = super()._to_dict(full)
-        def _is_nested(val: Any) -> bool:
-            return isinstance(val, (dict, list, tuple))
-        d = dict(sorted(d.items(), key=lambda pair: _is_nested(pair[1])))
-        doc = tk.document()
-        if (comments := self._top_level_comments()) is not None:
-            for comment in comments:
-                doc.add(tk.comment(comment) if comment.strip() else tk.nl())
-            doc.add(tk.nl())
-        for (key, val) in d.items():
-            if (fld := self.__dataclass_fields__.get(key)):  # type: ignore[attr-defined]
-                # TODO: handle None values (comment with empty RHS)
-                settings = self._field_settings(fld).adapt_to(DictDataclassFieldSettings)
-                if settings.doc is not None:
-                    for line in settings.doc.splitlines():
-                        doc.add(tk.comment(line))
-                val = NoneProxy() if (val is None) else val
-                if isinstance(val, dict):
-                    # to preserve, comments, must convert value from TOMLDocument to Table
-                    tbl = tk.table()
-                    if (len(val) > 1) and any(isinstance(subval, dict) for subval in val.values()):
-                        tbl.add(tk.nl())
-                    pair_iter = val.body if isinstance(val, tk.TOMLDocument) else val.items()
-                    for pair in pair_iter:
-                        tbl.add(*pair)  # pyrefly: ignore[no-matching-overload]
-                    val = tbl
-                doc.add(key, val)
-        return doc
-
-    @classmethod
-    def _from_dict_value(cls, tp: type, val: Any, validate: bool) -> Any:
-        if isinstance(val, NoneProxy):
-            return None
-        return super()._from_dict_value(tp, val, validate)
-
     @classmethod
     def _from_dict_value_basic(cls, tp: type, val: Any, validate: bool) -> Any:
         return super()._from_dict_value_basic(tp, from_dict_value_basic(tp, val), validate)
@@ -199,3 +208,14 @@ class TOMLDataclass(DictFileSerializableDataclass, TOMLSerializable, suppress_de
     def _get_missing_value(cls, fld: Field) -> Any:  # type: ignore[type-arg]
         # replace any missing required fields with a default of None
         return None
+
+    def to_toml(self, fp: IOBase, **kwargs: Any) -> None:  # noqa: D102
+        if not isinstance(fp, TextIOBase):
+            fp = TextIOWrapper(fp, encoding='utf-8')  # type: ignore[type-var]
+        return type(self)._dict_to_toml_file(self.to_dict(), fp, **kwargs)  # type: ignore[arg-type]
+
+    @classmethod
+    def from_toml(cls, fp: AnyIO, **kwargs: Any) -> Self:  # noqa: D102
+        if not isinstance(fp, TextIOBase):
+            fp = TextIOWrapper(fp, encoding='utf-8')  # type: ignore[type-var]
+        return cls._from_text_file(fp, **kwargs)
