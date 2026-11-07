@@ -67,9 +67,34 @@ total 0
 
 ## Details
 
-🚧 **Under construction** 🚧
+The [`SubprocessDataclass`][fancy_dataclass.subprocess.SubprocessDataclass] mixin provides the following useful methods automatically:
 
-<!--
-- Specify exactly one executable
-- "Secure" example (rmdir?)
--->
+- [`get_executable`][fancy_dataclass.subprocess.SubprocessDataclass.get_executable]: get the name of the executable to run in a subprocess
+- [`get_args`][fancy_dataclass.subprocess.SubprocessDataclass.get_args]: get the list of arguments to pass to the executable
+- [`run_subprocess`][fancy_dataclass.subprocess.SubprocessDataclass.run_subprocess]: run the executable with arguments in a subprocess
+
+### Executable Name
+
+The [`get_executable`][fancy_dataclass.subprocess.SubprocessDataclass.get_executable] method may be overridden to return the name of the executable, but the default implementation usually suffices. It obtains the name as follows:
+
+1. If the [class settings][fancy_dataclass.subprocess.SubprocessDataclassSettings] specify an `exec` member, uses that.
+2. Otherwise, returns the value of the first dataclass field whose `exec` [field setting][fancy_dataclass.subprocess.SubprocessDataclassFieldSettings] is set to `True`.
+
+Case 1 is typically for when the executable name is constant, while Case 2 is for when the name should vary based on the value of a field.
+
+### Arguments
+
+The default implementation of `get_args` will aggregate the results of the [`get_arg`][fancy_dataclass.subprocess.SubprocessDataclass.get_arg] method called on each dataclass field. `get_arg`'s default behavior will use the field name as a CLI option name, prefixed with `-` if it is one character long and `--` otherwise, and replacing underscores in the field name with dashes. The *value* of the option will be a stringified version of the dataclass field's value.
+
+To override the default behavior of `get_arg`, you can:
+
+1. Override `get_arg` itself to provide custom logic.
+2. Set the `option_name` field setting to a specific name.
+
+If the type of the field is `bool`, it will be treated as an argument-less *flag* instead of an option.
+
+If the `subprocess_positional` field setting is `True`, the field name will not be used as an option string; instead the field value along will be used as a positional argument.
+
+### Class and Field Settings
+
+You may customize the behavior of a `SubprocessDataclass` subclass by passing keyword arguments upon inheritance (see [mixin class settings](mixin.md#class-settings)). See [`SubprocessDataclassSettings`][fancy_dataclass.subprocess.SubprocessDataclassSettings] for the full list of settings. For field-specific settings, see [`SubprocessDataclassFieldSettings`][fancy_dataclass.subprocess.SubprocessDataclassFieldSettings].
