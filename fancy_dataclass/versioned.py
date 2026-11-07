@@ -165,7 +165,7 @@ class VersionedDataclass(DictDataclass):
     dict conversion, where by default the `version` field will be included in the dict representation."""
 
     __settings_type__ = VersionedDataclassSettings
-    __settings__ = VersionedDataclassSettings()
+    __settings__: ClassVar[VersionedDataclassSettings] = VersionedDataclassSettings()
 
     version: ClassVar[AnyVersion]
 

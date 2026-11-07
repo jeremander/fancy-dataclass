@@ -65,6 +65,15 @@ class _FuncDataclass(Protocol[P, R_co]):
     def __init__(self, *args: Any, **kwargs: P.kwargs) -> None:  # type: ignore[valid-type]
         ...
 
+
+class _FuncDataclassDefaultCall(Protocol[P, R_co]):
+    """Protocol type designating a callable function with positional args, invoked with __call__ as the method name."""
+
+    __dataclass_fields__: ClassVar[dict[str, Field[Any]]]
+
+    def __init__(self, *args: Any, **kwargs: P.kwargs) -> None:  # type: ignore[valid-type]
+        ...
+
     def __call__(self, *args: P.args) -> R_co:  # type: ignore[valid-type]
         ...
 
@@ -75,7 +84,7 @@ def func_dataclass(
     method_name: Literal['__call__'] = '__call__',
     cls_name: Optional[str] = None,
     bases: Bases = (),
-) -> type[_FuncDataclass[P, R_co]]:
+) -> type[_FuncDataclassDefaultCall[P, R_co]]:
     ...
 
 @overload
@@ -84,7 +93,7 @@ def func_dataclass(
     method_name: str = '__call__',
     cls_name: Optional[str] = None,
     bases: Bases = (),
-) -> DataclassType:
+) -> type[_FuncDataclass[P, R_co]]:
     ...
 
 def func_dataclass(
@@ -92,7 +101,7 @@ def func_dataclass(
     method_name: str = '__call__',
     cls_name: Optional[str] = None,
     bases: Bases = (),
-) -> DataclassType:
+) -> type[_FuncDataclass[P, R_co]]:
     """Wraps a function into a new dataclass type with a single method whose positional arguments (other than self)
     are equivalent to that of the given function, and whose kwargs are dataclass parameters.
 

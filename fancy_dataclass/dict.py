@@ -119,19 +119,20 @@ class DictDataclass(DataclassMixin):
     full list of settings."""
 
     __settings_type__ = DictDataclassSettings
-    __settings__ = DictDataclassSettings()
+    __settings__: ClassVar[DictDataclassSettings] = DictDataclassSettings()
     __field_settings_type__ = DictDataclassFieldSettings
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
+        settings = cls.__settings__
         # if store_type mode is 'auto', use base class to resolve it
-        if getattr(cls.__settings__, 'store_type', None) == 'auto':
+        if settings.store_type == 'auto':
             for base in cls.mro():
                 if issubclass(base, DictDataclass) and (base.__settings__.store_type != 'auto'):
-                    cls.__settings__._store_type = base.__settings__.store_type
+                    settings._store_type = base.__settings__.store_type
                     break
             else:  # by default, do not store
-                cls.__settings__._store_type = 'off'
+                settings._store_type = 'off'
 
     @classmethod
     def __post_dataclass_wrap__(cls, wrapped_cls: type[Self]) -> None:

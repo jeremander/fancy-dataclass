@@ -131,7 +131,7 @@ class JSONDataclass(DictFileSerializableDataclass, JSONSerializable):
         super().__init_subclass__(**kwargs)
         # if the class already inherits from JSONDataclass, raise an error if store_type="auto"
         # this is because resolving the type from a dict may be ambiguous
-        if getattr(cls.__settings__, 'store_type', None) == 'auto':
+        if cls.__settings__.store_type == 'auto':
             for base in cls.mro():
                 if (
                     (base not in [cls, JSONDataclass])
