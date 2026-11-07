@@ -59,6 +59,7 @@ class Version(tuple[int, ...]):
 class _VersionedDataclassGroup:
     """Represents a collection of [`VersionedDataclass`][fancy_dataclass.versioned.VersionedDataclass] subclasses with
     the same name but different versions."""
+
     name: str
     class_by_version: dict[Version, type['VersionedDataclass']] = field(  # pyrefly: ignore[bad-assignment]
         default_factory=WeakValueDictionary  # type: ignore[arg-type]
@@ -102,6 +103,7 @@ class _VersionedDataclassGroup:
 @dataclass(frozen=True)
 class _VersionedDataclassRegistry:
     """A registry tracking all subclasses of [`VersionedDataclass`][fancy_dataclass.versioned.VersionedDataclass]."""
+
     # mapping from class name to the group of all `VersionedDataclass` subclasses with that name
     # NOTE: the names are *not* qualified, which allows classes in different modules to belong to the same group
     groups_by_name: dict[str, _VersionedDataclassGroup] = field(default_factory=dict)
@@ -148,6 +150,7 @@ class VersionedDataclassSettings(DictDataclassSettings):
     Additionally they may set the following options as keyword arguments during inheritance:
 
     - `suppress_version`: suppress version field when converting to a dict"""
+
     version: Optional[AnyVersion] = None
     suppress_version: bool = False
 
@@ -160,6 +163,7 @@ class VersionedDataclass(DictDataclass):
 
     This class also inherits from [`DictDataclass`](fancy_dataclass.dict.DictDataclass], providing support for
     dict conversion, where by default the `version` field will be included in the dict representation."""
+
     __settings_type__ = VersionedDataclassSettings
     __settings__ = VersionedDataclassSettings()
 

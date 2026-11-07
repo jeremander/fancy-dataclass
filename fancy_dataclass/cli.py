@@ -102,6 +102,7 @@ class ArgparseDataclassSettings(MixinSettings):
         - If `prog` is set, displays the program name and the version, otherwise just the version.
     - `default_help`: if set to `True`, includes each field's default value in its help string (this can be overridden
     by the field-level `default_help` flag)"""
+
     parser_class: type[ArgumentParser] = ArgumentParser
     formatter_class: Optional[type[HelpFormatter]] = None
     help_descr: Optional[str] = None
@@ -157,6 +158,7 @@ class ArgparseDataclassFieldSettings(DocFieldSettings):
         - An option if it specifies a default value
         - Otherwise, a positional argument
     - If `required` is specified in the metadata, this will take precedence over the default behavior above."""
+
     type: Optional[Union[type, Callable[[Any], Any]]] = None  # can be used to define custom constructor
     args: Optional[Union[str, Sequence[str]]] = None
     action: Optional[Union[str, builtins.type[Action]]] = None

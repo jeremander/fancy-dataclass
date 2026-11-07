@@ -79,6 +79,7 @@ class DocFieldSettings(FieldSettings):
     1. `height: float = field(metadata={'doc': 'height (in cm)'})`
     2. `height: Annotated[float, Doc('height (in cm)')]`
     """
+
     doc: Optional[str] = None
 
     @classmethod

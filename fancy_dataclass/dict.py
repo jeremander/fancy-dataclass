@@ -60,6 +60,7 @@ class DictDataclassSettings(MixinSettings):
     with the main fields (provided there are no name collisions); otherwise, they are nested
     - `allow_extra_fields`: if `False`, raise an error when converting from a dict if unknown fields are present
     - `validate`: if `True`, attempt to validate data when converting from a dict"""
+
     suppress_defaults: bool = True
     suppress_none: bool = False
     store_type: StoreTypeMode = 'auto'
@@ -98,6 +99,7 @@ class DictDataclassFieldSettings(DocFieldSettings):
     - `validate`: If set to `True` or `False`, overrides the class-level `validate` flag for whether to validate the
     field upon conversion from a dict value
     - `doc`: a text description of the field, which may be used when generating schemas or serializing the data"""
+
     suppress: Optional[bool] = None
     suppress_default: Optional[bool] = None
     suppress_none: Optional[bool] = None

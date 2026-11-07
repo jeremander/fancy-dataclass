@@ -16,6 +16,7 @@ class SubprocessDataclassSettings(MixinSettings):
     Subclasses of `SubprocessDataclass` may set the following fields as keyword arguments during inheritance:
 
     - `exec`: name of command-line executable to call"""
+
     exec: Optional[str] = None
 
 
@@ -41,6 +42,7 @@ class SubprocessDataclassFieldSettings(FieldSettings):
         - Examples:
             - If `False` (default), generate `--my-option value1 value2 value3`
             - If `True`, generate `--my-option value1 --my-option value2 --my-option value3`"""
+
     exec: bool = False
     option_name: Optional[str] = None
     subprocess_exclude: Optional[bool] = None

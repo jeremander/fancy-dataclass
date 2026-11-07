@@ -67,6 +67,7 @@ class TOMLDataclassSettings(DictDataclassSettings):
     - `comment`: string that will be displayed as a top-level comment in the serialized TOML
     - `doc_as_comment`: if `True`, use the class's docstring as a top-level comment (this is overridden if `comment`
     is set)"""
+
     comment: Optional[str] = None
     doc_as_comment: bool = False
 
