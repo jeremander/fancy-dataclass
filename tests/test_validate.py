@@ -1,6 +1,6 @@
 from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
-from dataclasses import MISSING, FrozenInstanceError, dataclass, field
+from dataclasses import MISSING, FrozenInstanceError, InitVar, dataclass, field
 import re
 from types import NoneType
 from typing import Any, ClassVar
@@ -107,7 +107,7 @@ def test_int_as_float() -> None:
     assert obj1 == obj2
     for val in ['1', '1.0']:
         with raises_field_type_err(DCFloat, 'x', float, val):
-            _ = DCFloat(val)  # type: ignore[arg-type]
+            _ = DCFloat(val)
 
 def test_validate_collection() -> None:
     """Tests that all values in a collection are type-checked."""
@@ -121,11 +121,11 @@ def test_validate_collection() -> None:
     for i in range(n):
         vals = [str(j) if (j == i) else j for j in range(n)]
         with raises_field_type_err(DCList, 'vals', list[int], vals):
-            _ = DCList(vals)  # type: ignore[arg-type]
+            _ = DCList(vals)
     # check that tuple is not valid as a list
     vals = tuple(range(n))
     with raises_field_type_err(DCList, 'vals', list[int], vals):
-        _ = DCList(tuple(range(n)))  # type: ignore[arg-type]
+        _ = DCList(tuple(range(n)))
     # Sequence field type permits both list and tuple
     @dataclass
     class DCSequence(ValidatedDataclass):
@@ -194,9 +194,9 @@ def test_nested() -> None:
             inner = inner_cls(1, 'a')
             if should_error:
                 with raises_field_type_err(outer_cls, 'inner', DC1, inner):
-                    _ = outer_cls(inner)  # type: ignore[arg-type]
+                    _ = outer_cls(inner)
             else:
-                outer = outer_cls(inner)  # type: ignore[arg-type]
+                outer = outer_cls(inner)
                 assert type(outer) is outer_cls
                 assert outer.inner == inner
                 assert type(outer.inner) is inner_cls
@@ -204,9 +204,9 @@ def test_nested() -> None:
         for inner in [1, 'a']:
             if should_error:
                 with raises_field_type_err(outer_cls, 'inner', DC1, inner):
-                    _ = outer_cls(inner)  # type: ignore[arg-type]
+                    _ = outer_cls(inner)
             else:
-                outer = outer_cls(inner)  # type: ignore[arg-type]
+                outer = outer_cls(inner)
                 assert outer.inner == inner
 
 @pytest.mark.parametrize('frozen', [False, True])
@@ -223,32 +223,32 @@ def test_validate_init_and_assign(frozen: bool, init: bool, assign: bool) -> Non
     for cls in [DCClassFlags, DCFieldFlags]:
         # valid type is always OK
         obj = cls(1)
-        assert obj.x == 1  # type: ignore[attr-defined]
+        assert obj.x == 1
         # initialize with invalid type
         if init or ((not frozen) and assign):
             with raises_field_type_err(cls, 'x', int, 'a'):
-                _ = cls('a')  # type: ignore[arg-type]
+                _ = cls('a')
         else:
-            obj = cls('a')  # type: ignore[arg-type]
-            assert obj.x == 'a'  # type: ignore[attr-defined]
+            obj = cls('a')
+            assert obj.x == 'a'
         # initialize with valid type, assign with invalid type
         obj = cls(1)
         if frozen:
             with pytest.raises(FrozenInstanceError, match="cannot assign to field 'x'"):
-                obj.x = 'a'  # type: ignore[attr-defined]
+                obj.x = 'a'
             with pytest.raises(FrozenInstanceError, match="cannot assign to field 'y'"):
-                obj.y = 'a'  # type: ignore[attr-defined]
+                obj.y = 'a'
         else:
             if assign:
                 with raises_field_type_err(cls, 'x', int, 'a'):
-                    obj.x = 'a'  # type: ignore[attr-defined]
+                    obj.x = 'a'
             else:
-                obj.x = 'a'  # type: ignore[attr-defined]
-                assert obj.x == 'a'  # type: ignore[attr-defined]
+                obj.x = 'a'
+                assert obj.x == 'a'
             # assigning a non-field attribute is not prevented if the dataclass is not frozen
             assert not hasattr(obj, 'y')
-            obj.y = 'a'  # type: ignore[attr-defined]
-            assert obj.y == 'a'  # type: ignore[attr-defined]
+            obj.y = 'a'
+            assert obj.y == 'a'
     # try setting a default value of the wrong type
     if init:
         # field gets rejected at dataclass wrap time, since defaults can be checked then
@@ -275,7 +275,7 @@ def test_validate_init_and_assign(frozen: bool, init: bool, assign: bool) -> Non
             else:
                 # NOTE: assignment is bypassed if frozen=True
                 obj = cls()
-                assert obj.x == 'a'  # type: ignore[attr-defined]
+                assert obj.x == 'a'
     # try setting a default_factory value of the wrong type
     @dataclass(frozen=frozen)
     class DCClassFlagsBadDefaultFactory(ValidatedDataclass, validate_init=init, validate_assign=assign):
@@ -289,4 +289,20 @@ def test_validate_init_and_assign(frozen: bool, init: bool, assign: bool) -> Non
                 _ = cls()
         else:
             obj = cls()
-            assert obj.x == 'a'  # type: ignore[attr-defined]
+            assert obj.x == 'a'
+
+def test_init_var() -> None:
+    """Tests that an init-only field is ignored for validation."""
+    @dataclass
+    class DCInitVar(ValidatedDataclass, validate_init=True, validate_assign=True):
+        x: int
+        y: InitVar[int]
+        def __init__(self, x: int, y: int) -> None:
+            self.x = x
+            self.y = y
+    obj = DCInitVar(1, 2)
+    assert obj.y == 2
+    obj = DCInitVar(1, 'a')
+    assert obj.y == 'a'
+    obj.y = 'b'
+    assert obj.y == 'b'

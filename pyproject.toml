@@ -158,7 +158,7 @@ disable_error_code = ["misc"]
 
 [[tool.mypy.overrides]]
 module = "tests.test_validate"
-disable_error_code = ["literal-required"]
+disable_error_code = ["arg-type", "attr-defined", "literal-required"]
 
 [[tool.mypy.overrides]]
 module = "tests.test_versioned"
@@ -188,6 +188,14 @@ matches = "tests/test_utils.py"
 
 [tool.pyrefly.sub-config.errors]
 invalid-annotation = "ignore"
+
+[[tool.pyrefly.sub-config]]
+matches = "tests/test_validate.py"
+
+[tool.pyrefly.sub-config.errors]
+bad-argument-type = "ignore"
+bad-assignment = "ignore"
+missing-attribute = "ignore"
 
 [[tool.pyrefly.sub-config]]
 matches = "tests/test_versioned.py"

@@ -11,7 +11,7 @@
     - Relationships
 
 - Validation support: `ValidatedDataclass`
-  - Deal with `InitVar` and `init=False` fields.
+  - Deal with `init=False` fields.
   - Runtime type-check all class and field settings unilaterally for all settings classes?
     - I.e. have the settings mixins perform validation (but can't subclass `ValidatedDataclass` since that would be circular -- factor it into a helper function?)
   - Interaction with `validate=True` in `DictDataclass`?
