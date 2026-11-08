@@ -417,13 +417,19 @@ def dataclass_field_type(cls: DataclassType, name: str) -> type:
         name: Name of field
 
     Returns:
-        Fully evaluated type"""
+        Fully evaluated type
+
+    Raises:
+        AttributeError if there is no dataclass field with the given name"""
     try:
-        return cast(type, get_type_hints(cls)[name])
-    except NameError:  # try to resolve string annotation manually
-        field_type_str = cls.__annotations__[name]
-        assert isinstance(field_type_str, str)
-        return eval_type_str(field_type_str)
+        try:
+            return cast(type, get_type_hints(cls)[name])
+        except NameError:  # try to resolve string annotation manually
+            field_type_str = cls.__annotations__[name]
+            assert isinstance(field_type_str, str)
+            return eval_type_str(field_type_str)
+    except KeyError:
+        raise AttributeError(f'type {get_type_name(cls)} has no dataclass field {name!r}') from None
 
 def coerce_to_dataclass(cls: type[T], obj: object) -> T:
     """Coerces the fields from an arbitrary object to an instance of a dataclass type.

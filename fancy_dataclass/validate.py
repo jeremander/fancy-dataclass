@@ -1,11 +1,12 @@
 from dataclasses import MISSING, Field, dataclass
-from typing import Any, ClassVar, Optional, get_args
+from typing import Any, ClassVar, Optional, cast, get_args
 
 from typing_extensions import Self
 
 from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.settings import FieldSettings, MixinSettings
 from fancy_dataclass.utils import (
+    DataclassType,
     TypeLike,
     TypeValidationError,
     conforms_to,
@@ -102,10 +103,37 @@ class ValidatedDataclass(DataclassMixin):
     @classmethod
     def __post_dataclass_wrap__(cls, wrapped_cls: type[Self]) -> None:
         if wrapped_cls.__settings__.validate_init:
+            # validate ClassVar values at dataclass wrap time
             for fld in get_dataclass_fields(wrapped_cls, include_all=True):
                 if type_is_classvar(fld.type) and hasattr(wrapped_cls, fld.name):
                     tp = get_args(fld.type)[0]
                     _validate_type(wrapped_cls, fld.name, tp, getattr(wrapped_cls, fld.name))
+        # determine whether any fields should validate upon assignment
+        if wrapped_cls.__dataclass_params__.frozen:  # type: ignore[attr-defined]
+            validate_assign = False
+        else:
+            validate_assign = False
+            for fld in get_dataclass_fields(wrapped_cls):
+                flags = wrapped_cls._field_validation_flags(fld)
+                if flags.validate_assign:
+                    validate_assign = True
+                    break
+        if validate_assign:
+            # hook __setattr__ to validate instance attributes at assignment time
+            # NOTE: this will redundantly check attributes set during __post_init__ if validate_init=True as well.
+            # This is somewhat difficult to avoid since there is no simple way to distinguish assignments occurring
+            # during initialization.
+            # NOTE: if the dataclass is frozen, `setattr` will *not* be called when initializing fields, so if
+            # validation is desired, be sure to set validate_init=True.
+            def _validated_setattr(self: object, name: str, value: Any, /) -> None:
+                tp = cast(DataclassType, type(self))
+                if (
+                    (fld := tp.__dataclass_fields__.get(name, None))
+                    and tp._field_validation_flags(fld).validate_assign  # type: ignore[attr-defined]
+                ):
+                    _validate_type(tp, name, fld.type, value)
+                super(type(self), self).__setattr__(name, value)  # type: ignore[misc]
+            wrapped_cls.__setattr__ = _validated_setattr  # type: ignore[method-assign]
 
     @classmethod
     def _field_validation_flags(cls, fld: Field[Any]) -> _FieldValidationFlags:
@@ -116,8 +144,6 @@ class ValidatedDataclass(DataclassMixin):
         validate_assign = (
             cls.__settings__.validate_assign if (settings.validate_assign is None) else settings.validate_assign
         )
-        if validate_assign:
-            raise NotImplementedError('validation on assignment is not yet implemented')
         # TODO: do not validate InitVar or init=False fields?
         return _FieldValidationFlags(validate_init=validate_init, validate_assign=validate_assign)
 

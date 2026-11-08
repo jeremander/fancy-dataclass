@@ -11,17 +11,19 @@
     - Relationships
 
 - Validation support: `ValidatedDataclass`
+  - For invalid default, check the type at dataclass creation time.
+    - In tests, compare when the error occurs for `default` vs. `default_factory`.
+  - Deal with `InitVar` and `init=False` fields.
+  - Runtime type-check all class and field settings unilaterally for all settings classes?
+    - I.e. have the settings mixins perform validation (but can't subclass `ValidatedDataclass` since that would be circular -- factor it into a helper function?)
   - Interaction with `validate=True` in `DictDataclass`?
     - Simplest would be to deprecate/remove *all* validation features from here.
     - Alternatively could keep this flag, and have the class inherit from `ValidatedDataclass` if it's set.
       - Or inherit unconditionally but toggle validation flags to `False` based on the flag.
   - Configs
-    - Flag to validate when setting field value (default `False`)
-    - Whether to decorate all methods with arg & return type-checking (default `False`)
-  - Runtime type-check all class and field settings unilaterally?
-    - I.e. have the settings mixins perform validation (but can't subclass `ValidatedDataclass` since that would be circular -- factor it into a helper function?)
-    - Custom validation functions per field
-      - `Annotated` validators?
+    - Flag to decorate all methods with arg & return type-checking (default `False`)
+  - Custom validation functions per field
+    - `Annotated` validators?
   - Documentation
 
 ## Future
