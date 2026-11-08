@@ -19,6 +19,7 @@ classifiers = [
 dependencies = [
   "sqlalchemy >= 2.0",
   "tomlkit >= 0.15.1",
+  "typeguard >= 4.5",
   "typing_extensions >= 4.13",
 ]
 

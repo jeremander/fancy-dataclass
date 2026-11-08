@@ -3,7 +3,7 @@ from typing import Any, Optional, TypeVar, cast, get_args
 
 from typing_extensions import Doc, Self, _AnnotatedAlias, override
 
-from fancy_dataclass.utils import _is_instance, check_dataclass, coerce_to_dataclass, dataclass_kw_only
+from fancy_dataclass.utils import check_dataclass, coerce_to_dataclass, conforms_to, dataclass_kw_only
 
 
 DA = TypeVar('DA', bound='DataclassAdaptable')
@@ -50,8 +50,7 @@ class FieldSettings(DataclassAdaptable):
             TypeError: If a field is the wrong type"""
         for fld in fields(self):  # type: ignore[arg-type]
             val = getattr(self, fld.name)
-            # semi-robust type checking (could still be improved)
-            if not _is_instance(val, cast(type, fld.type)):
+            if not conforms_to(val, cast(type, fld.type)):
                 raise TypeError(f'expected type {fld.type} for field {fld.name!r}, got {type(val)}')
 
     @classmethod

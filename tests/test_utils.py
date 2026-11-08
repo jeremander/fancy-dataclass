@@ -7,10 +7,10 @@ import pytest
 from pytest import param
 
 from fancy_dataclass.utils import (
-    _is_instance,
     _is_subtype,
     camel_case_to_kebab_case,
     coerce_to_dataclass,
+    conforms_to,
     get_dataclass_fields,
     merge_dataclasses,
     snake_case_to_camel_case,
@@ -136,7 +136,8 @@ def test_check_is_subtype(tp1: Any, tp2: Any, output: bool) -> None:
     (None, Optional[int], True),
     ('a', Optional[int], False),
     (1.0, int, False),
-    (1, float, False),
+    # adheres to PEP 484 numeric tower rule that ints type-check as floats
+    (1, float, True),
     (1, Union[int, str], True),
     ('a', Union[int, str], True),
     (1.0, Union[int, str], False),
@@ -157,9 +158,9 @@ def test_check_is_subtype(tp1: Any, tp2: Any, output: bool) -> None:
     (None, Sequence[int], False),
     ((1, 2), Optional[Union[int, Sequence[int]]], True),
 ])
-def test_check_isinstance(obj: Any, tp: Any, output: bool) -> None:
-    """Tests the _is_instance helper function."""
-    assert _is_instance(obj, tp) is output
+def test_conforms_to(obj: Any, tp: Any, output: bool) -> None:
+    """Tests the conforms_to helper function."""
+    assert conforms_to(obj, tp) is output
 
 def test_coerce_to_dataclass() -> None:
     """Tests behavior of `coerce_to_dataclass`."""

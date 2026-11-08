@@ -30,6 +30,7 @@ from typing import (
     get_type_hints,
 )
 
+from typeguard import CollectionCheckStrategy, TypeCheckError, check_type
 from typing_extensions import TypeAlias, TypeGuard, _AnnotatedAlias, dataclass_transform
 
 
@@ -219,32 +220,15 @@ def _is_subtype(tp1: type, tp2: type) -> bool:
         return False
     return issubclass_safe(tp1, tp2)  # fallback
 
-def _is_instance(obj: Any, tp: type) -> bool:
-    """Checks if the given object is an instance of the given type.
+def conforms_to(obj: Any, tp: type) -> bool:
+    """Checks if the given object conforms to the given type.
 
-    This attempts to be somewhat more flexible than `isinstance` in that it will handle compound types
-    like `List[...]`."""
-    # TODO: make this more complete
-    if tp is Any:
+    This is more flexible than `isinstance` in that it will handle compound types like `list[...]`."""
+    try:
+        _ = check_type(obj, tp, collection_check_strategy=CollectionCheckStrategy.ALL_ITEMS)
         return True
-    origin = get_origin(tp)
-    if origin is Union:
-        return any(_is_instance(obj, arg) for arg in get_args(tp))
-    if origin in [list, collections.abc.Sequence]:
-        base_type = get_args(tp)[0]
-        return isinstance(obj, origin) and all(_is_instance(val, base_type) for val in obj)
-    if origin is dict:
-        (key_type, val_type) = get_args(tp)
-        return (
-            isinstance(obj, dict)
-            and all(_is_instance(key, key_type) and _is_instance(val, val_type) for (key, val) in obj.items())
-        )
-    if origin is type:
-        return isinstance(obj, type) and issubclass_safe(obj, get_args(tp)[0])
-    if origin is collections.abc.Callable:
-        # TODO: try to check object's annotations
-        return isinstance(obj, Callable)  # type: ignore[arg-type]
-    return isinstance(obj, tp)
+    except TypeCheckError:
+        return False
 
 def obj_class_name(obj: object) -> str:
     """Gets the name of the class of an object.
@@ -473,7 +457,7 @@ def dataclass_type_map(cls: DataclassType, func: Callable[[type], type]) -> Data
     for fld in get_dataclass_fields(cls, include_all=True):
         new_fld = copy(fld)
         origin_type = get_origin(fld.type)
-        if origin_type and (not _is_instance(fld.type, _AnnotatedAlias)) and issubclass_safe(origin_type, Iterable):
+        if origin_type and (not conforms_to(fld.type, _AnnotatedAlias)) and issubclass_safe(origin_type, Iterable):
             if issubclass(origin_type, dict):
                 (key_type, val_type) = get_args(fld.type)
                 tp = origin_type[key_type, _map_func(val_type)]  # pyrefly: ignore[unsupported-operation]
@@ -507,7 +491,7 @@ def merge_dataclasses(
         classes: Multiple dataclass types
         cls_name: Name of the output dataclass
         bases: Base classes for the new type
-        allow_duplicates: Whether to allow duplicate field names
+        allow_duplicates: Whether to allow duplicate field names, if the field types are consistent
 
     Returns:
         The merged dataclass type

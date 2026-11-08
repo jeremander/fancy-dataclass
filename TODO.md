@@ -12,12 +12,20 @@
 
 ## Future
 
+- Upgrade to Py3.10
+  - Can use `match`
+  - Can use pipe for unions
 - General-purpose validator mixin? `ValidatedDataclass`?
   - Does type-checking post-init, with ability to supply custom validation functions
   - Have most other mixins inherit from this?
   - Interaction with `validate=True` in `DictDataclass`?
     - Simplest would be to deprecate/remove *all* validation features from here.
     - Alternatively could keep this flag, and have the class inherit from `ValidatedDataclass` if it's set.
+  - Configs
+    - Flag to validate when setting field value (default `False`)
+    - Collection checking mode (`O1`, `Ologn`, `On`)
+    - PEP 484 tower
+    - Whether to decorate all methods with arg & return type-checking (default `False`)
 - Field metadata
   - Field converters
     - https://github.com/jeremander/fancy-dataclass/issues/2
