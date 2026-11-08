@@ -1,26 +1,26 @@
 """Various utility functions and classes."""
 
 import collections.abc
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from contextlib import suppress
 from copy import copy
 import dataclasses
-from dataclasses import Field, dataclass, is_dataclass, make_dataclass
-from functools import lru_cache, partial
+from dataclasses import Field, is_dataclass, make_dataclass
+from functools import lru_cache
 import importlib
 import inspect
 from pathlib import Path
 import re
-import sys
 import types
 from typing import (
     IO,
     TYPE_CHECKING,
     Any,
-    Callable,
     ClassVar,
     ForwardRef,
     Optional,
+    TypeAlias,
+    TypeGuard,
     TypeVar,
     Union,
     _SpecialForm,
@@ -31,7 +31,7 @@ from typing import (
 )
 
 from typeguard import CollectionCheckStrategy, TypeCheckError, check_type
-from typing_extensions import TypeAlias, TypeGuard, _AnnotatedAlias, dataclass_transform
+from typing_extensions import _AnnotatedAlias
 
 
 if TYPE_CHECKING:
@@ -40,9 +40,9 @@ if TYPE_CHECKING:
 
 T = TypeVar('T')
 
-AnyPath: TypeAlias = Union[str, Path]
-AnyIO: TypeAlias = Union[IO[str], IO[bytes]]
-TypeLike: TypeAlias = Union[type, _SpecialForm, ForwardRef, _AnnotatedAlias]
+AnyPath: TypeAlias = str | Path
+AnyIO: TypeAlias = IO[str] | IO[bytes]
+TypeLike: TypeAlias = type | _SpecialForm | ForwardRef | _AnnotatedAlias
 DataclassType: TypeAlias = type['DataclassInstance']
 
 
@@ -206,9 +206,9 @@ def _is_subtype(tp1: type, tp2: type) -> bool:
         return True
     origin1 = get_origin(tp1)
     origin2 = get_origin(tp2)
-    if origin1 is Union:
+    if origin1 in _UNION_TYPES:
         return all(_is_subtype(arg, tp2) for arg in get_args(tp1))
-    if origin2 is Union:
+    if origin2 in _UNION_TYPES:
         return any(_is_subtype(tp1, arg) for arg in get_args(tp2))
     if origin2 in [list, collections.abc.Sequence, ClassVar]:
         return (origin1 == origin2) and _is_subtype(get_args(tp1)[0], get_args(tp2)[0])
@@ -294,14 +294,6 @@ def get_subclass_with_name(cls: type[T], name: str) -> type[T]:
 
 # DATACLASS
 
-@dataclass_transform(kw_only_default=True)
-def dataclass_kw_only(**kwargs: Any) -> Callable[[type[T]], type[T]]:
-    """Identical to the usual dataclass decorator, but adds kw_only=True (if Python version is >= 3.10)."""
-    # TODO: remove this once we no longer support < 3.10
-    if sys.version_info[:2] >= (3, 10):
-        return partial(dataclass, kw_only=True)
-    return dataclass
-
 def check_dataclass(cls: type) -> TypeGuard[DataclassType]:
     """Checks whether a given type is a dataclass, raising a `TypeError` otherwise.
 
@@ -324,7 +316,7 @@ def is_dataclass_type(cls: type) -> TypeGuard[DataclassType]:
         True if `cls` is a dataclass"""
     return is_dataclass(cls)
 
-def get_dataclass_fields(obj: Union[type, object], include_all: bool = False) -> tuple[Field, ...]:  # type: ignore[type-arg]
+def get_dataclass_fields(obj: type | object, include_all: bool = False) -> tuple[Field, ...]:  # type: ignore[type-arg]
     """Variant of `dataclasses.fields` which can optionally include ClassVars and InitVars.
 
     Args:

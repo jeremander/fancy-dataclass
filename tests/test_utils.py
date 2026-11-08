@@ -73,8 +73,8 @@ def test_camel_case_to_kebab_case(camel: str, kebab: str) -> None:
     (type(None), False),
     (Optional[int], True),
     (Optional[Optional[int]], True),  # noqa: PYI016
-    (Union[int, Optional[float]], True),
-    (Union[Optional[float], int], True),
+    (int | Optional[float], True),
+    (Optional[float] | int, True),
     (Optional[type(None)], False),  # Optional[NoneType] -> NoneType
     (list[Optional[int]], False),
 ])
@@ -101,14 +101,17 @@ def test_type_is_optional_py310() -> None:  # novermin
     (int, Optional[int], True),
     (Optional[int], Optional[int], True),
     (Optional[int], Optional[float], False),
+    (int | str, int, False),
     (Union[int, str], int, False),
+    (int, int | str, True),
     (int, Union[int, str], True),
+    (int | str, int | str, True),
     (Union[int, str], Union[int, str], True),
-    (Union[int, str, float], Union[int, str], False),
-    (Union[int, str], Union[int, str, float], True),
-    (int, Union[int, None], True),
+    (int | str | float, int | str, False),
+    (int | str, int | str | float, True),
+    (int, int | None, True),
     (None, Optional[int], False),
-    (NoneType, Optional[int], True),  # novermin
+    (NoneType, Optional[int], True),
     (Sequence[str], Sequence[str], True),
     (Sequence[int], Sequence[str], False),
     (list[str], list[str], True),
@@ -138,9 +141,9 @@ def test_check_is_subtype(tp1: Any, tp2: Any, output: bool) -> None:
     (1.0, int, False),
     # adheres to PEP 484 numeric tower rule that ints type-check as floats
     (1, float, True),
-    (1, Union[int, str], True),
-    ('a', Union[int, str], True),
-    (1.0, Union[int, str], False),
+    (1, int | str, True),
+    ('a', int | str, True),
+    (1.0, int | str, False),
     ([], list[int], True),
     (1, list[int], False),
     ([1, 2], list[int], True),
@@ -156,7 +159,7 @@ def test_check_is_subtype(tp1: Any, tp2: Any, output: bool) -> None:
     ((), Sequence[int], True),
     ((1, 2), Sequence[int], True),
     (None, Sequence[int], False),
-    ((1, 2), Optional[Union[int, Sequence[int]]], True),
+    ((1, 2), Optional[int | Sequence[int]], True),
 ])
 def test_conforms_to(obj: Any, tp: Any, output: bool) -> None:
     """Tests the conforms_to helper function."""
@@ -237,15 +240,15 @@ class J:
 
 @dataclass
 class K:
-    k: Union[int, str]
+    k: int | str
 
 @dataclass
 class M:
-    m: Union[K, str]
+    m: K | str
 
 @dataclass
 class N:
-    n: Union[J, K]
+    n: J | K
 
 @dataclass
 class P:

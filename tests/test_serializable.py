@@ -9,7 +9,7 @@ import math
 from pathlib import Path
 import re
 import sys
-from typing import IO, Annotated, Any, Literal, NamedTuple, Optional, TypedDict, TypeVar, Union
+from typing import IO, Annotated, Any, Literal, NamedTuple, Optional, TypedDict, TypeVar
 
 import numpy as np
 import pytest
@@ -119,14 +119,11 @@ class DCOptionalStr(JSONDataclass):
 
 @dataclass
 class DCUnion(JSONDataclass):
-    x: Union[int, str]
+    x: int | str
 
-if sys.version_info[:2] < (3, 10):
-    DCBarUnion = DCUnion
-else:
-    @dataclass
-    class DCBarUnion(JSONDataclass):  # novermin
-        x: int | str  # noqa: FA102
+@dataclass
+class DCBarUnion(JSONDataclass):
+    x: int | str
 
 @dataclass
 class DCLiteral(JSONDataclass):

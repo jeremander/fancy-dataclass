@@ -4,7 +4,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 import re
 import sys
-from typing import Annotated, Any, Literal, NoReturn, Optional, Union
+from typing import Annotated, Any, Literal, NoReturn, Optional
 
 import pytest
 from typing_extensions import Doc
@@ -313,7 +313,7 @@ def test_argparse_options() -> None:
     # nontrivial union types not permitted
     @dataclass
     class DC19(ArgparseDataclass):
-        pos: Union[int, str]
+        pos: int | str
     with pytest.raises(ValueError, match='union type .+ not allowed'):
         _ = DC19.make_parser()
     # append action
@@ -404,7 +404,7 @@ def test_choices() -> None:
     # Union with Literal
     @dataclass
     class DC8(ArgparseDataclass):
-        x: Union[int, Literal['a', 'b']]
+        x: int | Literal['a', 'b']
     with pytest.raises(ValueError, match='union type .* not allowed'):
         _ = DC8.make_parser()
 
@@ -685,7 +685,7 @@ def test_nested() -> None:
     check_invalid_args(D, [], 'arguments are required: x')
     @dataclass
     class E(ArgparseDataclass):
-        val: Union[None, X]
+        val: None | X
     help_str = E.make_parser().format_help()
     assert re.search(r'positional arguments:\s+x\s+', help_str)
     assert E.from_cli_args(['1']) == E(X(1))
@@ -694,18 +694,18 @@ def test_nested() -> None:
     @dataclass
     class F(ArgparseDataclass):
         val1: Optional[X]
-        val2: Union[None, X]
+        val2: None | X
     with pytest.raises(ValueError, match="duplicate positional argument 'x'"):
         _ = F.make_parser()
     # nontrivial union not permitted
     @dataclass
     class G(ArgparseDataclass):
-        val: Union[str, X]
+        val: str | X
     with pytest.raises(ValueError, match='union type .+ not allowed'):
         _ = G.make_parser()
     @dataclass
     class H(ArgparseDataclass):
-        val: Union[X, XY]
+        val: X | XY
     with pytest.raises(ValueError, match='union type .+ not allowed'):
         _ = H.make_parser()
 
@@ -745,7 +745,7 @@ def test_subcommand(capsys: pytest.CaptureFixture[str]) -> None:
     with pytest.raises(TypeError, match='type must be an ArgparseDataclass or Union thereof'):
         @dataclass
         class DCSub3(ArgparseDataclass):
-            x: Union[Sub1, int] = field(metadata={'subcommand': True})
+            x: Sub1 | int = field(metadata={'subcommand': True})
     # one subcommand with extra top-level fields
     @dataclass
     class DCSub4(ArgparseDataclass):
@@ -776,7 +776,7 @@ def test_subcommand(capsys: pytest.CaptureFixture[str]) -> None:
     # union subcommand
     @dataclass
     class DCSub5(CLIDataclass):
-        sub: Union[Sub1, Sub2] = field(metadata={'subcommand': True, 'help': 'choose a subcommand'})
+        sub: Sub1 | Sub2 = field(metadata={'subcommand': True, 'help': 'choose a subcommand'})
         x: int = 1
     assert isinstance(DCSub5.__settings__, ArgparseDataclassSettings)
     assert DCSub5.__settings__.command_name == 'dc-sub5'
@@ -818,7 +818,7 @@ def test_subcommand(capsys: pytest.CaptureFixture[str]) -> None:
     with pytest.raises(TypeError, match="duplicate command name 'sub1' in subcommand field 'sub'"):
         @dataclass
         class DCSub6(ArgparseDataclass):
-            sub: Union[Sub1, Sub3] = field(metadata={'subcommand': True})
+            sub: Sub1 | Sub3 = field(metadata={'subcommand': True})
     # empty argument set is OK
     @dataclass
     class DCSub7(ArgparseDataclass):
@@ -982,7 +982,7 @@ def test_nested_subcommand_name_collision() -> None:
         x: int = 2
     @dataclass
     class DCOuter(ArgparseDataclass):
-        subcommand: Union[Sub1, Sub2] = field(metadata={'subcommand': True})
+        subcommand: Sub1 | Sub2 = field(metadata={'subcommand': True})
     assert DCOuter.from_cli_args(['sub1', '-x', '5']) == DCOuter(Sub1(x=5))
     assert DCOuter.from_cli_args(['sub2', '-x', '5']) == DCOuter(Sub2(x=5))
     # setting 'dest' is not necessary, but it's OK to do
@@ -994,7 +994,7 @@ def test_nested_subcommand_name_collision() -> None:
         x: int = field(default=2, metadata={'dest': 'x2'})
     @dataclass
     class DCOuter(ArgparseDataclass):
-        subcommand: Union[Sub1, Sub2] = field(metadata={'subcommand': True})
+        subcommand: Sub1 | Sub2 = field(metadata={'subcommand': True})
     assert DCOuter.from_cli_args(['sub1', '-x', '5']) == DCOuter(Sub1(x=5))
     assert DCOuter.from_cli_args(['sub2', '-x', '5']) == DCOuter(Sub2(x=5))
     # subcommand field cannot collide with a field in the parent parser
@@ -1003,7 +1003,7 @@ def test_nested_subcommand_name_collision() -> None:
         y: int = 2
     @dataclass
     class DCOuter(ArgparseDataclass):
-        subcommand: Union[Sub1, Sub2] = field(metadata={'subcommand': True})
+        subcommand: Sub1 | Sub2 = field(metadata={'subcommand': True})
         y: int = 0
     with pytest.raises(ValueError, match="duplicate destination field 'y'"):
         _ = DCOuter.make_parser()
@@ -1013,7 +1013,7 @@ def test_nested_subcommand_name_collision() -> None:
         y: int = field(default=2, metadata={'args': ['--y2']})
     @dataclass
     class DCOuter(ArgparseDataclass):
-        subcommand: Union[Sub1, Sub2] = field(metadata={'subcommand': True})
+        subcommand: Sub1 | Sub2 = field(metadata={'subcommand': True})
         y: int = 0
     with pytest.raises(ValueError, match="duplicate destination field 'y'"):
         _ = DCOuter.make_parser()
@@ -1023,7 +1023,7 @@ def test_nested_subcommand_name_collision() -> None:
         y: int = field(default=2, metadata={'dest': 'y2'})
     @dataclass
     class DCOuter(ArgparseDataclass):
-        subcommand: Union[Sub1, Sub2] = field(metadata={'subcommand': True})
+        subcommand: Sub1 | Sub2 = field(metadata={'subcommand': True})
         y: int = 0
     assert DCOuter.from_cli_args(['sub2', '-y', '5']) == DCOuter(Sub2(y=5), y=0)
     assert DCOuter.from_cli_args(['-y', '1', 'sub2', '-y', '5']) == DCOuter(Sub2(y=5), y=1)
@@ -1038,7 +1038,7 @@ def test_doubly_nested_subcommand() -> None:
         ...
     @dataclass
     class DC0(ArgparseDataclass, command_name='cmd0'):
-        subcommand: Union[DC00, DC01] = field(metadata={'subcommand': True})
+        subcommand: DC00 | DC01 = field(metadata={'subcommand': True})
     @dataclass
     class DC10(ArgparseDataclass, command_name='cmd10'):
         ...
@@ -1047,13 +1047,13 @@ def test_doubly_nested_subcommand() -> None:
         ...
     @dataclass
     class DC1(ArgparseDataclass, command_name='cmd1'):
-        subcommand: Union[DC10, DC11] = field(metadata={'subcommand': True})
+        subcommand: DC10 | DC11 = field(metadata={'subcommand': True})
     @dataclass
     class DCSingle(ArgparseDataclass):
         subcommand: DC0 = field(metadata={'subcommand': True})
     @dataclass
     class DCDouble(ArgparseDataclass):
-        subcommand: Union[DC0, DC1] = field(metadata={'subcommand': True})
+        subcommand: DC0 | DC1 = field(metadata={'subcommand': True})
     check_invalid_args(DCSingle, ['cmd0'], 'arguments are required: subcommand')
     assert DCSingle.from_cli_args(['cmd0', 'cmd00']) == DCSingle(DC0(DC00()))
     assert DCSingle.from_cli_args(['cmd0', 'cmd01']) == DCSingle(DC0(DC01()))
@@ -1077,7 +1077,7 @@ def test_optional_subcommand() -> None:
     assert A1.from_cli_args(['x']) == A1(X())
     @dataclass
     class A2(ArgparseDataclass):
-        sub: Optional[Union[X, Y]] = field(default=None, metadata={'subcommand': True})
+        sub: Optional[X | Y] = field(default=None, metadata={'subcommand': True})
     for A in [A1, A2]:
         assert A.from_cli_args([]) == A(None)
         assert A.from_cli_args(['x']) == A(X())
@@ -1087,7 +1087,7 @@ def test_optional_subcommand() -> None:
         sub: Optional[X] = field(default_factory=X, metadata={'subcommand': True})
     @dataclass
     class B2(ArgparseDataclass):
-        sub: Optional[Union[X, Y]] = field(default_factory=X, metadata={'subcommand': True})
+        sub: Optional[X | Y] = field(default_factory=X, metadata={'subcommand': True})
     for B in [B1, B2]:
         assert B.from_cli_args([]) == B(X())
         assert B.from_cli_args(['x']) == B(X())
@@ -1097,7 +1097,7 @@ def test_optional_subcommand() -> None:
         sub: Optional[X] = field(metadata={'subcommand': True})
     @dataclass
     class C2(ArgparseDataclass):
-        sub: Optional[Union[X, Y]] = field(metadata={'subcommand': True})
+        sub: Optional[X | Y] = field(metadata={'subcommand': True})
     for C in [C1, C2]:
         assert C.from_cli_args([]) == C(None)
         assert C.from_cli_args(['x']) == C(X())
@@ -1107,7 +1107,7 @@ def test_optional_subcommand() -> None:
         sub: Optional[X] = field(metadata={'required': True, 'subcommand': True})
     @dataclass
     class D2(ArgparseDataclass):
-        sub: Optional[Union[X, Y]] = field(metadata={'required': True, 'subcommand': True})
+        sub: Optional[X | Y] = field(metadata={'required': True, 'subcommand': True})
     for D in [D1, D2]:
         check_invalid_args(D, [], 'arguments are required: subcommand')
         assert D.from_cli_args(['x']) == D(X())
@@ -1118,7 +1118,7 @@ def test_optional_subcommand() -> None:
         val: Optional[int] = field(default=None)
     @dataclass
     class E2(ArgparseDataclass):
-        sub: Optional[Union[X, Y]] = field(default=None, metadata={'subcommand': True})
+        sub: Optional[X | Y] = field(default=None, metadata={'subcommand': True})
         val: Optional[int] = field(default=None)
     for E in [E1, E2]:
         assert E.from_cli_args([]) == E(None, None)
@@ -1132,7 +1132,7 @@ def test_optional_subcommand() -> None:
         sub: X = field(default_factory=X, metadata={'subcommand': True})
     @dataclass
     class F2(ArgparseDataclass):
-        sub: Union[X, Y] = field(default_factory=X, metadata={'subcommand': True})
+        sub: X | Y = field(default_factory=X, metadata={'subcommand': True})
     for F in [F1, F2]:
         assert F.from_cli_args([]) == F(X())
         assert F.from_cli_args(['x']) == F(X())
@@ -1142,7 +1142,7 @@ def test_optional_subcommand() -> None:
         sub: X = field(metadata={'required': False, 'subcommand': True})
     @dataclass
     class G2(ArgparseDataclass):
-        sub: Union[X, Y] = field(metadata={'required': False, 'subcommand': True})
+        sub: X | Y = field(metadata={'required': False, 'subcommand': True})
     for G in [G1, G2]:
         with pytest.raises(ValueError, match="'sub' field cannot set required=False"):
             _ = G.make_parser()

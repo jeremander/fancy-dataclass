@@ -1,7 +1,7 @@
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import Field, field, make_dataclass
 from inspect import getfullargspec
-from typing import Any, Callable, ClassVar, Literal, Optional, Protocol, TypeVar, Union, overload
+from typing import Any, ClassVar, Literal, Optional, Protocol, TypeVar, overload
 
 from typing_extensions import ParamSpec
 
@@ -11,7 +11,7 @@ from fancy_dataclass.utils import DataclassType, snake_case_to_camel_case
 P = ParamSpec('P')
 R_co = TypeVar('R_co', covariant=True)
 
-Bases = Union[type, tuple[type, ...]]
+Bases = type | tuple[type, ...]
 
 
 def _func_dataclass(

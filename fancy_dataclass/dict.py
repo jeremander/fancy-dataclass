@@ -2,7 +2,7 @@ from collections import defaultdict
 from collections.abc import Iterable
 from contextlib import suppress
 import dataclasses
-from dataclasses import Field, InitVar
+from dataclasses import Field, InitVar, dataclass
 from functools import partial
 import typing
 from typing import (  # type: ignore[attr-defined]
@@ -10,13 +10,14 @@ from typing import (  # type: ignore[attr-defined]
     ClassVar,
     Literal,
     Optional,
+    TypeAlias,
     TypeVar,
     _TypedDictMeta,
     get_args,
     get_origin,
 )
 
-from typing_extensions import Self, TypeAlias, _AnnotatedAlias
+from typing_extensions import Self, _AnnotatedAlias
 
 from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.settings import DocFieldSettings, MixinSettings
@@ -25,7 +26,6 @@ from fancy_dataclass.utils import (
     TypeConversionError,
     check_dataclass,
     dataclass_field_type,
-    dataclass_kw_only,
     fully_qualified_class_name,
     get_dataclass_fields,
     issubclass_safe,
@@ -43,7 +43,7 @@ StoreTypeMode: TypeAlias = Literal['auto', 'off', 'name', 'qualname']
 _TYPE_ALIAS_TYPE = getattr(typing, 'TypeAliasType', None)
 
 
-@dataclass_kw_only()
+@dataclass(kw_only=True)
 class DictDataclassSettings(MixinSettings):
     """Class-level settings for the [`DictDataclass`][fancy_dataclass.dict.DictDataclass] mixin.
 
@@ -79,7 +79,7 @@ class DictDataclassSettings(MixinSettings):
         return self._store_type in ['name', 'qualname']
 
 
-@dataclass_kw_only()
+@dataclass(kw_only=True)
 class DictDataclassFieldSettings(DocFieldSettings):
     """Settings for [`DictDataclass`][fancy_dataclass.dict.DictDataclass] fields.
 

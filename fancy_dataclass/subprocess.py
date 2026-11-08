@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from dataclasses import MISSING
+from dataclasses import MISSING, dataclass
 import subprocess
 from typing import Any, ClassVar, Optional, get_origin
 
@@ -7,10 +7,10 @@ from typing_extensions import Self
 
 from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.settings import FieldSettings, MixinSettings
-from fancy_dataclass.utils import dataclass_kw_only, get_dataclass_fields, obj_class_name
+from fancy_dataclass.utils import get_dataclass_fields, obj_class_name
 
 
-@dataclass_kw_only()
+@dataclass(kw_only=True)
 class SubprocessDataclassSettings(MixinSettings):
     """Class-level settings for the [`SubprocessDataclass`][fancy_dataclass.subprocess.SubprocessDataclass] mixin.
 
@@ -23,7 +23,7 @@ class SubprocessDataclassSettings(MixinSettings):
     extra_args: Optional[Sequence[str]] = None
 
 
-@dataclass_kw_only()
+@dataclass(kw_only=True)
 class SubprocessDataclassFieldSettings(FieldSettings):
     """Settings for [`SubprocessDataclass`][fancy_dataclass.subprocess.SubprocessDataclass] fields.
 

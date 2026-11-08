@@ -1,11 +1,12 @@
+from collections.abc import Callable
 from dataclasses import MISSING, dataclass, fields
 from datetime import datetime
 from typing import (
     Annotated,
     Any,
-    Callable,
     ClassVar,
     Optional,
+    TypeAlias,
     TypeVar,
     Union,
     cast,
@@ -15,11 +16,11 @@ from typing import (
 
 from sqlalchemy import Boolean, Column, DateTime, Integer, LargeBinary, Numeric, PickleType, String, Table
 import sqlalchemy.orm
-from typing_extensions import TypeAlias, dataclass_transform
+from typing_extensions import dataclass_transform
 
 from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.settings import FieldSettings
-from fancy_dataclass.utils import dataclass_kw_only, issubclass_safe, safe_dict_update
+from fancy_dataclass.utils import issubclass_safe, safe_dict_update
 
 
 T = TypeVar('T')
@@ -64,7 +65,7 @@ def _get_base_type_for_field_type(field_type: Any) -> type:
     return cast(type, field_type)
 
 
-@dataclass_kw_only()
+@dataclass(kw_only=True)
 class SQLDataclassFieldSettings(FieldSettings):
     """Settings for [`SQLDataclass`][fancy_dataclass.sql.SQLDataclass] fields.
 

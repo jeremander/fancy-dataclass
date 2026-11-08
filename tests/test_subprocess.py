@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 import re
-from typing import ClassVar, Optional, Union
+from typing import ClassVar, Optional
 
 import pytest
 
@@ -290,7 +290,7 @@ def test_union() -> None:
     """Tests fields with a union type."""
     @dataclass
     class DC1(SubprocessDataclass, exec='prog'):
-        a: Union[int, str]
+        a: int | str
     assert DC1(1).get_args() == ['prog', '-a', '1']
     assert DC1('val').get_args() == ['prog', '-a', 'val']
     @dataclass
@@ -301,16 +301,16 @@ def test_union() -> None:
         b: int
     @dataclass
     class DC2(SubprocessDataclass, exec='prog'):
-        inner: Union[Inner1, Inner2]
+        inner: Inner1 | Inner2
     assert DC2(Inner1(1)).get_args() == ['prog', '-a', '1']
     assert DC2(Inner2(1)).get_args() == ['prog', '-b', '1']
     @dataclass
     class DC3(SubprocessDataclass, exec='prog'):
-        inner: Union[int, Inner2]
+        inner: int | Inner2
     assert DC3(1).get_args() == ['prog', '--inner', '1']
     assert DC3(Inner2(1)).get_args() == ['prog', '-b', '1']
     @dataclass
     class DC4(SubprocessDataclass, exec='prog'):
-        inner: Union[Inner1, int]
+        inner: Inner1 | int
     assert DC4(Inner1(1)).get_args() == ['prog', '-a', '1']
     assert DC4(1).get_args() == ['prog', '--inner', '1']

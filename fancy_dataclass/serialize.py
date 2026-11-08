@@ -4,7 +4,7 @@ from inspect import getfullargspec
 from io import BytesIO, StringIO, TextIOBase
 from numbers import Integral
 from pathlib import Path
-from typing import IO, Any, BinaryIO, Union, cast
+from typing import IO, Any, BinaryIO, cast
 
 from typing_extensions import Self, override
 
@@ -96,7 +96,7 @@ class FileSerializable:
     def _file_mode_is_binary(cls) -> bool:
         """Returns True if the class's default mode for opening files is binary."""
 
-    def save(self, file: Union[AnyPath, AnyIO], **kwargs: Any) -> None:
+    def save(self, file: AnyPath | AnyIO, **kwargs: Any) -> None:
         """Serializes the object to a path or file-like object (text or binary).
 
         Args:
@@ -110,7 +110,7 @@ class FileSerializable:
             self._to_file(self, file, **kwargs)
 
     @classmethod
-    def load(cls, file: Union[AnyPath, AnyIO], **kwargs: Any) -> Self:
+    def load(cls, file: AnyPath | AnyIO, **kwargs: Any) -> Self:
         """Deserializes the object from a file, given a path or file-like object.
 
         Args:

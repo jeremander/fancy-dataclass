@@ -1,28 +1,29 @@
 from argparse import Action, ArgumentParser, HelpFormatter, Namespace, _ArgumentGroup, _MutuallyExclusiveGroup
 import builtins
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from contextlib import suppress
-from dataclasses import MISSING, fields
+from dataclasses import MISSING, dataclass, fields
 from enum import IntEnum
-from typing import Any, Callable, ClassVar, Literal, Optional, TypeVar, Union, cast, get_args, get_origin
+from typing import Any, ClassVar, Literal, Optional, TypeGuard, TypeVar, cast, get_args, get_origin
 
-from typing_extensions import Self, TypeGuard
+from typing_extensions import Self
 
 from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.settings import DocFieldSettings, MixinSettings
 from fancy_dataclass.utils import (
+    _UNION_TYPES,
     camel_case_to_kebab_case,
     check_dataclass,
-    dataclass_kw_only,
     eval_type_str,
     get_annotations,
     issubclass_safe,
     type_is_optional,
+    type_is_union,
 )
 
 
 T = TypeVar('T')
-ArgParser = Union[ArgumentParser, _ArgumentGroup]
+ArgParser = ArgumentParser | _ArgumentGroup
 
 
 ####################
@@ -77,7 +78,7 @@ def _add_group(parser: ArgParser, group_name: str, **group_kwargs: Any) -> _Argu
 # MIXINS #
 ##########
 
-@dataclass_kw_only()
+@dataclass(kw_only=True)
 class ArgparseDataclassSettings(MixinSettings):
     """Class-level settings for the [`ArgparseDataclass`][fancy_dataclass.cli.ArgparseDataclass] mixin.
 
@@ -109,11 +110,11 @@ class ArgparseDataclassSettings(MixinSettings):
     help_descr_brief: Optional[str] = None
     command_name: Optional[str] = None
     prog: Optional[str] = None
-    version: Optional[Union[int, str]] = None
+    version: Optional[int | str] = None
     default_help: bool = False
 
 
-@dataclass_kw_only()
+@dataclass(kw_only=True)
 class ArgparseDataclassFieldSettings(DocFieldSettings):
     """Settings for [`ArgparseDataclass`][fancy_dataclass.cli.ArgparseDataclass] fields.
 
@@ -159,14 +160,14 @@ class ArgparseDataclassFieldSettings(DocFieldSettings):
         - Otherwise, a positional argument
     - If `required` is specified in the metadata, this will take precedence over the default behavior above."""
 
-    type: Optional[Union[type, Callable[[Any], Any]]] = None  # can be used to define custom constructor
-    args: Optional[Union[str, Sequence[str]]] = None
-    action: Optional[Union[str, builtins.type[Action]]] = None
-    nargs: Optional[Union[str, int]] = None
+    type: Optional[type | Callable[[Any], Any]] = None  # can be used to define custom constructor
+    args: Optional[str | Sequence[str]] = None
+    action: Optional[str | builtins.type[Action]] = None
+    nargs: Optional[str | int] = None
     const: Optional[Any] = None
     choices: Optional[Sequence[Any]] = None
     help: Optional[str] = None
-    metavar: Optional[Union[str, Sequence[str]]] = None
+    metavar: Optional[str | Sequence[str]] = None
     required: Optional[bool] = None
     group: Optional[str] = None
     exclusive_group: Optional[str] = None
@@ -221,7 +222,7 @@ class ArgparseDataclass(DataclassMixin):
                 err = TypeError(
                     f'invalid subcommand field {fld.name!r}, type must be an ArgparseDataclass or Union thereof'
                 )
-                if get_origin(tp) == Union:
+                if type_is_union(tp):
                     tp_args = [arg for arg in get_args(tp) if (arg is not type(None))]
                     for arg in tp_args:
                         if not issubclass_safe(arg, ArgparseDataclass):
@@ -331,7 +332,7 @@ class ArgparseDataclass(DataclassMixin):
                 return
             tp_args = get_args(tp)
             if tp_args:  # Union/List/Optional
-                if origin_type == Union:
+                if origin_type in _UNION_TYPES:
                     tp_args = tuple(arg for arg in tp_args if (arg is not type(None)))
                     if (len(tp_args) > 1) and (not settings.subcommand):
                         raise ValueError(f'union type {tp} not allowed as ArgparseDataclass field except as subcommand')
@@ -436,7 +437,7 @@ class ArgparseDataclass(DataclassMixin):
         if (result := _get_parser_group_name(settings, fld.name)) is not None:
             # add argument to the group instead of the main parser
             (group_name, is_exclusive) = result
-            group: Optional[Union[_ArgumentGroup, _MutuallyExclusiveGroup]]
+            group: Optional[_ArgumentGroup | _MutuallyExclusiveGroup]
             if is_exclusive:
                 group = _get_parser_exclusive_group(parser, group_name)
             else:
@@ -490,7 +491,7 @@ class ArgparseDataclass(DataclassMixin):
             parser.add_argument(*args, **kwargs)
 
     @classmethod
-    def configure_version_argument(cls, parser: Union[ArgumentParser, _ArgumentGroup]) -> None:
+    def configure_version_argument(cls, parser: ArgumentParser | _ArgumentGroup) -> None:
         """Configures the special --version argument if a version field is included in the class settings."""
         if version := cls.__settings__.version:
             if cls.__settings__.prog:  # display the program name
@@ -500,7 +501,7 @@ class ArgparseDataclass(DataclassMixin):
             parser.add_argument('--version', action='version', version=version_str)
 
     @classmethod
-    def configure_parser(cls, parser: Union[ArgumentParser, _ArgumentGroup]) -> None:
+    def configure_parser(cls, parser: ArgumentParser | _ArgumentGroup) -> None:
         """Configures an argument parser by adding the appropriate arguments.
 
         By default, this will simply call
@@ -603,7 +604,7 @@ class ArgparseDataclass(DataclassMixin):
                 tp = fld.type
             is_subcommand = fld.metadata.get('subcommand', False)
             origin_type = get_origin(tp)
-            if origin_type == Union:
+            if origin_type in _UNION_TYPES:
                 tp_args = [arg for arg in get_args(tp) if (arg is not type(None))]
                 subcommand = getattr(args, cls.subcommand_dest_name, None)
                 if is_subcommand and subcommand:

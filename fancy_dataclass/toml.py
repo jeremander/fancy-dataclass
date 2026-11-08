@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from collections.abc import Iterable
-from dataclasses import Field
+from dataclasses import Field, dataclass
 from io import IOBase, StringIO, TextIOBase, TextIOWrapper
 from typing import IO, Any, Optional
 
@@ -17,7 +17,7 @@ from fancy_dataclass.serialize import (
     to_dict_value_basic,
 )
 from fancy_dataclass.settings import MixinSettings
-from fancy_dataclass.utils import AnyIO, dataclass_field_type, dataclass_kw_only, issubclass_safe
+from fancy_dataclass.utils import AnyIO, dataclass_field_type, issubclass_safe
 
 
 ####################
@@ -57,7 +57,7 @@ def _add_comments_to_doc(comments: Iterable[tomlkit.items.Comment], doc: tk.TOML
 # MIXINS #
 ##########
 
-@dataclass_kw_only()
+@dataclass(kw_only=True)
 class TOMLDataclassSettings(DictDataclassSettings):
     """Class-level settings for the [`TOMLDataclass`][fancy_dataclass.toml.TOMLDataclass] mixin.
 

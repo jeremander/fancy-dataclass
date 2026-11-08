@@ -1,4 +1,4 @@
-target-version = "py39"
+target-version = "py310"
 
 # rules to include
 
@@ -37,8 +37,8 @@ lint.ignore = [
     "D400",  # first line ending with period
     "D401",  # docstrings in imperative mood
     "D404",  # first word of docstring is "this"
-    "D406",
-    "D407",
+    "D406",  # newline after section name
+    "D407",  # dashed underline after section
     "D413",  # blank line after last section
     "D415",  # first line ending with punctuation
     "E731",  # assign lambda expression
@@ -47,7 +47,7 @@ lint.ignore = [
     "PT013",  # use simple import of pytest
     "PTH123",  # Path.open instead of regular open
     "RET501",  # return None
-    "UP007",  # | instead of Union
+    "UP045",  # | None instead of Optional
 ]
 
 # paths to exclude
@@ -69,6 +69,7 @@ line-length = 120
     "DTZ005",
     "DTZ007",
 ]
+"tests/test_utils.py" = ["UP007"]
 
 [lint.flake8-pytest-style]
 parametrize-names-type = "list"

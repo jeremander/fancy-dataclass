@@ -1,7 +1,7 @@
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 import dataclasses
 from dataclasses import Field, dataclass, field
-from typing import Any, Callable, ClassVar, Optional, TypeVar, Union, cast
+from typing import Any, ClassVar, Optional, TypeVar, Union, cast
 from weakref import WeakKeyDictionary, WeakValueDictionary
 
 from typing_extensions import Self, override
@@ -10,7 +10,6 @@ from fancy_dataclass.dict import AnyDict, DictDataclass, DictDataclassFieldSetti
 from fancy_dataclass.settings import FieldSettings
 from fancy_dataclass.utils import (
     MissingRequiredFieldError,
-    dataclass_kw_only,
     fully_qualified_class_name,
     get_dataclass_fields,
     issubclass_safe,
@@ -140,7 +139,7 @@ _VERSIONED_DATACLASS_REGISTRY = _VersionedDataclassRegistry()
 # VERSIONED DATACLASS #
 #######################
 
-@dataclass_kw_only()
+@dataclass(kw_only=True)
 class VersionedDataclassSettings(DictDataclassSettings):
     """Class-level settings for the [`VersionedDataclass`][fancy_dataclass.versioned.VersionedDataclass] mixin.
 

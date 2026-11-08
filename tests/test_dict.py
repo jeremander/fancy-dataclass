@@ -1,7 +1,7 @@
 from dataclasses import InitVar, dataclass, field, make_dataclass
 import re
 import sys
-from typing import Annotated, Any, ClassVar, Optional
+from typing import Annotated, Any, ClassVar, Optional, TypeAlias
 
 import pytest
 from typing_extensions import Doc
@@ -691,14 +691,12 @@ def test_typealias() -> None:
     class MyDC1(DictDataclass):
         x: IntAlias1  # type: ignore[valid-type]
     classes.append(MyDC1)
-    if sys.version_info >= (3, 10):
-        from typing import TypeAlias  # novermin
-        # TypeAlias
-        IntAlias2: TypeAlias = int
-        @dataclass
-        class MyDC2(DictDataclass):
-            x: IntAlias2
-        classes.append(MyDC2)
+    # TypeAlias
+    IntAlias2: TypeAlias = int
+    @dataclass
+    class MyDC2(DictDataclass):
+        x: IntAlias2
+    classes.append(MyDC2)
     if sys.version_info >= (3, 12):
         # 'type' keyword
         # type IntAlias3 = int

@@ -1,9 +1,9 @@
-from dataclasses import Field, fields
+from dataclasses import Field, dataclass, fields
 from typing import Any, Optional, TypeVar, cast, get_args
 
 from typing_extensions import Doc, Self, _AnnotatedAlias, override
 
-from fancy_dataclass.utils import check_dataclass, coerce_to_dataclass, conforms_to, dataclass_kw_only
+from fancy_dataclass.utils import check_dataclass, coerce_to_dataclass, conforms_to
 
 
 DA = TypeVar('DA', bound='DataclassAdaptable')
@@ -66,7 +66,7 @@ class FieldSettings(DataclassAdaptable):
         return obj
 
 
-@dataclass_kw_only()
+@dataclass(kw_only=True)
 class DocFieldSettings(FieldSettings):
     """Settings to expose a "doc" attribute of a field.
 
