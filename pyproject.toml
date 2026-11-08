@@ -7,7 +7,7 @@ name = "fancy-dataclass"
 dynamic = ["version"]
 description = "Spiff up your dataclasses with extra features."
 readme = "docs/README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = {text = "MIT License"}
 keywords = ["dataclass", "cli", "config", "orm", "serialize", "json", "toml"]
 authors = [
@@ -100,7 +100,7 @@ cov-report = ["- coverage combine", "coverage report", "coverage html"]
 cov = ["test", "cov-report"]
 
 [[tool.hatch.envs.test.matrix]]
-python = ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
+python = ["3.10", "3.11", "3.12", "3.13", "3.14"]
 
 [tool.hatch.envs.badge]
 dependencies = [
