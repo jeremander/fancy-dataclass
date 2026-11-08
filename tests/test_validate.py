@@ -23,10 +23,17 @@ class DC2(DC1, validate_init=False):
 
 
 @contextmanager
-def raises_field_type_err(cls: type | str, field_name: str, field_type: TypeLike, val: Any) -> Iterator[None]:
+def raises_field_type_err(
+    cls: type | str,
+    field_name: str,
+    field_type: TypeLike,
+    val: Any,
+    *,
+    is_default: bool = False,
+) -> Iterator[None]:
     """Context manager expecting a FieldTypeValidationError to be raised with the given parameters."""
     cls2 = NoneType if isinstance(cls, str) else cls
-    err = FieldTypeValidationError(cls2, field_name, field_type, val)
+    err = FieldTypeValidationError(cls2, field_name, field_type, val, is_default=is_default)
     err_str = re.escape(str(err))
     if isinstance(cls, str):
         err_str = err_str.replace('NoneType', f'.*{cls}')
@@ -229,22 +236,55 @@ def test_validate_init_and_assign(frozen: bool, init: bool, assign: bool) -> Non
         if frozen:
             with pytest.raises(FrozenInstanceError, match="cannot assign to field 'x'"):
                 obj.x = 'a'  # type: ignore[attr-defined]
-        elif assign:
-            with raises_field_type_err(cls, 'x', int, 'a'):
-                obj.x = 'a'  # type: ignore[attr-defined]
+            with pytest.raises(FrozenInstanceError, match="cannot assign to field 'y'"):
+                obj.y = 'a'  # type: ignore[attr-defined]
         else:
-            obj.x = 'a'  # type: ignore[attr-defined]
-            assert obj.x == 'a'  # type: ignore[attr-defined]
+            if assign:
+                with raises_field_type_err(cls, 'x', int, 'a'):
+                    obj.x = 'a'  # type: ignore[attr-defined]
+            else:
+                obj.x = 'a'  # type: ignore[attr-defined]
+                assert obj.x == 'a'  # type: ignore[attr-defined]
+            # assigning a non-field attribute is not prevented if the dataclass is not frozen
+            assert not hasattr(obj, 'y')
+            obj.y = 'a'  # type: ignore[attr-defined]
+            assert obj.y == 'a'  # type: ignore[attr-defined]
     # try setting a default value of the wrong type
+    if init:
+        # field gets rejected at dataclass wrap time, since defaults can be checked then
+        with raises_field_type_err('DCClassFlagsBadDefault', 'x', int, 'a', is_default=True):
+            @dataclass(frozen=frozen)
+            class DCClassFlagsBadDefault(ValidatedDataclass, validate_init=init, validate_assign=assign):
+                x: int = 'a'  # type: ignore[assignment]
+        with raises_field_type_err('DCFieldFlagsBadDefault', 'x', int, 'a', is_default=True):
+            @dataclass(frozen=frozen)
+            class DCFieldFlagsBadDefault(ValidatedDataclass):
+                x: int = field(default='a', metadata={'validate_init': init, 'validate_assign': assign})  # type: ignore[assignment]
+    else:
+        # field does not get rejected because default_factory is not called until object construction time
+        @dataclass(frozen=frozen)
+        class DCClassFlagsBadDefault(ValidatedDataclass, validate_init=init, validate_assign=assign):
+            x: int = 'a'  # type: ignore[assignment]
+        @dataclass(frozen=frozen)
+        class DCFieldFlagsBadDefault(ValidatedDataclass):
+            x: int = field(default='a', metadata={'validate_init': init, 'validate_assign': assign})  # type: ignore[assignment]
+        for cls in [DCClassFlagsBadDefault, DCFieldFlagsBadDefault]:
+            if (not frozen) and assign:
+                with raises_field_type_err(cls, 'x', int, 'a'):
+                    _ = cls()
+            else:
+                # NOTE: assignment is bypassed if frozen=True
+                obj = cls()
+                assert obj.x == 'a'  # type: ignore[attr-defined]
+    # try setting a default_factory value of the wrong type
     @dataclass(frozen=frozen)
-    class DCClassFlagsBadDefault(ValidatedDataclass, validate_init=init, validate_assign=assign):
-        x: int = 'a'  # type: ignore[assignment]
+    class DCClassFlagsBadDefaultFactory(ValidatedDataclass, validate_init=init, validate_assign=assign):
+        x: int = field(default_factory=lambda: 'a')  # type: ignore[assignment]
     @dataclass(frozen=frozen)
-    class DCFieldFlagsBadDefault(ValidatedDataclass):
-        x: int = field(default='a', metadata={'validate_init': init, 'validate_assign': assign})  # type: ignore[assignment]
-    for cls in [DCClassFlagsBadDefault, DCFieldFlagsBadDefault]:
+    class DCFieldFlagsBadDefaultFactory(ValidatedDataclass):
+        x: int = field(default_factory=lambda: 'a', metadata={'validate_init': init, 'validate_assign': assign})  # type: ignore[assignment]
+    for cls in [DCClassFlagsBadDefaultFactory, DCFieldFlagsBadDefaultFactory]:
         if init or ((not frozen) and assign):
-        # if ((not frozen) and init) or assign:
             with raises_field_type_err(cls, 'x', int, 'a'):
                 _ = cls()
         else:

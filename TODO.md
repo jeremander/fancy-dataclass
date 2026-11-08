@@ -11,8 +11,6 @@
     - Relationships
 
 - Validation support: `ValidatedDataclass`
-  - For invalid default, check the type at dataclass creation time.
-    - In tests, compare when the error occurs for `default` vs. `default_factory`.
   - Deal with `InitVar` and `init=False` fields.
   - Runtime type-check all class and field settings unilaterally for all settings classes?
     - I.e. have the settings mixins perform validation (but can't subclass `ValidatedDataclass` since that would be circular -- factor it into a helper function?)

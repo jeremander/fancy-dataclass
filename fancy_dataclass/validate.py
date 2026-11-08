@@ -23,33 +23,44 @@ from fancy_dataclass.utils import (
 class FieldTypeValidationError(TypeError):
     """Error type for runtime type-checking a value of a dataclass field."""
 
-    def __init__(self, cls: type, field_name: str, field_type: TypeLike, value: Any) -> None:
+    def __init__(
+        self,
+        cls: type,
+        field_name: str,
+        field_type: TypeLike,
+        value: Any,
+        *,
+        is_default: bool = False,
+    ) -> None:
         """Constructor for `TypeValidationError`.
 
         Args:
             cls: type of the dataclass whose field is being checked
             field_name: name of the field being checked
             field_type: type to check the value against
-            value: value to type-check"""
+            value: value to type-check
+            is_default: flag indicating whether the value is a field default"""
         self.cls = cls
         self.field_name = field_name
         self.field_type = field_type
         self.value = value
+        self.is_default = is_default
         cls_name = get_type_name(cls)
         if value == MISSING:
             # error message indicates that the field value is missing, rather than the wrong type
             err_msg = f'field {field_name!r} is missing for {cls_name}'
         else:
             err = TypeValidationError(field_type, value)
-            err_msg = f'field {field_name!r} of {cls_name}: {err}'
+            default_str = 'default ' if is_default else ''
+            err_msg = f'field {field_name!r} of {cls_name}: {default_str}{err}'
         super().__init__(err_msg)
 
 
-def _validate_type(cls: type, field_name: str, field_type: TypeLike, value: Any) -> None:
+def _validate_type(cls: type, field_name: str, field_type: TypeLike, value: Any, *, is_default: bool = False) -> None:
     """Given a class, field name, field type, and value, checks if the value matches the expected type.
     If not, raises a FieldTypeValidationError."""
     if not conforms_to(value, field_type):
-        raise FieldTypeValidationError(cls, field_name, field_type, value)
+        raise FieldTypeValidationError(cls, field_name, field_type, value, is_default=is_default)
 
 
 ##########
@@ -103,11 +114,13 @@ class ValidatedDataclass(DataclassMixin):
     @classmethod
     def __post_dataclass_wrap__(cls, wrapped_cls: type[Self]) -> None:
         if wrapped_cls.__settings__.validate_init:
-            # validate ClassVar values at dataclass wrap time
+            # validate ClassVar values and field default values at dataclass wrap time
             for fld in get_dataclass_fields(wrapped_cls, include_all=True):
                 if type_is_classvar(fld.type) and hasattr(wrapped_cls, fld.name):
                     tp = get_args(fld.type)[0]
                     _validate_type(wrapped_cls, fld.name, tp, getattr(wrapped_cls, fld.name))
+                elif (wrapped_cls._field_validation_flags(fld).validate_init) and (fld.default is not MISSING):
+                    _validate_type(wrapped_cls, fld.name, fld.type, fld.default, is_default=True)
         # determine whether any fields should validate upon assignment
         if wrapped_cls.__dataclass_params__.frozen:  # type: ignore[attr-defined]
             validate_assign = False
