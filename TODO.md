@@ -2,7 +2,7 @@
 
 # TODO
 
-## v0.12.1
+## v0.13.0
 
 - Documentation
   - CLI
@@ -12,9 +12,6 @@
 
 ## Future
 
-- Upgrade to Py3.10
-  - Can use `match`
-  - Can use pipe for unions
 - General-purpose validator mixin? `ValidatedDataclass`?
   - Does type-checking post-init, with ability to supply custom validation functions
   - Have most other mixins inherit from this?
@@ -32,8 +29,7 @@
   - PEP 712 (`converter` argument for dataclass fields), was rejected
   - Can implement it by hooking `__post_init__` with `__init_subclass__`, using `object.__setattr__` to set fields to converted values (even for frozen dataclass)
   - Allow `Annotated` as an alternative to `field.metadata`
-    - Esp. with `Doc`: this could auto-populate JSON schema, argparse description
-  - `BinaryDataclass`?
+    - Already supporting this with `Doc` for some things like `argparse` help, but could somehow encompass all metadata?
 - `alias` metadata field for dict conversion
   - Should this be bidirectional? Or separate fields for each direction? [pydantic](https://docs.pydantic.dev/latest/concepts/alias/) provides both.
   - https://github.com/jeremander/fancy-dataclass/issues/5
@@ -56,6 +52,7 @@
       - or a function that takes a name and version and returns a bool
     - `get_version_registry`: return the global singleton registry
 - `JSON5Dataclass`?
+- `BinaryDataclass`?
 - Tiered configs?
 - Improve `mkdocs` documentation
   - Auto-generate per-field descriptions via PEP 727?

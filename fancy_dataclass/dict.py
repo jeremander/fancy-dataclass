@@ -192,15 +192,17 @@ class DictDataclass(DataclassMixin):
         """Converts an arbitrary value to a form appropriate for dict values.
 
         This will recursively process values within containers (lists, dicts, etc.)."""
-        if isinstance(val, DictDataclass):
-            return val.to_dict(full=full)
-        if isinstance(val, list):
-            return [cls._to_dict_value(elt, full) for elt in val]
-        if isinstance(val, tuple):
-            return tuple(cls._to_dict_value(elt, full) for elt in val)
-        if isinstance(val, dict):
-            return {k: cls._to_dict_value(v, full) for (k, v) in val.items()}
-        return cls._to_dict_value_basic(val)
+        match val:
+            case DictDataclass():
+                return val.to_dict(full=full)
+            case list():
+                return [cls._to_dict_value(elt, full) for elt in val]
+            case tuple():
+                return tuple(cls._to_dict_value(elt, full) for elt in val)
+            case dict():
+                return {k: cls._to_dict_value(v, full) for (k, v) in val.items()}
+            case _:
+                return cls._to_dict_value_basic(val)
 
     def _to_dict(self, full: bool) -> AnyDict:
         d = self._dict_init()

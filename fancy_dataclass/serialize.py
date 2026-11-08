@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from collections.abc import Collection
 from enum import Enum
 from inspect import getfullargspec
 from io import BytesIO, StringIO, TextIOBase
@@ -21,23 +22,25 @@ def to_dict_value_basic(val: Any) -> Any:
 
     Returns:
         A version of that value suitable for serialization"""
-    if isinstance(val, Enum):
-        return val.value
-    if isinstance(val, range):  # store the range bounds
-        bounds = [val.start, val.stop]
-        if val.step != 1:
-            bounds.append(val.step)
-        return bounds
-    if isinstance(val, Path):  # convert Path to string
-        return str(val)
+    match val:
+        case Enum():
+            return val.value
+        case range(start=start, stop=stop, step=step):  # store the range bounds
+            bounds = [start, stop]
+            if step != 1:
+                bounds.append(step)
+            return bounds
+        case Path():
+            return str(val)
     if hasattr(val, 'dtype'):
-        if hasattr(val, '__len__'):  # assume it's a numpy array of numbers
-            return [float(elt) for elt in val]
-        # numpy scalars have trouble serializing
-        if isinstance(val, Integral):
-            return int(val)
-        if isinstance(val, float):
-            return float(val)  # pyrefly: ignore[unnecessary-type-conversion]
+        match val:
+            case Collection():  # assume it's a numpy array of numbers
+                return [float(elt) for elt in val]
+            # numpy scalars have trouble serializing
+            case Integral():
+                return int(val)
+            case float():
+                return float(val)  # pyrefly: ignore[unnecessary-type-conversion]
     return val
 
 def from_dict_value_basic(tp: type, val: Any) -> Any:

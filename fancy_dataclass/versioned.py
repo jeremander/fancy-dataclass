@@ -27,23 +27,24 @@ class Version(tuple[int, ...]):
     def __new__(cls, version: AnyVersion) -> 'Version':  # noqa: PYI034
         """Constructs a `Version` from a single integer, tuple of integers, or `.`-separated version string."""
         err = ValueError(f'invalid version {version!r}')
-        if isinstance(version, Version):
-            return version
-        if isinstance(version, int):
-            parts = [version]
-        elif isinstance(version, str):
-            parts = []
-            for part in version.strip().split('.'):
-                try:
-                    parts.append(int(part))
-                except ValueError as e:
-                    raise err from e
-        elif isinstance(version, Sequence):
-            parts = version  # type: ignore[assignment]
-            if (not version) or any(not isinstance(part, int) for part in parts):
+        match version:
+            case Version():
+                return version
+            case int():
+                parts = [version]
+            case str():
+                parts = []
+                for part in version.strip().split('.'):
+                    try:
+                        parts.append(int(part))
+                    except ValueError as e:
+                        raise err from e
+            case Sequence():
+                parts = version  # type: ignore[assignment]
+                if (not version) or any(not isinstance(part, int) for part in parts):
+                    raise err
+            case _:
                 raise err
-        else:
-            raise err
         return super().__new__(cls, tuple(parts))
 
     def __str__(self) -> str:
