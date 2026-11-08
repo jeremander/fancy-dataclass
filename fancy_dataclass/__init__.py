@@ -8,6 +8,7 @@ from .mixin import DataclassMixin
 from .sql import SQLDataclass
 from .subprocess import SubprocessDataclass
 from .toml import TOMLDataclass
+from .validate import ValidatedDataclass
 from .versioned import VersionedDataclass, version
 
 
@@ -27,6 +28,7 @@ __all__ = [
     'SQLDataclass',
     'SubprocessDataclass',
     'TOMLDataclass',
+    'ValidatedDataclass',
     'VersionedDataclass',
     'version',
 ]

@@ -10,26 +10,30 @@
     - Primary key (default `_id`)
     - Relationships
 
-## Future
-
-- General-purpose validator mixin? `ValidatedDataclass`?
-  - Does type-checking post-init, with ability to supply custom validation functions
-  - Have most other mixins inherit from this?
+- Validation support: `ValidatedDataclass`
   - Interaction with `validate=True` in `DictDataclass`?
     - Simplest would be to deprecate/remove *all* validation features from here.
     - Alternatively could keep this flag, and have the class inherit from `ValidatedDataclass` if it's set.
+      - Or inherit unconditionally but toggle validation flags to `False` based on the flag.
   - Configs
     - Flag to validate when setting field value (default `False`)
-    - Collection checking mode (`O1`, `Ologn`, `On`)
-    - PEP 484 tower
+    - Collection checking mode: `O1`, `Ologn`, `On` (default `On`)
+    - Respect PEP 484 tower (default `True` for now, since `typeguard` does so)
     - Whether to decorate all methods with arg & return type-checking (default `False`)
+  - Allow all (or at least most) configs to be overridable at field level
+  - Runtime type-check all class and field settings unilaterally?
 - Field metadata
+  - Custom validation functions
   - Field converters
     - https://github.com/jeremander/fancy-dataclass/issues/2
   - PEP 712 (`converter` argument for dataclass fields), was rejected
   - Can implement it by hooking `__post_init__` with `__init_subclass__`, using `object.__setattr__` to set fields to converted values (even for frozen dataclass)
   - Allow `Annotated` as an alternative to `field.metadata`
     - Already supporting this with `Doc` for some things like `argparse` help, but could somehow encompass all metadata?
+  - Documentation
+
+## Future
+
 - `alias` metadata field for dict conversion
   - Should this be bidirectional? Or separate fields for each direction? [pydantic](https://docs.pydantic.dev/latest/concepts/alias/) provides both.
   - https://github.com/jeremander/fancy-dataclass/issues/5
