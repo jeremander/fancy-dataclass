@@ -1,16 +1,55 @@
 from dataclasses import Field, dataclass
-from typing import Any, ClassVar, Optional
+from typing import Any, ClassVar, Optional, get_args
+
+from typing_extensions import Self
 
 from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.settings import FieldSettings, MixinSettings
 from fancy_dataclass.utils import (
     TypeLike,
+    TypeValidationError,
     conforms_to,
-    dataclass_field_type,
     fully_qualified_class_name,
     get_dataclass_fields,
+    get_type_name,
+    type_is_classvar,
 )
 
+
+####################
+# HELPER FUNCTIONS #
+####################
+
+class FieldTypeValidationError(TypeError):
+    """Error type for runtime type-checking a value of a dataclass field."""
+
+    def __init__(self, cls: type, field_name: str, val: Any, tp: TypeLike) -> None:
+        """Constructor for `TypeValidationError`.
+
+        Args:
+            cls: type of the dataclass whose field is being checked
+            field_name: name of the field being checked
+            tp: type to check the value against
+            val: value to type-check"""
+        self.cls = cls
+        self.field_name = field_name
+        self.val = val
+        self.tp = tp
+        cls_name = get_type_name(cls)
+        err = TypeValidationError(tp, val)
+        super().__init__(f'field {field_name!r} of {cls_name}: {err}')
+
+
+def _validate_type(cls: type, field_name: str, val: Any, field_type: TypeLike) -> None:
+    """Given a class, value, field name, and field type, checks if the value matches the expected type.
+    If not, raises a TypeError."""
+    if not conforms_to(val, field_type):
+        raise FieldTypeValidationError(cls, field_name, val, field_type)
+
+
+##########
+# MIXINS #
+##########
 
 @dataclass(kw_only=True)
 class ValidatedDataclassSettings(MixinSettings):
@@ -49,21 +88,20 @@ class _FieldValidationFlags:
     validate_assign: bool
 
 
-def _get_type_name(tp: TypeLike) -> str:
-    """Renders a type-like object as a human-readable string."""
-    if isinstance(tp, type):
-        if tp.__module__ == 'builtins':
-            return tp.__name__
-        return fully_qualified_class_name(tp)
-    return str(tp)
-
-
 class ValidatedDataclass(DataclassMixin):
     """Mixin class for dataclasses which can validate their fields upon initialization or assignment."""
 
     __settings_type__ = ValidatedDataclassSettings
     __settings__: ClassVar[ValidatedDataclassSettings] = ValidatedDataclassSettings()
     __field_settings_type__ = ValidatedDataclassFieldSettings
+
+    @classmethod
+    def __post_dataclass_wrap__(cls, wrapped_cls: type[Self]) -> None:
+        if wrapped_cls.__settings__.validate_init:
+            for fld in get_dataclass_fields(wrapped_cls, include_all=True):
+                if type_is_classvar(fld.type) and hasattr(wrapped_cls, fld.name):
+                    tp = get_args(fld.type)[0]
+                    _validate_type(wrapped_cls, fld.name, getattr(wrapped_cls, fld.name), tp)
 
     @classmethod
     def _field_validation_flags(cls, fld: Field[Any]) -> _FieldValidationFlags:
@@ -79,21 +117,12 @@ class ValidatedDataclass(DataclassMixin):
         # TODO: do not validate InitVar or init=False fields?
         return _FieldValidationFlags(validate_init=validate_init, validate_assign=validate_assign)
 
-    # TODO: runtime-validate `ClassVar`s in __init_subclass__
-
     def _validate_field(self, fld: Field[Any]) -> None:
         cls = type(self)
-        cls_name = fully_qualified_class_name(cls)
         if not hasattr(self, fld.name):
+            cls_name = fully_qualified_class_name(cls)
             raise TypeError(f'field {fld.name!r} is missing for {cls_name}')
-        val = getattr(self, fld.name)
-        fld_type = dataclass_field_type(cls, fld.name)  # type: ignore[arg-type]
-        if not conforms_to(val, fld_type):
-            val_type_str = _get_type_name(type(val))
-            fld_type_str = _get_type_name(fld_type)
-            raise TypeError(
-                f'field {fld.name!r} of {cls_name}: value has type {val_type_str}, expected {fld_type_str}'
-            )
+        _validate_type(cls, fld.name, getattr(self, fld.name), fld.type)
 
     def __post_init__(self, **kwargs: Any) -> None:
         for fld in get_dataclass_fields(self):

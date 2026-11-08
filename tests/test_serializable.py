@@ -19,7 +19,7 @@ from fancy_dataclass.dict import DictDataclass, DictDataclassSettings
 from fancy_dataclass.json import JSONBaseDataclass, JSONDataclass, JSONSerializable
 from fancy_dataclass.serialize import FileSerializable
 from fancy_dataclass.toml import TOMLDataclass
-from fancy_dataclass.utils import coerce_to_dataclass, dataclass_type_map, issubclass_safe
+from fancy_dataclass.utils import TypeConversionError, coerce_to_dataclass, dataclass_type_map, issubclass_safe
 
 from .test_dict import DCSuppress, DCSuppress2
 
@@ -436,14 +436,14 @@ class TestJSON(TestDict):
         (
             DCOptionalInt(None, 1),  # type: ignore[arg-type]
             {'x': None, 'y': 1},
-            (True, ValueError, "could not convert None to type 'int'"),
+            (True, TypeConversionError, "could not convert None to type int"),
         ),
         (DCOptionalStr('a', 'b'), {'x': 'a', 'y': 'b'}, None),
         (DCOptionalStr('a', None), {'x': 'a', 'y': None}, None),
         (
             DCOptionalStr(None, 'b'),  # type: ignore[arg-type]
             {'x': None, 'y': 'b'},
-            (True, ValueError, "could not convert None to type 'str'"),
+            (True, TypeConversionError, "could not convert None to type str"),
         ),
     ])
     def test_optional(self, obj: DictDataclass, d: dict[str, Any], err: Optional[ErrInfo]) -> None:
@@ -454,7 +454,7 @@ class TestJSON(TestDict):
         (
             DCLiteral('b'),  # type: ignore[arg-type]
             {'lit': 'b'},
-            (True, ValueError, re.escape("could not convert 'b' to type \"typing.Literal['a', 1]\"")),
+            (True, TypeConversionError, re.escape("could not convert 'b' to type typing.Literal['a', 1]")),
         ),
     ])
     def test_literal(self, obj: DictDataclass, d: dict[str, Any], err: Optional[ErrInfo]) -> None:
@@ -498,7 +498,7 @@ class TestJSON(TestDict):
         assert obj.to_dict() == {'d': td}
         # invalid TypedDicts
         for d in [{'x': 3}, {'x': 3, 'y': 'a', 'z': 1}, {'x': 3, 'y': 4}, {'x': 3, 'y': None}]:
-            with pytest.raises(ValueError, match="could not convert .* to type .*"):
+            with pytest.raises(TypeConversionError, match="could not convert .* to type .*"):
                 _ = DCTypedDict.from_dict({'d': d})
 
     @pytest.mark.parametrize(['obj', 'd', 'err'], [
@@ -508,7 +508,7 @@ class TestJSON(TestDict):
         (
             DCTypedNamedTuple(TypedNamedTuple(3, 4)),  # type: ignore[arg-type]
             {'t': {'x': 3, 'y': 4}},
-            (True, ValueError, "could not convert 4 to type 'str'"),
+            (True, TypeConversionError, "could not convert 4 to type str"),
         ),
     ])
     def test_namedtuple(self, obj: DictDataclass, d: dict[str, Any], err: Optional[ErrInfo]) -> None:

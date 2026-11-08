@@ -1,27 +1,27 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
-import sys
+from types import NoneType
 from typing import Any, ClassVar, Optional, Union
 
 import pytest
 from pytest import param
 
 from fancy_dataclass.utils import (
+    TypeLike,
     _is_subtype,
     camel_case_to_kebab_case,
     coerce_to_dataclass,
     conforms_to,
     get_dataclass_fields,
+    get_type_name,
     merge_dataclasses,
     snake_case_to_camel_case,
     type_is_optional,
 )
 
 
-try:
-    from types import NoneType  # novermin
-except ImportError:  # Python < 3.10
-    NoneType = type(None)  # type: ignore[misc]
+class Example:
+    ...
 
 
 @pytest.mark.parametrize(['snake', 'camel'], [
@@ -68,6 +68,28 @@ def test_camel_case_to_kebab_case(camel: str, kebab: str) -> None:
     """Tests conversion of camel case to kebab case."""
     assert camel_case_to_kebab_case(camel) == kebab
 
+@pytest.mark.parametrize(['tp', 'name'], [
+    (int, 'int'),
+    (float, 'float'),
+    (str, 'str'),
+    (int | str, 'int | str'),
+    (list[int], 'list[int]'),
+    (tuple[int, str], 'tuple[int, str]'),
+    (dict[str, int], 'dict[str, int]'),
+    (None, 'None'),
+    (NoneType, 'NoneType'),
+    (int | None, 'int | None'),
+    (None | int, 'None | int'),
+    (Optional[int], 'typing.Optional[int]'),
+    (Sequence[int], 'collections.abc.Sequence[int]'),
+    (ClassVar[int], 'typing.ClassVar[int]'),
+    (Any, 'typing.Any'),
+    (Example, f'{__name__}.Example'),
+])
+def test_get_type_name(tp: TypeLike, name: str) -> None:
+    """Tests the get_type_name function."""
+    assert get_type_name(tp) == name
+
 @pytest.mark.parametrize(['tp', 'is_optional'], [
     (int, False),
     (type(None), False),
@@ -79,16 +101,8 @@ def test_camel_case_to_kebab_case(camel: str, kebab: str) -> None:
     (list[Optional[int]], False),
 ])
 def test_type_is_optional(tp: Any, is_optional: bool) -> None:
+    """Tests the type_is_optional function."""
     assert type_is_optional(tp) == is_optional
-
-@pytest.mark.skipif(sys.version_info[:2] < (3, 10), reason='Py3.10 union type')
-def test_type_is_optional_py310() -> None:  # novermin
-    assert type_is_optional(int | None)
-    assert type_is_optional(None | int)
-    assert type_is_optional(None | int | str)
-    assert type_is_optional(int | str | None)
-    assert type_is_optional(Optional[int | str])
-    assert type_is_optional(Optional[int] | str)
 
 @pytest.mark.parametrize(['tp1', 'tp2', 'output'], [
     (int, int, True),
@@ -330,6 +344,7 @@ DC_FLATTEN_INVALID_PARAMS = [
 
 
 class TestMerge:
+    """Tests the merge_dataclasses function."""
 
     @pytest.mark.parametrize(['classes', 'field_names'], [
         ([], []),
@@ -371,6 +386,7 @@ class TestMerge:
         assert [fld.name for fld in get_dataclass_fields(X3, include_all=True)] == ['x', 'y']
 
     def test_merge_inheritance(self) -> None:
+        """Tests merge_dataclasses with complex inheritance scenarios."""
         @dataclass
         class DC1:
             x: int

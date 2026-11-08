@@ -10,6 +10,7 @@
     - Primary key (default `_id`)
     - Relationships
 
+- Improve param names in public `TypeError` subtypes.
 - Validation support: `ValidatedDataclass`
   - Interaction with `validate=True` in `DictDataclass`?
     - Simplest would be to deprecate/remove *all* validation features from here.

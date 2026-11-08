@@ -50,10 +50,10 @@ DataclassType: TypeAlias = type['DataclassInstance']
 # ERROR TYPES #
 ###############
 
-class TypeConversionError(ValueError):
+class TypeConversionError(TypeError):
     """Error type for type conversion."""
 
-    def __init__(self, tp: type, val: Any) -> None:
+    def __init__(self, tp: TypeLike, val: Any) -> None:
         """Constructor for `TypeConversionError`.
 
         Args:
@@ -61,8 +61,21 @@ class TypeConversionError(ValueError):
             val: value to convert"""
         self.tp = tp
         self.val = val
-        tp_name = re.sub("'>$", '', re.sub(r"^<\w+ '", '', str(tp)))
-        super().__init__(f'could not convert {val!r} to type {tp_name!r}')
+        super().__init__(f'could not convert {val!r} to type {get_type_name(tp)}')
+
+
+class TypeValidationError(TypeError):
+    """Error type for runtime type-checking."""
+
+    def __init__(self, tp: TypeLike, val: Any) -> None:
+        """Constructor for `TypeValidationError`.
+
+        Args:
+            tp: type to check the value against
+            val: value to type-check"""
+        self.tp = tp
+        self.val = val
+        super().__init__(f'value {val!r} does not match expected type {get_type_name(tp)}')
 
 
 class MissingRequiredFieldError(ValueError):
@@ -139,6 +152,10 @@ def safe_dict_update(d1: dict[str, Any], d2: dict[str, Any]) -> None:
 
 # TYPE INSPECTION
 
+def get_type_name(tp: TypeLike) -> str:
+    """Renders a type-like object as a human-readable string."""
+    return re.sub("'>$", '', re.sub(r"^<\w+ '", '', str(tp)))
+
 _UNION_TYPES = [Union, types.UnionType] if hasattr(types, 'UnionType') else [Union]  # novermin
 
 def type_is_union(tp: TypeLike) -> bool:
@@ -163,6 +180,16 @@ def type_is_optional(tp: TypeLike) -> bool:
     origin_type = get_origin(tp)
     args = get_args(tp)
     return (origin_type in _UNION_TYPES) and (type(None) in args)
+
+def type_is_classvar(tp: TypeLike) -> bool:
+    """Determines if a type is a ClassVar.
+
+    Args:
+        tp: Type to check
+
+    Returns:
+        True if the type is a ClassVar"""
+    return get_origin(tp) is ClassVar
 
 def all_subclasses(cls: type[T]) -> list[type[T]]:
     """Gets all subclasses of a given class, including the class itself.
@@ -220,7 +247,7 @@ def _is_subtype(tp1: type, tp2: type) -> bool:
         return False
     return issubclass_safe(tp1, tp2)  # fallback
 
-def conforms_to(obj: Any, tp: type) -> bool:
+def conforms_to(obj: Any, tp: TypeLike) -> bool:
     """Checks if the given object conforms to the given type.
 
     This is more flexible than `isinstance` in that it will handle compound types like `list[...]`."""

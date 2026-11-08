@@ -30,6 +30,7 @@ from fancy_dataclass.utils import (
     get_dataclass_fields,
     issubclass_safe,
     obj_class_name,
+    type_is_classvar,
     type_is_union,
 )
 
@@ -211,11 +212,10 @@ class DictDataclass(DataclassMixin):
         flattened_field_names = self._get_flattened_field_names()
         for fld in get_dataclass_fields(self, include_all=True):
             name = fld.name
-            is_class_var = get_origin(fld.type) is ClassVar
             settings = self._field_settings(fld).adapt_to(DictDataclassFieldSettings)
             if (should_suppress := settings.suppress) is None:
                 # suppress field by default if it is a ClassVar or InitVar or init=False
-                should_suppress = is_class_var or isinstance(fld.type, InitVar) or (not fld.init)
+                should_suppress = type_is_classvar(fld.type) or isinstance(fld.type, InitVar) or (not fld.init)
             if should_suppress:
                 continue
             val = getattr(self, name)

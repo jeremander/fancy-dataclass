@@ -1,10 +1,14 @@
-from collections.abc import Sequence
+from collections.abc import Iterator, Sequence
+from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Any
+import re
+from types import NoneType
+from typing import Any, ClassVar
 
 import pytest
 
-from fancy_dataclass.validate import ValidatedDataclass
+from fancy_dataclass.utils import TypeLike
+from fancy_dataclass.validate import FieldTypeValidationError, ValidatedDataclass
 
 
 @dataclass
@@ -16,6 +20,18 @@ class DC1(ValidatedDataclass):
 class DC2(DC1, validate_init=False):
     x: int
     y: str
+
+
+@contextmanager
+def raises_field_type_err(cls: type | str, field_name: str, val: Any, tp: TypeLike) -> Iterator[None]:
+    """Context manager expecting a FieldTypeValidationError to be raised with the given parameters."""
+    cls2 = NoneType if isinstance(cls, str) else cls
+    err = FieldTypeValidationError(cls2, field_name, val, tp)
+    err_str = re.escape(str(err))
+    if isinstance(cls, str):
+        err_str = err_str.replace('NoneType', f'.*{cls}')
+    with pytest.raises(FieldTypeValidationError, match=err_str):
+        yield
 
 
 @pytest.mark.parametrize(['args', 'kwargs'], [
@@ -50,11 +66,11 @@ def test_valid_fields(args: Sequence[Any], kwargs: dict[str, Any]) -> None:
     ),
     (
         {'x': 1, 'y': 2},
-        "field 'y' of .*DC1: value has type int, expected str",
+        "field 'y' of .*DC1: value 2 does not match expected type str",
     ),
     (
         {'x': 'a', 'y': 'b'},
-        "field 'x' of .*DC1: value has type str, expected int",
+        "field 'x' of .*DC1: value 'a' does not match expected type int",
     ),
 ])
 def test_invalid_fields(kwargs: dict[str, Any], err: str) -> None:
@@ -76,10 +92,10 @@ def test_int_as_float() -> None:
     obj2 = DCFloat(1)
     assert obj1 == obj2
     for val in ['1', '1.0']:
-        with pytest.raises(TypeError, match="field 'x' of .*DCFloat: value has type str, expected float"):
+        with raises_field_type_err(DCFloat, 'x', val, float):
             _ = DCFloat(val)  # type: ignore[arg-type]
 
-def test_collection_validation() -> None:
+def test_validate_collection() -> None:
     """Tests that all values in a collection are type-checked."""
     @dataclass
     class DCList(ValidatedDataclass):
@@ -90,10 +106,11 @@ def test_collection_validation() -> None:
     # check that changing an element's type makes it invalid
     for i in range(n):
         vals = [str(j) if (j == i) else j for j in range(n)]
-        with pytest.raises(TypeError, match=r"field 'vals' of .*DCList: value has type list, expected list\[int\]"):
+        with raises_field_type_err(DCList, 'vals', vals, list[int]):
             _ = DCList(vals)  # type: ignore[arg-type]
     # check that tuple is not valid as a list
-    with pytest.raises(TypeError, match=r"field 'vals' of .*DCList: value has type tuple, expected list\[int\]"):
+    vals = tuple(range(n))
+    with raises_field_type_err(DCList, 'vals', vals, list[int]):
         _ = DCList(tuple(range(n)))  # type: ignore[arg-type]
     # Sequence field type permits both list and tuple
     @dataclass
@@ -103,11 +120,39 @@ def test_collection_validation() -> None:
         vals = tp(range(n))
         assert DCSequence(vals).vals == vals
         vals = tp(str(j) if (j == n - 1) else j for j in range(n))
-        with pytest.raises(
-            TypeError,
-            match=r"field 'vals' of .*DCSequence: value has type .*, expected .*Sequence\[int\]",
-        ):
+        with raises_field_type_err(DCSequence, 'vals', vals, Sequence[int]):
             _ = DCSequence(vals)  # pyrefly: ignore[bad-argument-type]
+
+def test_validate_classvar() -> None:
+    """Tests validation of a ClassVar."""
+    with raises_field_type_err('DCClassVar', 'x', 'a', int):
+        @dataclass
+        class DCClassVar(ValidatedDataclass):
+            x: ClassVar[int] = 'a'  # type: ignore[assignment]
+    @dataclass
+    class DCClassVar(ValidatedDataclass):
+        x: ClassVar[int]
+    with pytest.raises(AttributeError, match="type object 'DCClassVar' has no attribute 'x'"):
+        _ = DCClassVar.x
+    obj = DCClassVar()
+    with pytest.raises(AttributeError, match="'DCClassVar' object has no attribute 'x'"):
+        _ = obj.x
+    @dataclass
+    class DCClassVarSub1(DCClassVar):
+        x: ClassVar[int] = 1
+    assert DCClassVarSub1.x == 1
+    obj = DCClassVarSub1()
+    assert obj.x == 1
+    with raises_field_type_err('DCClassVarSub2', 'x', 'a', int):
+        @dataclass
+        class DCClassVarSub2(DCClassVar):
+            x: ClassVar[int] = 'a'  # type: ignore[assignment]
+    @dataclass
+    class DCClassVarSub3(DCClassVar, validate_init=False):
+        x: ClassVar[int] = 'a'  # type: ignore[assignment]
+    assert DCClassVarSub3.x == 'a'  # type: ignore[comparison-overlap]
+    obj = DCClassVarSub3()
+    assert obj.x == 'a'  # type: ignore[comparison-overlap]
 
 def test_nested() -> None:
     """Tests validation of a nested ValidatedDataclass."""
@@ -134,7 +179,7 @@ def test_nested() -> None:
             should_error = (outer_cls is DCOuterValidate) and (inner_cls is DC1Fake)
             inner = inner_cls(1, 'a')
             if should_error:
-                with pytest.raises(TypeError, match=r"field 'inner' of .*: value has type .*DC1Fake, expected .*DC1"):
+                with raises_field_type_err(outer_cls, 'inner', inner, DC1):
                     _ = outer_cls(inner)  # type: ignore[arg-type]
             else:
                 outer = outer_cls(inner)  # type: ignore[arg-type]
@@ -144,10 +189,7 @@ def test_nested() -> None:
         should_error = outer_cls is DCOuterValidate
         for inner in [1, 'a']:
             if should_error:
-                with pytest.raises(
-                    TypeError,
-                    match=r"field 'inner' of .*DCOuterValidate: value has type .*, expected .*DC1",
-                ):
+                with raises_field_type_err(outer_cls, 'inner', inner, DC1):
                     _ = outer_cls(inner)  # type: ignore[arg-type]
             else:
                 outer = outer_cls(inner)  # type: ignore[arg-type]

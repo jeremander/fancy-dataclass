@@ -124,9 +124,9 @@ def test_make_dataclass() -> None:
     obj = dc.from_dict({'a': 3, 'b': 'b'})
     assert isinstance(obj, dc)  # pyrefly: ignore[invalid-argument]
     _test_dict_round_trip(obj, {'a': 3, 'b': 'b'})
-    with pytest.raises(ValueError, match="could not convert 4 to type 'str'"):
+    with pytest.raises(TypeConversionError, match="could not convert 4 to type str"):
         _ = dc.from_dict({'a': 3, 'b': 4})
-    with pytest.raises(ValueError, match="could not convert '3.7' to type 'int'"):
+    with pytest.raises(TypeConversionError, match=r"could not convert '3\.7' to type int"):
         _ = dc.from_dict({'a': '3.7', 'b': 'b'})
     # no type annotations
     dc = make_dataclass('TestDataclass', ['a', 'b'], bases=(DictDataclass,))
@@ -731,7 +731,7 @@ def test_validate_basic(class_validate: bool, field_validate: Optional[bool]) ->
     assert d == {'x': '1'}
     validate = class_validate if (field_validate is None) else field_validate
     if validate:
-        with pytest.raises(TypeConversionError, match="could not convert '1' to type 'int'"):
+        with pytest.raises(TypeConversionError, match="could not convert '1' to type int"):
             _ = DC.from_dict(d)
     else:
         assert DC.from_dict(d) == obj
@@ -752,16 +752,16 @@ def test_validate_nested() -> None:
         assert cls.from_dict(d) == cls(Inner(1))
     d = {'inner': {'x': '1'}}
     for cls in [OuterNoValidate, OuterValidate]:
-        with pytest.raises(TypeConversionError, match="could not convert '1' to type 'int'"):
+        with pytest.raises(TypeConversionError, match="could not convert '1' to type int"):
             _ = cls.from_dict(d)
     d = {'inner': 123}
     for cls in [OuterNoValidate, OuterValidate]:
-        with pytest.raises(TypeConversionError, match="could not convert 123 to type 'dict'"):
+        with pytest.raises(TypeConversionError, match="could not convert 123 to type dict"):
             _ = cls.from_dict(d)
     inner = object()
     d = {'inner': inner}
     for cls in [OuterNoValidate, OuterValidate]:
-        with pytest.raises(TypeConversionError, match="could not convert .* to type 'dict'"):
+        with pytest.raises(TypeConversionError, match="could not convert .* to type dict"):
             _ = cls.from_dict(d)
     d = {'inner': Inner('1')}  # type: ignore[arg-type]
     for cls in [OuterNoValidate, OuterValidate]:
