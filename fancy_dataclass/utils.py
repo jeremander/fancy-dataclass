@@ -53,29 +53,29 @@ DataclassType: TypeAlias = type['DataclassInstance']
 class TypeConversionError(TypeError):
     """Error type for type conversion."""
 
-    def __init__(self, tp: TypeLike, val: Any) -> None:
+    def __init__(self, target_type: TypeLike, value: Any) -> None:
         """Constructor for `TypeConversionError`.
 
         Args:
-            tp: type to convert to
-            val: value to convert"""
-        self.tp = tp
-        self.val = val
-        super().__init__(f'could not convert {val!r} to type {get_type_name(tp)}')
+            target_type: type to convert to
+            value: value to convert"""
+        self.target_type = target_type
+        self.value = value
+        super().__init__(f'could not convert {value!r} to type {get_type_name(target_type)}')
 
 
 class TypeValidationError(TypeError):
     """Error type for runtime type-checking."""
 
-    def __init__(self, tp: TypeLike, val: Any) -> None:
+    def __init__(self, expected_type: TypeLike, value: Any) -> None:
         """Constructor for `TypeValidationError`.
 
         Args:
-            tp: type to check the value against
-            val: value to type-check"""
-        self.tp = tp
-        self.val = val
-        super().__init__(f'value {val!r} does not match expected type {get_type_name(tp)}')
+            expected_type: type to check the value against
+            value: value to type-check"""
+        self.expected_type = expected_type
+        self.value = value
+        super().__init__(f'value {value!r} does not match expected type {get_type_name(expected_type)}')
 
 
 class MissingRequiredFieldError(ValueError):

@@ -10,7 +10,6 @@
     - Primary key (default `_id`)
     - Relationships
 
-- Improve param names in public `TypeError` subtypes.
 - Validation support: `ValidatedDataclass`
   - Interaction with `validate=True` in `DictDataclass`?
     - Simplest would be to deprecate/remove *all* validation features from here.
@@ -18,19 +17,11 @@
       - Or inherit unconditionally but toggle validation flags to `False` based on the flag.
   - Configs
     - Flag to validate when setting field value (default `False`)
-    - Collection checking mode: `O1`, `Ologn`, `On` (default `On`)
-    - Respect PEP 484 tower (default `True` for now, since `typeguard` does so)
     - Whether to decorate all methods with arg & return type-checking (default `False`)
-  - Allow all (or at least most) configs to be overridable at field level
   - Runtime type-check all class and field settings unilaterally?
-- Field metadata
-  - Custom validation functions
-  - Field converters
-    - https://github.com/jeremander/fancy-dataclass/issues/2
-  - PEP 712 (`converter` argument for dataclass fields), was rejected
-  - Can implement it by hooking `__post_init__` with `__init_subclass__`, using `object.__setattr__` to set fields to converted values (even for frozen dataclass)
-  - Allow `Annotated` as an alternative to `field.metadata`
-    - Already supporting this with `Doc` for some things like `argparse` help, but could somehow encompass all metadata?
+    - I.e. have the settings mixins perform validation (but can't subclass `ValidatedDataclass` since that would be circular -- factor it into a helper function?)
+    - Custom validation functions per field
+      - `Annotated` validators?
   - Documentation
 
 ## Future
@@ -39,6 +30,19 @@
   - Should this be bidirectional? Or separate fields for each direction? [pydantic](https://docs.pydantic.dev/latest/concepts/alias/) provides both.
   - https://github.com/jeremander/fancy-dataclass/issues/5
   - Simple approach would be to allow the value to be a list and have the first alias be "primary" (the one used for serialization), and have them be in descending priority order for consumption.
+- `ValidatedDataclass`
+  - Configs
+    - Collection checking mode: `O1`, `Ologn`, `On` (default `On`)
+      - Switch from `typeguard` to `beartype`? But it doesn't yet implement $O(n)$ checking.
+    - Respect PEP 484 tower (default `True` for now, since `typeguard` does so)
+  - Allow all (or at least most) configs to be overridable at field level
+- Field converters
+  - https://github.com/jeremander/fancy-dataclass/issues/2
+  - PEP 712 (`converter` argument for dataclass fields), was rejected
+    - Can implement it by hooking `__post_init__` with `__init_subclass__`, using `object.__setattr__` to set fields to converted values (even for frozen dataclass)
+  - Allow `Annotated` as an alternative to `field.metadata`
+    - Already supporting this with `Doc` for some things like `argparse` help, but could somehow encompass all metadata?
+  - Documentation
 - `PromptDataclass` to prompt user for each value type
   - Be able to supply validator functions
   - Specify behavior on error (bail or loop)

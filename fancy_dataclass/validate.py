@@ -1,4 +1,4 @@
-from dataclasses import Field, dataclass
+from dataclasses import MISSING, Field, dataclass
 from typing import Any, ClassVar, Optional, get_args
 
 from typing_extensions import Self
@@ -9,7 +9,6 @@ from fancy_dataclass.utils import (
     TypeLike,
     TypeValidationError,
     conforms_to,
-    fully_qualified_class_name,
     get_dataclass_fields,
     get_type_name,
     type_is_classvar,
@@ -23,28 +22,33 @@ from fancy_dataclass.utils import (
 class FieldTypeValidationError(TypeError):
     """Error type for runtime type-checking a value of a dataclass field."""
 
-    def __init__(self, cls: type, field_name: str, val: Any, tp: TypeLike) -> None:
+    def __init__(self, cls: type, field_name: str, field_type: TypeLike, value: Any) -> None:
         """Constructor for `TypeValidationError`.
 
         Args:
             cls: type of the dataclass whose field is being checked
             field_name: name of the field being checked
-            tp: type to check the value against
-            val: value to type-check"""
+            field_type: type to check the value against
+            value: value to type-check"""
         self.cls = cls
         self.field_name = field_name
-        self.val = val
-        self.tp = tp
+        self.field_type = field_type
+        self.value = value
         cls_name = get_type_name(cls)
-        err = TypeValidationError(tp, val)
-        super().__init__(f'field {field_name!r} of {cls_name}: {err}')
+        if value == MISSING:
+            # error message indicates that the field value is missing, rather than the wrong type
+            err_msg = f'field {field_name!r} is missing for {cls_name}'
+        else:
+            err = TypeValidationError(field_type, value)
+            err_msg = f'field {field_name!r} of {cls_name}: {err}'
+        super().__init__(err_msg)
 
 
-def _validate_type(cls: type, field_name: str, val: Any, field_type: TypeLike) -> None:
-    """Given a class, value, field name, and field type, checks if the value matches the expected type.
-    If not, raises a TypeError."""
-    if not conforms_to(val, field_type):
-        raise FieldTypeValidationError(cls, field_name, val, field_type)
+def _validate_type(cls: type, field_name: str, field_type: TypeLike, value: Any) -> None:
+    """Given a class, field name, field type, and value, checks if the value matches the expected type.
+    If not, raises a FieldTypeValidationError."""
+    if not conforms_to(value, field_type):
+        raise FieldTypeValidationError(cls, field_name, field_type, value)
 
 
 ##########
@@ -101,7 +105,7 @@ class ValidatedDataclass(DataclassMixin):
             for fld in get_dataclass_fields(wrapped_cls, include_all=True):
                 if type_is_classvar(fld.type) and hasattr(wrapped_cls, fld.name):
                     tp = get_args(fld.type)[0]
-                    _validate_type(wrapped_cls, fld.name, getattr(wrapped_cls, fld.name), tp)
+                    _validate_type(wrapped_cls, fld.name, tp, getattr(wrapped_cls, fld.name))
 
     @classmethod
     def _field_validation_flags(cls, fld: Field[Any]) -> _FieldValidationFlags:
@@ -120,9 +124,8 @@ class ValidatedDataclass(DataclassMixin):
     def _validate_field(self, fld: Field[Any]) -> None:
         cls = type(self)
         if not hasattr(self, fld.name):
-            cls_name = fully_qualified_class_name(cls)
-            raise TypeError(f'field {fld.name!r} is missing for {cls_name}')
-        _validate_type(cls, fld.name, getattr(self, fld.name), fld.type)
+            raise FieldTypeValidationError(cls, fld.name, fld.type, MISSING)
+        _validate_type(cls, fld.name, fld.type, getattr(self, fld.name))
 
     def __post_init__(self, **kwargs: Any) -> None:
         for fld in get_dataclass_fields(self):
