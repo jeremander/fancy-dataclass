@@ -27,7 +27,10 @@ def test_field_settings() -> None:
     assert MyFieldSettings2.from_field(fld_pos) == MyFieldSettings2(True)
     with pytest.raises(TypeError, match="missing 1 required positional argument: 'positive'"):
         _ = MyFieldSettings2.from_field(fld_empty)
-    with pytest.raises(TypeError, match="expected type .* for field 'positive', got .*"):
+    with pytest.raises(
+        TypeError,
+        match="field 'positive' of .*MyFieldSettings2: value 1 does not match expected type bool",
+    ):
         _ = MyFieldSettings2.from_field(fld_wrong_type)
     @dataclass
     class MyFieldSettings3(FieldSettings):

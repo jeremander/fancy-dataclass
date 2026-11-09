@@ -12,10 +12,12 @@ from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.settings import DocFieldSettings, MixinSettings
 from fancy_dataclass.utils import (
     _UNION_TYPES,
+    AnyVersion,
     camel_case_to_kebab_case,
     check_dataclass,
     eval_type_str,
     get_annotations,
+    get_version_string,
     issubclass_safe,
     type_is_optional,
     type_is_union,
@@ -110,7 +112,7 @@ class ArgparseDataclassSettings(MixinSettings):
     help_descr_brief: Optional[str] = None
     command_name: Optional[str] = None
     prog: Optional[str] = None
-    version: Optional[int | str] = None
+    version: Optional[AnyVersion] = None
     default_help: bool = False
 
 
@@ -494,10 +496,9 @@ class ArgparseDataclass(DataclassMixin):
     def configure_version_argument(cls, parser: ArgumentParser | _ArgumentGroup) -> None:
         """Configures the special --version argument if a version field is included in the class settings."""
         if version := cls.__settings__.version:
+            version_str = get_version_string(version)
             if cls.__settings__.prog:  # display the program name
                 version_str = f'%(prog)s {version}'
-            else:
-                version_str = str(version)
             parser.add_argument('--version', action='version', version=version_str)
 
     @classmethod

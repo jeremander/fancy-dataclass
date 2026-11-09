@@ -1182,7 +1182,7 @@ def test_version(capsys: pytest.CaptureFixture[str]) -> None:
     check_invalid_args(DCV2, ['--version'], 'exit with status 0')
     assert capsys.readouterr().out.strip() == 'myprog 2.0'
     @dataclass
-    class DCV3(ArgparseDataclass, version=Version((3,7))):
+    class DCV3(ArgparseDataclass, version=Version((3, 7))):
         ...
     assert DCV3.from_cli_args([]) == DCV3()
     check_invalid_args(DCV3, ['--version'], 'exit with status 0')

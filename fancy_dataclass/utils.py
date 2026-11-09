@@ -1,7 +1,7 @@
 """Various utility functions and classes."""
 
 import collections.abc
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Sequence
 from contextlib import suppress
 from copy import copy
 import dataclasses
@@ -42,6 +42,7 @@ T = TypeVar('T')
 
 AnyPath: TypeAlias = str | Path
 AnyIO: TypeAlias = IO[str] | IO[bytes]
+AnyVersion: TypeAlias = int | Sequence[int] | str
 TypeLike: TypeAlias = type | _SpecialForm | ForwardRef | _AnnotatedAlias
 DataclassType: TypeAlias = type['DataclassInstance']
 
@@ -169,6 +170,14 @@ def camel_case_to_kebab_case(name: str) -> str:
         else:
             segs.append(c)
     return ''.join(segs).lstrip('-')
+
+# VERSION STRINGS
+
+def get_version_string(version: AnyVersion) -> str:
+    """Renders a version-like object (string, int, or int sequence) as a dot-separated version string."""
+    if (not isinstance(version, str)) and isinstance(version, Sequence):
+        return '.'.join(map(str, version))
+    return str(version)
 
 # DICT MANIPULATION
 

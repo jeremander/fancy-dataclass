@@ -1,7 +1,7 @@
 from collections.abc import Callable, Sequence
 import dataclasses
 from dataclasses import Field, dataclass, field
-from typing import Any, ClassVar, Optional, TypeVar, Union, cast
+from typing import Any, ClassVar, Optional, TypeVar, cast
 from weakref import WeakKeyDictionary, WeakValueDictionary
 
 from typing_extensions import Self, override
@@ -9,27 +9,27 @@ from typing_extensions import Self, override
 from fancy_dataclass.dict import AnyDict, DictDataclass, DictDataclassFieldSettings, DictDataclassSettings
 from fancy_dataclass.settings import FieldSettings
 from fancy_dataclass.utils import (
+    AnyVersion,
     MissingRequiredFieldError,
     fully_qualified_class_name,
     get_dataclass_fields,
+    get_version_string,
     issubclass_safe,
 )
 
 
 T = TypeVar('T')
 
-AnyVersion = Union[int, Sequence[int], str, 'Version']
-
 
 class Version(tuple[int, ...]):
     """Class representing a version as a tuple of integers."""
 
-    def __new__(cls, version: AnyVersion) -> 'Version':  # noqa: PYI034
+    def __new__(cls, version: AnyVersion) -> Self:
         """Constructs a `Version` from a single integer, tuple of integers, or `.`-separated version string."""
         err = ValueError(f'invalid version {version!r}')
         match version:
             case Version():
-                return version
+                return cls(tuple(version))
             case int():
                 parts = [version]
             case str():
@@ -48,7 +48,7 @@ class Version(tuple[int, ...]):
         return super().__new__(cls, tuple(parts))
 
     def __str__(self) -> str:
-        return '.'.join(map(str, self))
+        return get_version_string(self)
 
 
 ###################

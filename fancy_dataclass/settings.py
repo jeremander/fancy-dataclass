@@ -1,9 +1,9 @@
-from dataclasses import Field, dataclass, fields
-from typing import Any, Optional, TypeVar, cast, get_args
+from dataclasses import Field, dataclass, fields, is_dataclass
+from typing import Any, Optional, TypeVar, get_args
 
 from typing_extensions import Doc, Self, _AnnotatedAlias, override
 
-from fancy_dataclass.utils import check_dataclass, coerce_to_dataclass, conforms_to
+from fancy_dataclass.utils import check_dataclass, coerce_to_dataclass, validate_dataclass_field
 
 
 DA = TypeVar('DA', bound='DataclassAdaptable')
@@ -27,7 +27,16 @@ class DataclassAdaptable:
         return dest_type.coerce(self)
 
 
-class MixinSettings(DataclassAdaptable):
+class _DataclassFieldValidate:
+    """Mixin class for a dataclass which, in __post_init__, performs runtime type-checking on all field values."""
+
+    def __post_init__(self) -> None:
+        assert is_dataclass(self)
+        for fld in fields(self):
+            validate_dataclass_field(type(self), fld, getattr(self, fld.name))
+
+
+class MixinSettings(DataclassAdaptable, _DataclassFieldValidate):
     """Base class for settings to be associated with `fancy_dataclass` mixins.
 
     Each [`DataclassMixin`][fancy_dataclass.mixin.DataclassMixin] class may store a `__settings_type__` attribute
@@ -35,23 +44,13 @@ class MixinSettings(DataclassAdaptable):
     The settings object will be instantiated as a `__settings__` attribute on a mixin subclass when it is defined."""
 
 
-class FieldSettings(DataclassAdaptable):
+class FieldSettings(DataclassAdaptable, _DataclassFieldValidate):
     """Class storing a bundle of parameters that will be extracted from dataclass field metadata.
 
     Each [`DataclassMixin`][fancy_dataclass.mixin.DataclassMixin] class may store a `__field_settings_type__` attribute
     which is a `FieldSettings` subclass.
     This specifies which keys in the `field.metadata` dictionary are recognized by the mixin class.
     Other keys will be ignored (unless they are used by other mixin classes)."""
-
-    def type_check(self) -> None:
-        """Checks that every field on the `FieldSettings` object is the proper type.
-
-        Raises:
-            TypeError: If a field is the wrong type"""
-        for fld in fields(self):  # type: ignore[arg-type]
-            val = getattr(self, fld.name)
-            if not conforms_to(val, cast(type, fld.type)):
-                raise TypeError(f'expected type {fld.type} for field {fld.name!r}, got {type(val)}')
 
     @classmethod
     def from_field(cls, fld: Field[Any]) -> Self:
@@ -61,9 +60,7 @@ class FieldSettings(DataclassAdaptable):
         Raises:
             TypeError: If any field has the wrong type"""
         assert check_dataclass(cls)
-        obj: Self = cls(**{key: val for (key, val) in fld.metadata.items() if key in cls.__dataclass_fields__})  # type: ignore[assignment]
-        obj.type_check()
-        return obj
+        return cls(**{key: val for (key, val) in fld.metadata.items() if key in cls.__dataclass_fields__})  # type: ignore[assignment]
 
 
 @dataclass(kw_only=True)
