@@ -11,17 +11,19 @@
     - Relationships
 
 - Validation support: `ValidatedDataclass`
-  - Deal with `init=False` fields.
   - Runtime type-check all class and field settings unilaterally for all settings classes?
     - I.e. have the settings mixins perform validation (but can't subclass `ValidatedDataclass` since that would be circular -- factor it into a helper function?)
+  - Tests
+    - `dataclasses.replace`
+    - `copy`/`deepcopy`/`pickle`
+  - Custom validation functions per field
+  - `Annotated` validators?
   - Interaction with `validate=True` in `DictDataclass`?
     - Simplest would be to deprecate/remove *all* validation features from here.
     - Alternatively could keep this flag, and have the class inherit from `ValidatedDataclass` if it's set.
       - Or inherit unconditionally but toggle validation flags to `False` based on the flag.
   - Configs
     - Flag to decorate all methods with arg & return type-checking (default `False`)
-  - Custom validation functions per field
-    - `Annotated` validators?
   - Documentation
 
 ## Future

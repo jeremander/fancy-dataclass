@@ -158,7 +158,7 @@ disable_error_code = ["misc"]
 
 [[tool.mypy.overrides]]
 module = "tests.test_validate"
-disable_error_code = ["arg-type", "attr-defined", "literal-required"]
+disable_error_code = ["arg-type", "assignment", "attr-defined", "comparison-overlap", "literal-required"]
 
 [[tool.mypy.overrides]]
 module = "tests.test_versioned"

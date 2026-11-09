@@ -80,7 +80,7 @@ def test_camel_case_to_kebab_case(camel: str, kebab: str) -> None:
     (NoneType, 'NoneType'),
     (int | None, 'int | None'),
     (None | int, 'None | int'),
-    (Optional[int], 'typing.Optional[int]'),
+    (Optional[int], str(Optional[int])),  # NOTE: Py3.14 represents Optional[int] as (int | None)
     (Sequence[int], 'collections.abc.Sequence[int]'),
     (ClassVar[int], 'typing.ClassVar[int]'),
     (Any, 'typing.Any'),

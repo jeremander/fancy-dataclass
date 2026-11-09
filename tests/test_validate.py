@@ -142,7 +142,7 @@ def test_validate_classvar() -> None:
     with raises_field_type_err('DCClassVar', 'x', int, 'a'):
         @dataclass
         class DCClassVar(ValidatedDataclass):
-            x: ClassVar[int] = 'a'  # type: ignore[assignment]
+            x: ClassVar[int] = 'a'
     @dataclass
     class DCClassVar(ValidatedDataclass):
         x: ClassVar[int]
@@ -160,13 +160,13 @@ def test_validate_classvar() -> None:
     with raises_field_type_err('DCClassVarSub2', 'x', int, 'a'):
         @dataclass
         class DCClassVarSub2(DCClassVar):
-            x: ClassVar[int] = 'a'  # type: ignore[assignment]
+            x: ClassVar[int] = 'a'
     @dataclass
     class DCClassVarSub3(DCClassVar, validate_init=False):
-        x: ClassVar[int] = 'a'  # type: ignore[assignment]
-    assert DCClassVarSub3.x == 'a'  # type: ignore[comparison-overlap]
+        x: ClassVar[int] = 'a'
+    assert DCClassVarSub3.x == 'a'
     obj = DCClassVarSub3()
-    assert obj.x == 'a'  # type: ignore[comparison-overlap]
+    assert obj.x == 'a'
 
 def test_nested() -> None:
     """Tests validation of a nested ValidatedDataclass."""
@@ -187,8 +187,7 @@ def test_nested() -> None:
     @dataclass
     class DCOuterNoValidate(ValidatedDataclass, validate_init=False):
         inner: DC1
-    outer_cls: type[DCOuterValidate | DCOuterNoValidate]
-    for outer_cls in [DCOuterValidate, DCOuterNoValidate]:  # type: ignore[assignment]
+    for outer_cls in [DCOuterValidate, DCOuterNoValidate]:
         for inner_cls in [DC1, DC1Sub, DC1Fake]:
             should_error = (outer_cls is DCOuterValidate) and (inner_cls is DC1Fake)
             inner = inner_cls(1, 'a')
@@ -255,19 +254,19 @@ def test_validate_init_and_assign(frozen: bool, init: bool, assign: bool) -> Non
         with raises_field_type_err('DCClassFlagsBadDefault', 'x', int, 'a', is_default=True):
             @dataclass(frozen=frozen)
             class DCClassFlagsBadDefault(ValidatedDataclass, validate_init=init, validate_assign=assign):
-                x: int = 'a'  # type: ignore[assignment]
+                x: int = 'a'
         with raises_field_type_err('DCFieldFlagsBadDefault', 'x', int, 'a', is_default=True):
             @dataclass(frozen=frozen)
             class DCFieldFlagsBadDefault(ValidatedDataclass):
-                x: int = field(default='a', metadata={'validate_init': init, 'validate_assign': assign})  # type: ignore[assignment]
+                x: int = field(default='a', metadata={'validate_init': init, 'validate_assign': assign})
     else:
         # field does not get rejected because default_factory is not called until object construction time
         @dataclass(frozen=frozen)
         class DCClassFlagsBadDefault(ValidatedDataclass, validate_init=init, validate_assign=assign):
-            x: int = 'a'  # type: ignore[assignment]
+            x: int = 'a'
         @dataclass(frozen=frozen)
         class DCFieldFlagsBadDefault(ValidatedDataclass):
-            x: int = field(default='a', metadata={'validate_init': init, 'validate_assign': assign})  # type: ignore[assignment]
+            x: int = field(default='a', metadata={'validate_init': init, 'validate_assign': assign})
         for cls in [DCClassFlagsBadDefault, DCFieldFlagsBadDefault]:
             if (not frozen) and assign:
                 with raises_field_type_err(cls, 'x', int, 'a'):
@@ -279,10 +278,10 @@ def test_validate_init_and_assign(frozen: bool, init: bool, assign: bool) -> Non
     # try setting a default_factory value of the wrong type
     @dataclass(frozen=frozen)
     class DCClassFlagsBadDefaultFactory(ValidatedDataclass, validate_init=init, validate_assign=assign):
-        x: int = field(default_factory=lambda: 'a')  # type: ignore[assignment]
+        x: int = field(default_factory=lambda: 'a')
     @dataclass(frozen=frozen)
     class DCFieldFlagsBadDefaultFactory(ValidatedDataclass):
-        x: int = field(default_factory=lambda: 'a', metadata={'validate_init': init, 'validate_assign': assign})  # type: ignore[assignment]
+        x: int = field(default_factory=lambda: 'a', metadata={'validate_init': init, 'validate_assign': assign})
     for cls in [DCClassFlagsBadDefaultFactory, DCFieldFlagsBadDefaultFactory]:
         if init or ((not frozen) and assign):
             with raises_field_type_err(cls, 'x', int, 'a'):
@@ -291,7 +290,7 @@ def test_validate_init_and_assign(frozen: bool, init: bool, assign: bool) -> Non
             obj = cls()
             assert obj.x == 'a'
 
-def test_init_var() -> None:
+def test_initvar() -> None:
     """Tests that an init-only field is ignored for validation."""
     @dataclass
     class DCInitVar(ValidatedDataclass, validate_init=True, validate_assign=True):
@@ -306,3 +305,63 @@ def test_init_var() -> None:
     assert obj.y == 'a'
     obj.y = 'b'
     assert obj.y == 'b'
+
+@pytest.mark.parametrize('init', [False, True])
+@pytest.mark.parametrize('assign', [False, True])
+def test_non_init_field(init: bool, assign: bool) -> None:
+    """Tests that a field with init=False still gets validated."""
+    @dataclass
+    class DCNonInitField(ValidatedDataclass, validate_init=init, validate_assign=assign):
+        x: int
+        y: int = field(init=False)
+    if init:
+        with raises_field_type_err(DCNonInitField, 'y', int, MISSING):
+            _ = DCNonInitField(1)
+    else:
+        obj = DCNonInitField(1)
+        with pytest.raises(AttributeError, match="'DCNonInitField' object has no attribute 'y'"):
+            _ = str(obj)
+    @dataclass
+    class DCNonInitFieldGoodDefaultFactory(ValidatedDataclass, validate_init=init, validate_assign=assign):
+        x: int
+        y: int = field(init=False, default_factory=lambda: 2)
+    @dataclass
+    class DCNonInitFieldBadDefaultFactory(ValidatedDataclass, validate_init=init, validate_assign=assign):
+        x: int
+        y: int = field(init=False, default_factory=lambda: 'a')
+    @dataclass
+    class DCNonInitFieldGoodPostInitAssign(ValidatedDataclass, validate_init=init, validate_assign=assign):
+        x: int
+        y: int = field(init=False)
+        def __post_init__(self) -> None:
+            self.y = 2
+    @dataclass
+    class DCNonInitFieldBadPostInitAssign(ValidatedDataclass, validate_init=init, validate_assign=assign):
+        x: int
+        y: int = field(init=False)
+        def __post_init__(self) -> None:
+            self.y = 'a'
+    for (cls, is_good) in [
+        (DCNonInitFieldGoodDefaultFactory, True),
+        (DCNonInitFieldBadDefaultFactory, False),
+        (DCNonInitFieldGoodPostInitAssign, True),
+        (DCNonInitFieldBadPostInitAssign, False),
+    ]:
+        if (
+            ((cls is DCNonInitFieldBadDefaultFactory) and (init or assign))
+            or ((cls is DCNonInitFieldBadPostInitAssign) and assign)
+        ):
+            with raises_field_type_err(cls, 'y', int, 'a'):
+                _ = cls(1)
+        else:
+            yval = 2 if is_good else 'a'
+            obj = cls(1)
+            assert obj.y == yval
+            obj.y = 2
+            assert obj.y == 2
+            if assign:
+                with raises_field_type_err(cls, 'y', int, 'b'):
+                    obj.y = 'b'
+            else:
+                obj.y = 'b'
+                assert obj.y == 'b'
