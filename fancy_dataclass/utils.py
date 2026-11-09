@@ -5,7 +5,7 @@ from collections.abc import Callable, Iterable
 from contextlib import suppress
 from copy import copy
 import dataclasses
-from dataclasses import Field, is_dataclass, make_dataclass
+from dataclasses import MISSING, Field, is_dataclass, make_dataclass
 from functools import lru_cache
 import importlib
 import inspect
@@ -76,6 +76,42 @@ class TypeValidationError(TypeError):
         self.expected_type = expected_type
         self.value = value
         super().__init__(f'value {value!r} does not match expected type {get_type_name(expected_type)}')
+
+
+class FieldTypeValidationError(TypeError):
+    """Error type for runtime type-checking a value of a dataclass field."""
+
+    def __init__(
+        self,
+        cls: type,
+        field_name: str,
+        field_type: TypeLike,
+        value: Any,
+        *,
+        is_default: bool = False,
+    ) -> None:
+        """Constructor for `FieldTypeValidationError`.
+
+        Args:
+            cls: type of the dataclass whose field is being checked
+            field_name: name of the field being checked
+            field_type: type to check the value against
+            value: value to type-check
+            is_default: flag indicating whether the value is a field default"""
+        self.cls = cls
+        self.field_name = field_name
+        self.field_type = field_type
+        self.value = value
+        self.is_default = is_default
+        cls_name = get_type_name(cls)
+        if value == MISSING:
+            # error message indicates that the field value is missing, rather than the wrong type
+            err_msg = f'field {field_name!r} is missing for {cls_name}'
+        else:
+            err = TypeValidationError(field_type, value)
+            default_str = 'default ' if is_default else ''
+            err_msg = f'field {field_name!r} of {cls_name}: {default_str}{err}'
+        super().__init__(err_msg)
 
 
 class MissingRequiredFieldError(ValueError):
@@ -498,10 +534,7 @@ def dataclass_type_map(cls: DataclassType, func: Callable[[type], type]) -> Data
         field_data.append((fld.name, tp, new_fld))
     return make_dataclass(cls.__name__, field_data, bases=cls.__bases__, namespace=dict(cls.__dict__))
 
-
-###########
-# MERGING #
-###########
+# MERGING
 
 def merge_dataclasses(
     *classes: type,
@@ -568,3 +601,12 @@ def merge_dataclasses(
     # so we revert them back to their canonical ordering
     cls.__dataclass_fields__ = {name: cls.__dataclass_fields__[name] for (name, _, _) in flds}  # type: ignore[attr-defined]
     return cls
+
+# VALIDATION
+
+def validate_dataclass_field(cls: type, fld: Field[Any], value: Any, *, is_default: bool = False) -> None:
+    """Given a dataclass type, Field object, and field value, checks if the value matches the expected type.
+    If not, raises a FieldTypeValidationError."""
+    tp = get_args(fld.type)[0] if type_is_classvar(fld.type) else fld.type
+    if not conforms_to(value, tp):
+        raise FieldTypeValidationError(cls, fld.name, tp, value, is_default=is_default)

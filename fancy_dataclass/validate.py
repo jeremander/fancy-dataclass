@@ -1,5 +1,5 @@
 from dataclasses import MISSING, Field, dataclass
-from typing import Any, ClassVar, Optional, cast, get_args
+from typing import Any, ClassVar, Optional, cast
 
 from typing_extensions import Self
 
@@ -7,60 +7,11 @@ from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.settings import FieldSettings, MixinSettings
 from fancy_dataclass.utils import (
     DataclassType,
-    TypeLike,
-    TypeValidationError,
-    conforms_to,
+    FieldTypeValidationError,
     get_dataclass_fields,
-    get_type_name,
     type_is_classvar,
+    validate_dataclass_field,
 )
-
-
-####################
-# HELPER FUNCTIONS #
-####################
-
-class FieldTypeValidationError(TypeError):
-    """Error type for runtime type-checking a value of a dataclass field."""
-
-    def __init__(
-        self,
-        cls: type,
-        field_name: str,
-        field_type: TypeLike,
-        value: Any,
-        *,
-        is_default: bool = False,
-    ) -> None:
-        """Constructor for `TypeValidationError`.
-
-        Args:
-            cls: type of the dataclass whose field is being checked
-            field_name: name of the field being checked
-            field_type: type to check the value against
-            value: value to type-check
-            is_default: flag indicating whether the value is a field default"""
-        self.cls = cls
-        self.field_name = field_name
-        self.field_type = field_type
-        self.value = value
-        self.is_default = is_default
-        cls_name = get_type_name(cls)
-        if value == MISSING:
-            # error message indicates that the field value is missing, rather than the wrong type
-            err_msg = f'field {field_name!r} is missing for {cls_name}'
-        else:
-            err = TypeValidationError(field_type, value)
-            default_str = 'default ' if is_default else ''
-            err_msg = f'field {field_name!r} of {cls_name}: {default_str}{err}'
-        super().__init__(err_msg)
-
-
-def _validate_type(cls: type, field_name: str, field_type: TypeLike, value: Any, *, is_default: bool = False) -> None:
-    """Given a class, field name, field type, and value, checks if the value matches the expected type.
-    If not, raises a FieldTypeValidationError."""
-    if not conforms_to(value, field_type):
-        raise FieldTypeValidationError(cls, field_name, field_type, value, is_default=is_default)
 
 
 ##########
@@ -117,10 +68,9 @@ class ValidatedDataclass(DataclassMixin):
             # validate ClassVar values and field default values at dataclass wrap time
             for fld in get_dataclass_fields(wrapped_cls, include_all=True):
                 if type_is_classvar(fld.type) and hasattr(wrapped_cls, fld.name):
-                    tp = get_args(fld.type)[0]
-                    _validate_type(wrapped_cls, fld.name, tp, getattr(wrapped_cls, fld.name))
+                    validate_dataclass_field(wrapped_cls, fld, getattr(wrapped_cls, fld.name))
                 elif (wrapped_cls._field_validation_flags(fld).validate_init) and (fld.default is not MISSING):
-                    _validate_type(wrapped_cls, fld.name, fld.type, fld.default, is_default=True)
+                    validate_dataclass_field(wrapped_cls, fld, fld.default, is_default=True)
         # determine whether any fields should validate upon assignment
         if wrapped_cls.__dataclass_params__.frozen:  # type: ignore[attr-defined]
             validate_assign = False
@@ -144,7 +94,7 @@ class ValidatedDataclass(DataclassMixin):
                     (fld := tp.__dataclass_fields__.get(name, None))
                     and tp._field_validation_flags(fld).validate_assign  # type: ignore[attr-defined]
                 ):
-                    _validate_type(tp, name, fld.type, value)
+                    validate_dataclass_field(tp, fld, value)
                 super(type(self), self).__setattr__(name, value)  # type: ignore[misc]
             wrapped_cls.__setattr__ = _validated_setattr  # type: ignore[method-assign]
 
@@ -157,14 +107,13 @@ class ValidatedDataclass(DataclassMixin):
         validate_assign = (
             cls.__settings__.validate_assign if (settings.validate_assign is None) else settings.validate_assign
         )
-        # TODO: do not validate InitVar or init=False fields?
         return _FieldValidationFlags(validate_init=validate_init, validate_assign=validate_assign)
 
     def _validate_field(self, fld: Field[Any]) -> None:
         cls = type(self)
         if not hasattr(self, fld.name):
             raise FieldTypeValidationError(cls, fld.name, fld.type, MISSING)
-        _validate_type(cls, fld.name, fld.type, getattr(self, fld.name))
+        validate_dataclass_field(cls, fld, getattr(self, fld.name))
 
     def __post_init__(self, **kwargs: Any) -> None:
         for fld in get_dataclass_fields(self):
