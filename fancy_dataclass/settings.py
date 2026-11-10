@@ -60,7 +60,7 @@ class FieldSettings(DataclassAdaptable, _DataclassFieldValidate):
         Raises:
             TypeError: If any field has the wrong type"""
         assert check_dataclass(cls)
-        return cls(**{key: val for (key, val) in fld.metadata.items() if key in cls.__dataclass_fields__})  # type: ignore[assignment]
+        return cls(**{key: val for (key, val) in fld.metadata.items() if key in cls.__dataclass_fields__})  # type: ignore[return-value]
 
 
 @dataclass(kw_only=True)

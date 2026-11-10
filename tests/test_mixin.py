@@ -6,7 +6,7 @@ from typing_extensions import Doc, Self
 
 from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.settings import DocFieldSettings, FieldSettings, MixinSettings
-from fancy_dataclass.utils import get_dataclass_fields
+from fancy_dataclass.utils import FieldTypeValidationError, get_dataclass_fields
 
 
 def test_field_settings() -> None:
@@ -347,3 +347,18 @@ class TestDataclassMixin:
         class DC3(DocMixin):
             x: 'fake-type'  # type: ignore  # noqa: F821
         assert DC3._field_settings(fields(DC3)[0]) == DocFieldSettings(doc=None)
+
+    def test_invalid_settings_fields(self) -> None:
+        """Tests field validation of MixinSettings and FieldSettings."""
+        @dataclass
+        class MyMixinSettings(MixinSettings):
+            x: int
+        @dataclass
+        class MyFieldSettings(FieldSettings):
+            x: int
+        for cls in [MyMixinSettings, MyFieldSettings]:
+            with pytest.raises(
+                FieldTypeValidationError,
+                match=f"field 'x' of .*{cls.__name__}: value '1' does not match expected type int",
+            ):
+                _ = cls('1')  # type: ignore[arg-type]

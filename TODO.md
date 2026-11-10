@@ -4,15 +4,7 @@
 
 ## v0.13.0
 
-- Documentation
-  - CLI
-  - SQL
-    - Primary key (default `_id`)
-    - Relationships
-
 - Validation support: `ValidatedDataclass`
-  - Runtime type-check all class and field settings unilaterally for all settings classes?
-    - I.e. have the settings mixins perform validation (but can't subclass `ValidatedDataclass` since that would be circular -- factor it into a helper function?)
   - Tests
     - `dataclasses.replace`
     - `copy`/`deepcopy`/`pickle`
@@ -24,7 +16,13 @@
       - Or inherit unconditionally but toggle validation flags to `False` based on the flag.
   - Configs
     - Flag to decorate all methods with arg & return type-checking (default `False`)
-  - Documentation
+
+- Documentation
+  - CLI
+  - SQL
+    - Primary key (default `_id`)
+    - Relationships
+  - `ValidatedDataclass`
 
 ## Future
 
