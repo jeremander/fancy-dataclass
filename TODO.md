@@ -5,9 +5,6 @@
 ## v0.13.0
 
 - Validation support: `ValidatedDataclass`
-  - Tests
-    - `dataclasses.replace`
-    - `copy`/`deepcopy`/`pickle`
   - Custom validation functions per field
   - `Annotated` validators?
   - Interaction with `validate=True` in `DictDataclass`?

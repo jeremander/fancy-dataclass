@@ -1,6 +1,8 @@
 from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
-from dataclasses import MISSING, FrozenInstanceError, InitVar, dataclass, field
+from copy import copy, deepcopy
+from dataclasses import MISSING, FrozenInstanceError, InitVar, dataclass, field, is_dataclass, replace
+import pickle
 import re
 from types import NoneType
 from typing import Any, ClassVar
@@ -20,6 +22,10 @@ class DC1(ValidatedDataclass):
 class DC2(DC1, validate_init=False):
     x: int
     y: str
+
+@dataclass
+class DC3(ValidatedDataclass, validate_init=True, validate_assign=True):
+    x: int
 
 
 @contextmanager
@@ -248,6 +254,24 @@ def test_validate_init_and_assign(frozen: bool, init: bool, assign: bool) -> Non
             assert not hasattr(obj, 'y')
             obj.y = 'a'
             assert obj.y == 'a'
+        # test dataclasses.replace
+        assert is_dataclass(obj)
+        obj2 = replace(obj, x=2)
+        assert obj2.x == 2
+        if init or ((not frozen) and assign):
+            with raises_field_type_err(cls, 'x', int, 'a'):
+                _ = replace(obj, x='a')
+        else:
+            obj2 = replace(obj, x='a')
+            assert obj2.x == 'a'
+        # test copy/deepcopy
+        for copy_func in [copy, deepcopy]:
+            obj3 = copy_func(obj)
+            assert obj3 == obj
+            object.__setattr__(obj3, 'x', 'a')
+            # copying bypasses validation
+            obj4 = copy_func(obj3)
+            assert obj4 == obj3
     # try setting a default value of the wrong type
     if init:
         # field gets rejected at dataclass wrap time, since defaults can be checked then
@@ -289,6 +313,15 @@ def test_validate_init_and_assign(frozen: bool, init: bool, assign: bool) -> Non
         else:
             obj = cls()
             assert obj.x == 'a'
+
+def test_pickle() -> None:
+    """Tests that unpickling does not trigger validation of fields."""
+    obj = DC3(1)
+    obj2 = pickle.loads(pickle.dumps(obj))
+    assert obj2 == obj
+    object.__setattr__(obj, 'x', 'a')
+    obj3 = pickle.loads(pickle.dumps(obj))
+    assert obj3 == obj
 
 def test_initvar() -> None:
     """Tests that an init-only field is ignored for validation."""
