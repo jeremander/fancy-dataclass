@@ -19,7 +19,13 @@ from fancy_dataclass.dict import DictDataclass, DictDataclassSettings
 from fancy_dataclass.json import JSONBaseDataclass, JSONDataclass, JSONSerializable
 from fancy_dataclass.serialize import FileSerializable
 from fancy_dataclass.toml import TOMLDataclass
-from fancy_dataclass.utils import TypeConversionError, coerce_to_dataclass, dataclass_type_map, issubclass_safe
+from fancy_dataclass.utils import (
+    FieldTypeValidationError,
+    TypeConversionError,
+    coerce_to_dataclass,
+    dataclass_type_map,
+    issubclass_safe,
+)
 
 from .test_dict import DCSuppress, DCSuppress2
 
@@ -436,17 +442,26 @@ class TestJSON(TestDict):
         (
             DCOptionalInt(None, 1),  # type: ignore[arg-type]
             {'x': None, 'y': 1},
-            (True, TypeConversionError, "could not convert None to type int"),
+            (True, FieldTypeValidationError, "field 'x' of .*DCOptionalInt: value None does not match"),
         ),
         (DCOptionalStr('a', 'b'), {'x': 'a', 'y': 'b'}, None),
         (DCOptionalStr('a', None), {'x': 'a', 'y': None}, None),
         (
             DCOptionalStr(None, 'b'),  # type: ignore[arg-type]
             {'x': None, 'y': 'b'},
-            (True, TypeConversionError, "could not convert None to type str"),
+            (True, FieldTypeValidationError, "field 'x' of .*DCOptionalStr: value None does not match"),
         ),
     ])
-    def test_optional(self, obj: DictDataclass, d: dict[str, Any], err: Optional[ErrInfo]) -> None:
+    def test_optional(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        obj: DictDataclass,
+        d: dict[str, Any],
+        err: Optional[ErrInfo],
+    ) -> None:
+        # patch class settings to activate field validation
+        monkeypatch.setattr(DCOptionalInt.__settings__, 'validate_init', True)
+        monkeypatch.setattr(DCOptionalStr.__settings__, 'validate_init', True)
         self._test_dict_convert(obj, d, err)
 
     @pytest.mark.parametrize(['obj', 'd', 'err'], [
@@ -492,13 +507,14 @@ class TestJSON(TestDict):
         obj = DCAnnotated(3, 4.7)
         assert obj.to_dict() == {'x': 3, 'y': 4.7}
 
-    def test_typed_dict(self) -> None:
+    def test_typed_dict(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(DCTypedDict.__settings__, 'validate_init', True)
         td: MyTypedDict = {'x': 3, 'y': 'a'}
         obj = DCTypedDict(td)
         assert obj.to_dict() == {'d': td}
         # invalid TypedDicts
         for d in [{'x': 3}, {'x': 3, 'y': 'a', 'z': 1}, {'x': 3, 'y': 4}, {'x': 3, 'y': None}]:
-            with pytest.raises(TypeConversionError, match="could not convert .* to type .*"):
+            with pytest.raises(FieldTypeValidationError, match="field 'd' of .*DCTypedDict: value .* does not match"):
                 _ = DCTypedDict.from_dict({'d': d})
 
     @pytest.mark.parametrize(['obj', 'd', 'err'], [
@@ -508,10 +524,17 @@ class TestJSON(TestDict):
         (
             DCTypedNamedTuple(TypedNamedTuple(3, 4)),  # type: ignore[arg-type]
             {'t': {'x': 3, 'y': 4}},
-            (True, TypeConversionError, "could not convert 4 to type str"),
+            (True, FieldTypeValidationError, "field 't' of .*DCTypedNamedTuple: value .* does not match"),
         ),
     ])
-    def test_namedtuple(self, obj: DictDataclass, d: dict[str, Any], err: Optional[ErrInfo]) -> None:
+    def test_namedtuple(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        obj: DictDataclass,
+        d: dict[str, Any],
+        err: Optional[ErrInfo],
+    ) -> None:
+        monkeypatch.setattr(DCTypedNamedTuple.__settings__, 'validate_init', True)
         self._test_dict_convert(obj, d, err)
 
     def test_any(self) -> None:

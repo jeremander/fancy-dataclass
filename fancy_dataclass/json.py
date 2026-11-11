@@ -176,17 +176,17 @@ class JSONDataclass(DictFileSerializableDataclass, JSONSerializable):
 
     @classmethod
     @override
-    def _from_dict_value_basic(cls, tp: type, val: Any, validate: bool) -> Any:
+    def _from_dict_value_basic(cls, tp: type, val: Any) -> Any:
         if issubclass(tp, datetime):
             val = tp.fromisoformat(val) if isinstance(val, str) else val
-        return super()._from_dict_value_basic(tp, from_dict_value_basic(tp, val), validate)
+        return super()._from_dict_value_basic(tp, from_dict_value_basic(tp, val))
 
     @classmethod
     @override
-    def _from_dict_value(cls, tp: type, val: Any, validate: bool) -> Any:
+    def _from_dict_value(cls, tp: type, val: Any) -> Any:
         # customize behavior for JSONSerializable
         origin_type = get_origin(tp)
-        convert_val = partial(cls._from_dict_value, validate=validate)
+        convert_val = partial(cls._from_dict_value)
         if (origin_type is None) and issubclass_safe(tp, tuple) and isinstance(val, dict) and hasattr(tp, '_fields'):
             # namedtuple
             try:
@@ -204,7 +204,7 @@ class JSONDataclass(DictFileSerializableDataclass, JSONSerializable):
                 cls.json_key_decoder(convert_val(keytype, k)): convert_val(valtype, v)
                 for (k, v) in val.items()
             }
-        return super()._from_dict_value(tp, val, validate)
+        return super()._from_dict_value(tp, val)
 
 
 class JSONBaseDataclass(JSONDataclass, store_type='qualname'):

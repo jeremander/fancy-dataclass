@@ -1,4 +1,4 @@
-from dataclasses import InitVar, dataclass, field, make_dataclass
+from dataclasses import MISSING, InitVar, dataclass, field, make_dataclass
 import re
 import sys
 from typing import Annotated, Any, ClassVar, Optional, TypeAlias
@@ -8,7 +8,7 @@ from typing_extensions import Doc
 
 from fancy_dataclass.dict import DictDataclass, DictDataclassSettings
 from fancy_dataclass.mixin import DataclassMixin
-from fancy_dataclass.utils import FieldTypeValidationError, MissingRequiredFieldError, TypeConversionError
+from fancy_dataclass.utils import FieldTypeValidationError, MissingRequiredFieldError
 
 
 @dataclass
@@ -116,25 +116,22 @@ def test_nested_list() -> None:
     d = {'comps': [{'a1': 1, 'a2': 2.0}, {'a1': 3, 'a2': 4.0}]}
     _test_dict_round_trip(obj, d)
 
-def test_make_dataclass() -> None:
+@pytest.mark.parametrize('annotations', [False, True])
+@pytest.mark.parametrize('a', [3, 3.7, '3', '3.7'])
+@pytest.mark.parametrize('b', ['b', 4])
+def test_make_dataclass(annotations: bool, a: Any, b: Any) -> None:
     """Tests behavior of make_dataclass."""
-    # with type annotations
-    dc = make_dataclass('TestDataclass', [('a', int), ('b', str)], bases=(DictDataclass,))
+    if annotations:
+        fields = [('a', int), ('b', str)]
+    else:
+        fields = ['a', 'b']
+    dc = make_dataclass('TestDataclass', fields, bases=(DictDataclass,))
     assert issubclass(dc, DictDataclass)
-    obj = dc.from_dict({'a': 3, 'b': 'b'})
-    assert isinstance(obj, dc)  # pyrefly: ignore[invalid-argument]
-    _test_dict_round_trip(obj, {'a': 3, 'b': 'b'})
-    with pytest.raises(TypeConversionError, match="could not convert 4 to type str"):
-        _ = dc.from_dict({'a': 3, 'b': 4})
-    with pytest.raises(TypeConversionError, match=r"could not convert '3\.7' to type int"):
-        _ = dc.from_dict({'a': '3.7', 'b': 'b'})
-    # no type annotations
-    dc = make_dataclass('TestDataclass', ['a', 'b'], bases=(DictDataclass,))
-    assert issubclass(dc, DictDataclass)
-    obj = dc.from_dict({'a': 3, 'b': 'b'})
-    _test_dict_round_trip(obj)
-    obj = dc.from_dict({'a': '3.7', 'b': 'b'})
-    _test_dict_round_trip(obj)
+    d = {'a': a, 'b': b}
+    # NOTE: DictDataclass does not validate by default, so invalid field types are OK
+    obj = dc.from_dict(d)
+    assert type(obj) is dc
+    _test_dict_round_trip(obj, d)
 
 def test_wrap_dataclass() -> None:
     """Tests behavior of wrap_dataclass."""
@@ -727,20 +724,23 @@ def test_validate_basic(class_validate: bool, field_validate: Optional[bool]) ->
     d = obj.to_dict()
     assert d == {'x': 1}
     assert DC.from_dict(d) == obj
-    # validation does not occur in constructor
-    obj = DC(x='1')  # type: ignore[arg-type]
-    assert obj.x == '1'  # type: ignore[comparison-overlap]
-    d = obj.to_dict()
-    assert d == {'x': '1'}
-    validate = class_validate if (field_validate is None) else field_validate
-    if validate:
-        with pytest.raises(TypeConversionError, match="could not convert '1' to type int"):
+    d = {'x': '1'}
+    validate_init = class_validate if (field_validate is None) else field_validate
+    if validate_init:
+        msg = "field 'x' of .*DC: value '1' does not match expected type int"
+        with pytest.raises(FieldTypeValidationError, match=msg):
+            _ = DC(x='1')  # type: ignore[arg-type]
+        with pytest.raises(FieldTypeValidationError, match=msg):
             _ = DC.from_dict(d)
     else:
+        obj = DC(x='1')  # type: ignore[arg-type]
+        assert obj.x == '1'  # type: ignore[comparison-overlap]
+        d = obj.to_dict()
+        assert d == {'x': '1'}
         assert DC.from_dict(d) == obj
 
 def test_validate_nested() -> None:
-    """Tests the `validate` flagg for a nested DictDataclass."""
+    """Tests the `validate` class flag for a nested DictDataclass."""
     @dataclass
     class Inner(DictDataclass, validate=True):
         x: int
@@ -755,17 +755,56 @@ def test_validate_nested() -> None:
         assert cls.from_dict(d) == cls(Inner(1))
     d = {'inner': {'x': '1'}}
     for cls in [OuterNoValidate, OuterValidate]:
-        with pytest.raises(TypeConversionError, match="could not convert '1' to type int"):
+        with pytest.raises(
+            FieldTypeValidationError,
+            match="field 'x' of .*Inner: value '1' does not match expected type int",
+        ):
             _ = cls.from_dict(d)
     d = {'inner': 123}
-    for cls in [OuterNoValidate, OuterValidate]:
-        with pytest.raises(TypeConversionError, match="could not convert 123 to type dict"):
-            _ = cls.from_dict(d)
+    obj = OuterNoValidate.from_dict(d)
+    assert obj.inner == 123  # type: ignore[comparison-overlap]
+    with pytest.raises(
+        FieldTypeValidationError,
+        match="field 'inner' of .*OuterValidate: value 123 does not match expected type .*Inner",
+    ):
+        _ = OuterValidate.from_dict(d)
     inner = object()
     d = {'inner': inner}
+    obj = OuterNoValidate.from_dict(d)
+    assert obj.inner == inner
+    with pytest.raises(
+        FieldTypeValidationError,
+        match="field 'inner' of .*OuterValidate: value .* does not match expected type .*Inner",
+    ):
+        _ = OuterValidate.from_dict(d)
+    @dataclass
+    class InnerNoValidate(Inner, validate=False):
+        ...
+    inner = InnerNoValidate('1')  # type: ignore[arg-type]
+    assert inner.x == '1'  # type: ignore[comparison-overlap]
+    d = {'inner': inner}
     for cls in [OuterNoValidate, OuterValidate]:
-        with pytest.raises(TypeConversionError, match="could not convert .* to type dict"):
-            _ = cls.from_dict(d)
-    d = {'inner': Inner('1')}  # type: ignore[arg-type]
-    for cls in [OuterNoValidate, OuterValidate]:
-        assert cls.from_dict(d) == cls(Inner('1'))  # type: ignore[arg-type]
+        assert cls.from_dict(d) == cls(inner)
+
+@pytest.mark.parametrize('parent_validate', [MISSING, None, False, True])
+@pytest.mark.parametrize('child_validate', [MISSING, None, False, True])
+def test_validate_inherit(parent_validate: Any, child_validate: Any) -> None:
+    """Tests passing the validate kwarg for subclass construction."""
+    assert DictDataclass.__default_validate__ is False
+    assert DictDataclass.__settings__.validate_init is False
+    parent_kwargs = {} if (parent_validate is MISSING) else {'validate': parent_validate}
+    child_kwargs = {} if (child_validate is MISSING) else {'validate': child_validate}
+    @dataclass
+    class DC1(DictDataclass, **parent_kwargs):
+        ...
+    @dataclass
+    class DC2(DC1, **child_kwargs):
+        ...
+    if parent_validate in [None, MISSING]:
+        parent_validate = False
+    assert DC1.__default_validate__ is parent_validate
+    assert DC1.__settings__.validate_init is parent_validate
+    if child_validate in [None, MISSING]:
+        child_validate = parent_validate
+    assert DC2.__default_validate__ is child_validate
+    assert DC2.__settings__.validate_init is child_validate

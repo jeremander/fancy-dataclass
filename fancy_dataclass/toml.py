@@ -72,8 +72,8 @@ class TOMLDataclassSettings(DictDataclassSettings):
     doc_as_comment: bool = False
 
     @override
-    def __post_init__(self) -> None:
-        super().__post_init__()
+    def __post_init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__post_init__(*args, **kwargs)
         # can use comment or doc_as_comment to specify top-level comment, but not both
         if (self.comment is not None) and self.doc_as_comment:
             raise ValueError('can set comment to a string or doc_as_comment=True, but not both')
@@ -207,8 +207,8 @@ class TOMLDataclass(DictFileSerializableDataclass, TOMLSerializable, suppress_de
 
     @classmethod
     @override
-    def _from_dict_value_basic(cls, tp: type, val: Any, validate: bool) -> Any:
-        return super()._from_dict_value_basic(tp, from_dict_value_basic(tp, val), validate)
+    def _from_dict_value_basic(cls, tp: type, val: Any) -> Any:
+        return super()._from_dict_value_basic(tp, from_dict_value_basic(tp, val))
 
     @classmethod
     @override

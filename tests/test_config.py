@@ -12,7 +12,7 @@ import tomlkit
 from fancy_dataclass.config import ConfigDataclass, DictConfig
 from fancy_dataclass.json import JSONDataclass
 from fancy_dataclass.toml import TOMLDataclass
-from fancy_dataclass.utils import TypeConversionError
+from fancy_dataclass.utils import FieldTypeValidationError
 
 
 def test_config_dataclass() -> None:
@@ -64,6 +64,29 @@ def test_config_dataclass() -> None:
     assert isinstance(outer_cfg, OuterConfig)
     assert outer_cfg.inner == outer.inner
 
+def test_validate() -> None:
+    """Tests validation behavior of ConfigDataclass."""
+    assert ConfigDataclass.__settings__.validate_init is True
+    @dataclass
+    class ConfigValidate(ConfigDataclass):
+        x: int
+    assert ConfigValidate.__settings__.validate_init is True
+    cfg = ConfigValidate(1)
+    assert ConfigValidate.from_dict(cfg.to_dict()) == cfg
+    with pytest.raises(FieldTypeValidationError, match="field 'x' of .*ConfigValidate: value '1' does not match"):
+        cfg = ConfigValidate('1')  # type: ignore[arg-type]
+    with pytest.raises(FieldTypeValidationError, match="field 'x' of .*ConfigValidate: value '1' does not match"):
+        cfg = ConfigValidate.from_dict({'x': '1'})
+    @dataclass
+    class ConfigNoValidate(ConfigDataclass, validate=False):
+        x: int
+    assert ConfigNoValidate.__settings__.validate_init is False
+    cfg = ConfigNoValidate(1)
+    assert ConfigNoValidate.from_dict(cfg.to_dict()) == cfg
+    cfg = ConfigNoValidate('1')  # type: ignore[arg-type]
+    assert cfg.to_dict() == {'x': '1'}
+    assert ConfigNoValidate.from_dict(cfg.to_dict()) == cfg
+
 def test_inner_plain(tmp_path: Path) -> None:
     """Tests nested dataclass where the inner dataclass is a regular dataclass, not a ConfigDataclass."""
     @dataclass
@@ -103,7 +126,7 @@ def test_inner_plain(tmp_path: Path) -> None:
     assert Outer.from_dict(cfg_dict) == cfg
     d = {'inner': {'x': 1}, 'y': 'a'}
     assert cfg_dict != d
-    with pytest.raises(TypeConversionError, match="could not convert {'x': 1}"):
+    with pytest.raises(FieldTypeValidationError, match="field 'inner' of .*Outer: value .* does not match"):
         _ = Outer.from_dict(d)
     toml_str = 'y = "a"\n[inner]\nx = 1\n'
     cfg_path = tmp_path / 'test.toml'

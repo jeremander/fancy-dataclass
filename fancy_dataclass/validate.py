@@ -151,7 +151,7 @@ class ValidatedDataclass(DataclassMixin):
             raise FieldTypeValidationError(cls, fld.name, fld.type, MISSING)
         validate_dataclass_field(cls, fld, getattr(self, fld.name))
 
-    def __post_init__(self, **kwargs: Any) -> None:
+    def __post_init__(self, *args: Any, **kwargs: Any) -> None:
         for fld in get_dataclass_fields(self):
             flags = self._field_validation_flags(fld)
             if flags.validate_init:

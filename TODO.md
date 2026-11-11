@@ -5,11 +5,10 @@
 ## v0.13.0
 
 - Validation support: `ValidatedDataclass`
-  - Plain `validate` field setting, sets both `validate_init` and `validate_assign`?
   - Interaction with `validate=True` in `DictDataclass`?
-    - Simplest would be to deprecate/remove *all* validation features from here.
-    - Alternatively could keep this flag, and have the class inherit from `ValidatedDataclass` if it's set.
-      - Or inherit unconditionally but toggle validation flags to `False` based on the flag.
+    - No need for `TypeConversionError`?
+  - Document that validation settings & field settings are inherited for `DictDataclass` (default no validation)
+  - Document that `ConfigDataclass` *does* do validation
   - Configs
     - Flag to decorate all methods with arg & return type-checking (default `False`)
 
