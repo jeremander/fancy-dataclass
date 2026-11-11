@@ -129,7 +129,13 @@ class TOMLSerializable(TextFileSerializable):
             return cls.from_toml(sio, **kwargs)
 
 
-class TOMLDataclass(DictFileSerializableDataclass, TOMLSerializable, suppress_defaults=False, store_type='off'):
+class TOMLDataclass(
+    DictFileSerializableDataclass,
+    TOMLSerializable,
+    validate=True,
+    suppress_defaults=False,
+    store_type='off',
+):
     """Dataclass mixin enabling default serialization of dataclass objects to and from TOML."""
 
     __settings_type__ = TOMLDataclassSettings

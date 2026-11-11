@@ -318,6 +318,12 @@ class DictDataclass(ValidatedDataclass):
                 subtype = subtypes[0]
                 return tuple(convert_val(subtype, elt) for elt in val)
             return tuple(convert_val(subtype, elt) for (subtype, elt) in zip(args, val))
+        if origin_type is Literal:
+            for basic_type in [int, str]:
+                # subclasses of basic types fail to type-check against Literal values, but we will be more permissive by
+                # coercing the value here
+                if isinstance(val, basic_type):
+                    return basic_type(val)
         if type_is_union(tp):
             for subtype in args:
                 try:

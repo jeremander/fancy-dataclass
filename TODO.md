@@ -5,7 +5,8 @@
 ## v0.13.0
 
 - Validation support: `ValidatedDataclass`
-  - Make subclasses of `DictDataclass` set `validate=True`?
+  - Validate on assignment by default? Think about it.
+  - Clearer error message for field validation when type is correct but value doesn't type-check due to nested field
   - Configs
     - Flag to decorate all methods with arg & return type-checking (default `False`)
 

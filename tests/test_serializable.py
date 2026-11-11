@@ -434,52 +434,39 @@ class TestJSON(TestDict):
         """Tests that DictDataclass does not do special type conversion for certain types, while JSONDataclass does."""
         self._test_dict_convert(obj, d, None)
 
-    @pytest.mark.parametrize(['obj', 'd', 'err'], [
-        (DCOptionalInt(1, 2), {'x': 1, 'y': 2}, None),
-        (DCOptionalInt(1, None), {'x': 1, 'y': None}, None),
-        # validation does not occur when converting to dict, only from dict
-        (
-            DCOptionalInt(None, 1),  # type: ignore[arg-type]
-            {'x': None, 'y': 1},
-            (True, FieldTypeValidationError, "field 'x' of .*DCOptionalInt: value None does not match"),
-        ),
-        (DCOptionalStr('a', 'b'), {'x': 'a', 'y': 'b'}, None),
-        (DCOptionalStr('a', None), {'x': 'a', 'y': None}, None),
-        (
-            DCOptionalStr(None, 'b'),  # type: ignore[arg-type]
-            {'x': None, 'y': 'b'},
-            (True, FieldTypeValidationError, "field 'x' of .*DCOptionalStr: value None does not match"),
-        ),
+    @pytest.mark.parametrize(['obj', 'd'], [
+        (DCOptionalInt(1, 2), {'x': 1, 'y': 2}),
+        (DCOptionalInt(1, None), {'x': 1, 'y': None}),
+        (DCOptionalStr('a', 'b'), {'x': 'a', 'y': 'b'}),
+        (DCOptionalStr('a', None), {'x': 'a', 'y': None}),
     ])
-    def test_optional(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        obj: DictDataclass,
-        d: dict[str, Any],
-        err: Optional[ErrInfo],
-    ) -> None:
-        # patch class settings to activate field validation
-        monkeypatch.setattr(DCOptionalInt.__settings__, 'validate_init', True)
-        monkeypatch.setattr(DCOptionalStr.__settings__, 'validate_init', True)
-        self._test_dict_convert(obj, d, err)
+    def test_optional_valid(self, obj: DictDataclass, d: dict[str, Any]) -> None:
+        """Tests an optional field, for valid examples."""
+        self._test_dict_convert(obj, d, None)
 
-    @pytest.mark.parametrize(['obj', 'd', 'err'], [
-        (DCLiteral(1), {'lit': 1}, None),
-        (
-            DCLiteral('b'),  # type: ignore[arg-type]
-            {'lit': 'b'},
-            (True, FieldTypeValidationError, "field 'lit' of .*DCLiteral: value 'b' does not match"),
-        ),
-    ])
-    def test_literal(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        obj: DictDataclass,
-        d: dict[str, Any],
-        err: Optional[ErrInfo],
-    ) -> None:
-        monkeypatch.setattr(DCLiteral.__settings__, 'validate_init', True)
-        self._test_dict_convert(obj, d, err)
+    def test_optional_invalid(self) -> None:
+        """Tests an optional field, for invalid examples."""
+        err = "field 'x' of .*DCOptionalStr: value None does not match"
+        with pytest.raises(FieldTypeValidationError, match=err):
+            _ = DCOptionalStr(None, 'b')  # type: ignore[arg-type]
+        obj = DCOptionalStr('a', 'b')
+        object.__setattr__(obj, 'x', None)
+        d = obj.to_dict()
+        assert d == {'x': None, 'y': 'b'}
+        with pytest.raises(FieldTypeValidationError, match=err):
+            _ = DCOptionalStr.from_dict(d)
+
+    def test_literal(self) -> None:
+        self._test_dict_convert(DCLiteral(1), {'lit': 1}, None)
+        err = "field 'lit' of .*DCLiteral: value 'b' does not match"
+        with pytest.raises(FieldTypeValidationError, match=err):
+            _ = DCLiteral('b')  # type: ignore[arg-type]
+        obj = DCLiteral(1)
+        object.__setattr__(obj, 'lit', 'b')
+        d = obj.to_dict()
+        assert d == {'lit': 'b'}
+        with pytest.raises(FieldTypeValidationError, match=err):
+            _ = DCLiteral.from_dict(d)
 
     def test_datetime(self) -> None:
         obj = DCDatetime(NOW)
@@ -513,8 +500,7 @@ class TestJSON(TestDict):
         obj = DCAnnotated(3, 4.7)
         assert obj.to_dict() == {'x': 3, 'y': 4.7}
 
-    def test_typed_dict(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setattr(DCTypedDict.__settings__, 'validate_init', True)
+    def test_typed_dict(self) -> None:
         td: MyTypedDict = {'x': 3, 'y': 'a'}
         obj = DCTypedDict(td)
         assert obj.to_dict() == {'d': td}
@@ -523,34 +509,39 @@ class TestJSON(TestDict):
             with pytest.raises(FieldTypeValidationError, match="field 'd' of .*DCTypedDict: value .* does not match"):
                 _ = DCTypedDict.from_dict({'d': d})
 
-    @pytest.mark.parametrize(['obj', 'd', 'err'], [
-        (DCUntypedNamedTuple(UntypedNamedTuple(3, 'a')), {'t': {'x': 3, 'y': 'a'}}, None),
-        (DCTypedNamedTuple(TypedNamedTuple(3, 'a')), {'t': {'x': 3, 'y': 'a'}}, None),
-        # invalid NamedTuple field (validation occurs on from_dict)
+    @pytest.mark.parametrize(['obj', 'd'], [
         (
-            DCTypedNamedTuple(TypedNamedTuple(3, 4)),  # type: ignore[arg-type]
-            {'t': {'x': 3, 'y': 4}},
-            (True, FieldTypeValidationError, "field 't' of .*DCTypedNamedTuple: value .* does not match"),
+            DCUntypedNamedTuple(UntypedNamedTuple(3, 'a')),
+            {'t': {'x': 3, 'y': 'a'}},
+        ),
+        (
+            DCTypedNamedTuple(TypedNamedTuple(3, 'a')),
+            {'t': {'x': 3, 'y': 'a'}},
         ),
     ])
-    def test_namedtuple(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        obj: DictDataclass,
-        d: dict[str, Any],
-        err: Optional[ErrInfo],
-    ) -> None:
-        monkeypatch.setattr(DCTypedNamedTuple.__settings__, 'validate_init', True)
-        self._test_dict_convert(obj, d, err)
+    def test_namedtuple(self, obj: DictDataclass, d: dict[str, Any]) -> None:
+        """Tests dict conversion with a namedtuple field, for valid examples."""
+        self._test_dict_convert(obj, d, None)
 
-    def test_namedtuple_missing_field(self) -> None:
+    def test_namedtuple_invalid_type(self) -> None:
+        """Tests dict conversion with a namedtuple field, when the namedtuple has a field of an incorrect type."""
+        tup1 = TypedNamedTuple(3, 'a')
+        tup2 = TypedNamedTuple(3, 4)  # type: ignore[arg-type]
+        obj = DCTypedNamedTuple(tup1)
+        object.__setattr__(obj, 't', tup2)
+        d = obj.to_dict()
+        assert d == {'t': {'x': 3, 'y': 4}}
+        with pytest.raises(FieldTypeValidationError, match="field 't' of .*DCTypedNamedTuple: value .* does not match"):
+            _ = DCTypedNamedTuple.from_dict(d)
+
+    @pytest.mark.parametrize('d', [
+        {'t': {'x': 3}},
+        {'t': {'x': 3, 'z': 4}},
+    ])
+    def test_namedtuple_missing_field(self, d: dict[str, Any]) -> None:
         """Tests converting a dict to a namedtuple when one of the namedtuple fields is missing."""
-        for d in [
-            {'t': {'x': 3}},
-            {'t': {'x': 3, 'z': 4}},
-        ]:
-            with pytest.raises(TypeError, match="missing key 'y' when converting dict to .*UntypedNamedTuple"):
-                _ = DCUntypedNamedTuple.from_dict(d)
+        with pytest.raises(TypeError, match="missing key 'y' when converting dict to .*UntypedNamedTuple"):
+            _ = DCUntypedNamedTuple.from_dict(d)
 
     def test_namedtuple_extraneous_field(self) -> None:
         """Tests converting a dict to a namedtuple when an extraneous field is present."""
