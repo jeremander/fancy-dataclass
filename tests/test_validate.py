@@ -451,3 +451,20 @@ def test_validate_field_setting(
         validate_assign = settings.validate_assign
     assert isinstance(validate_assign, bool)
     assert flags.validate_assign == validate_assign
+
+@pytest.mark.parametrize('validate_parent', [None, False, True])
+@pytest.mark.parametrize('validate_child', [None, False, True])
+def test_validate_setting_inheritance(validate_parent: bool, validate_child: bool) -> None:
+    """Tests that inheritance works when the `validate` flag is set on the parent and/or child class."""
+    @dataclass
+    class DCParent(ValidatedDataclass, validate=validate_parent):
+        x: int
+    @dataclass
+    class DCChild(DCParent, validate=validate_child):
+        ...
+    validate_init = DCParent.__settings__.validate_init if (validate_child is None) else validate_child
+    assert DCChild.__settings__.validate_init == validate_init
+    validate_assign = DCParent.__settings__.validate_assign if (validate_child is None) else validate_child
+    assert DCChild.__settings__.validate_assign == validate_assign
+    obj = DCChild(1)
+    assert obj.x == 1

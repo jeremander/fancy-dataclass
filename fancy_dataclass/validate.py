@@ -28,23 +28,16 @@ class ValidatedDataclassSettings(MixinSettings):
     - `validate_assign`: if `True`, validate all fields upon assignment (default `False`)
     - `validate`: convenience flag to set both `validate_init` and `validate_assign` simultaneously"""
 
-    validate_init: bool = True
-    validate_assign: bool = False
-    validate: InitVar[Optional[bool]]
+    validate_init: bool = None  # type: ignore[assignment]
+    validate_assign: bool = None  # type: ignore[assignment]
+    validate: InitVar[Optional[bool]] = None
 
-    def __init__(  # noqa: D107
-        self,
-        *,
-        validate_init: Optional[bool] = None,
-        validate_assign: Optional[bool] = None,
-        validate: Optional[bool] = None,
-    ) -> None:
-        if validate_init is None:
-            validate_init = True if (validate is None) else validate
-        if validate_assign is None:
-            validate_assign = False if (validate is None) else validate
-        self.validate_init = validate_init
-        self.validate_assign = validate_assign
+    def __post_init__(self, validate: Optional[bool], **kwargs: Any) -> None:
+        if self.validate_init is None:
+            self.validate_init = True if (validate is None) else validate  # pyrefly: ignore[attribute-assign-on-never]
+        if self.validate_assign is None:
+            self.validate_assign = False if (validate is None) else validate  # pyrefly: ignore[attribute-assign-on-never]
+        super().__post_init__(validate, **kwargs)
 
 
 @dataclass(kw_only=True)
@@ -88,6 +81,13 @@ class ValidatedDataclass(DataclassMixin):
     __field_settings_type__ = ValidatedDataclassFieldSettings
 
     @classmethod
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        if 'validate' in kwargs and (kwargs['validate'] is None):
+            # prevent subclass with validate=None from overriding parent settings
+            kwargs = {key: val for (key, val) in kwargs.items() if (key != 'validate')}
+        super().__init_subclass__(**kwargs)
+
+    @classmethod
     def __post_dataclass_wrap__(cls, wrapped_cls: type[Self]) -> None:
         if wrapped_cls.__settings__.validate_init:
             # validate ClassVar values and field default values at dataclass wrap time
@@ -113,6 +113,7 @@ class ValidatedDataclass(DataclassMixin):
             # during initialization.
             # NOTE: if the dataclass is frozen, `setattr` will *not* be called when initializing fields, so if
             # validation is desired, be sure to set validate_init=True.
+            orig_setattr = wrapped_cls.__setattr__
             def _validated_setattr(self: object, name: str, value: Any, /) -> None:
                 tp = cast(DataclassType, type(self))
                 if (
@@ -120,7 +121,7 @@ class ValidatedDataclass(DataclassMixin):
                     and tp._field_validation_flags(fld).validate_assign  # type: ignore[attr-defined]
                 ):
                     validate_dataclass_field(tp, fld, value)
-                super(type(self), self).__setattr__(name, value)  # type: ignore[misc]
+                orig_setattr(self, name, value)  # pyrefly: ignore[bad-argument-type]
             wrapped_cls.__setattr__ = _validated_setattr  # type: ignore[method-assign]
 
     @classmethod

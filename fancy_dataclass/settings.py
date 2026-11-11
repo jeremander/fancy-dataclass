@@ -30,7 +30,7 @@ class DataclassAdaptable:
 class _DataclassFieldValidate:
     """Mixin class for a dataclass which, in __post_init__, performs runtime type-checking on all field values."""
 
-    def __post_init__(self) -> None:
+    def __post_init__(self, *args: Any, **kwargs: Any) -> None:
         assert is_dataclass(self)
         for fld in fields(self):
             validate_dataclass_field(type(self), fld, getattr(self, fld.name))
