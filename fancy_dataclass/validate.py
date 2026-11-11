@@ -78,13 +78,23 @@ class ValidatedDataclass(DataclassMixin):
 
     __settings_type__ = ValidatedDataclassSettings
     __settings__: ClassVar[ValidatedDataclassSettings] = ValidatedDataclassSettings()
+    # extra class flag indicating whether to pass an explicit validate flag upon subclass construction
+    __default_validate__: ClassVar[Optional[bool]] = None
     __field_settings_type__ = ValidatedDataclassFieldSettings
 
     @classmethod
     def __init_subclass__(cls, **kwargs: Any) -> None:
+        # ensure that child classes use the value of their parent's __default_validate__ flag, if applicable
+        kwargs = {
+            **({} if (cls.__default_validate__ is None) else {'validate': cls.__default_validate__}),
+            **kwargs,
+        }
         if 'validate' in kwargs and (kwargs['validate'] is None):
             # prevent subclass with validate=None from overriding parent settings
-            kwargs = {key: val for (key, val) in kwargs.items() if (key != 'validate')}
+            kwargs.pop('validate')
+        # also override the child's __default_validate__ if the validate flag is set
+        if (validate := kwargs.get('validate')) is not None:
+            cls.__default_validate__ = validate
         super().__init_subclass__(**kwargs)
 
     @classmethod
