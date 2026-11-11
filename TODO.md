@@ -5,16 +5,20 @@
 ## v0.13.0
 
 - Validation support: `ValidatedDataclass`
-  - Validate on assignment by default? Think about it.
+  - Disjoint base?
+  - `typing.Never`
   - Clearer error message for field validation when type is correct but value doesn't type-check due to nested field
   - Configs
     - Flag to decorate all methods with arg & return type-checking (default `False`)
-
+- Test dependent packages
+- Handle `annotated_doc.doc` in addition to `typing_extensions.Doc` (abstract into helper)
 - Documentation
   - Validation
     - Fix discussion of validation in `DictDataclass` (including error type)
     - Document that validation settings & field settings are inherited for `DictDataclass` (default no validation)
     - Document that `ConfigDataclass` *does* do validation
+    - Differences vs. `pydantic`?
+      - Assignment validation by default
   - CLI
   - SQL
     - Primary key (default `_id`)
@@ -29,13 +33,18 @@
   - https://github.com/jeremander/fancy-dataclass/issues/5
   - Simple approach would be to allow the value to be a list and have the first alias be "primary" (the one used for serialization), and have them be in descending priority order for consumption.
 - `ValidatedDataclass`
+  - `Annotated` validators?
+    - Support `annotated_types`, custom predicates
+    - Helper to get all annotations
   - Configs
     - Collection checking mode: `O1`, `Ologn`, `On` (default `On`)
-      - Switch from `typeguard` to `beartype`? But it doesn't yet implement $O(n)$ checking.
-    - Respect PEP 484 tower (default `True` for now, since `typeguard` does so)
+      - Switch from `typeguard` to `beartype`? But it doesn't yet implement O(n) checking...
+    - Flag to toggle respecting PEP 484 tower (default `True` for now, since `typeguard` does so)
+    - Should have helper decorator to handle specific methods & functions, which will take priority
+      - Can use `typeguard` for simplicity, or try to emulate its inspection logic.
   - Allow all (or at least most) configs to be overridable at field level
   - Custom validation functions per field
-  - `Annotated` validators?
+
 - Field converters
   - https://github.com/jeremander/fancy-dataclass/issues/2
   - PEP 712 (`converter` argument for dataclass fields), was rejected

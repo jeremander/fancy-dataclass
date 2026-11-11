@@ -25,7 +25,7 @@ class ValidatedDataclassSettings(MixinSettings):
     Subclasses of `ValidatedDataclass` may set the following fields as keyword arguments during inheritance:
 
     - `validate_init`: if `True`, validate all fields upon initialization (default `True`)
-    - `validate_assign`: if `True`, validate all fields upon assignment (default `False`)
+    - `validate_assign`: if `True`, validate all fields upon assignment (default `True`)
     - `validate`: convenience flag to set both `validate_init` and `validate_assign` simultaneously"""
 
     validate_init: bool = None  # type: ignore[assignment]
@@ -36,7 +36,7 @@ class ValidatedDataclassSettings(MixinSettings):
         if self.validate_init is None:
             self.validate_init = True if (validate is None) else validate  # pyrefly: ignore[attribute-assign-on-never]
         if self.validate_assign is None:
-            self.validate_assign = False if (validate is None) else validate  # pyrefly: ignore[attribute-assign-on-never]
+            self.validate_assign = True if (validate is None) else validate  # pyrefly: ignore[attribute-assign-on-never]
         super().__post_init__(validate, **kwargs)
 
 

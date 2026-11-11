@@ -14,7 +14,7 @@ from fancy_dataclass.validate import FieldTypeValidationError, ValidatedDataclas
 
 
 @dataclass
-class DC1(ValidatedDataclass):
+class DC1(ValidatedDataclass, validate_assign=False):
     x: int
     y: str
 
@@ -191,7 +191,7 @@ def test_nested() -> None:
         inner: DC1
     # outer class does not validate
     @dataclass
-    class DCOuterNoValidate(ValidatedDataclass, validate_init=False):
+    class DCOuterNoValidate(ValidatedDataclass, validate=False):
         inner: DC1
     for outer_cls in [DCOuterValidate, DCOuterNoValidate]:
         for inner_cls in [DC1, DC1Sub, DC1Fake]:
@@ -417,7 +417,7 @@ def test_validate_class_setting(
         validate_init = True if (validate is None) else validate
     assert settings.validate_init == validate_init
     if validate_assign is None:
-        validate_assign = False if (validate is None) else validate
+        validate_assign = True if (validate is None) else validate
     assert settings.validate_assign == validate_assign
 
 @pytest.mark.parametrize('validate_init', [None, False, True])
