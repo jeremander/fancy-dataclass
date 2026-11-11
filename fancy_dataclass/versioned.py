@@ -51,6 +51,16 @@ class Version(tuple[int, ...]):
         return get_version_string(self)
 
 
+def _validate_version_for_class(version: Any, cls: type) -> Version:
+    """Validates a version as an arbitrary value passed in by keyword argument to `__init_subclass__` of a
+    `VersionedDataclass` subclass.
+    If it is invalid, raises a TypeError associated with the class."""
+    try:
+        return Version(version)
+    except ValueError as e:
+        raise TypeError(f'invalid version {version!r} for class {cls.__name__!r}') from e
+
+
 ###################
 # GLOBAL REGISTRY #
 ###################
@@ -170,15 +180,14 @@ class VersionedDataclass(DictDataclass):
     version: ClassVar[AnyVersion]
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
+        if (version := kwargs.get('version', None)) is not None:
+            _ = _validate_version_for_class(version, cls)
         super().__init_subclass__(allow_duplicates=True, **kwargs)
         assert hasattr(cls.__settings__, 'version')
-        version: Optional[AnyVersion] = getattr(cls, 'version', cls.__settings__.version)
+        version = getattr(cls, 'version', cls.__settings__.version)
         if version is None:
             raise TypeError(f'must supply a valid version for class {cls.__name__!r}')
-        try:
-            version_tup = Version(version)
-        except ValueError as e:
-            raise TypeError(f'invalid version {version!r} for class {cls.__name__!r}') from e
+        version_tup = _validate_version_for_class(version, cls)
         if 'version' not in cls.__dataclass_fields__:
             # if subclass gets generated dynamically, it might not have a 'version' ClassVar field, so create it
             cls.__dataclass_fields__['version'] = VersionedDataclass.__dataclass_fields__['version']

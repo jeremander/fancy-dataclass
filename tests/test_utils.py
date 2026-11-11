@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
 from types import NoneType
-from typing import Any, ClassVar, Optional, Union
+from typing import Any, ClassVar, Optional, TypedDict, Union
 
 import pytest
 from pytest import param
@@ -22,6 +22,10 @@ from fancy_dataclass.utils import (
 
 class Example:
     ...
+
+class TD(TypedDict):
+    x: int
+    y: str
 
 
 @pytest.mark.parametrize(['snake', 'camel'], [
@@ -174,6 +178,10 @@ def test_check_is_subtype(tp1: Any, tp2: Any, output: bool) -> None:
     ((1, 2), Sequence[int], True),
     (None, Sequence[int], False),
     ((1, 2), Optional[int | Sequence[int]], True),
+    ({}, TD, False),
+    ({'x': 1}, TD, False),
+    ({'x': 1, 'y': '2'}, TD, True),
+    ({'x': 1, 'y': 2}, TD, False),
 ])
 def test_conforms_to(obj: Any, tp: Any, output: bool) -> None:
     """Tests the conforms_to helper function."""

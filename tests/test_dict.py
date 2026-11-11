@@ -8,7 +8,7 @@ from typing_extensions import Doc
 
 from fancy_dataclass.dict import DictDataclass, DictDataclassSettings
 from fancy_dataclass.mixin import DataclassMixin
-from fancy_dataclass.utils import MissingRequiredFieldError, TypeConversionError
+from fancy_dataclass.utils import FieldTypeValidationError, MissingRequiredFieldError, TypeConversionError
 
 
 @dataclass
@@ -340,7 +340,10 @@ def test_allow_extra_fields() -> None:
 def test_store_type_setting() -> None:
     """Tests behavior of the store_type setting."""
     # invalid mode
-    with pytest.raises(ValueError, match="invalid value 'fake' for store_type mode"):
+    with pytest.raises(
+        FieldTypeValidationError,
+        match="field 'store_type' of .*DictDataclassSettings: value 'fake' does not match",
+    ):
         @dataclass
         class DC1(DictDataclass, store_type='fake'):
             ...

@@ -5,8 +5,7 @@
 ## v0.13.0
 
 - Validation support: `ValidatedDataclass`
-  - Custom validation functions per field
-  - `Annotated` validators?
+  - Plain `validate` field setting, sets both `validate_init` and `validate_assign`?
   - Interaction with `validate=True` in `DictDataclass`?
     - Simplest would be to deprecate/remove *all* validation features from here.
     - Alternatively could keep this flag, and have the class inherit from `ValidatedDataclass` if it's set.
@@ -20,6 +19,7 @@
     - Primary key (default `_id`)
     - Relationships
   - `ValidatedDataclass`
+  - Changelog
 
 ## Future
 
@@ -33,6 +33,8 @@
       - Switch from `typeguard` to `beartype`? But it doesn't yet implement $O(n)$ checking.
     - Respect PEP 484 tower (default `True` for now, since `typeguard` does so)
   - Allow all (or at least most) configs to be overridable at field level
+  - Custom validation functions per field
+  - `Annotated` validators?
 - Field converters
   - https://github.com/jeremander/fancy-dataclass/issues/2
   - PEP 712 (`converter` argument for dataclass fields), was rejected

@@ -70,9 +70,7 @@ class DictDataclassSettings(MixinSettings):
     validate: bool = True
 
     def __post_init__(self) -> None:
-        # validate store_type
-        if self.store_type not in get_args(StoreTypeMode):
-            raise ValueError(f'invalid value {self.store_type!r} for store_type mode')
+        super().__post_init__()
         self._store_type = self.store_type  # stores the value where 'auto' has been resolved from base class
 
     def should_store_type(self) -> bool:
