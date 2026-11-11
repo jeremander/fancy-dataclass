@@ -400,9 +400,15 @@ def test_non_init_field(init: bool, assign: bool) -> None:
                 assert obj.y == 'b'
 
 @pytest.mark.parametrize('validate_init', [None, False, True])
+@pytest.mark.parametrize('validate_assign', [None, False, True])
 @pytest.mark.parametrize('validate', [None, False, True])
-def test_validate_setting(validate_init: Optional[bool], validate: Optional[bool]) -> None:
-    kwargs = {'validate_init': validate_init, 'validate': validate}
+def test_validate_class_setting(
+    validate_init: Optional[bool],
+    validate_assign: Optional[bool],
+    validate: Optional[bool],
+) -> None:
+    """Tests interaction between the various validation flags for class settings."""
+    kwargs = {'validate_init': validate_init, 'validate_assign': validate_assign, 'validate': validate}
     @dataclass
     class DC(ValidatedDataclass, **kwargs):
         ...
@@ -410,4 +416,38 @@ def test_validate_setting(validate_init: Optional[bool], validate: Optional[bool
     if validate_init is None:
         validate_init = True if (validate is None) else validate
     assert settings.validate_init == validate_init
-    assert settings.validate_assign == (False if (validate is None) else validate)
+    if validate_assign is None:
+        validate_assign = False if (validate is None) else validate
+    assert settings.validate_assign == validate_assign
+
+@pytest.mark.parametrize('validate_init', [None, False, True])
+@pytest.mark.parametrize('validate_assign', [None, False, True])
+@pytest.mark.parametrize('validate', [None, False, True])
+def test_validate_field_setting(
+    validate_init: Optional[bool],
+    validate_assign: Optional[bool],
+    validate: Optional[bool],
+) -> None:
+    """Tests interaction between the various validation flags for field settings."""
+    kwargs = {'validate_init': validate_init, 'validate_assign': validate_assign, 'validate': validate}
+    @dataclass
+    class DC(ValidatedDataclass):
+        x: int = field(metadata=kwargs)
+    settings = DC.__settings__
+    fld = DC.__dataclass_fields__['x']
+    fld_settings = DC._field_settings(fld)
+    if validate_init is None:
+        validate_init = validate
+    assert fld_settings.validate_init == validate_init
+    if validate_assign is None:
+        validate_assign = validate
+    assert fld_settings.validate_assign == validate_assign
+    flags = DC._field_validation_flags(fld)
+    if validate_init is None:
+        validate_init = settings.validate_init
+    assert isinstance(validate_init, bool)
+    assert flags.validate_init == validate_init
+    if validate_assign is None:
+        validate_assign = settings.validate_assign
+    assert isinstance(validate_assign, bool)
+    assert flags.validate_assign == validate_assign

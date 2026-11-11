@@ -134,7 +134,7 @@ exclude_lines = [
 tag_format = "v$major.$minor.$patch"
 
 [tool.pytest.ini_options]
-addopts = "--verbose --cov=fancy_dataclass"
+addopts = "--verbose --cov=fancy_dataclass --cov=tests"
 
 [tool.mypy]
 # exclude = ["docs/", "scripts/", "site/", "tmp.*"]

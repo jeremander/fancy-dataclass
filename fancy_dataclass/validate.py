@@ -28,8 +28,8 @@ class ValidatedDataclassSettings(MixinSettings):
     - `validate_assign`: if `True`, validate all fields upon assignment (default `False`)
     - `validate`: convenience flag to set both `validate_init` and `validate_assign` simultaneously"""
 
-    validate_init: bool
-    validate_assign: bool
+    validate_init: bool = True
+    validate_assign: bool = False
     validate: InitVar[Optional[bool]]
 
     def __init__(  # noqa: D107
@@ -57,10 +57,19 @@ class ValidatedDataclassFieldSettings(FieldSettings):
     validate the field upon initialization
     - `validate_assign`: if set to `True` or `False`, overrides the class-level `validate_assign` flag for whether to
     validate the field upon assignment
+    - `validate`: convenience flag to set both `validate_init` and `validate_assign` simultaneously
     """
 
     validate_init: Optional[bool] = None
     validate_assign: Optional[bool] = None
+    validate: InitVar[Optional[bool]] = None
+
+    def __post_init__(self, validate: Optional[bool]) -> None:
+        if validate is not None:
+            if self.validate_init is None:
+                self.validate_init = validate
+            if self.validate_assign is None:
+                self.validate_assign = validate
 
 
 @dataclass(kw_only=True)
