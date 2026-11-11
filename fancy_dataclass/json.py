@@ -1,6 +1,5 @@
 from abc import abstractmethod
 from datetime import datetime
-from functools import partial
 from io import IOBase, StringIO
 import json
 from json import JSONEncoder
@@ -15,7 +14,7 @@ from fancy_dataclass.serialize import (
     from_dict_value_basic,
     to_dict_value_basic,
 )
-from fancy_dataclass.utils import AnyIO, TypeConversionError, issubclass_safe
+from fancy_dataclass.utils import AnyIO, get_type_name, issubclass_safe
 
 
 ####################
@@ -29,6 +28,9 @@ def _dump_value_to_json(val: Any, fp: IO[str], encoder_cls: type[JSONEncoder], *
         kwargs['indent'] = None
     kwargs['cls'] = encoder_cls
     json.dump(val, fp, **kwargs)
+
+def _is_namedtuple_type(tp: type) -> bool:
+    return issubclass_safe(tp, tuple) and isinstance(getattr(tp, '_fields', None), tuple)
 
 
 ##########
@@ -186,18 +188,17 @@ class JSONDataclass(DictFileSerializableDataclass, JSONSerializable):
     def _from_dict_value(cls, tp: type, val: Any) -> Any:
         # customize behavior for JSONSerializable
         origin_type = get_origin(tp)
-        convert_val = partial(cls._from_dict_value)
-        if (origin_type is None) and issubclass_safe(tp, tuple) and isinstance(val, dict) and hasattr(tp, '_fields'):
-            # namedtuple
-            try:
-                vals = []
-                for key in tp._fields:
-                    # if NamedTuple's types are annotated, check them
-                    valtype = getattr(tp, '__annotations__', {}).get(key)
-                    vals.append(val[key] if (valtype is None) else convert_val(valtype, val[key]))
-                return tp(*vals)
-            except KeyError as e:
-                raise TypeConversionError(tp, val) from e
+        convert_val = cls._from_dict_value
+        if (origin_type is None) and _is_namedtuple_type(tp) and isinstance(val, dict):
+            # namedtuple: convert from dict whose keys are field names
+            # NOTE: for now we allow extraneous keys to be present
+            vals = []
+            for key in tp._fields:  # type: ignore[attr-defined]
+                if key in val:
+                    vals.append(val[key])
+                else:
+                    raise TypeError(f'missing key {key!r} when converting dict to {get_type_name(tp)}')
+            return tp(*vals)
         if origin_type is dict:  # decode keys to be valid JSON
             (keytype, valtype) = get_args(tp)
             return {

@@ -543,6 +543,20 @@ class TestJSON(TestDict):
         monkeypatch.setattr(DCTypedNamedTuple.__settings__, 'validate_init', True)
         self._test_dict_convert(obj, d, err)
 
+    def test_namedtuple_missing_field(self) -> None:
+        """Tests converting a dict to a namedtuple when one of the namedtuple fields is missing."""
+        for d in [
+            {'t': {'x': 3}},
+            {'t': {'x': 3, 'z': 4}},
+        ]:
+            with pytest.raises(TypeError, match="missing key 'y' when converting dict to .*UntypedNamedTuple"):
+                _ = DCUntypedNamedTuple.from_dict(d)
+
+    def test_namedtuple_extraneous_field(self) -> None:
+        """Tests converting a dict to a namedtuple when an extraneous field is present."""
+        obj = DCUntypedNamedTuple.from_dict({'t': {'x': 3, 'y': 'a', 'z': 4}})
+        assert obj.t == UntypedNamedTuple(3, 'a')
+
     def test_any(self) -> None:
         # two non-identical objects get mapped to the same dict, resulting in round-trip failure
         obj1 = DCList([DCAny(DCAny(1))])

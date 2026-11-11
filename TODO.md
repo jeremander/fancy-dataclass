@@ -5,8 +5,7 @@
 ## v0.13.0
 
 - Validation support: `ValidatedDataclass`
-  - Interaction with `validate=True` in `DictDataclass`?
-    - No need for `TypeConversionError`?
+  - Make subclasses of `DictDataclass` set `validate=True`?
   - Configs
     - Flag to decorate all methods with arg & return type-checking (default `False`)
 

@@ -10,7 +10,7 @@ from typing import IO, Any, BinaryIO, cast
 from typing_extensions import Self, override
 
 from fancy_dataclass.dict import AnyDict, DictDataclass
-from fancy_dataclass.utils import AnyIO, AnyPath, TypeConversionError
+from fancy_dataclass.utils import AnyIO, AnyPath
 
 
 def to_dict_value_basic(val: Any) -> Any:
@@ -59,13 +59,8 @@ def from_dict_value_basic(tp: type, val: Any) -> Any:
         return tp(val)  # type: ignore[call-arg]
     if issubclass(tp, range):
         return tp(*val)
-    if issubclass(tp, Path):
+    if issubclass(tp, (Enum, Path)):
         return tp(val)
-    if issubclass(tp, Enum):
-        try:
-            return tp(val)
-        except ValueError as e:
-            raise TypeConversionError(tp, val) from e
     if getattr(tp, '__name__', None) == 'ndarray':  # numpy array
         import numpy as np
         return np.array(val)

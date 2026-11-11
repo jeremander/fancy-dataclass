@@ -51,34 +51,6 @@ DataclassType: TypeAlias = type['DataclassInstance']
 # ERROR TYPES #
 ###############
 
-class TypeConversionError(TypeError):
-    """Error type for type conversion."""
-
-    def __init__(self, target_type: TypeLike, value: Any) -> None:
-        """Constructor for `TypeConversionError`.
-
-        Args:
-            target_type: type to convert to
-            value: value to convert"""
-        self.target_type = target_type
-        self.value = value
-        super().__init__(f'could not convert {value!r} to type {get_type_name(target_type)}')
-
-
-class TypeValidationError(TypeError):
-    """Error type for runtime type-checking."""
-
-    def __init__(self, expected_type: TypeLike, value: Any) -> None:
-        """Constructor for `TypeValidationError`.
-
-        Args:
-            expected_type: type to check the value against
-            value: value to type-check"""
-        self.expected_type = expected_type
-        self.value = value
-        super().__init__(f'value {value!r} does not match expected type {get_type_name(expected_type)}')
-
-
 class FieldTypeValidationError(TypeError):
     """Error type for runtime type-checking a value of a dataclass field."""
 
@@ -109,9 +81,11 @@ class FieldTypeValidationError(TypeError):
             # error message indicates that the field value is missing, rather than the wrong type
             err_msg = f'field {field_name!r} is missing for {cls_name}'
         else:
-            err = TypeValidationError(field_type, value)
             default_str = 'default ' if is_default else ''
-            err_msg = f'field {field_name!r} of {cls_name}: {default_str}{err}'
+            err_msg = (
+                f'field {field_name!r} of {cls_name}: {default_str}value {value!r} '
+                f'does not match expected type {get_type_name(field_type)}'
+            )
         super().__init__(err_msg)
 
 
