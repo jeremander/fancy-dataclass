@@ -21,7 +21,6 @@ from fancy_dataclass.serialize import FileSerializable
 from fancy_dataclass.toml import TOMLDataclass
 from fancy_dataclass.utils import (
     FieldTypeValidationError,
-    TypeConversionError,
     coerce_to_dataclass,
     dataclass_type_map,
     issubclass_safe,
@@ -469,10 +468,17 @@ class TestJSON(TestDict):
         (
             DCLiteral('b'),  # type: ignore[arg-type]
             {'lit': 'b'},
-            (True, TypeConversionError, re.escape("could not convert 'b' to type typing.Literal['a', 1]")),
+            (True, FieldTypeValidationError, "field 'lit' of .*DCLiteral: value 'b' does not match"),
         ),
     ])
-    def test_literal(self, obj: DictDataclass, d: dict[str, Any], err: Optional[ErrInfo]) -> None:
+    def test_literal(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        obj: DictDataclass,
+        d: dict[str, Any],
+        err: Optional[ErrInfo],
+    ) -> None:
+        monkeypatch.setattr(DCLiteral.__settings__, 'validate_init', True)
         self._test_dict_convert(obj, d, err)
 
     def test_datetime(self) -> None:

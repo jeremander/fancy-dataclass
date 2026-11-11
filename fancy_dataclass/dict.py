@@ -3,6 +3,7 @@ from collections.abc import Iterable
 from contextlib import suppress
 import dataclasses
 from dataclasses import Field, InitVar, dataclass
+from types import NoneType
 import typing
 from typing import (
     Any,
@@ -21,7 +22,6 @@ from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.settings import DocFieldSettings
 from fancy_dataclass.utils import (
     MissingRequiredFieldError,
-    TypeConversionError,
     check_dataclass,
     dataclass_field_type,
     fully_qualified_class_name,
@@ -257,7 +257,6 @@ class DictDataclass(ValidatedDataclass):
             return val
         if not isinstance(val, dict):
             return val
-            # raise TypeConversionError(dict, val)
         # otherwise, convert from a dict
         return tp.from_dict(val)
 
@@ -272,14 +271,8 @@ class DictDataclass(ValidatedDataclass):
     @classmethod
     def _from_dict_value(cls, tp: type, val: Any) -> Any:
         """Given a type and a value, attempts to convert the value to the given type."""
-        def err() -> TypeConversionError:
-            return TypeConversionError(tp, val)
         convert_val = cls._from_dict_value
-        if tp is type(None):
-            if val is None:
-                return None
-            raise err()
-        if tp in [Any, 'typing.Any']:  # assume basic data type
+        if tp in [NoneType, Any, 'typing.Any']:  # assume basic data type
             return val
         if isinstance(tp, InitVar):
             tp = tp.type
@@ -332,16 +325,12 @@ class DictDataclass(ValidatedDataclass):
                     return convert_val(subtype, val)
                 except Exception:  # noqa: BLE001, S112
                     continue
-        elif origin_type == Literal:
-            if any((val == arg) for arg in args):
-                # one of the Literal options is matched
-                return val
         elif hasattr(origin_type, 'from_dict'):
             return cls._from_dict_value_convertible(origin_type, val)
         elif issubclass_safe(origin_type, Iterable):  # arbitrary iterable
             subtype = args[0]
             return type(val)(convert_val(subtype, elt) for elt in val)
-        raise err()
+        return val
 
     @classmethod
     def _get_missing_value(cls, fld: Field[Any]) -> Any:

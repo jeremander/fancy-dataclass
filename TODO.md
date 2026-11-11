@@ -7,12 +7,14 @@
 - Validation support: `ValidatedDataclass`
   - Interaction with `validate=True` in `DictDataclass`?
     - No need for `TypeConversionError`?
-  - Document that validation settings & field settings are inherited for `DictDataclass` (default no validation)
-  - Document that `ConfigDataclass` *does* do validation
   - Configs
     - Flag to decorate all methods with arg & return type-checking (default `False`)
 
 - Documentation
+  - Validation
+    - Fix discussion of validation in `DictDataclass` (including error type)
+    - Document that validation settings & field settings are inherited for `DictDataclass` (default no validation)
+    - Document that `ConfigDataclass` *does* do validation
   - CLI
   - SQL
     - Primary key (default `_id`)
