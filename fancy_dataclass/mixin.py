@@ -69,7 +69,7 @@ def _configure_mixin_settings(cls: type['DataclassMixin'], allow_duplicates: boo
         assert check_dataclass(stype)
     # this class's kwargs take priority over the parent classes'
     cls.__settings_kwargs__.update(kwargs)
-    field_names = set() if (stype is None) else {fld.name for fld in dataclasses.fields(stype)}
+    field_names = set() if (stype is None) else {fld.name for fld in get_dataclass_fields(stype, include_all=True)}
     d = {}
     for (name, val) in cls.__settings_kwargs__.items():
         if name in field_names:

@@ -5,7 +5,7 @@ from dataclasses import MISSING, FrozenInstanceError, InitVar, dataclass, field,
 import pickle
 import re
 from types import NoneType
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Optional
 
 import pytest
 
@@ -398,3 +398,16 @@ def test_non_init_field(init: bool, assign: bool) -> None:
             else:
                 obj.y = 'b'
                 assert obj.y == 'b'
+
+@pytest.mark.parametrize('validate_init', [None, False, True])
+@pytest.mark.parametrize('validate', [None, False, True])
+def test_validate_setting(validate_init: Optional[bool], validate: Optional[bool]) -> None:
+    kwargs = {'validate_init': validate_init, 'validate': validate}
+    @dataclass
+    class DC(ValidatedDataclass, **kwargs):
+        ...
+    settings = DC.__settings__
+    if validate_init is None:
+        validate_init = True if (validate is None) else validate
+    assert settings.validate_init == validate_init
+    assert settings.validate_assign == (False if (validate is None) else validate)

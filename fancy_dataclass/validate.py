@@ -1,4 +1,4 @@
-from dataclasses import MISSING, Field, dataclass
+from dataclasses import MISSING, Field, InitVar, dataclass
 from typing import Any, ClassVar, Optional, cast
 
 from typing_extensions import Self
@@ -24,11 +24,27 @@ class ValidatedDataclassSettings(MixinSettings):
 
     Subclasses of `ValidatedDataclass` may set the following fields as keyword arguments during inheritance:
 
-    - `validate_init`: if `True`, validate all fields upon initialization
-    - `validate_assign`: if `True`, validate all fields upon assignment"""
+    - `validate_init`: if `True`, validate all fields upon initialization (default `True`)
+    - `validate_assign`: if `True`, validate all fields upon assignment (default `False`)
+    - `validate`: convenience flag to set both `validate_init` and `validate_assign` simultaneously"""
 
-    validate_init: bool = True
-    validate_assign: bool = False
+    validate_init: bool
+    validate_assign: bool
+    validate: InitVar[Optional[bool]]
+
+    def __init__(  # noqa: D107
+        self,
+        *,
+        validate_init: Optional[bool] = None,
+        validate_assign: Optional[bool] = None,
+        validate: Optional[bool] = None,
+    ) -> None:
+        if validate_init is None:
+            validate_init = True if (validate is None) else validate
+        if validate_assign is None:
+            validate_assign = False if (validate is None) else validate
+        self.validate_init = validate_init
+        self.validate_assign = validate_assign
 
 
 @dataclass(kw_only=True)
