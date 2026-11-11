@@ -40,7 +40,8 @@
     - Collection checking mode: `O1`, `Ologn`, `On` (default `On`)
       - Switch from `typeguard` to `beartype`? But it doesn't yet implement O(n) checking...
     - Flag to toggle respecting PEP 484 tower (default `True` for now, since `typeguard` does so)
-    - Should have helper decorator to handle specific methods & functions, which will take priority
+    - Flag to decorate all methods with arg & return type-checking (default `False`)
+      - Should have helper decorator to handle specific methods & functions, which will take priority
       - Can use `typeguard` for simplicity, or try to emulate its inspection logic.
   - Allow all (or at least most) configs to be overridable at field level
   - Custom validation functions per field

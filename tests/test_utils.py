@@ -5,6 +5,7 @@ from typing import Any, ClassVar, Optional, TypedDict, Union
 
 import pytest
 from pytest import param
+from typing_extensions import Never
 
 from fancy_dataclass.utils import (
     TypeLike,
@@ -182,6 +183,12 @@ def test_check_is_subtype(tp1: Any, tp2: Any, output: bool) -> None:
     ({'x': 1}, TD, False),
     ({'x': 1, 'y': '2'}, TD, True),
     ({'x': 1, 'y': 2}, TD, False),
+    (1, Never, False),
+    (None, Never, False),
+    ([], list[Never], True),
+    # TODO: remove xfail if nested Never type is handled properly
+    #   see: https://github.com/agronholm/typeguard/issues/580
+    pytest.param([1], list[Never], False, marks=pytest.mark.xfail),
 ])
 def test_conforms_to(obj: Any, tp: Any, output: bool) -> None:
     """Tests the conforms_to helper function."""

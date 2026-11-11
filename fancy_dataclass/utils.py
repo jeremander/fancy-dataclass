@@ -31,7 +31,7 @@ from typing import (
 )
 
 from typeguard import CollectionCheckStrategy, TypeCheckError, check_type
-from typing_extensions import _AnnotatedAlias
+from typing_extensions import Never, _AnnotatedAlias
 
 
 if TYPE_CHECKING:
@@ -270,6 +270,11 @@ def conforms_to(obj: Any, tp: TypeLike) -> bool:
     """Checks if the given object conforms to the given type.
 
     This is more flexible than `isinstance` in that it will handle compound types like `list[...]`."""
+    # Currently Never is not handled properly by typeguard, so handle it specially.
+    # However, it still won't work if the Never type is nested in a compound type.
+    #   see: https://github.com/agronholm/typeguard/issues/580
+    if tp is Never:
+        return False
     try:
         _ = check_type(obj, tp, collection_check_strategy=CollectionCheckStrategy.ALL_ITEMS)
         return True
