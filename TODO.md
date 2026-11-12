@@ -4,9 +4,8 @@
 
 ## v0.13.0
 
-- Validation support: `ValidatedDataclass`
-- Handle `annotated_doc.doc` in addition to `typing_extensions.Doc` (abstract into helper)
 - Unify `CLIDataclass` and `ArgparseDataclass`.
+- Validation support: `ValidatedDataclass`
   - Configs
     - Flag to decorate all methods with arg & return type-checking (default `False`)
 - Test dependent packages

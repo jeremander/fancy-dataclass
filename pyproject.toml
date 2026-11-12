@@ -17,6 +17,7 @@ classifiers = [
   "Programming Language :: Python"
 ]
 dependencies = [
+  "annotated_doc >= 0.0.5",
   "sqlalchemy >= 2.0",
   "tomlkit >= 0.15.1",
   "typeguard >= 4.5",

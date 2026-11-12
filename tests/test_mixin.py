@@ -1,6 +1,7 @@
 from dataclasses import astuple, dataclass, field, fields, is_dataclass
 from typing import Annotated, ClassVar
 
+import annotated_doc
 import pytest
 from typing_extensions import Doc, Self
 
@@ -319,6 +320,8 @@ class TestDataclassMixin:
             i: "typing_extensions.Annotated[int, typing_extensions.Doc('i')]" = 9  # type: ignore[name-defined]  # noqa: F821
             # this is OK since the Annotated part is not stringized
             j: Annotated['int', Doc('j')] = 10
+            k: Annotated[int, annotated_doc.Doc('k')] = 11
+            l: Annotated[int, Doc('bad'), annotated_doc.Doc('l')] = 12  # noqa: E741
         docs = {}
         for fld in fields(DC1):
             fld_settings = DC1._field_settings(fld)
@@ -335,6 +338,8 @@ class TestDataclassMixin:
             'h': None,
             'i': None,
             'j': 'j',
+            'k': 'k',
+            'l': 'l',
         }
         # try to convert a field with unknown type to DocFieldSettings
         @dataclass
