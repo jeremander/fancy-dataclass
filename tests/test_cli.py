@@ -737,12 +737,12 @@ def test_subcommand(capsys: pytest.CaptureFixture[str]) -> None:
         class DCSub1(ArgparseDataclass):
             sub1: Sub1 = field(metadata={'subcommand': True})
             sub2: Sub2 = field(metadata={'subcommand': True})
-    # subcommand must be ArgparseDataclass or union thereof
-    with pytest.raises(TypeError, match='type must be an ArgparseDataclass or Union thereof'):
+    # subcommand must be CLIDataclass or union thereof
+    with pytest.raises(TypeError, match='type must be a CLIDataclass or Union thereof'):
         @dataclass
         class DCSub2(ArgparseDataclass):
             x: int = field(metadata={'subcommand': True})
-    with pytest.raises(TypeError, match='type must be an ArgparseDataclass or Union thereof'):
+    with pytest.raises(TypeError, match='type must be a CLIDataclass or Union thereof'):
         @dataclass
         class DCSub3(ArgparseDataclass):
             x: Sub1 | int = field(metadata={'subcommand': True})

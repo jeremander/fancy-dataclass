@@ -32,7 +32,7 @@ ArgParser = ArgumentParser | _ArgumentGroup
 # HELPER FUNCTIONS #
 ####################
 
-def _get_parser_group_name(settings: 'ArgparseDataclassFieldSettings', name: str) -> Optional[tuple[str, bool]]:
+def _get_parser_group_name(settings: 'CLIDataclassFieldSettings', name: str) -> Optional[tuple[str, bool]]:
     if settings.group:
         if settings.exclusive_group:
             raise ValueError(f'{name!r} specifies both group and exclusive_group: must choose only one')
@@ -119,10 +119,10 @@ def _update_argument_kwargs_for_bool_action(
 ##########
 
 @dataclass(kw_only=True)
-class ArgparseDataclassSettings(MixinSettings):
-    """Class-level settings for the [`ArgparseDataclass`][fancy_dataclass.cli.ArgparseDataclass] mixin.
+class CLIDataclassSettings(MixinSettings):
+    """Class-level settings for the [`CLIDataclass`][fancy_dataclass.cli.CLIDataclass] mixin.
 
-    Subclasses of `ArgparseDataclass` may set the following fields as keyword arguments during inheritance:
+    Subclasses of `CLIDataclass` may set the following fields as keyword arguments during inheritance:
 
     - `parser_class`: subclass of
     [`argparse.ArgumentParser`](https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser) to use for
@@ -155,8 +155,8 @@ class ArgparseDataclassSettings(MixinSettings):
 
 
 @dataclass(kw_only=True)
-class ArgparseDataclassFieldSettings(DocFieldSettings):
-    """Settings for [`ArgparseDataclass`][fancy_dataclass.cli.ArgparseDataclass] fields.
+class CLIDataclassFieldSettings(DocFieldSettings):
+    """Settings for [`CLIDataclass`][fancy_dataclass.cli.CLIDataclass] fields.
 
     Each field may define a `metadata` dict containing any of the following entries:
 
@@ -169,7 +169,7 @@ class ArgparseDataclassFieldSettings(DocFieldSettings):
     - `help`: help string
         - Another way to specify the `help` is to use the `Annotated`/`Doc` pattern on the field (see
         [PEP 727](https://peps.python.org/pep-0727/))
-    - `dest`: name of destination variable (only needed to avoid field name collisions when nesting `ArgparseDataclass`)
+    - `dest`: name of destination variable (only needed to avoid field name collisions when nesting `CLIDataclass`)
     - `metavar`: name for the argument in usage messages
     - `required`: whether the option is required
     - `group`: name of the [argument group](https://docs.python.org/3/library/argparse.html#argument-groups) in which
@@ -216,26 +216,29 @@ class ArgparseDataclassFieldSettings(DocFieldSettings):
     default_help: Optional[bool] = None
 
 
-class ArgparseDataclass(DataclassMixin):
+class CLIDataclass(DataclassMixin):
     """Mixin class providing a means of setting up an [`argparse`](https://docs.python.org/3/library/argparse.html)
     parser with the dataclass fields, and then converting the namespace of parsed arguments into an instance of
     the class.
 
     The parser's argument names and types will be derived from the dataclass's fields.
 
+    Additionally, subclasses may override the `run` method to execute arbitrary program logic using the parsed arguments
+    as input.
+
     Per-field settings can be passed into the `metadata` argument of each `dataclasses.field`.
-    See [`ArgparseDataclassFieldSettings`][fancy_dataclass.cli.ArgparseDataclassFieldSettings] for the full list
+    See [`CLIDataclassFieldSettings`][fancy_dataclass.cli.CLIDataclassFieldSettings] for the full list
     of settings."""
 
-    __settings_type__ = ArgparseDataclassSettings
-    __settings__ = ArgparseDataclassSettings()
-    __field_settings_type__ = ArgparseDataclassFieldSettings
+    __settings_type__ = CLIDataclassSettings
+    __settings__ = CLIDataclassSettings()
+    __field_settings_type__ = CLIDataclassFieldSettings
 
     # name of subcommand field, if present
     subcommand_field_name: ClassVar[Optional[str]] = None
     # name of the `argparse.Namespace` attribute associated with the subcommand
     # The convention is for this name to contain both the subcommand name and the class name.
-    # This is because nested `ArgparseDataclass` fields may have the same subcommand name, causing conflicts.
+    # This is because nested `CLIDataclass` fields may have the same subcommand name, causing conflicts.
     subcommand_dest_name: ClassVar[str]
 
     @classmethod
@@ -254,18 +257,18 @@ class ArgparseDataclass(DataclassMixin):
             if not fld.metadata.get('subcommand', False):
                 continue
             if subcommand is None:
-                # check field type is ArgparseDataclass or Union thereof
+                # check field type is CLIDataclass or Union thereof
                 subcommand = fld.name
                 tp = cast(type, fld.type)
-                if issubclass_safe(tp, ArgparseDataclass):
+                if issubclass_safe(tp, CLIDataclass):
                     continue
                 err = TypeError(
-                    f'invalid subcommand field {fld.name!r}, type must be an ArgparseDataclass or Union thereof'
+                    f'invalid subcommand field {fld.name!r}, type must be a CLIDataclass or Union thereof'
                 )
                 if type_is_union(tp):
                     tp_args = [arg for arg in get_args(tp) if (arg is not type(None))]
                     for arg in tp_args:
-                        if not issubclass_safe(arg, ArgparseDataclass):
+                        if not issubclass_safe(arg, CLIDataclass):
                             raise err
                         name = arg.__settings__.command_name
                         if name in names:
@@ -286,7 +289,7 @@ class ArgparseDataclass(DataclassMixin):
         Returns:
             Name of the subcommand, if a subcommand field exists, and `None` otherwise"""
         if self.subcommand_field_name is not None:
-            tp: type[ArgparseDataclass] = type(getattr(self, self.subcommand_field_name))
+            tp: type[CLIDataclass] = type(getattr(self, self.subcommand_field_name))
             return tp.__settings__.command_name
         return None
 
@@ -348,12 +351,12 @@ class ArgparseDataclass(DataclassMixin):
         Args:
             parser: parser object to update with a new argument
             name: Name of the argument to configure"""
-        def is_nested(tp: type) -> TypeGuard[ArgparseDataclass]:
-            return issubclass_safe(tp, ArgparseDataclass)
+        def is_nested(tp: type) -> TypeGuard[CLIDataclass]:
+            return issubclass_safe(tp, CLIDataclass)
         kwargs: dict[str, Any] = {}
         fld = cls.__dataclass_fields__[name]  # type: ignore[attr-defined]
         meta = fld.metadata
-        settings = cls._field_settings(fld).adapt_to(ArgparseDataclassFieldSettings)
+        settings = cls._field_settings(fld).adapt_to(CLIDataclassFieldSettings)
         if settings.parse_exclude:  # exclude the argument from the parser
             return
         # determine the type of the parser argument for the field
@@ -375,7 +378,7 @@ class ArgparseDataclass(DataclassMixin):
                 if origin_type in _UNION_TYPES:
                     tp_args = tuple(arg for arg in tp_args if (arg is not type(None)))
                     if (len(tp_args) > 1) and (not settings.subcommand):
-                        raise ValueError(f'union type {tp} not allowed as ArgparseDataclass field except as subcommand')
+                        raise ValueError(f'union type {tp} not allowed as CLIDataclass field except as subcommand')
                 elif issubclass_safe(origin_type, list) or issubclass_safe(origin_type, tuple):
                     for arg in tp_args:
                         if is_nested(arg):
@@ -383,7 +386,7 @@ class ArgparseDataclass(DataclassMixin):
                                 name = f'list of {arg.__name__}'  # type: ignore[attr-defined]
                             else:
                                 name = f'tuple with {arg}'
-                            raise ValueError(f'{name} not allowed in ArgparseDataclass parser')
+                            raise ValueError(f'{name} not allowed in CLIDataclass parser')
                 tp = tp_args[0]
                 if get_origin(tp) == Literal:  # Optional[Literal[...]]: unwrap to Literal[...]
                     tp_args = get_args(tp)
@@ -467,7 +470,7 @@ class ArgparseDataclass(DataclassMixin):
         if (result := _get_parser_group_name(settings, fld.name)) is not None:
             # add argument to the group instead of the main parser
             (group_name, is_exclusive) = result
-            # get kwargs from nested ArgparseDataclass
+            # get kwargs from nested CLIDataclass
             group_kwargs = tp.parser_kwargs() if is_nested(tp) else {}
             parser = _configure_parser_group(
                 parser,
@@ -486,7 +489,7 @@ class ArgparseDataclass(DataclassMixin):
             subparsers = parser.add_subparsers(dest=dest, required=required, help=settings.help, metavar='subcommand')
             tp_args = (tp,) if (origin_type is None) else tp_args  # pyrefly: ignore[unbound-name]
             for arg in tp_args:
-                assert issubclass_safe(arg, ArgparseDataclass)
+                assert issubclass_safe(arg, CLIDataclass)
                 descr_brief = arg._parser_description_brief()
                 subparser_kwargs = arg.parser_kwargs()
                 if 'formatter_class' not in subparser_kwargs:
@@ -497,7 +500,7 @@ class ArgparseDataclass(DataclassMixin):
                 subparser._dests = set(parser._dests)  # type: ignore[attr-defined]
                 arg.configure_parser(subparser)
             return
-        if is_nested(tp):  # recursively configure a nested ArgparseDataclass field
+        if is_nested(tp):  # recursively configure a nested CLIDataclass field
             tp.configure_parser(parser)
         else:
             # prevent duplicate positional args
@@ -530,7 +533,7 @@ class ArgparseDataclass(DataclassMixin):
         """Configures an argument parser by adding the appropriate arguments.
 
         By default, this will simply call
-        [`configure_argument`][fancy_dataclass.cli.ArgparseDataclass.configure_argument] for each dataclass field.
+        [`configure_argument`][fancy_dataclass.cli.CLIDataclass.configure_argument] for each dataclass field.
 
         Args:
             parser: `ArgumentParser` to configure"""
@@ -541,7 +544,7 @@ class ArgparseDataclass(DataclassMixin):
         for fld in fields(cls):  # type: ignore[arg-type]
             name = fld.name
             if fld.metadata.get('subcommand', False):
-                # TODO: check field type is ArgparseDataclass or Union thereof
+                # TODO: check field type is CLIDataclass or Union thereof
                 # TODO: move this to __init_dataclass__
                 if subcommand is None:
                     subcommand = name
@@ -592,8 +595,8 @@ class ArgparseDataclass(DataclassMixin):
             is_optional = type_is_optional(tp)
             if is_optional:
                 tp = get_args(tp)[0]
-            if issubclass_safe(tp, ArgparseDataclass):
-                # recursively gather arguments for nested ArgparseDataclass
+            if issubclass_safe(tp, CLIDataclass):
+                # recursively gather arguments for nested CLIDataclass
                 val = tp.args_to_dict(args)  # type: ignore[attr-defined]
                 is_nested_field = True
             elif hasattr(args, dest):  # extract arg from the namespace
@@ -604,7 +607,7 @@ class ArgparseDataclass(DataclassMixin):
                     raise ValueError(f'invalid value {val!r} for type {tp}')
             else:  # argument not present
                 continue
-            if is_nested_field:  # merge in nested ArgparseDataclass
+            if is_nested_field:  # merge in nested CLIDataclass
                 d.update(val)
             else:
                 d[fld.name] = val
@@ -612,7 +615,7 @@ class ArgparseDataclass(DataclassMixin):
 
     @classmethod
     def from_args(cls, args: Namespace) -> Self:
-        """Constructs an [`ArgparseDataclass`][fancy_dataclass.cli.ArgparseDataclass] from a `Namespace` object.
+        """Constructs an [`CLIDataclass`][fancy_dataclass.cli.CLIDataclass] from a `Namespace` object.
 
         Args:
             args: `Namespace` object storing parsed arguments
@@ -635,10 +638,10 @@ class ArgparseDataclass(DataclassMixin):
                 if is_subcommand and subcommand:
                     tp_args = [arg for arg in tp_args if (arg.__settings__.command_name == subcommand)]
                     assert len(tp_args) == 1, f'exactly one type within {tp} should have command name {subcommand}'
-                    assert issubclass_safe(tp_args[0], ArgparseDataclass)
+                    assert issubclass_safe(tp_args[0], CLIDataclass)
                 tp = tp_args[0] if (subcommand or (not is_subcommand)) else None  # type: ignore[assignment]
-            if tp and issubclass_safe(tp, ArgparseDataclass):
-                # handle nested ArgparseDataclass
+            if tp and issubclass_safe(tp, CLIDataclass):
+                # handle nested CLIDataclass
                 kwargs[name] = tp.from_args(args)  # type: ignore[attr-defined]
             elif name in d:
                 if (origin_type is tuple) and isinstance(d.get(name), list):
@@ -679,13 +682,6 @@ class ArgparseDataclass(DataclassMixin):
         cls.process_args(parser, args)  # process arguments
         return cls.from_args(args)
 
-
-class CLIDataclass(ArgparseDataclass):
-    """This subclass of [`ArgparseDataclass`][fancy_dataclass.cli.ArgparseDataclass] allows the user to execute
-    arbitrary program logic using the parsed arguments as input.
-
-    Subclasses should override the `run` method to implement custom behavior."""
-
     def run(self) -> None:
         """Runs the main body of the program.
 
@@ -715,3 +711,10 @@ class CLIDataclass(ArgparseDataclass):
             arg_list: List of arguments as strings (if `None`, uses `sys.argv`)"""
         obj = cls.from_cli_args(arg_list)  # steps 1-5
         obj.run()  # step 6
+
+
+# aliases for backward compatibility (to be deprecated)
+
+ArgparseDataclass = CLIDataclass
+ArgparseDataclassSettings = CLIDataclassSettings
+ArgparseDataclassFieldSettings = CLIDataclassFieldSettings
