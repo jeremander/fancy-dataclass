@@ -5,7 +5,7 @@ from dataclasses import MISSING, FrozenInstanceError, InitVar, dataclass, field,
 import pickle
 import re
 from types import NoneType
-from typing import Any, ClassVar, Optional
+from typing import Any, ClassVar, Optional, Protocol
 
 import pytest
 
@@ -468,3 +468,29 @@ def test_validate_setting_inheritance(validate_parent: bool, validate_child: boo
     assert DCChild.__settings__.validate_assign == validate_assign
     obj = DCChild(1)
     assert obj.x == 1
+
+def test_validate_protocol() -> None:
+    """Tests a Protocol field."""
+    class Proto(Protocol):
+        def some_method(self) -> None:
+            ...
+    @dataclass
+    class HasProto(ValidatedDataclass):
+        proto: Proto
+    class YesProto:
+        def some_method(self) -> None:
+            pass
+    class NoProto:
+        ...
+    proto = YesProto()
+    obj = HasProto(proto)
+    assert obj.proto == proto
+    with pytest.raises(
+        FieldTypeValidationError,
+        match=re.compile(
+            "field 'proto' of .*HasProto: value .* does not match .*NoProto is not compatible with the .*Proto protocol"
+            " because it has no method named 'some_method'",
+            re.DOTALL,
+        )
+    ):
+        _ = HasProto(NoProto())

@@ -5,8 +5,7 @@
 ## v0.13.0
 
 - Validation support: `ValidatedDataclass`
-  - Clearer error message for field validation when type is correct but value doesn't type-check due to nested field
-  - Protocol?
+  - Helper for testing field validation error
   - Configs
     - Flag to decorate all methods with arg & return type-checking (default `False`)
 - Test dependent packages
