@@ -306,7 +306,7 @@ class CLIDataclass(DataclassMixin):
         cls.subcommand_field_name = subcommand
 
     @property
-    def subcommand_name(self) -> Optional[str]:
+    def _subcommand_name(self) -> Optional[str]:
         """Gets the name of the chosen subcommand associated with the type of the object's subcommand field.
 
         Returns:
@@ -332,7 +332,7 @@ class CLIDataclass(DataclassMixin):
         return brief
 
     @classmethod
-    def parser_kwargs(cls) -> dict[str, Any]:
+    def _parser_kwargs(cls) -> dict[str, Any]:
         """Gets keyword arguments that will be passed to the top-level argument parser.
 
         Returns:
@@ -352,18 +352,18 @@ class CLIDataclass(DataclassMixin):
         return ['action', 'nargs', 'const', 'choices', 'help', 'metavar']
 
     @classmethod
-    def new_parser(cls) -> ArgumentParser:
+    def _new_parser(cls) -> ArgumentParser:
         """Constructs a new top-level argument parser..
 
         Returns:
             New top-level parser derived from the class's fields"""
-        parser = cls.__settings__.parser_class(**cls.parser_kwargs())
+        parser = cls.__settings__.parser_class(**cls._parser_kwargs())
         # we disallow duplicate 'dest' variables for the same parser, so track them in a set
         parser._dests = set()  # type: ignore[attr-defined]
         return parser
 
     @classmethod
-    def configure_argument(cls, parser: ArgParser, name: str) -> None:
+    def _configure_argument(cls, parser: ArgParser, name: str) -> None:
         """Given an argument parser and a field name, configures the parser with an argument of that name.
 
         Attempts to provide reasonable default behavior based on the dataclass field name, type, default, and metadata.
@@ -487,7 +487,7 @@ class CLIDataclass(DataclassMixin):
             # add argument to the group instead of the main parser
             (group_name, is_exclusive) = result
             # get kwargs from nested CLIDataclass
-            group_kwargs = tp.parser_kwargs() if is_nested(tp) else {}
+            group_kwargs = tp._parser_kwargs() if is_nested(tp) else {}
             required = kwargs.get('required', False)
             parser = _configure_parser_group(parser, group_name, is_exclusive, required, **group_kwargs)
         if settings.subcommand:
@@ -502,7 +502,7 @@ class CLIDataclass(DataclassMixin):
             for arg in tp_args:
                 assert issubclass_safe(arg, CLIDataclass)
                 descr_brief = arg._parser_description_brief()
-                subparser_kwargs = arg.parser_kwargs()
+                subparser_kwargs = arg._parser_kwargs()
                 if 'formatter_class' not in subparser_kwargs:
                     # inherit formatter_class from the parent
                     subparser_kwargs['formatter_class'] = parser.formatter_class
@@ -521,7 +521,7 @@ class CLIDataclass(DataclassMixin):
         parser.add_argument(*args, **kwargs)
 
     @classmethod
-    def configure_version_argument(cls, parser: ArgumentParser | _ArgumentGroup) -> None:
+    def _configure_version_argument(cls, parser: ArgParser) -> None:
         """Configures the special --version argument if a version field is included in the class settings."""
         if version := cls.__settings__.version:
             version_str = get_version_string(version)
@@ -530,16 +530,16 @@ class CLIDataclass(DataclassMixin):
             parser.add_argument('--version', action='version', version=version_str)
 
     @classmethod
-    def configure_parser(cls, parser: ArgumentParser | _ArgumentGroup) -> None:
+    def configure_parser(cls, parser: ArgParser) -> None:
         """Configures an argument parser by adding the appropriate arguments.
 
         By default, this will simply call
-        [`configure_argument`][fancy_dataclass.cli.CLIDataclass.configure_argument] for each dataclass field.
+        [`configure_argument`][fancy_dataclass.cli.CLIDataclass._configure_argument] for each dataclass field.
 
         Args:
             parser: `ArgumentParser` to configure"""
         check_dataclass(cls)
-        cls.configure_version_argument(parser)
+        cls._configure_version_argument(parser)
         subcommand = None
         field_names = []
         for fld in fields(cls):  # type: ignore[arg-type]
@@ -560,7 +560,7 @@ class CLIDataclass(DataclassMixin):
             # process subcommand last, since the subparser must inherit the names of all parent 'dest' fields
             field_names.append(subcommand)
         for name in field_names:
-            cls.configure_argument(parser, name)
+            cls._configure_argument(parser, name)
 
     @classmethod
     def make_parser(cls) -> ArgumentParser:
@@ -568,7 +568,7 @@ class CLIDataclass(DataclassMixin):
 
         Returns:
             The configured `ArgumentParser`"""
-        parser = cls.new_parser()
+        parser = cls._new_parser()
         cls.configure_parser(parser)
         return parser
 

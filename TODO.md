@@ -5,13 +5,9 @@
 ## v0.13.0
 
 - `CLIDataclass`
-  - Make more methods private?
-    - E.g. `_subcommand_name`, `_parser_kwargs`, `_configure_argument`, `_configure_version_argument`
-  - Helper to obtain a *group*
   - `is bool` check vs. checking for subclass of `bool`
   - Add `switch` field option (use `BooleanOptionalAction`)
-  - Simplify `args_to_dict`
-  - Tuple field type, both fixed and variable length
+    - Tuple field type, both fixed and variable length
     - Test length 0?
   - Tests
     - `Sequence[int]` and `Iterable[int]`?

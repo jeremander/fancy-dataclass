@@ -67,8 +67,8 @@ class DC1(CLIDataclass):
     ignored_value: str = field(default='ignored', metadata={'args': [], 'parse_exclude': True})
 
     @classmethod
-    def parser_kwargs(cls) -> dict[str, Any]:
-        return {**super().parser_kwargs(), 'formatter_class': ArgumentDefaultsHelpFormatter}
+    def _parser_kwargs(cls) -> dict[str, Any]:
+        return {**super()._parser_kwargs(), 'formatter_class': ArgumentDefaultsHelpFormatter}
 
     def run(self) -> None:
         print(self)
@@ -721,7 +721,7 @@ def test_subcommand(capsys: pytest.CaptureFixture[str]) -> None:
     assert isinstance(Sub1.__settings__, CLIDataclassSettings)
     assert Sub1.__settings__.command_name == 'sub1'
     assert Sub1.subcommand_field_name is None
-    assert Sub1(1, 2).subcommand_name is None
+    assert Sub1(1, 2)._subcommand_name is None
     @dataclass
     class Sub2(CLIDataclass, command_name='my-subcommand'):
         """Second subcommand"""
@@ -730,7 +730,7 @@ def test_subcommand(capsys: pytest.CaptureFixture[str]) -> None:
     assert isinstance(Sub2.__settings__, CLIDataclassSettings)
     assert Sub2.__settings__.command_name == 'my-subcommand'
     assert Sub2.subcommand_field_name is None
-    assert Sub2(1, 2).subcommand_name is None  # type: ignore[arg-type]
+    assert Sub2(1, 2)._subcommand_name is None  # type: ignore[arg-type]
     # multiple subcommands not allowed
     with pytest.raises(TypeError, match='multiple fields .* registered as subcommands'):
         @dataclass
@@ -758,7 +758,7 @@ def test_subcommand(capsys: pytest.CaptureFixture[str]) -> None:
     assert DCSub4.__settings__.command_name == 'dc-sub4'
     assert DCSub4.subcommand_field_name == 'sub1'
     assert DCSub4.subcommand_dest_name == '_subcommand_DCSub4'
-    assert DCSub4(Sub1(1, 2), 1).subcommand_name == 'sub1'
+    assert DCSub4(Sub1(1, 2), 1)._subcommand_name == 'sub1'
     help_str = DCSub4.make_parser().format_help()
     assert re.search(
         r'positional arguments:.+x\s+x value\s+subcommand\s+sub1\s+first subcommand\s+option.+-y Y',
@@ -781,8 +781,8 @@ def test_subcommand(capsys: pytest.CaptureFixture[str]) -> None:
     assert isinstance(DCSub5.__settings__, CLIDataclassSettings)
     assert DCSub5.__settings__.command_name == 'dc-sub5'
     assert DCSub5.subcommand_field_name == 'sub'
-    assert DCSub5(Sub1(1, 2)).subcommand_name == 'sub1'
-    assert DCSub5(Sub2(1, 2)).subcommand_name == 'my-subcommand'  # type: ignore[arg-type]
+    assert DCSub5(Sub1(1, 2))._subcommand_name == 'sub1'
+    assert DCSub5(Sub2(1, 2))._subcommand_name == 'my-subcommand'  # type: ignore[arg-type]
     help_str = DCSub5.make_parser().format_help()
     assert re.search(
         (
