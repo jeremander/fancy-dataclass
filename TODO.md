@@ -5,13 +5,13 @@
 ## v0.13.0
 
 - Validation support: `ValidatedDataclass`
-  - Disjoint base?
-  - `typing.Never`
   - Clearer error message for field validation when type is correct but value doesn't type-check due to nested field
+  - Protocol?
   - Configs
     - Flag to decorate all methods with arg & return type-checking (default `False`)
 - Test dependent packages
 - Handle `annotated_doc.doc` in addition to `typing_extensions.Doc` (abstract into helper)
+- Unify `CLIDataclass` and `ArgparseDataclass`.
 - Documentation
   - Validation
     - Fix discussion of validation in `DictDataclass` (including error type)

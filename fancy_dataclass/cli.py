@@ -75,6 +75,44 @@ def _add_group(parser: ArgParser, group_name: str, **group_kwargs: Any) -> _Argu
     group._dests = parser._dests  # type: ignore[attr-defined]
     return group
 
+def _configure_parser_group(
+    parser: ArgParser,
+    group_name: str,
+    is_exclusive: bool,
+    required: bool,
+    **group_kwargs: Any,
+) -> _ArgumentGroup:
+    # add argument to the group instead of the main parser
+    group: Optional[_ArgumentGroup | _MutuallyExclusiveGroup]
+    if is_exclusive:
+        group = _get_parser_exclusive_group(parser, group_name)
+    else:
+        group = _get_parser_group(parser, group_name)
+    if not group:  # group not found, so create it
+        if is_exclusive:
+            group = _add_exclusive_group(parser, group_name, required)
+        else:
+            group = _add_group(parser, group_name, **group_kwargs)
+    return group
+
+def _update_argument_kwargs_for_bool_action(
+    kwargs: dict[str, Any],
+    action:  Optional[str | builtins.type[Action]],
+    name: str,
+    default: Any,
+) -> None:
+    action = action or 'store_true'
+    kwargs['action'] = action
+    if isinstance(action, str) and (action not in ['store_true', 'store_false']):
+        raise ValueError(f'invalid action {action!r} for boolean flag field {name!r}')
+    if (default is not None) and ((action != 'store_false') == default):
+        raise ValueError(
+            f'cannot use default value of {default} for action {action!r} with boolean flag field {name!r}'
+        )
+    for key in ('type', 'required'):
+        with suppress(KeyError):
+            kwargs.pop(key)
+
 
 ##########
 # MIXINS #
@@ -403,17 +441,7 @@ class ArgparseDataclass(DataclassMixin):
         has_default = 'default' in kwargs
         default = kwargs.get('default')
         if tp is bool:  # use boolean flag instead of an argument
-            action = settings.action or 'store_true'
-            kwargs['action'] = action
-            if isinstance(action, str) and (action not in ['store_true', 'store_false']):
-                raise ValueError(f'invalid action {action!r} for boolean flag field {name!r}')
-            if (default is not None) and ((action != 'store_false') == default):
-                raise ValueError(
-                    f'cannot use default value of {default} for action {action!r} with boolean flag field {name!r}'
-                )
-            for key in ('type', 'required'):
-                with suppress(KeyError):
-                    kwargs.pop(key)
+            _update_argument_kwargs_for_bool_action(kwargs, settings.action, name, default)
         # extract additional items from metadata
         for key in cls._parser_argument_kwarg_names():
             if key in meta:
@@ -439,19 +467,15 @@ class ArgparseDataclass(DataclassMixin):
         if (result := _get_parser_group_name(settings, fld.name)) is not None:
             # add argument to the group instead of the main parser
             (group_name, is_exclusive) = result
-            group: Optional[_ArgumentGroup | _MutuallyExclusiveGroup]
-            if is_exclusive:
-                group = _get_parser_exclusive_group(parser, group_name)
-            else:
-                group = _get_parser_group(parser, group_name)
-            if not group:  # group not found, so create it
-                if is_exclusive:
-                    group = _add_exclusive_group(parser, group_name, kwargs.get('required', False))
-                else:
-                    # get kwargs from nested ArgparseDataclass
-                    group_kwargs = tp.parser_kwargs() if is_nested(tp) else {}
-                    group = _add_group(parser, group_name, **group_kwargs)
-            parser = group
+            # get kwargs from nested ArgparseDataclass
+            group_kwargs = tp.parser_kwargs() if is_nested(tp) else {}
+            parser = _configure_parser_group(
+                parser,
+                group_name,
+                is_exclusive,
+                kwargs.get('required', False),
+                **group_kwargs,
+            )
         if settings.subcommand:
             # create subparsers for each variant
             assert isinstance(parser, ArgumentParser)
