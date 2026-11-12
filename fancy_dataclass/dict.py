@@ -16,7 +16,7 @@ from typing import (
     get_origin,
 )
 
-from typing_extensions import Self, _AnnotatedAlias
+from typing_extensions import Self
 
 from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.settings import DocFieldSettings
@@ -277,8 +277,6 @@ class DictDataclass(ValidatedDataclass):
         if isinstance(tp, InitVar):
             tp = tp.type
         ttp = type(tp)
-        if ttp is _AnnotatedAlias:  # Annotated: just ignore the annotation
-            return convert_val(get_args(tp)[0], val)
         if (_TYPE_ALIAS_TYPE is not None) and (ttp is _TYPE_ALIAS_TYPE):
             # Python 3.12 'type' keyword wraps the type in a TypeAliasType
             return cls._from_dict_value(tp.__value__, val)  # type: ignore[attr-defined]

@@ -15,6 +15,7 @@ import types
 from typing import (
     IO,
     TYPE_CHECKING,
+    Annotated,
     Any,
     ClassVar,
     ForwardRef,
@@ -227,6 +228,20 @@ def type_is_classvar(tp: TypeLike) -> bool:
         True if the type is a ClassVar"""
     return get_origin(tp) is ClassVar
 
+def get_annotated_elements(tp: TypeLike) -> Optional[tuple[TypeLike, tuple[Any, ...]]]:
+    """If the given type is Annotated, returns the wrapped type and a tuple of additional annotated elements.
+
+    Args:
+        tp: Type to examine
+
+    Returns:
+        A tuple (wrapped type, extra elements) if `tp` is `Annotated`, otherwise `None`
+    Otherwise, returns None."""
+    if get_origin(tp) is not Annotated:
+        return None
+    args = get_args(tp)
+    return (args[0], args[1:])
+
 def all_subclasses(cls: type[T]) -> list[type[T]]:
     """Gets all subclasses of a given class, including the class itself.
 
@@ -294,16 +309,6 @@ def _check_type(obj: Any, tp: TypeLike) -> None:
         _ = check_type(obj, tp, collection_check_strategy=CollectionCheckStrategy.ALL_ITEMS)
     except TypeCheckError as e:
         raise TypeValidationError(obj, tp) from e
-
-def _conforms_to(obj: Any, tp: TypeLike) -> bool:
-    """Checks if the given object conforms to the given type.
-
-    This is more flexible than `isinstance` in that it will handle compound types like `list[...]`."""
-    try:
-        _check_type(obj, tp)
-        return True
-    except TypeValidationError:
-        return False
 
 def obj_class_name(obj: object) -> str:
     """Gets the name of the class of an object.
@@ -531,7 +536,7 @@ def dataclass_type_map(cls: DataclassType, func: Callable[[type], type]) -> Data
     for fld in get_dataclass_fields(cls, include_all=True):
         new_fld = copy(fld)
         origin_type = get_origin(fld.type)
-        if origin_type and (not _conforms_to(fld.type, _AnnotatedAlias)) and issubclass_safe(origin_type, Iterable):
+        if origin_type and (origin_type is not Annotated) and issubclass_safe(origin_type, Iterable):
             if issubclass(origin_type, dict):
                 (key_type, val_type) = get_args(fld.type)
                 tp = origin_type[key_type, _map_func(val_type)]  # pyrefly: ignore[unsupported-operation]

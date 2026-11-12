@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
 from types import NoneType
-from typing import Any, ClassVar, Optional, TypedDict, Union
+from typing import Annotated, Any, ClassVar, Literal, Optional, TypedDict, Union
 
 import pytest
 from pytest import param
@@ -9,10 +9,12 @@ from typing_extensions import Never
 
 from fancy_dataclass.utils import (
     TypeLike,
-    _conforms_to,
+    TypeValidationError,
+    _check_type,
     _is_subtype,
     camel_case_to_kebab_case,
     coerce_to_dataclass,
+    dataclass_field_type,
     get_dataclass_fields,
     get_type_name,
     merge_dataclasses,
@@ -24,9 +26,27 @@ from fancy_dataclass.utils import (
 class Example:
     ...
 
+
 class TD(TypedDict):
     x: int
     y: str
+
+
+@dataclass
+class DC:
+    a: int
+    b: Annotated[int, 'a']
+    c: Literal['a', 1]
+    d: list[int]
+    e: Never
+
+
+def _check_type_ok(obj: Any, tp: TypeLike) -> bool:
+    try:
+        _check_type(obj, tp)
+        return True
+    except TypeValidationError:
+        return False
 
 
 @pytest.mark.parametrize(['snake', 'camel'], [
@@ -190,9 +210,9 @@ def test_check_is_subtype(tp1: Any, tp2: Any, output: bool) -> None:
     #   see: https://github.com/agronholm/typeguard/issues/580
     pytest.param([1], list[Never], False, marks=pytest.mark.xfail),
 ])
-def test_conforms_to(obj: Any, tp: Any, output: bool) -> None:
-    """Tests the _conforms_to helper function."""
-    assert _conforms_to(obj, tp) is output
+def test_check_type(obj: Any, tp: Any, output: bool) -> None:
+    """Tests the _check_type helper function."""
+    assert _check_type_ok(obj, tp) is output
 
 def test_coerce_to_dataclass() -> None:
     """Tests behavior of `coerce_to_dataclass`."""
@@ -440,3 +460,15 @@ class TestMerge:
         assert get_names(merge_dataclasses(DC4, DC3)) == ['x', 'y']
         assert get_names(merge_dataclasses(DC6, DC5)) == ['x', 'w', 'y', 'z']
         assert get_names(merge_dataclasses(DC1, DC2, DC3, DC4, bases=())) == ['x', 'y']
+
+
+@pytest.mark.parametrize(['name', 'tp'], [
+    ('a', int),
+    ('b', int),
+    ('c', Literal['a', 1]),
+    ('d', list[int]),
+    ('e', Never),
+])
+def test_dataclass_field_type(name: str, tp: TypeLike) -> None:
+    """Tests the dataclass_field_type helper function."""
+    assert dataclass_field_type(DC, name) == tp

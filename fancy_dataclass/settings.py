@@ -1,9 +1,14 @@
 from dataclasses import Field, dataclass, fields, is_dataclass
-from typing import Any, Optional, TypeVar, get_args
+from typing import Any, Optional, TypeVar
 
-from typing_extensions import Doc, Self, _AnnotatedAlias, override
+from typing_extensions import Doc, Self, override
 
-from fancy_dataclass.utils import _validate_dataclass_field, check_dataclass, coerce_to_dataclass
+from fancy_dataclass.utils import (
+    _validate_dataclass_field,
+    check_dataclass,
+    coerce_to_dataclass,
+    get_annotated_elements,
+)
 
 
 DA = TypeVar('DA', bound='DataclassAdaptable')
@@ -84,8 +89,10 @@ class DocFieldSettings(FieldSettings):
         settings = super().from_field(fld)
         if settings.doc is None:
             tp = None if isinstance(fld.type, str) else fld.type
-            if isinstance(tp, _AnnotatedAlias):
-                doc = next((arg for arg in get_args(tp)[::-1] if isinstance(arg, Doc)), None)
-                if doc:
-                    settings.doc = doc.documentation
+            match get_annotated_elements(tp):
+                case (_, elements):
+                    if (doc := next((arg for arg in elements[::-1] if isinstance(arg, Doc)), None)):
+                        settings.doc = doc.documentation
+                case _:
+                    pass
         return settings
