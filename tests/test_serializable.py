@@ -19,13 +19,9 @@ from fancy_dataclass.dict import DictDataclass, DictDataclassSettings
 from fancy_dataclass.json import JSONBaseDataclass, JSONDataclass, JSONSerializable
 from fancy_dataclass.serialize import FileSerializable
 from fancy_dataclass.toml import TOMLDataclass
-from fancy_dataclass.utils import (
-    FieldTypeValidationError,
-    coerce_to_dataclass,
-    dataclass_type_map,
-    issubclass_safe,
-)
+from fancy_dataclass.utils import coerce_to_dataclass, dataclass_type_map, fully_qualified_class_name, issubclass_safe
 
+from . import raises_field_type_err
 from .test_dict import DCSuppress, DCSuppress2
 
 
@@ -446,26 +442,24 @@ class TestJSON(TestDict):
 
     def test_optional_invalid(self) -> None:
         """Tests an optional field, for invalid examples."""
-        err = "field 'x' of .*DCOptionalStr: value None does not match"
-        with pytest.raises(FieldTypeValidationError, match=err):
+        with raises_field_type_err(DCOptionalStr, 'x', str, None):
             _ = DCOptionalStr(None, 'b')  # type: ignore[arg-type]
         obj = DCOptionalStr('a', 'b')
         object.__setattr__(obj, 'x', None)
         d = obj.to_dict()
         assert d == {'x': None, 'y': 'b'}
-        with pytest.raises(FieldTypeValidationError, match=err):
+        with raises_field_type_err(DCOptionalStr, 'x', str, None):
             _ = DCOptionalStr.from_dict(d)
 
     def test_literal(self) -> None:
         self._test_dict_convert(DCLiteral(1), {'lit': 1}, None)
-        err = "field 'lit' of .*DCLiteral: value 'b' does not match"
-        with pytest.raises(FieldTypeValidationError, match=err):
+        with raises_field_type_err(DCLiteral, 'lit', Literal['a', 1], 'b'):
             _ = DCLiteral('b')  # type: ignore[arg-type]
         obj = DCLiteral(1)
         object.__setattr__(obj, 'lit', 'b')
         d = obj.to_dict()
         assert d == {'lit': 'b'}
-        with pytest.raises(FieldTypeValidationError, match=err):
+        with raises_field_type_err(DCLiteral, 'lit', Literal['a', 1], 'b'):
             _ = DCLiteral.from_dict(d)
 
     def test_datetime(self) -> None:
@@ -506,7 +500,7 @@ class TestJSON(TestDict):
         assert obj.to_dict() == {'d': td}
         # invalid TypedDicts
         for d in [{'x': 3}, {'x': 3, 'y': 'a', 'z': 1}, {'x': 3, 'y': 4}, {'x': 3, 'y': None}]:
-            with pytest.raises(FieldTypeValidationError, match="field 'd' of .*DCTypedDict: value .* does not match"):
+            with raises_field_type_err(DCTypedDict, 'd', MyTypedDict, d):
                 _ = DCTypedDict.from_dict({'d': d})
 
     @pytest.mark.parametrize(['obj', 'd'], [
@@ -531,15 +525,14 @@ class TestJSON(TestDict):
         object.__setattr__(obj, 't', tup2)
         d = obj.to_dict()
         assert d == {'t': {'x': 3, 'y': 4}}
-        with pytest.raises(
-            FieldTypeValidationError,
-            match=re.compile(
-                "field 't' of .*DCTypedNamedTuple: value .* does not match .*TypedNamedTuple.*attribute 'y' of "
-                '.*TypedNamedTuple is not an instance of str',
-                re.DOTALL,
-            )
+        with raises_field_type_err(
+            DCTypedNamedTuple,
+            't',
+            TypedNamedTuple,
+            tup2,
+            msg=f"attribute 'y' of {fully_qualified_class_name(TypedNamedTuple)} is not an instance of str",
         ):
-            _ = DCTypedNamedTuple.from_dict(d)
+             _ = DCTypedNamedTuple.from_dict(d)
 
     @pytest.mark.parametrize('d', [
         {'t': {'x': 3}},

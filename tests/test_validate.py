@@ -1,16 +1,15 @@
-from collections.abc import Iterator, Sequence
-from contextlib import contextmanager
+from collections.abc import Sequence
 from copy import copy, deepcopy
 from dataclasses import MISSING, FrozenInstanceError, InitVar, dataclass, field, is_dataclass, replace
 import pickle
 import re
-from types import NoneType
 from typing import Any, ClassVar, Optional, Protocol
 
 import pytest
 
-from fancy_dataclass.utils import TypeLike
 from fancy_dataclass.validate import FieldTypeValidationError, ValidatedDataclass
+
+from . import raises_field_type_err
 
 
 @dataclass
@@ -26,25 +25,6 @@ class DC2(DC1, validate_init=False):
 @dataclass
 class DC3(ValidatedDataclass, validate_init=True, validate_assign=True):
     x: int
-
-
-@contextmanager
-def raises_field_type_err(
-    cls: type | str,
-    field_name: str,
-    field_type: TypeLike,
-    val: Any,
-    *,
-    is_default: bool = False,
-) -> Iterator[None]:
-    """Context manager expecting a FieldTypeValidationError to be raised with the given parameters."""
-    cls2 = NoneType if isinstance(cls, str) else cls
-    err = FieldTypeValidationError(cls2, field_name, field_type, val, is_default=is_default)
-    err_str = re.escape(str(err))
-    if isinstance(cls, str):
-        err_str = err_str.replace('NoneType', f'.*{cls}')
-    with pytest.raises(FieldTypeValidationError, match=err_str):
-        yield
 
 
 @pytest.mark.parametrize(['args', 'kwargs'], [
@@ -145,9 +125,11 @@ def test_validate_collection() -> None:
 
 def test_validate_classvar() -> None:
     """Tests validation of a ClassVar."""
-    with raises_field_type_err('DCClassVar', 'x', int, 'a'):
+    class DCClassVarBad: ...
+    # pass dummy class object just so it exists prior to defining the real version
+    with raises_field_type_err(DCClassVarBad, 'x', int, 'a'):
         @dataclass
-        class DCClassVar(ValidatedDataclass):
+        class DCClassVarBad(ValidatedDataclass):
             x: ClassVar[int] = 'a'
     @dataclass
     class DCClassVar(ValidatedDataclass):
@@ -163,7 +145,8 @@ def test_validate_classvar() -> None:
     assert DCClassVarSub1.x == 1
     obj = DCClassVarSub1()
     assert obj.x == 1
-    with raises_field_type_err('DCClassVarSub2', 'x', int, 'a'):
+    class DCClassVarSub2: ...
+    with raises_field_type_err(DCClassVarSub2, 'x', int, 'a'):
         @dataclass
         class DCClassVarSub2(DCClassVar):
             x: ClassVar[int] = 'a'
@@ -274,12 +257,14 @@ def test_validate_init_and_assign(frozen: bool, init: bool, assign: bool) -> Non
             assert obj4 == obj3
     # try setting a default value of the wrong type
     if init:
+        class DCClassFlagsBadDefault: ...
         # field gets rejected at dataclass wrap time, since defaults can be checked then
-        with raises_field_type_err('DCClassFlagsBadDefault', 'x', int, 'a', is_default=True):
+        with raises_field_type_err(DCClassFlagsBadDefault, 'x', int, 'a', is_default=True):
             @dataclass(frozen=frozen)
             class DCClassFlagsBadDefault(ValidatedDataclass, validate_init=init, validate_assign=assign):
                 x: int = 'a'
-        with raises_field_type_err('DCFieldFlagsBadDefault', 'x', int, 'a', is_default=True):
+        class DCFieldFlagsBadDefault: ...
+        with raises_field_type_err(DCFieldFlagsBadDefault, 'x', int, 'a', is_default=True):
             @dataclass(frozen=frozen)
             class DCFieldFlagsBadDefault(ValidatedDataclass):
                 x: int = field(default='a', metadata={'validate_init': init, 'validate_assign': assign})

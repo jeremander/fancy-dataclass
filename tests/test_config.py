@@ -12,7 +12,8 @@ import tomlkit
 from fancy_dataclass.config import ConfigDataclass, DictConfig
 from fancy_dataclass.json import JSONDataclass
 from fancy_dataclass.toml import TOMLDataclass
-from fancy_dataclass.utils import FieldTypeValidationError
+
+from . import raises_field_type_err
 
 
 def test_config_dataclass() -> None:
@@ -73,9 +74,9 @@ def test_validate() -> None:
     assert ConfigValidate.__settings__.validate_init is True
     cfg = ConfigValidate(1)
     assert ConfigValidate.from_dict(cfg.to_dict()) == cfg
-    with pytest.raises(FieldTypeValidationError, match="field 'x' of .*ConfigValidate: value '1' does not match"):
+    with raises_field_type_err(ConfigValidate, 'x', int, '1'):
         cfg = ConfigValidate('1')  # type: ignore[arg-type]
-    with pytest.raises(FieldTypeValidationError, match="field 'x' of .*ConfigValidate: value '1' does not match"):
+    with raises_field_type_err(ConfigValidate, 'x', int, '1'):
         cfg = ConfigValidate.from_dict({'x': '1'})
     @dataclass
     class ConfigNoValidate(ConfigDataclass, validate=False):
@@ -126,7 +127,7 @@ def test_inner_plain(tmp_path: Path) -> None:
     assert Outer.from_dict(cfg_dict) == cfg
     d = {'inner': {'x': 1}, 'y': 'a'}
     assert cfg_dict != d
-    with pytest.raises(FieldTypeValidationError, match="field 'inner' of .*Outer: value .* does not match"):
+    with raises_field_type_err(Outer, 'inner', Inner, {'x': 1}):
         _ = Outer.from_dict(d)
     toml_str = 'y = "a"\n[inner]\nx = 1\n'
     cfg_path = tmp_path / 'test.toml'

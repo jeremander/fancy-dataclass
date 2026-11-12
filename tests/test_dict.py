@@ -6,9 +6,11 @@ from typing import Annotated, Any, ClassVar, Optional, TypeAlias
 import pytest
 from typing_extensions import Doc
 
-from fancy_dataclass.dict import DictDataclass, DictDataclassSettings
+from fancy_dataclass.dict import DictDataclass, DictDataclassSettings, StoreTypeMode
 from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.utils import FieldTypeValidationError, MissingRequiredFieldError
+
+from . import raises_field_type_err
 
 
 @dataclass
@@ -337,10 +339,7 @@ def test_allow_extra_fields() -> None:
 def test_store_type_setting() -> None:
     """Tests behavior of the store_type setting."""
     # invalid mode
-    with pytest.raises(
-        FieldTypeValidationError,
-        match="field 'store_type' of .*DictDataclassSettings: value 'fake' does not match",
-    ):
+    with raises_field_type_err(DictDataclassSettings, 'store_type', StoreTypeMode, 'fake'):
         @dataclass
         class DC1(DictDataclass, store_type='fake'):
             ...
@@ -727,10 +726,9 @@ def test_validate_basic(class_validate: bool, field_validate: Optional[bool]) ->
     d = {'x': '1'}
     validate_init = class_validate if (field_validate is None) else field_validate
     if validate_init:
-        msg = "field 'x' of .*DC: value '1' does not match expected type int"
-        with pytest.raises(FieldTypeValidationError, match=msg):
+        with raises_field_type_err(DC, 'x', int, '1'):
             _ = DC(x='1')  # type: ignore[arg-type]
-        with pytest.raises(FieldTypeValidationError, match=msg):
+        with raises_field_type_err(DC, 'x', int, '1'):
             _ = DC.from_dict(d)
     else:
         obj = DC(x='1')  # type: ignore[arg-type]
