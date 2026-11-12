@@ -1,7 +1,6 @@
 from argparse import Action, ArgumentParser, HelpFormatter, Namespace, _ArgumentGroup, _MutuallyExclusiveGroup
 import builtins
 from collections.abc import Callable, Sequence
-from contextlib import suppress
 from dataclasses import MISSING, dataclass, fields
 from enum import IntEnum
 from typing import Any, ClassVar, Literal, Optional, TypeGuard, TypeVar, cast, get_args, get_origin
@@ -110,8 +109,32 @@ def _update_argument_kwargs_for_bool_action(
             f'cannot use default value of {default} for action {action!r} with boolean flag field {name!r}'
         )
     for key in ('type', 'required'):
-        with suppress(KeyError):
-            kwargs.pop(key)
+        kwargs.pop(key, None)
+
+def _field_name_to_arg_name(field_name: str) -> str:
+    """Gets an argument name from a field name.
+    If the field name is one character long, prefixes it with '-', otherwise '--'.
+    Also replaces underscores with hyphens."""
+    # use a single dash for 1-letter names
+    prefix = '-' if (len(field_name) == 1) else '--'
+    arg_name = field_name.replace('_', '-')
+    return prefix + arg_name
+
+def _deconflict_duplicate_positional_args(parser: ArgParser, positional: bool, arg: str) -> None:
+    if not hasattr(parser, '_pos_args'):
+        parser._pos_args = set()  # type: ignore[union-attr]
+    if positional:
+        pos_args = parser._pos_args  # type: ignore[union-attr]
+        if arg in pos_args:
+            raise ValueError(f'duplicate positional argument {arg!r}')
+        pos_args.add(arg)
+
+def _deconflict_duplicate_dests(parser: ArgParser, dest: str) -> None:
+    if not hasattr(parser, '_dests'):
+        parser._dests = set()  # type: ignore[union-attr]
+    elif dest in parser._dests:
+        raise ValueError(f'duplicate destination field {dest!r}')
+    parser._dests.add(dest)  # type: ignore[union-attr]
 
 
 ##########
@@ -335,7 +358,6 @@ class CLIDataclass(DataclassMixin):
         Returns:
             New top-level parser derived from the class's fields"""
         parser = cls.__settings__.parser_class(**cls.parser_kwargs())
-
         # we disallow duplicate 'dest' variables for the same parser, so track them in a set
         parser._dests = set()  # type: ignore[attr-defined]
         return parser
@@ -426,13 +448,7 @@ class CLIDataclass(DataclassMixin):
                 kwargs['required'] = True
         else:
             positional = (tp is not bool) and ('default' not in kwargs)
-            if positional:
-                args = [fld.name]
-            else:
-                # use a single dash for 1-letter names
-                prefix = '-' if (len(fld.name) == 1) else '--'
-                argname = fld.name.replace('_', '-')
-                args = [prefix + argname]
+            args = [fld.name if positional else _field_name_to_arg_name(fld.name)]
         if args and (not positional):
             if 'dest' in meta:  # user explicitly set 'dest' in metadata
                 kwargs['dest'] = meta['dest']
@@ -472,13 +488,8 @@ class CLIDataclass(DataclassMixin):
             (group_name, is_exclusive) = result
             # get kwargs from nested CLIDataclass
             group_kwargs = tp.parser_kwargs() if is_nested(tp) else {}
-            parser = _configure_parser_group(
-                parser,
-                group_name,
-                is_exclusive,
-                kwargs.get('required', False),
-                **group_kwargs,
-            )
+            required = kwargs.get('required', False)
+            parser = _configure_parser_group(parser, group_name, is_exclusive, required, **group_kwargs)
         if settings.subcommand:
             # create subparsers for each variant
             assert isinstance(parser, ArgumentParser)
@@ -502,22 +513,12 @@ class CLIDataclass(DataclassMixin):
             return
         if is_nested(tp):  # recursively configure a nested CLIDataclass field
             tp.configure_parser(parser)
-        else:
-            # prevent duplicate positional args
-            if not hasattr(parser, '_pos_args'):
-                parser._pos_args = set()  # type: ignore[union-attr]
-            if positional:
-                pos_args = parser._pos_args  # type: ignore[union-attr]
-                if args[0] in pos_args:
-                    raise ValueError(f'duplicate positional argument {args[0]!r}')
-                pos_args.add(args[0])
-            if (dest := kwargs.get('dest')) is not None:  # type: ignore[assignment]
-                if not hasattr(parser, '_dests'):
-                    parser._dests = set()  # type: ignore[union-attr]
-                elif dest in parser._dests:
-                    raise ValueError(f'duplicate destination field {dest!r}')
-                parser._dests.add(dest)  # type: ignore[union-attr]
-            parser.add_argument(*args, **kwargs)
+            return
+        # error if there are duplicate positional args or dest values
+        _deconflict_duplicate_positional_args(parser, positional, args[0])
+        if (dest := kwargs.get('dest')) is not None:  # type: ignore[assignment]
+            _deconflict_duplicate_dests(parser, dest)
+        parser.add_argument(*args, **kwargs)
 
     @classmethod
     def configure_version_argument(cls, parser: ArgumentParser | _ArgumentGroup) -> None:
