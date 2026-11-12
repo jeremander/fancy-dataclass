@@ -314,7 +314,7 @@ def test_argparse_options() -> None:
     @dataclass
     class DC19(CLIDataclass):
         pos: int | str
-    with pytest.raises(ValueError, match='union type .+ not allowed'):
+    with pytest.raises(TypeError, match='union type .+ not allowed'):
         _ = DC19.make_parser()
     # append action
     @dataclass
@@ -382,7 +382,7 @@ def test_choices() -> None:
     assert DC5.from_cli_args(['a']).x == 'a'
     check_invalid_args(DC5, ['b'], "invalid choice: 'b'")
     # custom choice can be parsed, but it is not valid for the type
-    with pytest.raises(ValueError, match="invalid value 'c'"):
+    with pytest.raises(TypeError, match="invalid value 'c'"):
         _ = DC5.from_cli_args(['c'])
     # optional Literal
     @dataclass
@@ -405,7 +405,7 @@ def test_choices() -> None:
     @dataclass
     class DC8(CLIDataclass):
         x: int | Literal['a', 'b']
-    with pytest.raises(ValueError, match='union type .* not allowed'):
+    with pytest.raises(TypeError, match='union type .* not allowed'):
         _ = DC8.make_parser()
 
 def test_string_field_annotations() -> None:
@@ -701,12 +701,12 @@ def test_nested() -> None:
     @dataclass
     class G(CLIDataclass):
         val: str | X
-    with pytest.raises(ValueError, match='union type .+ not allowed'):
+    with pytest.raises(TypeError, match='union type .+ not allowed'):
         _ = G.make_parser()
     @dataclass
     class H(CLIDataclass):
         val: X | XY
-    with pytest.raises(ValueError, match='union type .+ not allowed'):
+    with pytest.raises(TypeError, match='union type .+ not allowed'):
         _ = H.make_parser()
 
 def test_subcommand(capsys: pytest.CaptureFixture[str]) -> None:

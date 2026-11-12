@@ -5,9 +5,8 @@
 ## v0.13.0
 
 - `CLIDataclass`
-  - `literal_type_and_choices` helper at top-level
-  - Make `_parser_class` a `ClassVar`? Make this a generic param? `typing_extensions` for default param?
-  - Should `parser_*` methods be public or private?
+  - Make more methods private?
+    - E.g. `_subcommand_name`, `_parser_kwargs`, `_configure_argument`, `_configure_version_argument`
   - Helper to obtain a *group*
   - `is bool` check vs. checking for subclass of `bool`
   - Add `switch` field option (use `BooleanOptionalAction`)

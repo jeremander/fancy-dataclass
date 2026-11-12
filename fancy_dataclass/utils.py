@@ -308,7 +308,7 @@ def _check_type(obj: Any, tp: TypeLike) -> None:
     try:
         _ = check_type(obj, tp, collection_check_strategy=CollectionCheckStrategy.ALL_ITEMS)
     except TypeCheckError as e:
-        raise TypeValidationError(obj, tp) from e
+        raise TypeValidationError(tp, obj) from e
 
 def obj_class_name(obj: object) -> str:
     """Gets the name of the class of an object.

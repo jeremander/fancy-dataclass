@@ -400,7 +400,7 @@ class CLIDataclass(DataclassMixin):
                 if origin_type in _UNION_TYPES:
                     tp_args = tuple(arg for arg in tp_args if (arg is not type(None)))
                     if (len(tp_args) > 1) and (not settings.subcommand):
-                        raise ValueError(f'union type {tp} not allowed as CLIDataclass field except as subcommand')
+                        raise TypeError(f'union type {tp} not allowed as CLIDataclass field except as subcommand')
                 elif issubclass_safe(origin_type, list) or issubclass_safe(origin_type, tuple):
                     for arg in tp_args:
                         if is_nested(arg):
@@ -421,7 +421,7 @@ class CLIDataclass(DataclassMixin):
                         tp = None  # type: ignore[assignment]
                     kwargs['choices'] = tp_args
             else:  # type cannot be inferred
-                raise ValueError(f'cannot infer type of items in field {name!r}')
+                raise TypeError(f'cannot infer type of items in field {name!r}')
             if issubclass_safe(origin_type, list) and (action == 'store'):  # type: ignore[arg-type]
                 kwargs['nargs'] = '*'  # allow multiple arguments by default
         if issubclass_safe(tp, IntEnum):
@@ -546,7 +546,7 @@ class CLIDataclass(DataclassMixin):
             name = fld.name
             if fld.metadata.get('subcommand', False):
                 # TODO: check field type is CLIDataclass or Union thereof
-                # TODO: move this to __init_dataclass__
+                # TODO: move this to __post_dataclass_wrap__?
                 if subcommand is None:
                     subcommand = name
                 else:
@@ -603,9 +603,8 @@ class CLIDataclass(DataclassMixin):
             elif hasattr(args, dest):  # extract arg from the namespace
                 val = getattr(args, dest)
                 # check that Literal value matches one of the allowed values
-                # TODO: let general-purpose validation mixin handle this post-init?
                 if (not is_optional) and (get_origin(tp) == Literal) and (not any(val == arg for arg in get_args(tp))):
-                    raise ValueError(f'invalid value {val!r} for type {tp}')
+                    raise TypeError(f'invalid value {val!r} for type {tp}')
             else:  # argument not present
                 continue
             if is_nested_field:  # merge in nested CLIDataclass
