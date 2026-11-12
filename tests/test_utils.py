@@ -9,10 +9,10 @@ from typing_extensions import Never
 
 from fancy_dataclass.utils import (
     TypeLike,
+    _conforms_to,
     _is_subtype,
     camel_case_to_kebab_case,
     coerce_to_dataclass,
-    conforms_to,
     get_dataclass_fields,
     get_type_name,
     merge_dataclasses,
@@ -191,8 +191,8 @@ def test_check_is_subtype(tp1: Any, tp2: Any, output: bool) -> None:
     pytest.param([1], list[Never], False, marks=pytest.mark.xfail),
 ])
 def test_conforms_to(obj: Any, tp: Any, output: bool) -> None:
-    """Tests the conforms_to helper function."""
-    assert conforms_to(obj, tp) is output
+    """Tests the _conforms_to helper function."""
+    assert _conforms_to(obj, tp) is output
 
 def test_coerce_to_dataclass() -> None:
     """Tests behavior of `coerce_to_dataclass`."""

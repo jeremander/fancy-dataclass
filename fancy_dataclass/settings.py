@@ -3,7 +3,7 @@ from typing import Any, Optional, TypeVar, get_args
 
 from typing_extensions import Doc, Self, _AnnotatedAlias, override
 
-from fancy_dataclass.utils import check_dataclass, coerce_to_dataclass, validate_dataclass_field
+from fancy_dataclass.utils import _validate_dataclass_field, check_dataclass, coerce_to_dataclass
 
 
 DA = TypeVar('DA', bound='DataclassAdaptable')
@@ -33,7 +33,7 @@ class _DataclassFieldValidate:
     def __post_init__(self, *args: Any, **kwargs: Any) -> None:
         assert is_dataclass(self)
         for fld in fields(self):
-            validate_dataclass_field(type(self), fld, getattr(self, fld.name))
+            _validate_dataclass_field(type(self), fld, getattr(self, fld.name))
 
 
 class MixinSettings(DataclassAdaptable, _DataclassFieldValidate):

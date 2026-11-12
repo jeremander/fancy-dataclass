@@ -8,9 +8,9 @@ from fancy_dataclass.settings import FieldSettings, MixinSettings
 from fancy_dataclass.utils import (
     DataclassType,
     FieldTypeValidationError,
+    _validate_dataclass_field,
     get_dataclass_fields,
     type_is_classvar,
-    validate_dataclass_field,
 )
 
 
@@ -103,9 +103,9 @@ class ValidatedDataclass(DataclassMixin):
             # validate ClassVar values and field default values at dataclass wrap time
             for fld in get_dataclass_fields(wrapped_cls, include_all=True):
                 if type_is_classvar(fld.type) and hasattr(wrapped_cls, fld.name):
-                    validate_dataclass_field(wrapped_cls, fld, getattr(wrapped_cls, fld.name))
+                    _validate_dataclass_field(wrapped_cls, fld, getattr(wrapped_cls, fld.name))
                 elif (wrapped_cls._field_validation_flags(fld).validate_init) and (fld.default is not MISSING):
-                    validate_dataclass_field(wrapped_cls, fld, fld.default, is_default=True)
+                    _validate_dataclass_field(wrapped_cls, fld, fld.default, is_default=True)
         # determine whether any fields should validate upon assignment
         if wrapped_cls.__dataclass_params__.frozen:  # type: ignore[attr-defined]
             validate_assign = False
@@ -130,7 +130,7 @@ class ValidatedDataclass(DataclassMixin):
                     (fld := tp.__dataclass_fields__.get(name, None))
                     and tp._field_validation_flags(fld).validate_assign  # type: ignore[attr-defined]
                 ):
-                    validate_dataclass_field(tp, fld, value)
+                    _validate_dataclass_field(tp, fld, value)
                 orig_setattr(self, name, value)  # pyrefly: ignore[bad-argument-type]
             wrapped_cls.__setattr__ = _validated_setattr  # type: ignore[method-assign]
 
@@ -149,7 +149,7 @@ class ValidatedDataclass(DataclassMixin):
         cls = type(self)
         if not hasattr(self, fld.name):
             raise FieldTypeValidationError(cls, fld.name, fld.type, MISSING)
-        validate_dataclass_field(cls, fld, getattr(self, fld.name))
+        _validate_dataclass_field(cls, fld, getattr(self, fld.name))
 
     def __post_init__(self, *args: Any, **kwargs: Any) -> None:
         for fld in get_dataclass_fields(self):

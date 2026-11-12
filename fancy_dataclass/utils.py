@@ -51,6 +51,20 @@ DataclassType: TypeAlias = type['DataclassInstance']
 # ERROR TYPES #
 ###############
 
+class TypeValidationError(TypeError):
+    """Error type for runtime type-checking."""
+
+    def __init__(self, expected_type: TypeLike, value: Any) -> None:
+        """Constructor for `TypeValidationError`.
+
+        Args:
+            expected_type: type to check the value against
+            value: value to type-check"""
+        self.expected_type = expected_type
+        self.value = value
+        super().__init__(f'value {value!r} does not match expected type {get_type_name(expected_type)}')
+
+
 class FieldTypeValidationError(TypeError):
     """Error type for runtime type-checking a value of a dataclass field."""
 
@@ -62,6 +76,7 @@ class FieldTypeValidationError(TypeError):
         value: Any,
         *,
         is_default: bool = False,
+        msg: Optional[str] = None,
     ) -> None:
         """Constructor for `FieldTypeValidationError`.
 
@@ -70,7 +85,8 @@ class FieldTypeValidationError(TypeError):
             field_name: name of the field being checked
             field_type: type to check the value against
             value: value to type-check
-            is_default: flag indicating whether the value is a field default"""
+            is_default: flag indicating whether the value is a field default
+            msg: additional error message for context"""
         self.cls = cls
         self.field_name = field_name
         self.field_type = field_type
@@ -82,10 +98,11 @@ class FieldTypeValidationError(TypeError):
             err_msg = f'field {field_name!r} is missing for {cls_name}'
         else:
             default_str = 'default ' if is_default else ''
-            err_msg = (
-                f'field {field_name!r} of {cls_name}: {default_str}value {value!r} '
-                f'does not match expected type {get_type_name(field_type)}'
-            )
+            err = TypeValidationError(field_type, value)
+            err_msg = f'field {field_name!r} of {cls_name}: {default_str}{err}'
+        if msg is not None:
+            # append message with extra context
+            err_msg += f'\n\t{msg}'
         super().__init__(err_msg)
 
 
@@ -246,7 +263,7 @@ def _is_subtype(tp1: type, tp2: type) -> bool:
     """Checks if one type is a subtype of the other.
 
     This attempts to be somewhat more flexible than `issubclass` in that it will handle compound types
-    like `List[...]`."""
+    like `list[...]`."""
     # TODO: make this more complete
     if tp2 is Any:
         return True
@@ -266,19 +283,26 @@ def _is_subtype(tp1: type, tp2: type) -> bool:
         return False
     return issubclass_safe(tp1, tp2)  # fallback
 
-def conforms_to(obj: Any, tp: TypeLike) -> bool:
-    """Checks if the given object conforms to the given type.
-
-    This is more flexible than `isinstance` in that it will handle compound types like `list[...]`."""
+def _check_type(obj: Any, tp: TypeLike) -> None:
+    """Checks if the given object conforms to the given type, raising a TypeError if not."""
     # Currently Never is not handled properly by typeguard, so handle it specially.
     # However, it still won't work if the Never type is nested in a compound type.
     #   see: https://github.com/agronholm/typeguard/issues/580
     if tp is Never:
-        return False
+        raise TypeValidationError(tp, obj)
     try:
         _ = check_type(obj, tp, collection_check_strategy=CollectionCheckStrategy.ALL_ITEMS)
+    except TypeCheckError as e:
+        raise TypeValidationError(obj, tp) from e
+
+def _conforms_to(obj: Any, tp: TypeLike) -> bool:
+    """Checks if the given object conforms to the given type.
+
+    This is more flexible than `isinstance` in that it will handle compound types like `list[...]`."""
+    try:
+        _check_type(obj, tp)
         return True
-    except TypeCheckError:
+    except TypeValidationError:
         return False
 
 def obj_class_name(obj: object) -> str:
@@ -468,27 +492,28 @@ def coerce_to_dataclass(cls: type[T], obj: object) -> T:
         A new object of the desired type, coerced from the input object"""
     kwargs = {}
     for fld in dataclasses.fields(cls):  # type: ignore[arg-type]
-        if hasattr(obj, fld.name):
-            val = getattr(obj, fld.name)
-            if is_dataclass_type(fld.type):  # type: ignore[arg-type]
-                val = coerce_to_dataclass(fld.type, val)
-            else:
-                origin_type = get_origin(fld.type)
-                if origin_type and issubclass_safe(origin_type, Iterable):
-                    if issubclass(origin_type, dict):
-                        (_, val_type) = get_args(fld.type)
-                        if is_dataclass_type(val_type):
-                            val = type(val)({key: coerce_to_dataclass(val_type, elt) for (key, elt) in val.items()})
-                    elif issubclass(origin_type, tuple):
-                        val = type(val)(
-                            coerce_to_dataclass(tp, elt) if is_dataclass_type(tp) else elt
-                            for (tp, elt) in zip(get_args(fld.type), val)
-                        )
-                    else:
-                        (elt_type,) = get_args(fld.type)
-                        if is_dataclass_type(elt_type):
-                            val = type(val)(coerce_to_dataclass(elt_type, elt) for elt in val)
-            kwargs[fld.name] = val
+        if not hasattr(obj, fld.name):
+            continue
+        val = getattr(obj, fld.name)
+        if is_dataclass_type(fld.type):  # type: ignore[arg-type]
+            val = coerce_to_dataclass(fld.type, val)
+        else:
+            origin_type = get_origin(fld.type)
+            if origin_type and issubclass_safe(origin_type, Iterable):
+                if issubclass(origin_type, dict):
+                    (_, val_type) = get_args(fld.type)
+                    if is_dataclass_type(val_type):
+                        val = type(val)({key: coerce_to_dataclass(val_type, elt) for (key, elt) in val.items()})
+                elif issubclass(origin_type, tuple):
+                    val = type(val)(
+                        coerce_to_dataclass(tp, elt) if is_dataclass_type(tp) else elt
+                        for (tp, elt) in zip(get_args(fld.type), val)
+                    )
+                else:
+                    (elt_type,) = get_args(fld.type)
+                    if is_dataclass_type(elt_type):
+                        val = type(val)(coerce_to_dataclass(elt_type, elt) for elt in val)
+        kwargs[fld.name] = val
     return cls(**kwargs)
 
 def dataclass_type_map(cls: DataclassType, func: Callable[[type], type]) -> DataclassType:
@@ -506,7 +531,7 @@ def dataclass_type_map(cls: DataclassType, func: Callable[[type], type]) -> Data
     for fld in get_dataclass_fields(cls, include_all=True):
         new_fld = copy(fld)
         origin_type = get_origin(fld.type)
-        if origin_type and (not conforms_to(fld.type, _AnnotatedAlias)) and issubclass_safe(origin_type, Iterable):
+        if origin_type and (not _conforms_to(fld.type, _AnnotatedAlias)) and issubclass_safe(origin_type, Iterable):
             if issubclass(origin_type, dict):
                 (key_type, val_type) = get_args(fld.type)
                 tp = origin_type[key_type, _map_func(val_type)]  # pyrefly: ignore[unsupported-operation]
@@ -592,9 +617,16 @@ def merge_dataclasses(
 
 # VALIDATION
 
-def validate_dataclass_field(cls: type, fld: Field[Any], value: Any, *, is_default: bool = False) -> None:
+def _validate_dataclass_field(cls: type, fld: Field[Any], value: Any, *, is_default: bool = False) -> None:
     """Given a dataclass type, Field object, and field value, checks if the value matches the expected type.
-    If not, raises a FieldTypeValidationError."""
+    If not, raises a [`FieldTypeValidationError`][fancy_dataclass.utils.FieldTypeValidationError]."""
     tp = get_args(fld.type)[0] if type_is_classvar(fld.type) else fld.type
-    if not conforms_to(value, tp):
-        raise FieldTypeValidationError(cls, fld.name, tp, value, is_default=is_default)
+    try:
+        _check_type(value, tp)
+    except TypeValidationError as e:
+        kwargs: dict[str, Any] = {'is_default': is_default}
+        with suppress(TypeError):
+            if isinstance(tp, type) and isinstance(value, tp):
+                # value is the correct type, but fails to validate in some other way
+                kwargs['msg'] = str(e.__cause__ or e)
+        raise FieldTypeValidationError(cls, fld.name, tp, value, **kwargs) from e

@@ -531,7 +531,14 @@ class TestJSON(TestDict):
         object.__setattr__(obj, 't', tup2)
         d = obj.to_dict()
         assert d == {'t': {'x': 3, 'y': 4}}
-        with pytest.raises(FieldTypeValidationError, match="field 't' of .*DCTypedNamedTuple: value .* does not match"):
+        with pytest.raises(
+            FieldTypeValidationError,
+            match=re.compile(
+                "field 't' of .*DCTypedNamedTuple: value .* does not match .*TypedNamedTuple.*attribute 'y' of "
+                '.*TypedNamedTuple is not an instance of str',
+                re.DOTALL,
+            )
+        ):
             _ = DCTypedNamedTuple.from_dict(d)
 
     @pytest.mark.parametrize('d', [
