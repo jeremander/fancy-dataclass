@@ -102,7 +102,7 @@ class FieldTypeValidationError(TypeError):
             err_msg = f'field {field_name!r} of {cls_name}: {default_str}{err}'
         if msg is not None:
             # append message with extra context
-            err_msg += f'\n\t{msg}'
+            err_msg += f'\n  {msg}'
         super().__init__(err_msg)
 
 
@@ -625,8 +625,6 @@ def _validate_dataclass_field(cls: type, fld: Field[Any], value: Any, *, is_defa
         _check_type(value, tp)
     except TypeValidationError as e:
         kwargs: dict[str, Any] = {'is_default': is_default}
-        with suppress(TypeError):
-            if isinstance(tp, type) and isinstance(value, tp):
-                # value is the correct type, but fails to validate in some other way
-                kwargs['msg'] = str(e.__cause__ or e)
+        if e.__cause__:
+            kwargs['msg'] = str(e.__cause__)
         raise FieldTypeValidationError(cls, fld.name, tp, value, **kwargs) from e
