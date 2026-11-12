@@ -2,11 +2,11 @@
 
 `fancy_dataclass` makes it super-easy to create command-line programs.
 
-The [`ArgparseDataclass`][fancy_dataclass.cli.ArgparseDataclass] mixin lets you automatically generate an [`argparse`](https://docs.python.org/3/library/argparse.html) argument parser from a dataclass. This saves a lot of boilerplate code which would be required to set up the parser manually.
+The [`CLIDataclass`][fancy_dataclass.cli.CLIDataclass] mixin lets you automatically generate an [`argparse`](https://docs.python.org/3/library/argparse.html) argument parser from a dataclass. This saves a lot of boilerplate code which would be required to set up the parser manually.
 
-The [`CLIDataclass`][fancy_dataclass.cli.CLIDataclass] mixin extends `ArgparseDataclass` by additionally providing a [`run`][fancy_dataclass.cli.CLIDataclass.run] method which you override to perform arbitrary program logic, given the parsed arguments. You can then call [`main`][fancy_dataclass.cli.CLIDataclass.main] on your custom dataclass to run an entire program end-to-end (parser construction, argument parsing, main program logic).
+[`CLIDataclass`][fancy_dataclass.cli.CLIDataclass] additionally provides a [`run`][fancy_dataclass.cli.CLIDataclass.run] method which you override to perform arbitrary program logic, given the parsed arguments. You can then call [`main`][fancy_dataclass.cli.CLIDataclass.main] on your custom dataclass to run an entire program end-to-end (parser construction, argument parsing, main program logic).
 
-By default, `ArgparseDataclass` and `CLIDataclass` provide a "help" option so that a help menu is printed out when the user passes in `-h` or `--help` as an argument. The help string for each argument can be provided in the dataclass field metadata.
+By default, `CLIDataclass` provides a "help" option so that a help menu is printed out when the user passes in `-h` or `--help` as an argument. The help string for each argument can be provided in the dataclass field metadata.
 
 ## Usage Example
 
@@ -112,7 +112,7 @@ python calculator.py div 8 3 --round
 ### Subparsers
 
 - Single nested field marked with `subcommand=True`
-- Field should be a `Union` type, all of whose variants are `ArgparseDataclass` subclasses
+- Field should be a `Union` type, all of whose variants are `CLIDataclass` subclasses
 - Each variant must have a name
     - By default, this will be the kebab-case version of the class name
     - A `command_name` class setting can override this

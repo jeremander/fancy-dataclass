@@ -121,7 +121,7 @@ class DataclassMixin:
 
     For example, this could provide features for conversion to/from JSON
     ([`JSONDataclass`][fancy_dataclass.json.JSONDataclass]), the ability to construct CLI argument parsers
-    ([`ArgparseDataclass`][fancy_dataclass.cli.ArgparseDataclass]), etc.
+    ([`CLIDataclass`][fancy_dataclass.cli.CLIDataclass]), etc.
 
     This mixin also provides a [`wrap_dataclass`][fancy_dataclass.mixin.DataclassMixin.wrap_dataclass] decorator which
     can be used to wrap an existing dataclass type into one that provides the mixin's functionality."""

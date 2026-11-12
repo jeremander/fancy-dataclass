@@ -4,7 +4,20 @@
 
 ## v0.13.0
 
-- Unify `CLIDataclass` and `ArgparseDataclass`.
+- `CLIDataclass`
+  - `literal_type_and_choices` helper at top-level
+  - Make `_parser_class` a `ClassVar`? Make this a generic param? `typing_extensions` for default param?
+  - Should `parser_*` methods be public or private?
+  - Helper to obtain a *group*
+  - `is bool` check vs. checking for subclass of `bool`
+  - Add `switch` field option (use `BooleanOptionalAction`)
+  - Simplify `args_to_dict`
+  - Tuple field type, both fixed and variable length
+    - Test length 0?
+  - Tests
+    - `Sequence[int]` and `Iterable[int]`?
+    - `T` for generic `T`?
+
 - Validation support: `ValidatedDataclass`
   - Configs
     - Flag to decorate all methods with arg & return type-checking (default `False`)
@@ -25,6 +38,7 @@
 
 ## Future
 
+- Eventually Deprecate `ArgparseDataclass` (`typing_extensions.deprecated` on class works)
 - `alias` metadata field for dict conversion
   - Should this be bidirectional? Or separate fields for each direction? [pydantic](https://docs.pydantic.dev/latest/concepts/alias/) provides both.
   - https://github.com/jeremander/fancy-dataclass/issues/5

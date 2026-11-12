@@ -5,7 +5,6 @@
 Mixin classes inherit from a base class called [`DataclassMixin`][fancy_dataclass.mixin.DataclassMixin]. A class may inherit from multiple mixin classes. Below is a list of pre-defined mixin classes which can be imported.
 
 - [CLI Parsing](cli.md)
-    - `ArgparseDataclass`
     - `CLIDataclass`
 - [Configurations](config.md)
     - `ConfigDataclass`
