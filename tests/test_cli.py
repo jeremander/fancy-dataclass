@@ -1321,3 +1321,37 @@ def test_typevar() -> None:
         for args in [[], ['--val', '1']]:
             with pytest.raises(ValueError, match='.*T is not callable'):
                 _ = cls.from_cli_args(args)
+
+def test_switch() -> None:
+    """Tests the switch=True field setting."""
+    @dataclass
+    class DCFalse(CLIDataclass):
+        flag: bool = field(default=False, metadata={'switch': True})
+    assert DCFalse.from_cli_args([]) == DCFalse(flag=False)
+    assert DCFalse.from_cli_args(['--flag']) == DCFalse(flag=True)
+    assert DCFalse.from_cli_args(['--no-flag']) == DCFalse(flag=False)
+    assert DCFalse.from_cli_args(['--no-flag', '--flag']) == DCFalse(flag=True)
+    assert DCFalse.from_cli_args(['--flag', '--no-flag']) == DCFalse(flag=False)
+    @dataclass
+    class DCTrue(CLIDataclass):
+        flag: bool = field(default=True, metadata={'switch': True})
+    assert DCTrue.from_cli_args([]) == DCTrue(flag=True)
+    assert DCTrue.from_cli_args(['--flag']) == DCTrue(flag=True)
+    assert DCTrue.from_cli_args(['--no-flag']) == DCTrue(flag=False)
+    assert DCTrue.from_cli_args(['--no-flag', '--flag']) == DCTrue(flag=True)
+    assert DCTrue.from_cli_args(['--flag', '--no-flag']) == DCTrue(flag=False)
+    @dataclass
+    class DCStr(CLIDataclass):
+        val: str = field(metadata={'switch': True})
+    with pytest.raises(ValueError, match="cannot use switch=True for field 'val' which is not a bool"):
+        _ = DCStr.from_cli_args([])
+    @dataclass
+    class DCSingleChar(CLIDataclass):
+        x: bool = field(metadata={'switch': True})
+    with pytest.raises(ValueError, match="cannot use switch=True for field 'x' with 1-letter name"):
+        _ = DCSingleChar.from_cli_args([])
+    @dataclass
+    class DCSingleCharStr(CLIDataclass):
+        x: str = field(metadata={'switch': True})
+    with pytest.raises(ValueError, match="cannot use switch=True for field 'x' which is not a bool"):
+        _ = DCSingleCharStr.from_cli_args([])

@@ -1,4 +1,12 @@
-from argparse import Action, ArgumentParser, HelpFormatter, Namespace, _ArgumentGroup, _MutuallyExclusiveGroup
+from argparse import (
+    Action,
+    ArgumentParser,
+    BooleanOptionalAction,
+    HelpFormatter,
+    Namespace,
+    _ArgumentGroup,
+    _MutuallyExclusiveGroup,
+)
 import builtins
 from collections.abc import Callable, Iterable, Sequence
 from collections.abc import Set as AbstractSet
@@ -100,15 +108,19 @@ def _update_argument_kwargs_for_bool_action(
     action:  Optional[str | builtins.type[Action]],
     name: str,
     default: Any,
+    switch: bool
 ) -> None:
-    action = action or 'store_true'
-    kwargs['action'] = action
+    if switch:
+        action = BooleanOptionalAction
+    else:
+        action = action or 'store_true'
+        if (default is not None) and ((action != 'store_false') == default):
+            raise ValueError(
+                f'cannot use default value of {default} for action {action!r} with boolean flag field {name!r}'
+            )
     if isinstance(action, str) and (action not in ['store_true', 'store_false']):
         raise ValueError(f'invalid action {action!r} for boolean flag field {name!r}')
-    if (default is not None) and ((action != 'store_false') == default):
-        raise ValueError(
-            f'cannot use default value of {default} for action {action!r} with boolean flag field {name!r}'
-        )
+    kwargs['action'] = action
     for key in ('type', 'required'):
         kwargs.pop(key, None)
 
@@ -208,6 +220,8 @@ class CLIDataclassFieldSettings(DocFieldSettings):
     - `parse_exclude`: boolean flag indicating that the field should not be included in the parser
     - `default_help`: boolean flag indicating the field's default value (if present) should be shown in the help
         - If `None`, falls back on the class-level `default_help` flag
+    - `switch`: if `True` and the field type is `bool`, makes the option a "switch" that can be set on or off, instead
+    of just a flag
 
     Note that these line up closely with the usual options that can be passed to
     [`ArgumentParser.add_argument`](https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser.add_argument).
@@ -238,6 +252,7 @@ class CLIDataclassFieldSettings(DocFieldSettings):
     subcommand: bool = False
     parse_exclude: bool = False
     default_help: Optional[bool] = None
+    switch: bool = False
 
 
 class CLIDataclass(DataclassMixin):
@@ -402,7 +417,7 @@ class CLIDataclass(DataclassMixin):
                 if tp_args:
                     tp = tp_args[0]
                     if (len(tp_args) == 2) and (tp_args[1] is Ellipsis):
-                        nargs = '*'
+                        nargs: str | int = '*'
                     elif any(arg is not tp for arg in tp_args[1:]):
                         raise TypeError(f'arguments to tuple type must all be the same in {cls_name} field')
                     else:
@@ -476,8 +491,14 @@ class CLIDataclass(DataclassMixin):
             kwargs['required'] = settings.required
         has_default = 'default' in kwargs
         default = kwargs.get('default')
+        if settings.switch:
+            # TODO: move this to __post_dataclass_wrap__
+            if tp is not bool:
+                raise ValueError(f'cannot use switch=True for field {name!r} which is not a bool')
+            if len(name) == 1:
+                raise ValueError(f'cannot use switch=True for field {name!r} with 1-letter name')
         if tp is bool:  # use boolean flag instead of an argument
-            _update_argument_kwargs_for_bool_action(kwargs, settings.action, name, default)
+            _update_argument_kwargs_for_bool_action(kwargs, settings.action, name, default, settings.switch)
         # extract additional items from metadata
         for key in cls._parser_argument_kwarg_names():
             if key in meta:
