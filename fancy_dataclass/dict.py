@@ -154,7 +154,7 @@ class DictDataclass(ValidatedDataclass):
         flattened_field_names = set()
         for fld in fields:
             settings = cls._field_settings(fld).adapt_to(DictDataclassFieldSettings)
-            if issubclass_safe(fld.type, DictDataclass):  # type: ignore[arg-type]
+            if issubclass_safe(fld.type, DictDataclass):
                 if class_flatten:
                     flatten_field = settings.flatten is not False
                 else:

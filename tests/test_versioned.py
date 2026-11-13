@@ -145,7 +145,7 @@ def test_version_decorator() -> None:
             ...
     with pytest.raises(TypeError, match="missing 1 required positional argument: 'version'"):
         @version()  # pyrefly: ignore[missing-argument]
-        @dataclass
+        @dataclass  # pragma: no cover
         class D:
             ...
 

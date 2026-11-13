@@ -65,7 +65,7 @@ def test_func_dataclass() -> None:
     assert AddArgs()(1, 2, 3) == 6
     # varkwargs (not allowed)
     def add_kwargs(**kwargs: int) -> int:
-        return sum(kwargs.values())
+        return sum(kwargs.values())  # pragma: no cover
     with pytest.raises(TypeError, match='with keyword arguments'):
         _ = func_dataclass(add_kwargs)
     # explicit method_name

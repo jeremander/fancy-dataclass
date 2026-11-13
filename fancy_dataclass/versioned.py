@@ -256,7 +256,7 @@ class VersionedDataclass(DictDataclass):
         for fld in get_dataclass_fields(cls):
             if hasattr(self, fld.name):
                 val = getattr(self, fld.name)
-                if isinstance(val, VersionedDataclass) and issubclass_safe(fld.type, VersionedDataclass):  # type: ignore[arg-type]
+                if isinstance(val, VersionedDataclass) and issubclass_safe(fld.type, VersionedDataclass):
                     val = val.migrate(fld.type.version)  # type: ignore[union-attr]
                 kwargs[fld.name] = val
             elif (fld.default == dataclasses.MISSING) and (fld.default_factory == dataclasses.MISSING):

@@ -1,16 +1,21 @@
 import argparse
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, HelpFormatter, Namespace, _SubParsersAction
-from collections.abc import Callable
+from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Set as AbstractSet
 from dataclasses import dataclass, field
 import re
 import sys
-from typing import Annotated, Any, Literal, NoReturn, Optional
+from typing import Annotated, Any, Generic, Literal, NoReturn, Optional, TypeVar
 
 import pytest
 from typing_extensions import Doc
 
 from fancy_dataclass.cli import CLIDataclass, CLIDataclassSettings
+from fancy_dataclass.utils import TypeLike
 from fancy_dataclass.versioned import Version
+
+
+T = TypeVar('T')
 
 
 def _fix_parser(parser: ArgumentParser) -> ArgumentParser:
@@ -73,7 +78,7 @@ class DC1(CLIDataclass):
     def run(self) -> None:
         print(self)
 
-def test_argparse_dataclass_help() -> None:
+def test_cli_dataclass_help() -> None:
     """Tests equivalence of argparse-generated help string between a CLIDataclass and building the parser
     manually."""
     parser = ArgumentParser(description=DC1.__doc__, formatter_class=ArgumentDefaultsHelpFormatter)
@@ -920,18 +925,17 @@ def test_boolean_flag() -> None:  # novermin
         flag: bool = field(default=False, metadata={'action': 'store'})
     with pytest.raises(ValueError, match="invalid action 'store'"):
         _ = DCFlagActionStore.make_parser()
-    if hasattr(argparse, 'BooleanOptionalAction'):  # Python >= 3.9
-        @dataclass
-        class DCBooleanOptionalActionFalse(CLIDataclass):
-            flag: bool = field(default=False, metadata={'action': argparse.BooleanOptionalAction})
-        assert DCBooleanOptionalActionFalse.from_cli_args([]).flag is False
-        assert DCBooleanOptionalActionFalse.from_cli_args(['--flag']).flag is True
-        assert DCBooleanOptionalActionFalse.from_cli_args(['--no-flag']).flag is False
-        @dataclass
-        class DCBooleanOptionalActionTrue(CLIDataclass):
-            flag: bool = field(default=True, metadata={'action': argparse.BooleanOptionalAction})
-        with pytest.raises(ValueError, match='cannot use default value of True'):
-            _ = DCBooleanOptionalActionTrue.make_parser()
+    @dataclass
+    class DCBooleanOptionalActionFalse(CLIDataclass):
+        flag: bool = field(default=False, metadata={'action': argparse.BooleanOptionalAction})
+    assert DCBooleanOptionalActionFalse.from_cli_args([]).flag is False
+    assert DCBooleanOptionalActionFalse.from_cli_args(['--flag']).flag is True
+    assert DCBooleanOptionalActionFalse.from_cli_args(['--no-flag']).flag is False
+    @dataclass
+    class DCBooleanOptionalActionTrue(CLIDataclass):
+        flag: bool = field(default=True, metadata={'action': argparse.BooleanOptionalAction})
+    with pytest.raises(ValueError, match='cannot use default value of True'):
+        _ = DCBooleanOptionalActionTrue.make_parser()
 
 def test_count_action() -> None:
     """Tests the 'count' action of a field."""
@@ -1234,6 +1238,22 @@ def test_optional_list() -> None:
     assert DC2.from_cli_args(['--strings', 'abc']) == DC2(['abc'])
     assert DC2.from_cli_args(['--strings', 'abc', 'def']) == DC2(['abc', 'def'])
 
+@pytest.mark.parametrize('coll_type', [
+    Sequence,
+    Iterable,
+    AbstractSet,
+    set,
+])
+def test_collections(coll_type: TypeLike) -> None:
+    """Tests fields with non-standard collection types."""
+    tp = set if (coll_type in [set, AbstractSet]) else list
+    @dataclass
+    class DC(CLIDataclass):
+        vals: coll_type[int] = field(default_factory=tp)  # type: ignore[valid-type]
+    assert DC.from_cli_args([]) == DC()
+    assert DC.from_cli_args(['--vals', '1']) == DC(tp([1]))
+    assert DC.from_cli_args(['--vals', '1', '2']) == DC(tp([1, 2]))
+
 def test_annotated_doc() -> None:
     """Tests that Annotated/Doc gives rise to a help string."""
     # display version
@@ -1248,3 +1268,16 @@ def test_annotated_doc() -> None:
     help_str = DCDoc2.make_parser().format_help()
     assert not re.search(r'x\s+an int', help_str)
     assert re.search(r'x\s+help string', help_str)
+
+def test_typevar() -> None:
+    """Tests a field with a generic type variable."""
+    @dataclass
+    class DC1(CLIDataclass, Generic[T]):
+        val: T
+    @dataclass
+    class DC2(CLIDataclass, Generic[T]):
+        val: list[T]
+    for cls in [DC1, DC2]:
+        for args in [[], ['--val', '1']]:
+            with pytest.raises(ValueError, match='.*T is not callable'):
+                _ = cls.from_cli_args(args)

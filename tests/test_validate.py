@@ -457,16 +457,13 @@ def test_validate_setting_inheritance(validate_parent: bool, validate_child: boo
 def test_validate_protocol() -> None:
     """Tests a Protocol field."""
     class Proto(Protocol):
-        def some_method(self) -> None:
-            ...
+        def some_method(self) -> None: ...  # pragma: no cover
     @dataclass
     class HasProto(ValidatedDataclass):
         proto: Proto
     class YesProto:
-        def some_method(self) -> None:
-            pass
-    class NoProto:
-        ...
+        def some_method(self) -> None: ...  # pragma: no cover
+    class NoProto: ...
     proto = YesProto()
     obj = HasProto(proto)
     assert obj.proto == proto

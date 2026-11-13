@@ -1,6 +1,7 @@
 from argparse import Action, ArgumentParser, HelpFormatter, Namespace, _ArgumentGroup, _MutuallyExclusiveGroup
 import builtins
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Set as AbstractSet
 from dataclasses import MISSING, dataclass, fields
 from enum import IntEnum
 from typing import Any, ClassVar, Literal, Optional, TypeGuard, TypeVar, cast, get_args, get_origin
@@ -422,12 +423,12 @@ class CLIDataclass(DataclassMixin):
                     kwargs['choices'] = tp_args
             else:  # type cannot be inferred
                 raise TypeError(f'cannot infer type of items in field {name!r}')
-            if issubclass_safe(origin_type, list) and (action == 'store'):  # type: ignore[arg-type]
+            if issubclass_safe(origin_type, Iterable) and (action == 'store'):
                 kwargs['nargs'] = '*'  # allow multiple arguments by default
         if issubclass_safe(tp, IntEnum):
             # use a bare int type
             tp = int
-        if issubclass_safe(get_origin(tp), list):  # type: ignore[arg-type]
+        if issubclass_safe(get_origin(tp), list):
             tp = get_args(tp)[0]
         kwargs['type'] = tp
         # determine the default value
@@ -644,10 +645,13 @@ class CLIDataclass(DataclassMixin):
                 # handle nested CLIDataclass
                 kwargs[name] = tp.from_args(args)  # type: ignore[attr-defined]
             elif name in d:
-                if (origin_type is tuple) and isinstance(d.get(name), list):
-                    kwargs[name] = tuple(d[name])
-                else:
-                    kwargs[name] = d[name]
+                val = d[name]
+                if isinstance(val, list) :
+                    if issubclass_safe(origin_type, AbstractSet):
+                        val = set(val)
+                    elif issubclass_safe(origin_type, tuple):
+                        val = tuple(val)
+                kwargs[name] = val
             elif (
                 type_is_optional(cast(type, fld.type))
                 and (fld.default == MISSING)

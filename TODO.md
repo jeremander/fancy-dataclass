@@ -5,14 +5,10 @@
 ## v0.13.0
 
 - `CLIDataclass`
-  - `is bool` check vs. checking for subclass of `bool`
   - Add `switch` field option (use `BooleanOptionalAction`)
     - Tuple field type, both fixed and variable length
     - Test length 0?
-  - Tests
-    - `Sequence[int]` and `Iterable[int]`?
-    - `T` for generic `T`?
-
+- Rename `SQLDataclassFieldSettings` fields (prefix `sql_`)?
 - Validation support: `ValidatedDataclass`
   - Configs
     - Flag to decorate all methods with arg & return type-checking (default `False`)

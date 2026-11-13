@@ -257,7 +257,7 @@ def all_subclasses(cls: type[T]) -> list[type[T]]:
     [id(subcls) for subcls in subclasses]
     return subclasses
 
-def issubclass_safe(type1: type, type2: type) -> bool:
+def issubclass_safe(type1: TypeLike, type2: type) -> bool:
     """Calls `issubclass(type1, type2)`, returning `False` if an error occurs.
 
     Args:
@@ -270,7 +270,7 @@ def issubclass_safe(type1: type, type2: type) -> bool:
     Raises:
         TypeError: If `type1` is something like a `GenericAlias`"""
     try:
-        return issubclass(type1, type2)
+        return issubclass(type1, type2)  # type: ignore[arg-type]
     except TypeError:
         return False
 
