@@ -374,6 +374,7 @@ class CLIDataclass(DataclassMixin):
         Args:
             parser: parser object to update with a new argument
             name: Name of the argument to configure"""
+        cls_name = 'CLIDataclass'
         def is_nested(tp: type) -> TypeGuard[CLIDataclass]:
             return issubclass_safe(tp, CLIDataclass)
         kwargs: dict[str, Any] = {}
@@ -397,11 +398,24 @@ class CLIDataclass(DataclassMixin):
             if origin_type == ClassVar:  # by default, exclude ClassVars from the parser
                 return
             tp_args = get_args(tp)
-            if tp_args:  # Union/List/Optional
+            if issubclass_safe(origin_type, tuple):
+                if tp_args:
+                    tp = tp_args[0]
+                    if (len(tp_args) == 2) and (tp_args[1] is Ellipsis):
+                        nargs = '*'
+                    elif any(arg is not tp for arg in tp_args[1:]):
+                        raise TypeError(f'arguments to tuple type must all be the same in {cls_name} field')
+                    else:
+                        nargs = len(tp_args)
+                    kwargs['nargs'] = nargs
+                else:
+                    action = 'store_const'
+                    kwargs['const'] = origin_type()
+            elif tp_args:  # Union / Optional / list
                 if origin_type in _UNION_TYPES:
                     tp_args = tuple(arg for arg in tp_args if (arg is not type(None)))
                     if (len(tp_args) > 1) and (not settings.subcommand):
-                        raise TypeError(f'union type {tp} not allowed as CLIDataclass field except as subcommand')
+                        raise TypeError(f'union type {tp} not allowed as {cls_name} field except as subcommand')
                 elif issubclass_safe(origin_type, list) or issubclass_safe(origin_type, tuple):
                     for arg in tp_args:
                         if is_nested(arg):
@@ -409,7 +423,7 @@ class CLIDataclass(DataclassMixin):
                                 name = f'list of {arg.__name__}'  # type: ignore[attr-defined]
                             else:
                                 name = f'tuple with {arg}'
-                            raise ValueError(f'{name} not allowed in CLIDataclass parser')
+                            raise ValueError(f'{name} not allowed in {cls_name} parser')
                 tp = tp_args[0]
                 if get_origin(tp) == Literal:  # Optional[Literal[...]]: unwrap to Literal[...]
                     tp_args = get_args(tp)
@@ -421,16 +435,18 @@ class CLIDataclass(DataclassMixin):
                     else:
                         tp = None  # type: ignore[assignment]
                     kwargs['choices'] = tp_args
+                if issubclass_safe(origin_type, Iterable) and (action == 'store'):
+                    kwargs['nargs'] = '*'  # allow multiple arguments by default
             else:  # type cannot be inferred
                 raise TypeError(f'cannot infer type of items in field {name!r}')
-            if issubclass_safe(origin_type, Iterable) and (action == 'store'):
-                kwargs['nargs'] = '*'  # allow multiple arguments by default
         if issubclass_safe(tp, IntEnum):
             # use a bare int type
             tp = int
         if issubclass_safe(get_origin(tp), list):
             tp = get_args(tp)[0]
         kwargs['type'] = tp
+        if 'action' not in kwargs:
+            kwargs['action'] = action
         # determine the default value
         if fld.default == MISSING:
             if fld.default_factory != MISSING:

@@ -1238,13 +1238,53 @@ def test_optional_list() -> None:
     assert DC2.from_cli_args(['--strings', 'abc']) == DC2(['abc'])
     assert DC2.from_cli_args(['--strings', 'abc', 'def']) == DC2(['abc', 'def'])
 
+def test_tuple() -> None:
+    """Tests fields with a tuple type."""
+    @dataclass
+    class DC0(CLIDataclass):
+        tup: tuple[()] = field(default=())
+    assert DC0.from_cli_args([]) == DC0()
+    assert DC0.from_cli_args(['--tup']) == DC0()
+    check_invalid_args(DC0, ['--tup', '1'], 'unrecognized arguments: 1')
+    @dataclass
+    class DC1(CLIDataclass):
+        tup: tuple[int] = field(default=(1,))
+    assert DC1.from_cli_args([]) == DC1(tup=(1,))
+    check_invalid_args(DC1, ['--tup'], 'expected 1 argument')
+    assert DC1.from_cli_args(['--tup', '2']) == DC1(tup=(2,))
+    check_invalid_args(DC1, ['--tup', 'a'], "argument --tup: invalid int value: 'a'")
+    check_invalid_args(DC1, ['--tup', '2', '3'], 'unrecognized arguments: 3')
+    @dataclass
+    class DC2Int(CLIDataclass):
+        tup: tuple[int, int] = field(default=(1, 2))
+    assert DC2Int.from_cli_args([]) == DC2Int(tup=(1, 2))
+    check_invalid_args(DC2Int, ['--tup'], 'expected 2 arguments')
+    check_invalid_args(DC2Int, ['--tup', '1'], 'expected 2 arguments')
+    assert DC2Int.from_cli_args(['--tup', '2', '3']) == DC2Int(tup=(2, 3))
+    check_invalid_args(DC2Int, ['--tup', '2', 'a'], "argument --tup: invalid int value: 'a'")
+    check_invalid_args(DC2Int, ['--tup', '1', '2', '3'], 'unrecognized arguments: 3')
+    @dataclass
+    class DCVarInt(CLIDataclass):
+        tup: tuple[int, ...] = field(default=(1,))
+    assert DCVarInt.from_cli_args([]) == DCVarInt(tup=(1,))
+    assert DCVarInt.from_cli_args(['--tup']) == DCVarInt(tup=())
+    assert DCVarInt.from_cli_args(['--tup', '2']) == DCVarInt(tup=(2,))
+    assert DCVarInt.from_cli_args(['--tup', '2', '3']) == DCVarInt(tup=(2, 3))
+    check_invalid_args(DCVarInt, ['--tup', 'a'], "argument --tup: invalid int value: 'a'")
+    check_invalid_args(DCVarInt, ['--tup', '2', 'a'], "argument --tup: invalid int value: 'a'")
+    @dataclass
+    class DC2IntStr(CLIDataclass):
+        tup: tuple[int, str] = field(default=(1, 'a'))
+    with pytest.raises(TypeError, match='arguments to tuple type must all be the same in CLIDataclass field'):
+        _ = DC2IntStr.from_cli_args([])
+
 @pytest.mark.parametrize('coll_type', [
     Sequence,
     Iterable,
     AbstractSet,
     set,
 ])
-def test_collections(coll_type: TypeLike) -> None:
+def test_misc_collections(coll_type: TypeLike) -> None:
     """Tests fields with non-standard collection types."""
     tp = set if (coll_type in [set, AbstractSet]) else list
     @dataclass
