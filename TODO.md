@@ -5,10 +5,8 @@
 ## v0.13.0
 
 - `CLIDataclass`
-  - Add `switch` field option (use `BooleanOptionalAction`)
-    - Tuple field type, both fixed and variable length
-    - Test length 0?
 - Rename `SQLDataclassFieldSettings` fields (prefix `sql_`)?
+- `SubprocessDataclass` - no `suppress_defaults` arg
 - Validation support: `ValidatedDataclass`
   - Configs
     - Flag to decorate all methods with arg & return type-checking (default `False`)
