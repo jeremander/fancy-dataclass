@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from dataclasses import MISSING, dataclass
+from dataclasses import dataclass
 import subprocess
 from typing import Any, ClassVar, Optional, get_origin
 
@@ -95,12 +95,11 @@ class SubprocessDataclass(DataclassMixin):
             if fld_settings.subprocess_flag and (fld.type is not bool):
                 raise ValueError('cannot use subprocess_flag=True when the field type is not bool')
 
-    def get_arg(self, name: str, *, suppress_defaults: bool = False) -> list[str]:
+    def get_arg(self, name: str) -> list[str]:
         """Gets the command-line arguments for the given dataclass field.
 
         Args:
             name: Name of dataclass field
-            suppress_defaults: If `True`, suppresses arguments that are equal to the default values
 
         Returns:
             List of command-line args corresponding to the field"""
@@ -120,21 +119,9 @@ class SubprocessDataclass(DataclassMixin):
             return []
         if isinstance(val, SubprocessDataclass):  # get args via nested SubprocessDataclass
             if val.get_executable():  # nested value has an executable, so include it (e.g. a subcommand)
-                return val.get_args(suppress_defaults=suppress_defaults)
+                return val.get_args()
             # otherwise, only include the arguments
-            return val._get_args(suppress_defaults=suppress_defaults)
-        if suppress_defaults:  # if value matches the default, suppress the argument
-            default = None
-            has_default = True
-            if fld.default == MISSING:
-                if fld.default_factory == MISSING:
-                    has_default = False
-                else:
-                    default = fld.default_factory()
-            else:
-                default = fld.default
-            if has_default and (val == default):
-                return []
+            return val._get_args()
         # determine the option name (if any)
         if settings.subprocess_positional:
             assert not settings.option_name
@@ -200,26 +187,26 @@ class SubprocessDataclass(DataclassMixin):
                 return _check_type(getattr(self, fld.name, None))
         return None
 
-    def _get_args(self, suppress_defaults: bool = False) -> list[str]:
+    def _get_args(self) -> list[str]:
+        """Converts dataclass fields to a list of command-line arguments for a subprocess call.
+
+        This excludes the executable name itself."""
         args = []
         for fld in get_dataclass_fields(self, include_all=True):
-            args += [arg for arg in self.get_arg(fld.name, suppress_defaults=suppress_defaults) if arg]
+            args += [arg for arg in self.get_arg(fld.name) if arg]
         args += list(self.__settings__.extra_args or [])
         return args
 
-    def get_args(self, suppress_defaults: bool = False) -> list[str]:
+    def get_args(self) -> list[str]:
         """Converts dataclass fields to a list of command-line arguments for a subprocess call.
 
         This includes the executable name itself as the first argument, if there is one.
 
-        Args:
-            suppress_defaults: If `True`, suppresses arguments that are equal to the default values
-
         Returns:
             List of command-line args corresponding to the dataclass fields"""
-        args = self._get_args(suppress_defaults=suppress_defaults)
+        args = self._get_args()
         if (executable := self.get_executable()):
-            args.insert(0, executable)
+            args = [executable] + args
         return args
 
     def run_subprocess(self, **kwargs: Any) -> subprocess.CompletedProcess[Any]:

@@ -9,6 +9,7 @@ from typing_extensions import Self
 
 from fancy_dataclass import (
     ArgparseDataclass,
+    CLIDataclass,
     ConfigDataclass,
     DictDataclass,
     JSONBaseDataclass,
@@ -183,25 +184,21 @@ def test_json_toml() -> None:
         sio.seek(0)
         assert type(obj2).load(sio) == obj2
 
-def test_argparse_subprocess_dataclass() -> None:
-    """Tests inheritance from both ArgparseDataclass and SubprocessDataclass."""
+def test_cli_subprocess_dataclass(tmp_path: Path) -> None:
+    """Tests subclassing both CLIDataclass and SubprocessDataclass."""
     # no name collision in field settings, so inheritance works OK
-    class ArgparseSubprocessDC(ArgparseDataclass, SubprocessDataclass):
+    class CLISubprocessDC(CLIDataclass, SubprocessDataclass):
         ...
     @dataclass
-    class DC1(ArgparseSubprocessDC, exec='prog'):
+    class DC2(CLISubprocessDC, exec='prog'):
         a: int = field(default=1, metadata={'args': ['--a-value']})
         b: int = field(default=2, metadata={'option_name': 'b-value'})
         c: int = field(default=3)
         d: int = field(default=4, metadata={'args': ['--name1'], 'option_name': '--name2'})
-    assert DC1(1, 2, 3, 4).get_args() == ['prog', '-a', '1', '--b-value', '2', '-c', '3', '--name2', '4']
-    assert DC1(1, 2, 3, 4).get_args(suppress_defaults=True) == ['prog']
-    assert DC1.from_cli_args(['--a-value', '1', '-b', '2', '-c', '3', '--name1', '4']) == DC1(1, 2, 3, 4)
-
-def test_cli_subprocess_dataclass(tmp_path: Path) -> None:
-    """Tests subclassing both CLIDataclass and SubprocessDataclass."""
+    assert DC2(1, 2, 3, 4).get_args() == ['prog', '-a', '1', '--b-value', '2', '-c', '3', '--name2', '4']
+    assert DC2.from_cli_args(['--a-value', '1', '-b', '2', '-c', '3', '--name1', '4']) == DC2(1, 2, 3, 4)
     @dataclass
-    class DC2(DC1, SubprocessDataclass):
+    class DC3(DC1, SubprocessDataclass):
         prog: str = field(default='prog', metadata={'exec': True})
         # ensure the positional arg is positional for both argument parsing *and* subprocess output
         required_string: str = field(
@@ -213,7 +210,7 @@ def test_cli_subprocess_dataclass(tmp_path: Path) -> None:
             metadata={'args': [], 'parse_exclude': True, 'subprocess_exclude': True},
         )
     prog = str(tmp_path / 'prog.py')
-    dc2 = DC2(
+    dc3 = DC3(
         required_string='positional',
         input_file='my_input',
         output_file='my_output',
@@ -227,15 +224,12 @@ def test_cli_subprocess_dataclass(tmp_path: Path) -> None:
         ignored_value='ignored',
         prog=prog,
     )
-    assert dc2.get_args() == [
+    assert dc3.get_args() == [
         prog, 'positional', '--input-file', 'my_input', '--output-file', 'my_output', '--choice', 'a', '--optional',
         'default', '--flag', '-x', '7', '-y', '3.14', '--pair', '0', '0',
     ]
-    assert dc2.get_args(suppress_defaults=True) == [
-        prog, 'positional', '--input-file', 'my_input', '--output-file', 'my_output', '--flag',
-    ]
     # create a script to run the CLIDataclass
-    dc1 = coerce_to_dataclass(DC1, dc2)
+    dc1 = coerce_to_dataclass(DC1, dc3)
     with open(prog, 'w') as f:
         print(f"""#!/usr/bin/env python3
 import sys
@@ -245,7 +239,7 @@ from test_cli import DC1
 DC1.main()""", file=f)
     Path(prog).chmod(0o770)
     # call the script with subprocess
-    res = dc2.run_subprocess(capture_output=True, text=True)
+    res = dc3.run_subprocess(capture_output=True, text=True)
     assert res.stdout.rstrip() == str(dc1)
 
 def test_config_json_dataclass() -> None:
