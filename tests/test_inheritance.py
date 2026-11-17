@@ -190,16 +190,16 @@ def test_cli_subprocess_dataclass(tmp_path: Path) -> None:
     class CLISubprocessDC(CLIDataclass, SubprocessDataclass):
         ...
     @dataclass
-    class DC2(CLISubprocessDC, exec='prog'):
+    class DC2(CLISubprocessDC, subprocess_exec_name='prog'):
         a: int = field(default=1, metadata={'args': ['--a-value']})
-        b: int = field(default=2, metadata={'option_name': 'b-value'})
+        b: int = field(default=2, metadata={'subprocess_option_name': 'b-value'})
         c: int = field(default=3)
-        d: int = field(default=4, metadata={'args': ['--name1'], 'option_name': '--name2'})
+        d: int = field(default=4, metadata={'args': ['--name1'], 'subprocess_option_name': '--name2'})
     assert DC2(1, 2, 3, 4).get_args() == ['prog', '-a', '1', '--b-value', '2', '-c', '3', '--name2', '4']
     assert DC2.from_cli_args(['--a-value', '1', '-b', '2', '-c', '3', '--name1', '4']) == DC2(1, 2, 3, 4)
     @dataclass
     class DC3(DC1, SubprocessDataclass):
-        prog: str = field(default='prog', metadata={'exec': True})
+        prog: str = field(default='prog', metadata={'subprocess_exec': True})
         # ensure the positional arg is positional for both argument parsing *and* subprocess output
         required_string: str = field(
             metadata={'args': ['required_string'], 'subprocess_positional': True, 'help': 'a required string'},
@@ -336,9 +336,9 @@ def test_json_subprocess_dataclass() -> None:
     assert isinstance(DC4.__settings__, SubprocessDataclassSettings)
     assert DC4.__settings__.exec is None
     @dataclass
-    class DC5(SubprocessDataclass, DC, store_type='off', exec='prog'):
+    class DC5(SubprocessDataclass, DC, store_type='off', subprocess_exec_name='prog'):
         pass
     assert isinstance(DC5.__settings__, DictDataclassSettings)
     assert DC5.__settings__._store_type == 'off'
     assert isinstance(DC5.__settings__, SubprocessDataclassSettings)
-    assert DC5.__settings__.exec == 'prog'
+    assert DC5.__settings__.subprocess_exec_name == 'prog'

@@ -84,7 +84,8 @@ class SQLDataclassFieldSettings(FieldSettings):
     sql: Optional[bool] = None
     column: Optional[dict[str, Any]] = None
 
-    def __post_init__(self) -> None:
+    def __post_init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__post_init__(*args, **kwargs)
         for (deprecated_attr, attr) in [('sql', 'sql_exclude'), ('column', 'sql_column_kwargs')]:
             if (val := getattr(self, deprecated_attr)) is not None:
                 warnings.warn(
@@ -92,10 +93,10 @@ class SQLDataclassFieldSettings(FieldSettings):
                     DeprecationWarning,
                     stacklevel=2,
                 )
-            if (deprecated_attr == 'sql') and (val is False):
-                self.sql_exclude = True
-            elif (deprecated_attr == 'column') and (self.sql_column_kwargs is None):
-                self.sql_column_kwargs = val
+                if (deprecated_attr == 'sql') and (val is False):
+                    self.sql_exclude = True
+                elif (deprecated_attr == 'column') and (self.sql_column_kwargs is None):
+                    self.sql_column_kwargs = val
 
 
 class SQLDataclass(DataclassMixin):

@@ -18,22 +18,22 @@ from fancy_dataclass import SubprocessDataclass
 
 
 @dataclass
-class ListDir(SubprocessDataclass, exec='ls'):  # specify program to run
+class ListDir(SubprocessDataclass, subprocess_exec_name='ls'):  # specify program to run
     """Lists directory contents."""
     # list in long form
     long: bool = field(
         default=False,
-        metadata={'option_name': '-l'}
+        metadata={'subprocess_option_name': '-l'}
     )
     # list in reverse order
     reverse: bool = field(
         default=False,
-        metadata={'option_name': '-r'}
+        metadata={'subprocess_option_name': '-r'}
     )
     # sort by time
     time: bool = field(
         default=False,
-        metadata={'option_name': '-t'}
+        metadata={'subprocess_option_name': '-t'}
     )
     # name of directory to list
     dir_name: str = field(
