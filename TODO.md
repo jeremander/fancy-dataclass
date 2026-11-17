@@ -4,11 +4,6 @@
 
 ## v0.13.0
 
-- `SubprocessDataclass`
-  - Prefix `subprocess` on field names?
-- Validation support: `ValidatedDataclass`
-  - Configs
-    - Flag to decorate all methods with arg & return type-checking (default `False`)
 - Test dependent packages
 - Documentation
   - Validation

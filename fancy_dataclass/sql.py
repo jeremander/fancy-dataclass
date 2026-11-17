@@ -13,7 +13,6 @@ from typing import (
     get_args,
     get_origin,
 )
-import warnings
 
 from sqlalchemy import Boolean, Column, DateTime, Integer, LargeBinary, Numeric, PickleType, String, Table
 import sqlalchemy.orm
@@ -81,22 +80,6 @@ class SQLDataclassFieldSettings(FieldSettings):
     sql_exclude: bool = False
     sql_column_kwargs: Optional[dict[str, Any]] = None
     sql_type: Optional[type] = None
-    sql: Optional[bool] = None
-    column: Optional[dict[str, Any]] = None
-
-    def __post_init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__post_init__(*args, **kwargs)
-        for (deprecated_attr, attr) in [('sql', 'sql_exclude'), ('column', 'sql_column_kwargs')]:
-            if (val := getattr(self, deprecated_attr)) is not None:
-                warnings.warn(
-                    f'{deprecated_attr} parameter is deprecated, use {attr} instead',
-                    DeprecationWarning,
-                    stacklevel=2,
-                )
-                if (deprecated_attr == 'sql') and (val is False):
-                    self.sql_exclude = True
-                elif (deprecated_attr == 'column') and (self.sql_column_kwargs is None):
-                    self.sql_column_kwargs = val
 
 
 class SQLDataclass(DataclassMixin):
