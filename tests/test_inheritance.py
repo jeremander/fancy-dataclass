@@ -190,24 +190,24 @@ def test_cli_subprocess_dataclass(tmp_path: Path) -> None:
     class CLISubprocessDC(CLIDataclass, SubprocessDataclass):
         ...
     @dataclass
-    class DC2(CLISubprocessDC, subprocess_exec_name='prog'):
+    class DC2(CLISubprocessDC, subproc_exec_name='prog'):
         a: int = field(default=1, metadata={'args': ['--a-value']})
-        b: int = field(default=2, metadata={'subprocess_option_name': 'b-value'})
+        b: int = field(default=2, metadata={'subproc_option_name': 'b-value'})
         c: int = field(default=3)
-        d: int = field(default=4, metadata={'args': ['--name1'], 'subprocess_option_name': '--name2'})
+        d: int = field(default=4, metadata={'args': ['--name1'], 'subproc_option_name': '--name2'})
     assert DC2(1, 2, 3, 4).get_args() == ['prog', '-a', '1', '--b-value', '2', '-c', '3', '--name2', '4']
     assert DC2.from_cli_args(['--a-value', '1', '-b', '2', '-c', '3', '--name1', '4']) == DC2(1, 2, 3, 4)
     @dataclass
     class DC3(DC1, SubprocessDataclass):
-        prog: str = field(default='prog', metadata={'subprocess_exec': True})
+        prog: str = field(default='prog', metadata={'subproc_is_exec': True})
         # ensure the positional arg is positional for both argument parsing *and* subprocess output
         required_string: str = field(
-            metadata={'args': ['required_string'], 'subprocess_positional': True, 'help': 'a required string'},
+            metadata={'args': ['required_string'], 'subproc_positional': True, 'help': 'a required string'},
         )
         # ensure the ignored value is excluded from both argument parsing *and* subprocess output
         ignored_value: str = field(
             default='ignored',
-            metadata={'args': [], 'parse_exclude': True, 'subprocess_exclude': True},
+            metadata={'args': [], 'parse_exclude': True, 'subproc_exclude': True},
         )
     prog = str(tmp_path / 'prog.py')
     dc3 = DC3(
@@ -224,6 +224,7 @@ def test_cli_subprocess_dataclass(tmp_path: Path) -> None:
         ignored_value='ignored',
         prog=prog,
     )
+    assert dc3.get_executable() == prog
     assert dc3.get_args() == [
         prog, 'positional', '--input-file', 'my_input', '--output-file', 'my_output', '--choice', 'a', '--optional',
         'default', '--flag', '-x', '7', '-y', '3.14', '--pair', '0', '0',
@@ -310,14 +311,14 @@ def test_json_subprocess_dataclass() -> None:
     assert isinstance(DC1.__settings__, DictDataclassSettings)
     assert DC1.__settings__._store_type == 'off'
     assert isinstance(DC1.__settings__, SubprocessDataclassSettings)
-    assert DC1.__settings__.exec is None
+    assert DC1.__settings__.subproc_exec_name is None
     @dataclass
     class DC2(SubprocessDataclass, JSONDataclass):
         pass
     assert isinstance(DC2.__settings__, DictDataclassSettings)
     assert DC2.__settings__._store_type == 'off'
     assert isinstance(DC2.__settings__, SubprocessDataclassSettings)
-    assert DC2.__settings__.exec is None
+    assert DC2.__settings__.subproc_exec_name is None
     @dataclass
     class DC(JSONBaseDataclass):
         pass
@@ -327,18 +328,18 @@ def test_json_subprocess_dataclass() -> None:
     assert isinstance(DC3.__settings__, DictDataclassSettings)
     assert DC3.__settings__._store_type == 'qualname'
     assert isinstance(DC3.__settings__, SubprocessDataclassSettings)
-    assert DC3.__settings__.exec is None
+    assert DC3.__settings__.subproc_exec_name is None
     @dataclass
     class DC4(SubprocessDataclass, DC):
         pass
     assert isinstance(DC4.__settings__, DictDataclassSettings)
     assert DC4.__settings__._store_type == 'qualname'
     assert isinstance(DC4.__settings__, SubprocessDataclassSettings)
-    assert DC4.__settings__.exec is None
+    assert DC4.__settings__.subproc_exec_name is None
     @dataclass
-    class DC5(SubprocessDataclass, DC, store_type='off', subprocess_exec_name='prog'):
+    class DC5(SubprocessDataclass, DC, store_type='off', subproc_exec_name='prog'):
         pass
     assert isinstance(DC5.__settings__, DictDataclassSettings)
     assert DC5.__settings__._store_type == 'off'
     assert isinstance(DC5.__settings__, SubprocessDataclassSettings)
-    assert DC5.__settings__.subprocess_exec_name == 'prog'
+    assert DC5.__settings__.subproc_exec_name == 'prog'

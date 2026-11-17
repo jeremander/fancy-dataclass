@@ -2,7 +2,6 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 import subprocess
 from typing import Any, ClassVar, Optional, get_origin
-import warnings
 
 from typing_extensions import Self
 
@@ -17,27 +16,11 @@ class SubprocessDataclassSettings(MixinSettings):
 
     Subclasses of `SubprocessDataclass` may set the following fields as keyword arguments during inheritance:
 
-    - `subprocess_exec_name`: name of command-line executable to call
-    - `subprocess_extra_args`: list of additional arguments to pass after all of the field-derived arguments"""
+    - `subproc_exec_name`: name of command-line executable to call
+    - `subproc_extra_args`: list of additional arguments to pass after all of the field-derived arguments"""
 
-    subprocess_exec_name: Optional[str] = None
-    subprocess_extra_args: Optional[Sequence[str]] = None
-    exec: Optional[str] = None
-    extra_args: Optional[Sequence[str]] = None
-
-    def __post_init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__post_init__(*args, **kwargs)
-        for (deprecated_attr, attr) in [
-            ('exec', 'subprocess_exec_name'),
-            ('extra_args', 'subprocess_extra_args'),
-        ]:
-            if (val := getattr(self, deprecated_attr)) is not None:
-                warnings.warn(
-                    f'{deprecated_attr} parameter is deprecated, use {attr} instead',
-                    DeprecationWarning,
-                    stacklevel=2,
-                )
-                setattr(self, attr, val)
+    subproc_exec_name: Optional[str] = None
+    subproc_extra_args: Optional[Sequence[str]] = None
 
 
 @dataclass(kw_only=True)
@@ -46,49 +29,30 @@ class SubprocessDataclassFieldSettings(FieldSettings):
 
     Each field may define a `metadata` dict containing any of the following entries:
 
-    - `subprocess_exec`: if `True`, use this field as the name of the executable, rather than an argument
-    - `subprocess_option_name`: command-line option name for this field
+    - `subproc_is_exec`: if `True`, use this field as the name of the executable, rather than an argument
+    - `subproc_option_name`: command-line option name for this field
         - If a string, use this as the option name, prepending with one or two dashes if not provided
         - If `None`, use the field name prefixed by one dash (if single letter) or two dashes, with underscores
         replaced by dashes
         - If the field type is `bool`, will provide the argument as a flag if the value is `True`, and omit it otherwise
-    - `subprocess_exclude`:
+    - `subproc_exclude`:
         - If `True`, exclude this field in the subprocess args
         - If `False`, include this field in the subprocess args
         - If `None` (default), exclude this field in the subprocess args if the field is a `ClassVar`
-    - `subprocess_positional`: if `True`, make this a positional argument rather than an option
-    - `subprocess_flag`: if `False` and the field type is `bool`, treat the field as a regular option rather than a flag
-    - `subprocess_repeat`: if `True` and the field type is a list or tuple, repeat the option name for each sequence
+    - `subproc_positional`: if `True`, make this a positional argument rather than an option
+    - `subproc_flag`: if `False` and the field type is `bool`, treat the field as a regular option rather than a flag
+    - `subproc_repeat`: if `True` and the field type is a list or tuple, repeat the option name for each sequence
         value
         - Examples:
             - If `False` (default), generate `--my-option value1 value2 value3`
             - If `True`, generate `--my-option value1 --my-option value2 --my-option value3`"""
 
-    subprocess_exec: bool = False
-    subprocess_option_name: Optional[str] = None
-    subprocess_exclude: Optional[bool] = None
-    subprocess_positional: bool = False
-    subprocess_flag: Optional[bool] = None
-    subprocess_repeat: Optional[bool] = None
-    exec: Optional[bool] = None
-    option_name: Optional[str] = None
-    repeat_option_name: Optional[bool] = None
-
-    def __post_init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__post_init__(*args, **kwargs)
-        for (deprecated_attr, attr) in [
-            ('exec', 'subprocess_exec'),
-            ('option_name', 'subprocess_option_name'),
-            ('repeat_option_name', 'subprocess_repeat'),
-        ]:
-            if (val := getattr(self, deprecated_attr)) is not None:
-                # breakpoint()
-                warnings.warn(
-                    f'{deprecated_attr} parameter is deprecated, use {attr} instead',
-                    DeprecationWarning,
-                    stacklevel=2,
-                )
-                setattr(self, attr, val)
+    subproc_is_exec: bool = False
+    subproc_option_name: Optional[str] = None
+    subproc_exclude: Optional[bool] = None
+    subproc_positional: bool = False
+    subproc_flag: Optional[bool] = None
+    subproc_repeat: Optional[bool] = None
 
 
 class SubprocessDataclass(DataclassMixin):
@@ -105,32 +69,32 @@ class SubprocessDataclass(DataclassMixin):
 
     @classmethod
     def __post_dataclass_wrap__(cls, wrapped_cls: type[Self]) -> None:
-        cls_exec_name = wrapped_cls.__settings__.subprocess_exec_name
+        cls_exec_name = wrapped_cls.__settings__.subproc_exec_name
         # make sure there is at most one exec field
         exec_field = None
         for fld in get_dataclass_fields(wrapped_cls, include_all=True):
             fld_settings = cls._field_settings(fld).adapt_to(SubprocessDataclassFieldSettings)
-            if fld_settings.subprocess_exec:
+            if fld_settings.subproc_is_exec:
                 if cls_exec_name is not None:
                     raise TypeError(
-                        "cannot set field's 'subprocess_exec' flag to True (class already set executable to "
+                        "cannot set field's 'subproc_is_exec' flag to True (class already set executable to "
                         f"{cls_exec_name})"
                     )
                 if exec_field is not None:
                     raise TypeError(
-                        "cannot have more than one field with 'subprocess_exec' flag set to True "
+                        "cannot have more than one field with 'subproc_is_exec' flag set to True "
                         f"(already set executable to {exec_field})"
                     )
                 exec_field = fld.name
-            if fld_settings.subprocess_option_name == '':
+            if fld_settings.subproc_option_name == '':
                 raise ValueError('empty string not allowed for option_name')
-            if fld_settings.subprocess_positional:
-                if fld_settings.subprocess_option_name:
-                    raise ValueError('cannot specify a field option_name when subprocess_positional=True')
-                if fld_settings.subprocess_repeat:
-                    raise ValueError('cannot repeat option name for positional field (subprocess_positional=True)')
-            if fld_settings.subprocess_flag and (fld.type is not bool):
-                raise ValueError('cannot use subprocess_flag=True when the field type is not bool')
+            if fld_settings.subproc_positional:
+                if fld_settings.subproc_option_name:
+                    raise ValueError('cannot specify a field option_name when subproc_positional=True')
+                if fld_settings.subproc_repeat:
+                    raise ValueError('cannot repeat option name for positional field (subproc_positional=True)')
+            if fld_settings.subproc_flag and (fld.type is not bool):
+                raise ValueError('cannot use subproc_flag=True when the field type is not bool')
 
     def get_arg(self, name: str) -> list[str]:
         """Gets the command-line arguments for the given dataclass field.
@@ -142,13 +106,13 @@ class SubprocessDataclass(DataclassMixin):
             List of command-line args corresponding to the field"""
         fld = self.__dataclass_fields__[name]  # type: ignore[attr-defined]
         settings = self._field_settings(fld).adapt_to(SubprocessDataclassFieldSettings)
-        if settings.subprocess_exec:  # this field is the executable, so return no arguments
+        if settings.subproc_is_exec:  # this field is the executable, so return no arguments
             return []
         if get_origin(fld.type) is ClassVar:
             # by default, exclude fields associated with the class rather than the instance
-            exclude = settings.subprocess_exclude is not False
+            exclude = settings.subproc_exclude is not False
         else:
-            exclude = settings.subprocess_exclude is True
+            exclude = settings.subproc_exclude is True
         if exclude:  # exclude the argument
             return []
         val = getattr(self, name, None)
@@ -160,22 +124,22 @@ class SubprocessDataclass(DataclassMixin):
             # otherwise, only include the arguments
             return val._get_args()
         # determine the option name (if any)
-        if settings.subprocess_positional:
-            assert not settings.subprocess_option_name
+        if settings.subproc_positional:
+            assert not settings.subproc_option_name
             option_name = None
         else:
             # if option_name is unspecified, use the field name with underscore replaced by dash
-            if settings.subprocess_option_name is None:
+            if settings.subproc_option_name is None:
                 option_name = name.replace('_', '-')
             else:
-                option_name = settings.subprocess_option_name
+                option_name = settings.subproc_option_name
             if not option_name.startswith('-'):
                 # assume a single dash if the name is a single letter, otherwise a double dash
                 prefix = '-' if (len(option_name) == 1) else '--'
                 option_name = prefix + option_name
         # determine the value
         if isinstance(val, bool):
-            if settings.subprocess_flag is False:  # use a literal boolean-valued option
+            if settings.subproc_flag is False:  # use a literal boolean-valued option
                 val = [str(val)]
             else:  # make it a boolean flag if value True, otherwise omit it
                 if not val:
@@ -183,8 +147,8 @@ class SubprocessDataclass(DataclassMixin):
                 val = []
         elif isinstance(val, (list, tuple)):
             if val:
-                if settings.subprocess_repeat:  # repeat the argument for each value in the list
-                    assert not settings.subprocess_positional
+                if settings.subproc_repeat:  # repeat the argument for each value in the list
+                    assert not settings.subproc_positional
                     assert option_name
                     val = [y for x in val for y in [option_name, str(x)]]
                     option_name = None
@@ -204,8 +168,8 @@ class SubprocessDataclass(DataclassMixin):
 
         By default, this obtains the name of the executable as follows:
 
-        1. If the class settings specify a `subprocess_exec` member, uses that.
-        2. Otherwise, returns the value of the first dataclass field whose `subprocess_exec` metadata flag is set to
+        1. If the class settings specify a `subproc_exec_name` member, uses that.
+        2. Otherwise, returns the value of the first dataclass field whose `subproc_is_exec` metadata flag is set to
         `True` (only one is permitted), and `None` otherwise.
 
         Returns:
@@ -217,11 +181,11 @@ class SubprocessDataclass(DataclassMixin):
             if isinstance(val, str):
                 return val
             raise ValueError(f'executable is {val} (must be a string)')
-        if self.__settings__.subprocess_exec_name:
-            return _check_type(self.__settings__.subprocess_exec_name)
+        if self.__settings__.subproc_exec_name:
+            return _check_type(self.__settings__.subproc_exec_name)
         for fld in get_dataclass_fields(self, include_all=True):
             settings = self._field_settings(fld).adapt_to(SubprocessDataclassFieldSettings)
-            if settings.subprocess_exec:
+            if settings.subproc_is_exec:
                 return _check_type(getattr(self, fld.name, None))
         return None
 
@@ -232,7 +196,7 @@ class SubprocessDataclass(DataclassMixin):
         args = []
         for fld in get_dataclass_fields(self, include_all=True):
             args += [arg for arg in self.get_arg(fld.name) if arg]
-        args += list(self.__settings__.subprocess_extra_args or [])
+        args += list(self.__settings__.subproc_extra_args or [])
         return args
 
     def get_args(self) -> list[str]:
