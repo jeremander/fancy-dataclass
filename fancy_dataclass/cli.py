@@ -379,7 +379,7 @@ class CLIDataclass(DataclassMixin):
         return parser
 
     @classmethod
-    def configure_argument(cls, parser: ArgParser, name: str) -> None:
+    def _configure_argument(cls, parser: ArgParser, name: str) -> None:
         """Given an argument parser and a field name, configures the parser with an argument of that name.
 
         Attempts to provide reasonable default behavior based on the dataclass field name, type, default, and metadata.
@@ -572,7 +572,7 @@ class CLIDataclass(DataclassMixin):
         """Configures an argument parser by adding the appropriate arguments.
 
         By default, this will simply call
-        [`configure_argument`][fancy_dataclass.cli.CLIDataclass.configure_argument] for each dataclass field.
+        [`_configure_argument`][fancy_dataclass.cli.CLIDataclass._configure_argument] for each dataclass field.
 
         Args:
             parser: `ArgumentParser` to configure"""
@@ -598,7 +598,7 @@ class CLIDataclass(DataclassMixin):
             # process subcommand last, since the subparser must inherit the names of all parent 'dest' fields
             field_names.append(subcommand)
         for name in field_names:
-            cls.configure_argument(parser, name)
+            cls._configure_argument(parser, name)
 
     @classmethod
     def make_parser(cls) -> ArgumentParser:

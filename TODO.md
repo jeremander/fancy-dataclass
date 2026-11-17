@@ -6,7 +6,7 @@
 
 - `CLIDataclass`
 - Rename `SQLDataclassFieldSettings` fields (prefix `sql_`)?
-- `SubprocessDataclass` - no `suppress_defaults` arg
+- `SubprocessDataclass`
   - Prefix `subprocess` on field names?
 - Validation support: `ValidatedDataclass`
   - Configs
