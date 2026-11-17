@@ -4,8 +4,6 @@
 
 ## v0.13.0
 
-- `CLIDataclass`
-- Rename `SQLDataclassFieldSettings` fields (prefix `sql_`)?
 - `SubprocessDataclass`
   - Prefix `subprocess` on field names?
 - Validation support: `ValidatedDataclass`
@@ -28,7 +26,7 @@
 
 ## Future
 
-- Eventually Deprecate `ArgparseDataclass` (`typing_extensions.deprecated` on class works)
+- Eventually deprecate `ArgparseDataclass` (`typing_extensions.deprecated` on class works)
 - `alias` metadata field for dict conversion
   - Should this be bidirectional? Or separate fields for each direction? [pydantic](https://docs.pydantic.dev/latest/concepts/alias/) provides both.
   - https://github.com/jeremander/fancy-dataclass/issues/5

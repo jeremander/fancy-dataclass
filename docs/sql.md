@@ -28,7 +28,7 @@ class Employee(SQLDataclass):
     # set _id as primary key, which will auto-increment if omitted
     _id: int = field(
         default=None,
-        metadata={'column': {'primary_key':True}}
+        metadata={'sql_column_kwargs': {'primary_key':True}}
     )
 
 # create sqlalchemy engine

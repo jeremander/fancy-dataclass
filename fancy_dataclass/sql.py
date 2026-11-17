@@ -13,6 +13,7 @@ from typing import (
     get_args,
     get_origin,
 )
+import warnings
 
 from sqlalchemy import Boolean, Column, DateTime, Integer, LargeBinary, Numeric, PickleType, String, Table
 import sqlalchemy.orm
@@ -71,15 +72,30 @@ class SQLDataclassFieldSettings(FieldSettings):
 
     Each field may define a `metadata` dict containing any of the following entries:
 
-    - `sql`: if `True`, include this field as a table column (default `True`)
-    - `column`: dict of keyword arguments passed to the
+    - `sql_exclude`: if `True`, exclude this field as a table column (default `False`)
+    - `sql_column_kwargs`: dict of keyword arguments passed to the
     [`Column`](https://docs.sqlalchemy.org/en/20/core/metadata.html#sqlalchemy.schema.Column) constructor
     - `sql_type`: a SQLAlchemy column type to be used for this field
     """
 
-    sql: bool = True
-    column: Optional[dict[str, Any]] = None
+    sql_exclude: bool = False
+    sql_column_kwargs: Optional[dict[str, Any]] = None
     sql_type: Optional[type] = None
+    sql: Optional[bool] = None
+    column: Optional[dict[str, Any]] = None
+
+    def __post_init__(self) -> None:
+        for (deprecated_attr, attr) in [('sql', 'sql_exclude'), ('column', 'sql_column_kwargs')]:
+            if (val := getattr(self, deprecated_attr)) is not None:
+                warnings.warn(
+                    f'{deprecated_attr} parameter is deprecated, use {attr} instead',
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
+            if (deprecated_attr == 'sql') and (val is False):
+                self.sql_exclude = True
+            elif (deprecated_attr == 'column') and (self.sql_column_kwargs is None):
+                self.sql_column_kwargs = val
 
 
 class SQLDataclass(DataclassMixin):
@@ -109,7 +125,7 @@ class SQLDataclass(DataclassMixin):
         for fld in fields(cls):  # type: ignore[arg-type]
             settings = cls._field_settings(fld).adapt_to(SQLDataclassFieldSettings)
             # nullable = False
-            if not settings.sql:  # skip fields whose 'sql' setting is False
+            if settings.sql_exclude:  # skip fields whose 'sql_exclude' setting is True
                 continue
             column_type = settings.sql_type
             field_type = _get_base_type_for_field_type(fld.type)
@@ -126,7 +142,7 @@ class SQLDataclass(DataclassMixin):
                 elif fld.default_factory is not MISSING:
                     column_kwargs['default'] = fld.default_factory
                 # get additional keyword arguments from 'column' section of metadata, if present
-                column_kwargs.update(settings.column or {})
+                column_kwargs.update(settings.sql_column_kwargs or {})
                 cols[fld.name] = Column(fld.name, column_type, **column_kwargs)
         return cols
 

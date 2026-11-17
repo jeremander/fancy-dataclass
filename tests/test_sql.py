@@ -37,6 +37,11 @@ class ExampleWithExtra(_Example):
     ...
 
 @register()
+class ExampleExclude(SQLDataclass):
+    x: int
+    y: int = field(metadata={'sql_exclude': True})
+
+@register()
 class MetaFields(SQLDataclass):
     a: int = field(metadata={'sql_type': Integer})
     b: str = field(metadata={'sql_type': String})
@@ -140,3 +145,21 @@ def test_meta_fields(sqlite_engine: Engine, session: Session) -> None:
     assert rows == [(1, 1, 'a', '{"key": [0, "val", {}]}')]
     objs = session.execute(select(MetaFields)).scalars().all()
     assert objs == [obj]
+
+def test_sql_exclude(sqlite_engine: Engine, session: Session) -> None:
+    """Tests setting sql_exclude flag to True."""
+    cols = ExampleExclude.get_columns()
+    assert list(cols) == ['x']
+    for y in range(5):
+        obj = ExampleExclude(1, y)
+        session.add(obj)
+    session.commit()
+    # _test_sql_convert(obj, session)
+    with sqlite_engine.connect() as conn:
+        rows = list(conn.execute(text('SELECT * FROM ExampleExclude')))
+    assert rows == [(i + 1, 1) for i in range(5)]
+    results = session.query(type(obj)).all()
+    assert len(results) == 5
+    result = results[0]
+    assert result.x == 1
+    assert not hasattr(result, 'y')
