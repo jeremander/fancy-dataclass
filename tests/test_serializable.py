@@ -1,6 +1,8 @@
 from collections import namedtuple
+from collections.abc import Callable, Iterable
 from contextlib import nullcontext
-from dataclasses import asdict, dataclass, field, fields, make_dataclass
+from copy import copy
+from dataclasses import asdict, dataclass, field, fields, is_dataclass, make_dataclass
 from datetime import datetime
 from enum import Enum, Flag, auto
 from io import StringIO
@@ -9,7 +11,7 @@ import math
 from pathlib import Path
 import re
 import sys
-from typing import IO, Annotated, Any, Literal, NamedTuple, Optional, TypedDict, TypeVar
+from typing import IO, Annotated, Any, Literal, NamedTuple, Optional, TypedDict, TypeVar, get_args, get_origin
 
 import numpy as np
 import pytest
@@ -19,7 +21,13 @@ from fancy_dataclass.dict import DictDataclass, DictDataclassSettings
 from fancy_dataclass.json import JSONBaseDataclass, JSONDataclass, JSONSerializable
 from fancy_dataclass.serialize import FileSerializable
 from fancy_dataclass.toml import TOMLDataclass
-from fancy_dataclass.utils import coerce_to_dataclass, dataclass_type_map, fully_qualified_class_name, issubclass_safe
+from fancy_dataclass.utils import (
+    DataclassType,
+    coerce_to_dataclass,
+    fully_qualified_class_name,
+    get_dataclass_fields,
+    issubclass_safe,
+)
 
 from . import raises_field_type_err
 from .test_dict import DCSuppress, DCSuppress2
@@ -37,6 +45,31 @@ def to_json_dataclass(cls: type) -> type[JSONDataclass]:
     flds = [(fld.name, fld.type, fld) for fld in fields(cls)]
     return make_dataclass(cls.__name__, fields=flds, bases=(JSONDataclass,))
 
+def _dataclass_type_map(cls: DataclassType, func: Callable[[type], type]) -> DataclassType:
+    """Applies a type function to all dataclass field types, recursively through container types."""
+    # TODO: eliminate this function?
+    def _map_func(tp: type) -> type:
+        return func(_dataclass_type_map(tp, func)) if is_dataclass(tp) else func(tp)
+    field_data = []
+    for fld in get_dataclass_fields(cls, include_all=True):
+        new_fld = copy(fld)
+        origin_type = get_origin(fld.type)
+        if origin_type and (origin_type is not Annotated) and issubclass_safe(origin_type, Iterable):
+            if issubclass(origin_type, dict):
+                (key_type, val_type) = get_args(fld.type)
+                tp = origin_type[key_type, _map_func(val_type)]  # pyrefly: ignore[unsupported-operation]
+            elif issubclass(origin_type, tuple):
+                tp = origin_type[  # pyrefly: ignore[unsupported-operation]
+                    tuple([_map_func(elt_type) for elt_type in get_args(fld.type)])
+                ]
+            else:
+                (elt_type,) = get_args(fld.type)
+                tp = origin_type[_map_func(elt_type)]  # pyrefly: ignore[unsupported-operation]
+        else:
+            tp = _map_func(fld.type)  # type: ignore[arg-type]
+        field_data.append((fld.name, tp, new_fld))
+    return make_dataclass(cls.__name__, field_data, bases=cls.__bases__, namespace=dict(cls.__dict__))
+
 def _convert_json_dataclass(cls: type[T], new_cls: type[DictDataclass]) -> type[T]:
     """Converts JSONDataclass base classes with the given class, recursively within the input class's fields."""
     # TODO: this is very hacky; can we clean it up?
@@ -51,7 +84,7 @@ def _convert_json_dataclass(cls: type[T], new_cls: type[DictDataclass]) -> type[
                 bases.append(base)
             return type(tp.__name__, tuple(bases), dict(tp.__dict__))
         return tp
-    tp = _convert(dataclass_type_map(cls, _convert))  # type: ignore[arg-type]
+    tp = _convert(_dataclass_type_map(cls, _convert))  # type: ignore[arg-type]
     assert issubclass(tp, DictDataclass)
     tp.__eq__ = cls.__eq__  # type: ignore[method-assign]
     tp.__settings__ = cls.__settings__

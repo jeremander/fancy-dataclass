@@ -4,6 +4,8 @@
 
 ## v0.13.0
 
+- Avoid: `elif hasattr(origin_type, 'from_dict')`, instead check subclass explicitly?
+
 - Test dependent packages
 - Documentation
   - Validation

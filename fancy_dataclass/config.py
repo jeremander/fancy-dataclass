@@ -1,16 +1,14 @@
 from abc import ABC, abstractmethod
 from collections.abc import Iterator
 from contextlib import contextmanager
-from dataclasses import is_dataclass, make_dataclass
 from pathlib import Path
-from typing import Any, ClassVar, Optional
+from typing import Any, ClassVar, Optional, cast
 
 from typing_extensions import Self, override
 
 from fancy_dataclass.dict import DictDataclass
-from fancy_dataclass.mixin import DataclassMixin
-from fancy_dataclass.serialize import FileSerializable
-from fancy_dataclass.utils import AnyPath, coerce_to_dataclass, dataclass_type_map, get_dataclass_fields
+from fancy_dataclass.serialize import DictFileSerializableDataclass, FileSerializable
+from fancy_dataclass.utils import AnyPath
 
 
 class Config:
@@ -94,30 +92,13 @@ class ConfigDataclass(DictDataclass, FileConfig, validate=True, suppress_default
     - TOML
     """
 
-    @staticmethod
-    def _wrap_config_dataclass(mixin_cls: type[DataclassMixin], cls: type['ConfigDataclass']) -> type[DataclassMixin]:
-        """Recursively wraps a DataclassMixin class around a ConfigDataclass so that nested dataclass fields inherit
-        from the same mixin."""
-        def _wrap(tp: type) -> type:
-            if is_dataclass(tp):
-                wrapped_cls = mixin_cls.wrap_dataclass(tp)
-                field_data = [(fld.name, fld.type, fld) for fld in get_dataclass_fields(tp, include_all=True)]
-                return make_dataclass(
-                    tp.__name__,
-                    field_data,
-                    bases=wrapped_cls.__bases__,
-                    namespace=dict(wrapped_cls.__dict__),
-                )
-            return tp
-        return _wrap(dataclass_type_map(cls, _wrap))  # type: ignore[arg-type]
-
     @classmethod
     @override
     def load_config(cls, path: AnyPath) -> Self:
-        tp = _get_dataclass_type_for_path(path)
-        new_cls: type[FileSerializable] = ConfigDataclass._wrap_config_dataclass(tp, cls)  # type: ignore[arg-type, assignment]
+        tp = cast(type[DictFileSerializableDataclass], _get_dataclass_type_for_path(path))
         with open(path) as fp:
-            cfg: Self = coerce_to_dataclass(cls, new_cls._from_file(fp))
+            d = tp._text_file_to_dict(fp)
+        cfg = cls.from_dict(d)
         cfg.update_config()
         return cfg
 

@@ -1,9 +1,8 @@
 """Various utility functions and classes."""
 
 import collections.abc
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Iterable, Sequence
 from contextlib import suppress
-from copy import copy
 import dataclasses
 from dataclasses import MISSING, Field, is_dataclass, make_dataclass
 from functools import lru_cache
@@ -520,37 +519,6 @@ def coerce_to_dataclass(cls: type[T], obj: object) -> T:
                         val = type(val)(coerce_to_dataclass(elt_type, elt) for elt in val)
         kwargs[fld.name] = val
     return cls(**kwargs)
-
-def dataclass_type_map(cls: DataclassType, func: Callable[[type], type]) -> DataclassType:
-    """Applies a type function to all dataclass field types, recursively through container types.
-
-    Args:
-        cls: Target dataclass type to manipulate
-        func: Function to map onto basic (non-container) field types
-
-    Returns:
-        A new dataclass type whose field types have been mapped by the function"""
-    def _map_func(tp: type) -> type:
-        return func(dataclass_type_map(tp, func)) if is_dataclass(tp) else func(tp)
-    field_data = []
-    for fld in get_dataclass_fields(cls, include_all=True):
-        new_fld = copy(fld)
-        origin_type = get_origin(fld.type)
-        if origin_type and (origin_type is not Annotated) and issubclass_safe(origin_type, Iterable):
-            if issubclass(origin_type, dict):
-                (key_type, val_type) = get_args(fld.type)
-                tp = origin_type[key_type, _map_func(val_type)]  # pyrefly: ignore[unsupported-operation]
-            elif issubclass(origin_type, tuple):
-                tp = origin_type[  # pyrefly: ignore[unsupported-operation]
-                    tuple([_map_func(elt_type) for elt_type in get_args(fld.type)])
-                ]
-            else:
-                (elt_type,) = get_args(fld.type)
-                tp = origin_type[_map_func(elt_type)]  # pyrefly: ignore[unsupported-operation]
-        else:
-            tp = _map_func(fld.type)  # type: ignore[arg-type]
-        field_data.append((fld.name, tp, new_fld))
-    return make_dataclass(cls.__name__, field_data, bases=cls.__bases__, namespace=dict(cls.__dict__))
 
 # MERGING
 

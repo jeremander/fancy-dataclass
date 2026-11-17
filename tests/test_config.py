@@ -12,6 +12,7 @@ import tomlkit
 from fancy_dataclass.config import ConfigDataclass, DictConfig
 from fancy_dataclass.json import JSONDataclass
 from fancy_dataclass.toml import TOMLDataclass
+from fancy_dataclass.utils import FieldTypeValidationError
 
 from . import raises_field_type_err
 
@@ -132,8 +133,9 @@ def test_inner_plain(tmp_path: Path) -> None:
     toml_str = 'y = "a"\n[inner]\nx = 1\n'
     cfg_path = tmp_path / 'test.toml'
     Path(cfg_path).write_text(toml_str)
-    # can load from config file even though nested Inner class is *not* a DictDataclass
-    assert Outer.load_config(cfg_path) == cfg
+    with pytest.raises(FieldTypeValidationError, match="field 'inner' .* does not match expected type .*Inner"):
+        # cannot load from config file because though nested Inner class is not a DictDataclass
+        _ = Outer.load_config(cfg_path)
 
 def test_dict_config(tmp_path: Path) -> None:
     """Tests behavior of DictConfig."""
