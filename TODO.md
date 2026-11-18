@@ -4,8 +4,6 @@
 
 ## v0.13.0
 
-- Avoid: `elif hasattr(origin_type, 'from_dict')`, instead check subclass explicitly?
-
 - Test dependent packages
 - Documentation
   - Validation
@@ -23,6 +21,7 @@
 
 ## Future
 
+- Don't merge settings types; instead keep a multiplicity? E.g. store a `WeakKeyDictionary[type, type]`.
 - Eventually deprecate `ArgparseDataclass` (`typing_extensions.deprecated` on class works)
 - `alias` metadata field for dict conversion
   - Should this be bidirectional? Or separate fields for each direction? [pydantic](https://docs.pydantic.dev/latest/concepts/alias/) provides both.

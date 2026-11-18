@@ -294,7 +294,7 @@ class DictDataclass(ValidatedDataclass):
                 # can't refer to instantiated type, so we assume a basic data type
                 # this limitation means we can only use TypeVar for basic types
                 return val
-            if hasattr(tp, 'from_dict'):  # handle nested fields which are themselves convertible from a dict
+            if issubclass(tp, DictDataclass):  # handle nested DictDataclass fields
                 return cls._from_dict_value_convertible(tp, val)
             if issubclass(tp, tuple):
                 return tp(*val)
@@ -329,7 +329,7 @@ class DictDataclass(ValidatedDataclass):
                     return convert_val(subtype, val)
                 except Exception:  # noqa: BLE001, S112
                     continue
-        elif hasattr(origin_type, 'from_dict'):
+        elif issubclass_safe(origin_type, DictDataclass):
             return cls._from_dict_value_convertible(origin_type, val)
         elif issubclass_safe(origin_type, Iterable):  # arbitrary iterable
             subtype = args[0]

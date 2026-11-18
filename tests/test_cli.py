@@ -1319,7 +1319,7 @@ def test_typevar() -> None:
         val: list[T]
     for cls in [DC1, DC2]:
         for args in [[], ['--val', '1']]:
-            with pytest.raises(ValueError, match='.*T is not callable'):
+            with pytest.raises((TypeError, ValueError), match='.*T is not callable'):
                 _ = cls.from_cli_args(args)
 
 def test_switch() -> None:
