@@ -9,6 +9,7 @@ from typing_extensions import Doc
 from fancy_dataclass.dict import DictDataclass, DictDataclassSettings, StoreTypeMode
 from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.utils import FieldTypeValidationError, MissingRequiredFieldError
+from fancy_dataclass.validate import ValidatedDataclass, ValidatedDataclassSettings
 
 from . import raises_field_type_err
 
@@ -341,95 +342,76 @@ def test_store_type_setting() -> None:
     # invalid mode
     with raises_field_type_err(DictDataclassSettings, 'store_type', StoreTypeMode, 'fake'):
         @dataclass
-        class DC1(DictDataclass, store_type='fake'):
+        class DCFake(DictDataclass, store_type='fake'):
             ...
-    # 'auto' mode inherits from base class
+    # default store_type mode is 'off'
     @dataclass
-    class DC2(DictDataclass):
+    class DC1(DictDataclass):
         ...
+    settings1 = DC1._dict_dataclass_settings()
+    assert settings1.store_type == 'off'
+    assert settings1.should_store_type() is False
     @dataclass
-    class DC3(DC2):
+    class DC2(DC1):
         ...
-    assert isinstance(DC3.__settings__, DictDataclassSettings)
-    assert DC3.__settings__.store_type == 'auto'
-    assert DC3.__settings__._store_type == 'off'
-    assert DC3.__settings__.should_store_type() is False
+    settings2 = DC2._dict_dataclass_settings()
+    assert settings2.store_type == 'off'
     @dataclass
-    class DC4(DC2, store_type='auto'):
+    class DC3(DC1, store_type='name'):
         ...
-    assert isinstance(DC4.__settings__, DictDataclassSettings)
-    assert DC4.__settings__.store_type == 'auto'
-    assert DC4.__settings__._store_type == 'off'
+    settings3 = DC3._dict_dataclass_settings()
+    assert settings3.store_type == 'name'
+    assert settings3.should_store_type() is True
     @dataclass
-    class DC5(DC2, store_type='name'):
+    class DC4(DC3):
         ...
-    assert isinstance(DC5.__settings__, DictDataclassSettings)
-    assert DC5.__settings__.store_type == 'name'
-    assert DC5.__settings__.should_store_type() is True
+    settings4 = DC4._dict_dataclass_settings()
+    assert settings4.store_type == 'name'
     @dataclass
-    class DC6(DC5):
+    class DC5(DC3, store_type='off'):
         ...
-    assert isinstance(DC6.__settings__, DictDataclassSettings)
-    assert DC6.__settings__.store_type == 'name'
-    @dataclass
-    class DC7(DC5, store_type='off'):
-        ...
-    assert isinstance(DC7.__settings__, DictDataclassSettings)
-    assert DC7.__settings__.store_type == 'off'
+    settings5 = DC5._dict_dataclass_settings()
+    assert settings5.store_type == 'off'
     # other base class won't interfere
     class OtherClass:
         pass
     @dataclass
-    class DC8(OtherClass, DC5):
+    class DC6(OtherClass, DC3):
         ...
-    assert isinstance(DC8.__settings__, DictDataclassSettings)
-    assert DC8.__settings__.store_type == 'name'
+    settings6 = DC6._dict_dataclass_settings()
+    assert settings6.store_type == 'name'
     # multiple inheritance with conflicting settings (uses MRO)
-    class DC9(DictDataclass, store_type='qualname'):
+    @dataclass
+    class DC7(DictDataclass, store_type='qualname'):
         ...
     @dataclass
-    class DC10(DC5, DC9):
+    class DC8(DC3, DC7):
         ...
-    assert isinstance(DC10.__settings__, DictDataclassSettings)
-    assert DC10.__settings__.store_type == 'name'
+    settings8 = DC8._dict_dataclass_settings()
+    assert settings8.store_type == 'name'
     @dataclass
-    class DC11(DC9, DC5):
+    class DC9(DC7, DC3):
         ...
-    assert isinstance(DC11.__settings__, DictDataclassSettings)
-    assert DC11.__settings__._store_type == 'qualname'
-    # multiple inheritance where one is 'auto'
-    # DC9 takes priority since it both has a kwarg and comes first
+    settings9 = DC9._dict_dataclass_settings()
+    assert settings9.store_type == 'qualname'
+    # DC7 takes priority since it comes first
     @dataclass
-    class DC12(DC9, DC2):
+    class DC10(DC7, DC1):
         ...
-    assert isinstance(DC12.__settings__, DictDataclassSettings)
-    assert DC12.__settings__.store_type == 'qualname'
-    assert DC12.__settings__._store_type == 'qualname'
-    # DC9 had an explicit kwarg set, so this takes priority over DC2's default despite coming second
+    settings10 = DC10._dict_dataclass_settings()
+    assert settings10.store_type == 'qualname'
+    # DC7 had an explicit kwarg set, but DC1 still takes priority since it comes first
     @dataclass
-    class DC13(DC2, DC9):
+    class DC11(DC1, DC7):
         ...
-    assert isinstance(DC13.__settings__, DictDataclassSettings)
-    assert DC13.__settings__.store_type == 'qualname'
-    assert DC13.__settings__._store_type == 'qualname'
-    # DC4's kwarg takes priority over DC9's since it appears first,
-    # but since it is set to 'auto' we scan for the first non-auto value to use as _store_type
+    settings11 = DC11._dict_dataclass_settings()
+    assert settings11.store_type == 'off'
+    # DC2's kwarg takes priority over DC7's since it appears first
     @dataclass
-    class DC14(DC4, DC9):
+    class DC12(DC3, DC7):
         ...
-    assert isinstance(DC14.__settings__, DictDataclassSettings)
-    assert DC14.__settings__.store_type == 'auto'
-    assert DC14.__settings__._store_type == 'qualname'
-    @dataclass
-    class DC15(DC2, store_type='auto'):
-        ...
-    # two 'auto' values lead to the default of 'off' as the _store_type
-    @dataclass
-    class DC16(DC4, DC15):
-        ...
-    assert isinstance(DC16.__settings__, DictDataclassSettings)
-    assert DC16.__settings__.store_type == 'auto'
-    assert DC16.__settings__._store_type == 'off'
+    settings12 = DC12._dict_dataclass_settings()
+    assert settings12.store_type == 'name'
 
 def test_store_type_with_flatten() -> None:
     """Tests behavior of the store_type setting when combined with flatten=True."""
@@ -518,8 +500,8 @@ def test_suppress_defaults() -> None:
     @dataclass
     class DC(DictDataclass):
         x: int = 1
-    assert isinstance(DC.__settings__, DictDataclassSettings)
-    assert DC.__settings__.suppress_defaults is True
+    settings = DC._dict_dataclass_settings()
+    assert settings.suppress_defaults is True
     obj = DC()
     assert obj.to_dict() == {}
     assert obj.to_dict(full=True) == {'x': 1}
@@ -788,7 +770,8 @@ def test_validate_nested() -> None:
 @pytest.mark.parametrize('child_validate', [MISSING, None, False, True])
 def test_validate_inherit(parent_validate: Any, child_validate: Any) -> None:
     """Tests passing the validate kwarg for subclass construction."""
-    assert DictDataclass.__settings__.validate_init is False
+    settings = DictDataclass._class_settings(base=ValidatedDataclass)
+    assert settings == ValidatedDataclassSettings(validate_init=None, validate_assign=None, validate=False)
     parent_kwargs = {} if (parent_validate is MISSING) else {'validate': parent_validate}
     child_kwargs = {} if (child_validate is MISSING) else {'validate': child_validate}
     @dataclass
@@ -797,9 +780,11 @@ def test_validate_inherit(parent_validate: Any, child_validate: Any) -> None:
     @dataclass
     class DC2(DC1, **child_kwargs):
         ...
-    if parent_validate in [None, MISSING]:
+    if parent_validate is MISSING:
         parent_validate = False
-    assert DC1.__settings__.validate_init is parent_validate
-    if child_validate in [None, MISSING]:
+    settings1 = DC1._class_settings(base=ValidatedDataclass)
+    assert settings1 == ValidatedDataclassSettings(validate_init=None, validate_assign=None, validate=parent_validate)
+    if child_validate is MISSING:
         child_validate = parent_validate
-    assert DC2.__settings__.validate_init is child_validate
+    settings2 = DC2._class_settings(base=ValidatedDataclass)
+    assert settings2 == ValidatedDataclassSettings(validate_init=None, validate_assign=None, validate=child_validate)

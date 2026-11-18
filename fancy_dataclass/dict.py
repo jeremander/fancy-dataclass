@@ -2,7 +2,7 @@ from collections import defaultdict
 from collections.abc import Iterable
 from contextlib import suppress
 import dataclasses
-from dataclasses import Field, InitVar, dataclass, replace
+from dataclasses import Field, InitVar, dataclass
 from types import NoneType
 import typing
 from typing import (
@@ -17,7 +17,7 @@ from typing import (
     get_origin,
 )
 
-from typing_extensions import Self, override
+from typing_extensions import Self
 
 from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.settings import DocFieldSettings, MixinSettings
@@ -32,20 +32,20 @@ from fancy_dataclass.utils import (
     type_is_classvar,
     type_is_union,
 )
-from fancy_dataclass.validate import ValidatedDataclass, ValidatedDataclassFieldSettings, ValidatedDataclassSettings
+from fancy_dataclass.validate import ValidatedDataclass, ValidatedDataclassFieldSettings
 
 
 T = TypeVar('T', bound=DataclassMixin)
 
 AnyDict: TypeAlias = dict[str, Any]
 # mode for storing data type in dict
-StoreTypeMode: TypeAlias = Literal['auto', 'off', 'name', 'qualname']
+StoreTypeMode: TypeAlias = Literal['off', 'name', 'qualname']
 # Python 3.12+ wraps types defined as aliases with 'type' keyword in TypeAliasType
 _TYPE_ALIAS_TYPE = getattr(typing, 'TypeAliasType', None)
 
 
 @dataclass(kw_only=True)
-class DictDataclassSettings(ValidatedDataclassSettings):
+class DictDataclassSettings(MixinSettings):
     """Class-level settings for the [`DictDataclass`][fancy_dataclass.dict.DictDataclass] mixin.
 
     Subclasses of `DictDataclass` may set the following options as keyword arguments during inheritance:
@@ -53,7 +53,6 @@ class DictDataclassSettings(ValidatedDataclassSettings):
     - `suppress_defaults`: suppress default values in the dict, by default
     - `suppress_none`: suppress `None` values in the dict, by default
     - `store_type`: whether and how to store the object's type name in its dict, options are:
-        - `auto`: base class determines how to store the type
         - `off`: do not store the type
         - `name`: store the type name
         - `qualname`: store the fully qualified type name (easiest way to resolve the type from the dict)
@@ -63,17 +62,13 @@ class DictDataclassSettings(ValidatedDataclassSettings):
 
     suppress_defaults: bool = True
     suppress_none: bool = False
-    store_type: StoreTypeMode = 'auto'
+    store_type: StoreTypeMode = 'off'
     flatten: bool = False
     allow_extra_fields: bool = True
 
-    def __post_init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__post_init__(*args, **kwargs)
-        self._store_type = self.store_type  # stores the value where 'auto' has been resolved from base class
-
     def should_store_type(self) -> bool:
         """Returns `True` if the type should be stored (qualified or unqualified) in the output dict."""
-        return self._store_type in ['name', 'qualname']
+        return self.store_type in ['name', 'qualname']
 
 
 @dataclass(kw_only=True)
@@ -92,8 +87,7 @@ class DictDataclassFieldSettings(ValidatedDataclassFieldSettings, DocFieldSettin
     (overrides class-level `suppress_none`)
     - `alias`: alternate name to use for the field, both when converting to and from a dict key
     - `flatten`: if set to `True` or `False` and the field is a `DictDataclass`, determines whether to merge subfields
-    into the outer dataclass (this overrides the class-level `flatten` setting)
-    - `doc`: a text description of the field, which may be used when generating schemas or serializing the data"""
+    into the outer dataclass (this overrides the class-level `flatten` setting)"""
 
     suppress: Optional[bool] = None
     suppress_default: Optional[bool] = None
@@ -102,7 +96,7 @@ class DictDataclassFieldSettings(ValidatedDataclassFieldSettings, DocFieldSettin
     flatten: Optional[bool] = None
 
 
-class DictDataclass(ValidatedDataclass):
+class DictDataclass(ValidatedDataclass, validate=False):
     """Mixin class for dataclasses that can be converted to and from a Python dict.
 
     A subclass may configure settings by using [`DictDataclassSettings`][fancy_dataclass.dict.DictDataclassSettings]
@@ -112,32 +106,18 @@ class DictDataclass(ValidatedDataclass):
     See [`DictDataclassFieldSettings`][fancy_dataclass.dict.DictDataclassFieldSettings] for the
     full list of settings."""
 
-    __settings_type__ = DictDataclassSettings
-    __settings__: ClassVar[DictDataclassSettings] = DictDataclassSettings(validate=False)
+    __settings_type__: ClassVar[Optional[type[MixinSettings]]] = DictDataclassSettings
+    __settings__: ClassVar[Optional[MixinSettings]] = DictDataclassSettings()
     __field_settings_type__ = DictDataclassFieldSettings
 
     @classmethod
-    @override
-    def _class_settings(cls, *, base: Optional[type[DataclassMixin]] = None) -> MixinSettings:
-        settings = super()._class_settings(base=base)
-        if base is DictDataclass:
-            settings = cast(DictDataclassSettings, settings)
-            # if store_type mode is 'auto', use base class to resolve it
-            if settings.store_type == 'auto':
-                for base_cls in cls.mro():
-                    if issubclass(base_cls, DictDataclass):
-                        base_settings = cast(DictDataclassSettings, base_cls._class_settings(base=DictDataclass))
-                        if base_settings.store_type != 'auto':
-                            return replace(settings, store_type=base_settings.store_type)
-                # by default, do not store
-                # TODO: don't set private attribute directly
-                settings._store_type = 'off'
-        return settings
+    def _dict_dataclass_settings(cls) -> DictDataclassSettings:
+        return cast(DictDataclassSettings, cls._class_settings(base=DictDataclass))
 
     @classmethod
     def __post_dataclass_wrap__(cls, wrapped_cls: type[Self]) -> None:
         # disallow 'type' field when the type needs to be stored in the output dict
-        if wrapped_cls.__settings__.should_store_type():
+        if wrapped_cls._dict_dataclass_settings().should_store_type():
             for fld in dataclasses.fields(wrapped_cls):  # type: ignore[arg-type]
                 if fld.name == 'type':
                     raise TypeError(
@@ -155,7 +135,7 @@ class DictDataclass(ValidatedDataclass):
     @classmethod
     def _get_flattened_field_names(cls) -> set[str]:
         """Gets the set of flattened field names."""
-        class_flatten = cls.__settings__.flatten
+        class_flatten = cls._dict_dataclass_settings().flatten
         fields = dataclasses.fields(cls)  # type: ignore[arg-type]
         flattened_field_names = set()
         for fld in fields:
@@ -173,9 +153,10 @@ class DictDataclass(ValidatedDataclass):
     def _dict_init(self) -> AnyDict:
         """Gets the basic skeleton for a dict generated by this type.
         If `store_type` is `'name'` or `'qualname'`, will include a `type` field to store the type."""
-        if self.__settings__._store_type == 'name':
+        settings = self._dict_dataclass_settings()
+        if settings.store_type == 'name':
             return {'type': obj_class_name(self)}
-        if self.__settings__._store_type == 'qualname':
+        if settings.store_type == 'qualname':
             return {'type': fully_qualified_class_name(self.__class__)}
         return {}
 
@@ -206,27 +187,33 @@ class DictDataclass(ValidatedDataclass):
 
     def _to_dict(self, full: bool) -> AnyDict:
         d = self._dict_init()
-        class_suppress_none = self.__settings__.suppress_none
-        class_suppress_defaults = self.__settings__.suppress_defaults
+        cls_settings = self._dict_dataclass_settings()
+        class_suppress_none = cls_settings.suppress_none
+        class_suppress_defaults = cls_settings.suppress_defaults
         flattened_field_names = self._get_flattened_field_names()
         for fld in get_dataclass_fields(self, include_all=True):
             name = fld.name
-            settings = self._field_settings(fld).adapt_to(DictDataclassFieldSettings)
-            if (should_suppress := settings.suppress) is None:
+            fld_settings = self._field_settings(fld).adapt_to(DictDataclassFieldSettings)
+            if (should_suppress := fld_settings.suppress) is None:
                 # suppress field by default if it is a ClassVar or InitVar or init=False
                 should_suppress = type_is_classvar(fld.type) or isinstance(fld.type, InitVar) or (not fld.init)
             if should_suppress:
                 continue
             val = getattr(self, name)
-            if (not full) and (settings.suppress is None):
+            if (not full) and (fld_settings.suppress is None):
                 # suppress None if field specifies it (falling back on class setting)
                 if (
                     (val is None) and
-                    (class_suppress_none if (settings.suppress_none is None) else settings.suppress_none)
+                    (class_suppress_none if (fld_settings.suppress_none is None) else fld_settings.suppress_none)
                 ):
                     continue
                 # suppress default if field specifies it (falling back on class setting)
-                if (class_suppress_defaults if (settings.suppress_default is None) else settings.suppress_default):
+                suppress_defaults = (
+                    class_suppress_defaults
+                    if (fld_settings.suppress_default is None)
+                    else fld_settings.suppress_default
+                )
+                if suppress_defaults:
                     # suppress values that match the default
                     with suppress(ValueError):  # some types may fail to compare
                         if val == fld.default:
@@ -238,7 +225,7 @@ class DictDataclass(ValidatedDataclass):
                 if 'type' in d2:
                     raise ValueError(f"flattened field {name!r} may not store a 'type' field in dict")
             else:
-                key = name if (settings.alias is None) else settings.alias
+                key = name if (fld_settings.alias is None) else fld_settings.alias
                 d2 = {key: self._to_dict_value(val, full)}
             for (inner_key, inner_val) in d2.items():
                 if inner_key in d:
@@ -409,7 +396,7 @@ class DictDataclass(ValidatedDataclass):
                         val = fld.default_factory()
                         # raise ValueError(f'{fld.name!r} field is required')
                     kwargs[fld.name] = val
-        if (not cls.__settings__.allow_extra_fields) and (len(consumed_keys) < len(d)):
+        if (not cls._dict_dataclass_settings().allow_extra_fields) and (len(consumed_keys) < len(d)):
             # error if there are unknown fields when they are not allowed
             unknown_fields = [key for key in d if (key not in consumed_keys)]
             raise ValueError(f'unknown dict fields for {cls.__name__}: {unknown_fields!r}')

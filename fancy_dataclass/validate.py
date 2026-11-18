@@ -88,8 +88,8 @@ class ValidatedDataclassFieldSettings(FieldSettings, _ValidationSettings):
 class ValidatedDataclass(DataclassMixin):
     """Mixin class for dataclasses which can validate their fields upon initialization or assignment."""
 
-    __settings_type__ = ValidatedDataclassSettings
-    __settings__: ClassVar[ValidatedDataclassSettings] = ValidatedDataclassSettings()
+    __settings_type__: ClassVar[Optional[type[MixinSettings]]] = ValidatedDataclassSettings
+    __settings__: ClassVar[Optional[MixinSettings]] = ValidatedDataclassSettings()
     __field_settings_type__ = ValidatedDataclassFieldSettings
 
     @classmethod
