@@ -4,6 +4,8 @@
 
 ## v0.13.0
 
+- Don't merge settings types; instead keep a multiplicity? E.g. store a `WeakKeyDictionary[type, type]`.
+  - Deal with `_store_type` flag?
 - Test dependent packages
 - Documentation
   - Validation
@@ -21,7 +23,6 @@
 
 ## Future
 
-- Don't merge settings types; instead keep a multiplicity? E.g. store a `WeakKeyDictionary[type, type]`.
 - Eventually deprecate `ArgparseDataclass` (`typing_extensions.deprecated` on class works)
 - `alias` metadata field for dict conversion
   - Should this be bidirectional? Or separate fields for each direction? [pydantic](https://docs.pydantic.dev/latest/concepts/alias/) provides both.

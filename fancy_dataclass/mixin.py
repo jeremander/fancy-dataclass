@@ -1,5 +1,9 @@
+from collections.abc import Iterable
+from contextlib import suppress
 import dataclasses
+from functools import cache
 from typing import Any, ClassVar, Optional, TypeVar
+from weakref import WeakKeyDictionary
 
 from typing_extensions import Self
 
@@ -8,6 +12,7 @@ from fancy_dataclass.utils import (
     check_dataclass,
     get_dataclass_fields,
     get_subclass_with_name,
+    issubclass_safe,
     merge_dataclasses,
     obj_class_name,
 )
@@ -32,62 +37,97 @@ def _process_class(cls: type, *args: Any) -> type:
 dataclasses._process_class = _process_class  # type: ignore[attr-defined]
 
 
+def _reconcile_base_dataclasses(bases: Iterable[type]) -> None:
+    """Given a list of base classes for a dataclass type, checks if there are any fields with duplicate names across
+    different classes (other than shared by ancestry).
+
+    If there are, raises a TypeError."""
+    flds = []
+    field_type_map: dict[str, Any] = {}
+    base_map: dict[str, type] = {}
+    @cache
+    def _get_field_names(tp: type) -> set[str]:
+        return {fld.name for fld in get_dataclass_fields(tp, include_all=True)}
+    def _base_type_with_field(cls: type, name: str) -> type:
+        for tp in cls.mro()[::-1]:
+            with suppress(TypeError):
+                if name in _get_field_names(tp):
+                    return tp
+        raise TypeError(f'no field named {name!r} for {cls}')
+    for cls in bases:
+        for fld in get_dataclass_fields(cls, include_all=True):
+            base = _base_type_with_field(cls, fld.name)
+            if fld.name in field_type_map:
+                # allow duplicate field if it came from the same ancestor class
+                if base != base_map[fld.name]:
+                    raise TypeError(f'duplicate field name {fld.name!r}')
+            else:
+                field_type_map[fld.name] = fld.type
+                base_map[fld.name] = base
+                flds.append((fld.name, fld.type, fld))
+
+
 ############
 # SETTINGS #
 ############
 
-def _configure_mixin_settings(cls: type['DataclassMixin'], allow_duplicates: bool = False, **kwargs: Any) -> None:
+def _get_settings_type(cls: type) -> Optional[type[MixinSettings]]:
+    """Gets the value of the __settings_type__ field of a class, if it is defined specifically on that class
+    (not inherited from a base class)."""
+    return cls.__dict__.get('__settings_type__')
+
+def _configure_mixin_settings(cls: type['DataclassMixin'], **kwargs: Any) -> None:
     """Sets up a `DataclassMixin`'s settings (at definition time), given inheritance kwargs."""
     # get user-specified settings (need to use __dict__ here rather than direct access,
     # which inherits parent class's value)
-    stype = cls.__dict__.get('__settings_type__')
-    settings = cls.__dict__.get('__settings__')
-    cls.__settings_kwargs__ = {}
-    if stype is None:  # merge settings types of base classes
-        pairs = [(base, stype) for base in cls.__bases__ if (stype := getattr(base, '__settings_type__', None))]
-        # remove duplicate settings classes
-        stypes = list(dict.fromkeys([stype for (_, stype) in pairs]))
-        if stypes:
-            try:
-                if len(stypes) == 1:
-                    stype = stypes[0]
-                else:
-                    stype = merge_dataclasses(
-                        *stypes,
-                        cls_name='MiscDataclassSettings',
-                        allow_duplicates=allow_duplicates,
-                    )
-            except TypeError as e:
-                raise TypeError(f'error merging base class settings for {cls.__name__}: {e}') from e
-            # inherit kwargs from the parent classes, with earlier ones in the inheritance list taking priority
-            cls.__settings_type__ = stype
-            for (base, _) in pairs[::-1]:
-                cls.__settings_kwargs__.update(getattr(base, '__settings_kwargs__', {}))
-    else:
+    pairs: list[tuple[type, type[MixinSettings]]] = []
+    if (stype := _get_settings_type(cls)):
+        assert check_dataclass(stype)
         if not issubclass(stype, MixinSettings):
             raise TypeError(f'invalid settings type {stype.__name__} for {cls.__name__}')
-        assert check_dataclass(stype)
-    # this class's kwargs take priority over the parent classes'
-    cls.__settings_kwargs__.update(kwargs)
-    field_names = set() if (stype is None) else {fld.name for fld in get_dataclass_fields(stype, include_all=True)}
-    d = {}
-    for (name, val) in cls.__settings_kwargs__.items():
-        if name in field_names:
-            d[name] = val
-        else:
-            raise TypeError(f'unknown settings field {name!r} for {cls.__name__}')
-    # explicit settings will override inheritance kwargs
-    if settings is not None:
-        # make sure user-configured settings type has all required fields
-        for fld in get_dataclass_fields(stype):
-            name = fld.name
-            if stype and (not hasattr(settings, name)):
-                raise TypeError(f'settings for {cls.__name__} missing expected field {name!r}')
-            if name in kwargs:  # disallow kwarg specification alongside __settings__ specification
+        pairs.append((cls, stype))
+    else:
+        cls.__settings_type__ = None
+    settings_kwargs = cls.__settings_kwargs__ = {}
+    if (settings := cls.__dict__.get('__settings__')) is None:
+        cls.__settings__ = None
+    else:
+    # if (settings := cls.__dict__.get('__settings__')):
+        # explicit __settings__ will get overridden by kwargs
+        if not dataclasses.is_dataclass(settings):
+            raise TypeError(f'invalid __settings__ type {type(settings).__name__} for {cls.__name__}')
+        d = dataclasses.asdict(settings)
+        for name in d:
+            if name in kwargs:
                 raise TypeError(f'redundant specification of field {name!r} for {cls.__name__}')
-            d[name] = getattr(settings, name)
-    if stype is not None:
-        cls.__settings__ = stype(**d)  # pyrefly: ignore[bad-assignment]
+        settings_kwargs.update(d)
+    for base in cls.mro():
+        if (stype := _get_settings_type(base)) and issubclass_safe(stype, MixinSettings):
+            pairs.append((base, stype))
+        # inherit kwargs from the parent classes, with earlier ones in the inheritance list taking priority
+        settings_kwargs.update(getattr(base, '__settings_kwargs__', None) or {})
+    settings_map: WeakKeyDictionary[type, MixinSettings] = WeakKeyDictionary()
+    if pairs:
+        stypes = [stype for (_, stype) in pairs]
+        try:
+            _reconcile_base_dataclasses(stypes)
+        except TypeError as e:
+            raise TypeError(f'error reconciling base class settings for {cls.__name__}: {e}') from e
+    # this class's kwargs take priority over the parent classes'
+    settings_kwargs.update(kwargs)
+    settings_map = WeakKeyDictionary()
+    field_names = set()
+    for (base, stype) in pairs:
+        d = {}
+        for fld in get_dataclass_fields(stype, include_all=True):
+            if (name := fld.name) in settings_kwargs:
+                d[name] = settings_kwargs[name]
+                field_names.add(name)
+        settings_map[base] = stype(**d)
+    for name in kwargs:
+        if name not in field_names:
+            raise TypeError(f'unknown settings field {name!r} for {cls.__name__}')
+    cls.__settings_map__ = settings_map
 
 def _configure_field_settings_type(cls: type['DataclassMixin']) -> None:
     """Sets up the __field_settings_type__ attribute on a `DataclassMixin` subclass at definition time.
@@ -129,6 +169,7 @@ class DataclassMixin:
     __settings_type__: ClassVar[Optional[type[MixinSettings]]] = None
     __settings__: ClassVar[Optional[MixinSettings]] = None
     __settings_kwargs__: ClassVar[Optional[dict[str, Any]]] = None
+    __settings_map__: ClassVar[WeakKeyDictionary[type, MixinSettings]]
     __field_settings_type__: ClassVar[Optional[type[FieldSettings]]] = None
 
     @classmethod
@@ -162,6 +203,13 @@ class DataclassMixin:
         Args:
             wrapped_cls: Class wrapped by the `dataclass` decorator"""
         _check_field_settings(wrapped_cls)
+
+    @classmethod
+    def _class_settings(cls, *, base: Optional[type['DataclassMixin']] = None) -> MixinSettings:
+        base = cls if (base is None) else base
+        if base not in cls.__settings_map__:
+            raise TypeError(f'could not get class settings for {cls.__name__}, base {base.__name__}')
+        return cls.__settings_map__[base]
 
     @classmethod
     def _field_settings(cls, fld: dataclasses.Field[Any]) -> FieldSettings:

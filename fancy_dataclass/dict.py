@@ -2,7 +2,7 @@ from collections import defaultdict
 from collections.abc import Iterable
 from contextlib import suppress
 import dataclasses
-from dataclasses import Field, InitVar, dataclass
+from dataclasses import Field, InitVar, dataclass, replace
 from types import NoneType
 import typing
 from typing import (
@@ -12,13 +12,14 @@ from typing import (
     Optional,
     TypeAlias,
     TypeVar,
+    cast,
     get_args,
     get_origin,
 )
 
-from typing_extensions import Self
+from typing_extensions import Self, override
 
-from fancy_dataclass.mixin import DataclassMixin
+from fancy_dataclass.mixin import DataclassMixin, MixinSettings
 from fancy_dataclass.settings import DocFieldSettings
 from fancy_dataclass.utils import (
     MissingRequiredFieldError,
@@ -116,17 +117,22 @@ class DictDataclass(ValidatedDataclass):
     __default_validate__: ClassVar[Optional[bool]] = False
     __field_settings_type__ = DictDataclassFieldSettings
 
-    def __init_subclass__(cls, **kwargs: Any) -> None:
-        super().__init_subclass__(**kwargs)
-        settings = cls.__settings__
-        # if store_type mode is 'auto', use base class to resolve it
-        if settings.store_type == 'auto':
-            for base in cls.mro():
-                if issubclass(base, DictDataclass) and (base.__settings__.store_type != 'auto'):
-                    settings._store_type = base.__settings__.store_type
-                    break
-            else:  # by default, do not store
+    @classmethod
+    @override
+    def _class_settings(cls, *, base: Optional[type[DataclassMixin]] = None) -> MixinSettings:
+        settings = super()._class_settings(base=base)
+        if base is DictDataclass:
+            settings = cast(DictDataclassSettings, settings)
+            # if store_type mode is 'auto', use base class to resolve it
+            if settings.store_type == 'auto':
+                for base_cls in cls.mro():
+                    base_settings = base_cls._class_settings(base=DictDataclass)
+                    if issubclass(base_cls, DictDataclass) and (base_settings.store_type != 'auto'):
+                        return replace(settings, store_type=base_settings.store_type)
+                # by default, do not store
+                # TODO: don't set private attribute directly
                 settings._store_type = 'off'
+        return settings
 
     @classmethod
     def __post_dataclass_wrap__(cls, wrapped_cls: type[Self]) -> None:

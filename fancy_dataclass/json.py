@@ -7,7 +7,7 @@ from typing import IO, Any, cast, get_args, get_origin
 
 from typing_extensions import Self, override
 
-from fancy_dataclass.dict import AnyDict
+from fancy_dataclass.dict import AnyDict, DictDataclass, DictDataclassSettings
 from fancy_dataclass.serialize import (
     DictFileSerializableDataclass,
     TextFileSerializable,
@@ -133,7 +133,8 @@ class JSONDataclass(DictFileSerializableDataclass, JSONSerializable, validate=Tr
         super().__init_subclass__(**kwargs)
         # if the class already inherits from JSONDataclass, raise an error if store_type="auto"
         # this is because resolving the type from a dict may be ambiguous
-        if cls.__settings__.store_type == 'auto':
+        settings = cast(DictDataclassSettings, cls._class_settings(base=DictDataclass))
+        if settings.store_type == 'auto':
             for base in cls.mro():
                 if (
                     (base not in [cls, JSONDataclass])

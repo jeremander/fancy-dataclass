@@ -723,8 +723,10 @@ def test_subcommand(capsys: pytest.CaptureFixture[str]) -> None:
         y1: int
         def run(self) -> None:
             print(self.__class__.__name__)
-    assert isinstance(Sub1.__settings__, CLIDataclassSettings)
-    assert Sub1.__settings__.command_name == 'sub1'
+    assert Sub1.__settings__ is None
+    settings = Sub1._class_settings(base=CLIDataclass)
+    assert isinstance(settings, CLIDataclassSettings)
+    assert settings.command_name == 'sub1'
     assert Sub1.subcommand_field_name is None
     assert Sub1(1, 2)._subcommand_name is None
     @dataclass
@@ -732,8 +734,9 @@ def test_subcommand(capsys: pytest.CaptureFixture[str]) -> None:
         """Second subcommand"""
         x2: int
         y2: str = 'abc'
-    assert isinstance(Sub2.__settings__, CLIDataclassSettings)
-    assert Sub2.__settings__.command_name == 'my-subcommand'
+    settings = Sub2._class_settings(base=CLIDataclass)
+    assert isinstance(settings, CLIDataclassSettings)
+    assert settings.command_name == 'my-subcommand'
     assert Sub2.subcommand_field_name is None
     assert Sub2(1, 2)._subcommand_name is None  # type: ignore[arg-type]
     # multiple subcommands not allowed
@@ -759,8 +762,9 @@ def test_subcommand(capsys: pytest.CaptureFixture[str]) -> None:
         # NOTE: this must be provided *before* the subcommand, since those get processed last
         x: int = field(metadata={'help': 'x value'})
         y: int = 2
-    assert isinstance(DCSub4.__settings__, CLIDataclassSettings)
-    assert DCSub4.__settings__.command_name == 'dc-sub4'
+    settings = DCSub4._class_settings(base=CLIDataclass)
+    assert isinstance(settings, CLIDataclassSettings)
+    assert settings.command_name == 'dc-sub4'
     assert DCSub4.subcommand_field_name == 'sub1'
     assert DCSub4.subcommand_dest_name == '_subcommand_DCSub4'
     assert DCSub4(Sub1(1, 2), 1)._subcommand_name == 'sub1'
@@ -783,8 +787,9 @@ def test_subcommand(capsys: pytest.CaptureFixture[str]) -> None:
     class DCSub5(CLIDataclass):
         sub: Sub1 | Sub2 = field(metadata={'subcommand': True, 'help': 'choose a subcommand'})
         x: int = 1
-    assert isinstance(DCSub5.__settings__, CLIDataclassSettings)
-    assert DCSub5.__settings__.command_name == 'dc-sub5'
+    settings = DCSub5._class_settings(base=CLIDataclass)
+    assert isinstance(settings, CLIDataclassSettings)
+    assert settings.command_name == 'dc-sub5'
     assert DCSub5.subcommand_field_name == 'sub'
     assert DCSub5(Sub1(1, 2))._subcommand_name == 'sub1'
     assert DCSub5(Sub2(1, 2))._subcommand_name == 'my-subcommand'  # type: ignore[arg-type]
