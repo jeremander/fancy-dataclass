@@ -1,5 +1,12 @@
 import argparse
-from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, HelpFormatter, Namespace, _SubParsersAction
+from argparse import (
+    ArgumentDefaultsHelpFormatter,
+    ArgumentParser,
+    HelpFormatter,
+    Namespace,
+    _ArgumentGroup,
+    _SubParsersAction,
+)
 from collections.abc import Callable, Iterable, Sequence
 from collections.abc import Set as AbstractSet
 from dataclasses import dataclass, field
@@ -738,7 +745,7 @@ def test_subcommand(capsys: pytest.CaptureFixture[str]) -> None:
     assert isinstance(settings, CLIDataclassSettings)
     assert settings.command_name == 'my-subcommand'
     assert Sub2.subcommand_field_name is None
-    assert Sub2(1, 2)._subcommand_name is None  # type: ignore[arg-type]
+    assert Sub2(1, 2)._subcommand_name is None  # pyrefly: ignore[bad-argument-type]
     # multiple subcommands not allowed
     with pytest.raises(TypeError, match='multiple fields .* registered as subcommands'):
         @dataclass
@@ -792,7 +799,7 @@ def test_subcommand(capsys: pytest.CaptureFixture[str]) -> None:
     assert settings.command_name == 'dc-sub5'
     assert DCSub5.subcommand_field_name == 'sub'
     assert DCSub5(Sub1(1, 2))._subcommand_name == 'sub1'
-    assert DCSub5(Sub2(1, 2))._subcommand_name == 'my-subcommand'  # type: ignore[arg-type]
+    assert DCSub5(Sub2(1, 2))._subcommand_name == 'my-subcommand'  # pyrefly: ignore[bad-argument-type]
     help_str = DCSub5.make_parser().format_help()
     assert re.search(
         (
@@ -881,7 +888,10 @@ def test_subcommand(capsys: pytest.CaptureFixture[str]) -> None:
     p = DCSub12.make_parser()
     assert p.formatter_class is ArgumentDefaultsHelpFormatter
     # subparser adopts parent's formatter_class by default
-    assert p._subparsers._actions[1].choices['sub7'].formatter_class is ArgumentDefaultsHelpFormatter  # type: ignore[index, union-attr]
+    assert isinstance(p._subparsers, _ArgumentGroup)
+    action = p._subparsers._actions[1]
+    assert isinstance(action, _SubParsersAction)
+    assert action.choices['sub7'].formatter_class is ArgumentDefaultsHelpFormatter
     @dataclass
     class Sub8(CLIDataclass, formatter_class=HelpFormatter):
         ...
@@ -889,8 +899,11 @@ def test_subcommand(capsys: pytest.CaptureFixture[str]) -> None:
     class DCSub13(CLIDataclass, formatter_class=ArgumentDefaultsHelpFormatter):
         sub: Sub8 = field(metadata={'subcommand': True})
     p = DCSub13.make_parser()
+    assert isinstance(p._subparsers, _ArgumentGroup)
     assert p.formatter_class is ArgumentDefaultsHelpFormatter
-    assert p._subparsers._actions[1].choices['sub8'].formatter_class is HelpFormatter  # type: ignore[index, union-attr]
+    action = p._subparsers._actions[1]
+    assert isinstance(action, _SubParsersAction)
+    assert action.choices['sub8'].formatter_class is HelpFormatter
 
 def test_boolean_flag() -> None:  # novermin
     """Tests the behavior of boolean fields in a CLIDataclass."""

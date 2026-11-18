@@ -1,5 +1,6 @@
-from dataclasses import MISSING, Field, InitVar, dataclass
-from typing import Any, ClassVar, Optional, cast
+from collections.abc import Iterable
+from dataclasses import MISSING, Field, dataclass
+from typing import Any, ClassVar, Optional, TypeVar, cast
 
 from typing_extensions import Self
 
@@ -14,12 +15,53 @@ from fancy_dataclass.utils import (
 )
 
 
+T = TypeVar('T')
+
+
+def _first_non_null(vals: Iterable[Optional[T]], *, default: T) -> T:
+    for val in vals:
+        if val is not None:
+            return val
+    return default
+
+
+@dataclass(frozen=True, kw_only=True)
+class _FieldValidationFlags:
+    """A pair of flags indicating whether a field should be validated for initialization and assignment."""
+
+    _validate_init: Optional[bool]
+    _validate_assign: Optional[bool]
+
+    @property
+    def validate_init(self) -> bool:
+        return True if (self._validate_init is None) else self._validate_init
+
+    @property
+    def validate_assign(self) -> bool:
+        return True if (self._validate_assign is None) else self._validate_assign
+
+
+@dataclass(kw_only=True)
+class _ValidationSettings:
+
+    validate_init: Optional[bool] = None
+    validate_assign: Optional[bool] = None
+    validate: Optional[bool] = None
+
+    @property
+    def flags(self) -> _FieldValidationFlags:
+        return _FieldValidationFlags(
+            _validate_init=self.validate if (self.validate_init is None) else self.validate_init,
+            _validate_assign=self.validate if (self.validate_assign is None) else self.validate_assign,
+        )
+
+
 ##########
 # MIXINS #
 ##########
 
 @dataclass(kw_only=True)
-class ValidatedDataclassSettings(MixinSettings):
+class ValidatedDataclassSettings(MixinSettings, _ValidationSettings):
     """Class-level settings for the [`ValidatedDataclass`][fancy_dataclass.validate.ValidatedDataclass] mixin.
 
     Subclasses of `ValidatedDataclass` may set the following fields as keyword arguments during inheritance:
@@ -28,20 +70,9 @@ class ValidatedDataclassSettings(MixinSettings):
     - `validate_assign`: if `True`, validate all fields upon assignment (default `True`)
     - `validate`: convenience flag to set both `validate_init` and `validate_assign` simultaneously"""
 
-    validate_init: bool = None  # type: ignore[assignment]
-    validate_assign: bool = None  # type: ignore[assignment]
-    validate: InitVar[Optional[bool]] = None
-
-    def __post_init__(self, validate: Optional[bool], **kwargs: Any) -> None:
-        if self.validate_init is None:
-            self.validate_init = True if (validate is None) else validate  # pyrefly: ignore[attribute-assign-on-never]
-        if self.validate_assign is None:
-            self.validate_assign = True if (validate is None) else validate  # pyrefly: ignore[attribute-assign-on-never]
-        super().__post_init__(validate, **kwargs)
-
 
 @dataclass(kw_only=True)
-class ValidatedDataclassFieldSettings(FieldSettings):
+class ValidatedDataclassFieldSettings(FieldSettings, _ValidationSettings):
     """Settings for [`ValidatedDataclass`][fancy_dataclass.validate.ValidatedDataclass] fields.
 
     Each field may define a `metadata` dict containing any of the following entries:
@@ -53,53 +84,18 @@ class ValidatedDataclassFieldSettings(FieldSettings):
     - `validate`: convenience flag to set both `validate_init` and `validate_assign` simultaneously
     """
 
-    validate_init: Optional[bool] = None
-    validate_assign: Optional[bool] = None
-    validate: InitVar[Optional[bool]] = None
-
-    def __post_init__(self, validate: Optional[bool]) -> None:
-        if validate is not None:
-            if self.validate_init is None:
-                self.validate_init = validate
-            if self.validate_assign is None:
-                self.validate_assign = validate
-
-
-@dataclass(kw_only=True)
-class _FieldValidationFlags:
-    """A pair of flags indicating whether a field should be validated for initialization and assignment."""
-
-    validate_init: bool
-    validate_assign: bool
-
 
 class ValidatedDataclass(DataclassMixin):
     """Mixin class for dataclasses which can validate their fields upon initialization or assignment."""
 
     __settings_type__ = ValidatedDataclassSettings
     __settings__: ClassVar[ValidatedDataclassSettings] = ValidatedDataclassSettings()
-    # extra class flag indicating whether to pass an explicit validate flag upon subclass construction
-    __default_validate__: ClassVar[Optional[bool]] = None
     __field_settings_type__ = ValidatedDataclassFieldSettings
 
     @classmethod
-    def __init_subclass__(cls, **kwargs: Any) -> None:
-        # ensure that child classes use the value of their parent's __default_validate__ flag, if applicable
-        kwargs = {
-            **({} if (cls.__default_validate__ is None) else {'validate': cls.__default_validate__}),
-            **kwargs,
-        }
-        if 'validate' in kwargs and (kwargs['validate'] is None):
-            # prevent subclass with validate=None from overriding parent settings
-            kwargs.pop('validate')
-        # also override the child's __default_validate__ if the validate flag is set
-        if (validate := kwargs.get('validate')) is not None:
-            cls.__default_validate__ = validate
-        super().__init_subclass__(**kwargs)
-
-    @classmethod
     def __post_dataclass_wrap__(cls, wrapped_cls: type[Self]) -> None:
-        if wrapped_cls.__settings__.validate_init:
+        settings = cast(ValidatedDataclassSettings, wrapped_cls._class_settings(base=ValidatedDataclass))
+        if settings.flags.validate_init:
             # validate ClassVar values and field default values at dataclass wrap time
             for fld in get_dataclass_fields(wrapped_cls, include_all=True):
                 if type_is_classvar(fld.type) and hasattr(wrapped_cls, fld.name):
@@ -138,16 +134,22 @@ class ValidatedDataclass(DataclassMixin):
     def _field_validation_flags(cls, fld: Field[Any]) -> _FieldValidationFlags:
         """Returns a _FieldValidationFlags object indicating if the value the given field should be validated for
         initialization and assignment."""
-        settings = cls._field_settings(fld).adapt_to(ValidatedDataclassFieldSettings)
-        validate_init = cls.__settings__.validate_init if (settings.validate_init is None) else settings.validate_init
-        validate_assign = (
-            cls.__settings__.validate_assign if (settings.validate_assign is None) else settings.validate_assign
+        cls_settings = cast(ValidatedDataclassSettings, cls._class_settings(base=ValidatedDataclass))
+        fld_settings = cls._field_settings(fld).adapt_to(ValidatedDataclassFieldSettings)
+        validate_init = _first_non_null(
+            [fld_settings.flags._validate_init, cls_settings.flags._validate_init],
+            default=True,
         )
-        return _FieldValidationFlags(validate_init=validate_init, validate_assign=validate_assign)
+        validate_assign = _first_non_null(
+            [fld_settings.flags._validate_assign, cls_settings.flags._validate_assign],
+            default=True,
+        )
+        return _FieldValidationFlags(_validate_init=validate_init, _validate_assign=validate_assign)
 
     def _validate_field(self, fld: Field[Any]) -> None:
         cls = type(self)
         if not hasattr(self, fld.name):
+            # first check that the instance has an attribute for the field
             raise FieldTypeValidationError(cls, fld.name, fld.type, MISSING)
         _validate_dataclass_field(cls, fld, getattr(self, fld.name))
 

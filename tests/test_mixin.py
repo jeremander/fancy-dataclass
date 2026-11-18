@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field, fields
-from typing import Annotated, ClassVar
+from typing import Annotated, ClassVar, Optional
 
 import annotated_doc
 import pytest
@@ -137,10 +137,10 @@ class TestDataclassMixin:
             __settings__ = MySettingsOpt(enhanced=True)
         assert MyDC.__settings__ == MySettingsOpt(enhanced=True)
         # subclasses do *not* inherit __settings__ from their parent
-        class MyDCSub(MyDC):
+        class MySub(MyDC):
             pass
-        assert MyDCSub.__settings__ is None
-        MyDCSub = dataclass(MyDCSub)
+        assert MySub.__settings__ is None
+        MyDCSub: type = dataclass(MySub)
         assert MyDCSub.__settings__ is None
         # can set required keyword arg on the base class
         @dataclass
@@ -215,30 +215,53 @@ class TestDataclassMixin:
             class MyDC6(MyMixinReq, enhanced=False):
                 __settings__ = MySettingsReq(enhanced=True)
 
+    def test_settings_kwargs_override(self) -> None:
+        """Tests overriding settings via kwargs."""
+        @dataclass
+        class DCSettings(MixinSettings):
+            a: bool = True
+            b: bool = True
+        @dataclass
+        class DC1(DataclassMixin):
+            __settings_type__ = DCSettings
+            __settings__ = DCSettings()
+        @dataclass
+        class DC2(DC1, a=False):
+            pass
+        @dataclass
+        class DC3(DC2, b=False):
+            pass
+        assert DC1.__settings_kwargs__ == {'a': True, 'b': True}
+        assert DC1._class_settings(base=DC1) == DCSettings(a=True, b=True)
+        assert DC2.__settings_kwargs__ == {'a': False, 'b': True}
+        assert DC2._class_settings(base=DC1) == DCSettings(a=False, b=True)
+        assert DC3.__settings_kwargs__ == {'a': False, 'b': False}
+        assert DC3._class_settings(base=DC1) == DCSettings(a=False, b=False)
+
     def test_reconcile_class_settings(self) -> None:
         """Tests reconciliation of class settings when subclassing multiple DataclassMixins."""
         @dataclass
         class Settings1(MixinSettings):
             a: int = 1
         class Mixin1(DataclassMixin):
-            __settings_type__ = Settings1
+            __settings_type__: ClassVar[Optional[type[MixinSettings]]] = Settings1
         @dataclass
         class Settings2(MixinSettings):
             b: int = 2
             c: int = 3
         class Mixin2(DataclassMixin):
-            __settings_type__ = Settings2
+            __settings_type__: ClassVar[Optional[type[MixinSettings]]] = Settings2
         @dataclass
         class Settings3(MixinSettings):
             pass
         class Mixin3(DataclassMixin):
-            __settings_type__ = Settings3
+            __settings_type__: ClassVar[Optional[type[MixinSettings]]] = Settings3
         @dataclass
         class Settings4(MixinSettings):
             c: int = 4
             d: int = 5
         class Mixin4(DataclassMixin):
-            __settings_type__ = Settings4
+            __settings_type__: ClassVar[Optional[type[MixinSettings]]] = Settings4
         @dataclass
         class DC1(Mixin1):
             ...

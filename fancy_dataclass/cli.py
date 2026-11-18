@@ -297,6 +297,10 @@ class CLIDataclass(DataclassMixin):
         return settings
 
     @classmethod
+    def _cli_dataclass_settings(cls) -> CLIDataclassSettings:
+        return cast(CLIDataclassSettings, cls._class_settings(base=CLIDataclass))
+
+    @classmethod
     @override
     def __post_dataclass_wrap__(cls, wrapped_cls: type[Self]) -> None:
         subcommand = None
@@ -318,7 +322,7 @@ class CLIDataclass(DataclassMixin):
                     for arg in tp_args:
                         if not issubclass_safe(arg, CLIDataclass):
                             raise err
-                        name = arg._class_settings(base=CLIDataclass).command_name
+                        name = arg._cli_dataclass_settings().command_name
                         if name in names:
                             raise TypeError(f'duplicate command name {name!r} in subcommand field {subcommand!r}')
                         names.add(name)
@@ -338,18 +342,18 @@ class CLIDataclass(DataclassMixin):
             Name of the subcommand, if a subcommand field exists, and `None` otherwise"""
         if self.subcommand_field_name is not None:
             tp: type[CLIDataclass] = type(getattr(self, self.subcommand_field_name))
-            return tp._class_settings(base=CLIDataclass).command_name
+            return tp._cli_dataclass_settings().command_name
         return None
 
     @classmethod
     def _parser_description(cls) -> Optional[str]:
-        if (descr := cls._class_settings(base=CLIDataclass).help_descr) is None:
+        if (descr := cls._cli_dataclass_settings().help_descr) is None:
             return cls.__doc__
         return descr
 
     @classmethod
     def _parser_description_brief(cls) -> Optional[str]:
-        if (brief := cls._class_settings(base=CLIDataclass).help_descr_brief) is None:
+        if (brief := cls._cli_dataclass_settings().help_descr_brief) is None:
             brief = cls._parser_description()
             if brief:
                 brief = brief[0].lower() + brief[1:]
@@ -363,7 +367,7 @@ class CLIDataclass(DataclassMixin):
         Returns:
             Keyword arguments passed upon construction of the `ArgumentParser`"""
         kwargs: dict[str, Any] = {'description': cls._parser_description()}
-        settings = cls._class_settings(base=CLIDataclass)
+        settings = cls._cli_dataclass_settings()
         for key in ['formatter_class', 'prog']:
             if (val := getattr(settings, key)) is not None:
                 kwargs[key] = val
@@ -383,7 +387,7 @@ class CLIDataclass(DataclassMixin):
 
         Returns:
             New top-level parser derived from the class's fields"""
-        parser = cls._class_settings(base=CLIDataclass).parser_class(**cls._parser_kwargs())
+        parser = cls._cli_dataclass_settings().parser_class(**cls._parser_kwargs())
         # we disallow duplicate 'dest' variables for the same parser, so track them in a set
         parser._dests = set()  # type: ignore[attr-defined]
         return parser
@@ -518,7 +522,7 @@ class CLIDataclass(DataclassMixin):
         if ('help' not in kwargs) and settings.doc:
             kwargs['help'] = settings.doc
         # determine if the field show its default in the help string
-        if cls._class_settings(base=CLIDataclass).default_help:
+        if cls._cli_dataclass_settings().default_help:
             # include default if there is one, and the flag is not overridden to False at the field level
             default_help = has_default and (settings.default_help is not False)
         else:
@@ -554,7 +558,7 @@ class CLIDataclass(DataclassMixin):
                 if 'formatter_class' not in subparser_kwargs:
                     # inherit formatter_class from the parent
                     subparser_kwargs['formatter_class'] = parser.formatter_class
-                command_name = arg._class_settings(base=CLIDataclass).command_name
+                command_name = arg._cli_dataclass_settings().command_name
                 subparser = subparsers.add_parser(command_name, help=descr_brief, **subparser_kwargs)
                 # a subparser inherits the dest variables of its parents but *not* its siblings, so make a copy
                 subparser._dests = set(parser._dests)  # type: ignore[attr-defined]
@@ -572,7 +576,7 @@ class CLIDataclass(DataclassMixin):
     @classmethod
     def _configure_version_argument(cls, parser: ArgParser) -> None:
         """Configures the special --version argument if a version field is included in the class settings."""
-        settings = cls._class_settings(base=CLIDataclass)
+        settings = cls._cli_dataclass_settings()
         if version := settings.version:
             version_str = get_version_string(version)
             if settings.prog:  # display the program name

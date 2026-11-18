@@ -788,7 +788,6 @@ def test_validate_nested() -> None:
 @pytest.mark.parametrize('child_validate', [MISSING, None, False, True])
 def test_validate_inherit(parent_validate: Any, child_validate: Any) -> None:
     """Tests passing the validate kwarg for subclass construction."""
-    assert DictDataclass.__default_validate__ is False
     assert DictDataclass.__settings__.validate_init is False
     parent_kwargs = {} if (parent_validate is MISSING) else {'validate': parent_validate}
     child_kwargs = {} if (child_validate is MISSING) else {'validate': child_validate}
@@ -800,9 +799,7 @@ def test_validate_inherit(parent_validate: Any, child_validate: Any) -> None:
         ...
     if parent_validate in [None, MISSING]:
         parent_validate = False
-    assert DC1.__default_validate__ is parent_validate
     assert DC1.__settings__.validate_init is parent_validate
     if child_validate in [None, MISSING]:
         child_validate = parent_validate
-    assert DC2.__default_validate__ is child_validate
     assert DC2.__settings__.validate_init is child_validate

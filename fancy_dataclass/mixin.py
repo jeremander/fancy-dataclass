@@ -92,19 +92,18 @@ def _configure_mixin_settings(cls: type['DataclassMixin'], **kwargs: Any) -> Non
     if (settings := cls.__dict__.get('__settings__')) is None:
         cls.__settings__ = None
     else:
-    # if (settings := cls.__dict__.get('__settings__')):
         # explicit __settings__ will get overridden by kwargs
         if not dataclasses.is_dataclass(settings):
             raise TypeError(f'invalid __settings__ type {type(settings).__name__} for {cls.__name__}')
-        d = dataclasses.asdict(settings)
+        d = dataclasses.asdict(settings)  # type: ignore[arg-type]
         for name in d:
             if name in kwargs:
                 raise TypeError(f'redundant specification of field {name!r} for {cls.__name__}')
         settings_kwargs.update(d)
-    for base in cls.mro():
+    # inherit kwargs from the parent classes, with nearer ones in the inheritance chain taking priority
+    for base in cls.mro()[::-1]:
         if (stype := _get_settings_type(base)) and issubclass_safe(stype, MixinSettings):
             pairs.append((base, stype))
-        # inherit kwargs from the parent classes, with earlier ones in the inheritance list taking priority
         settings_kwargs.update(getattr(base, '__settings_kwargs__', None) or {})
     settings_map: WeakKeyDictionary[type, MixinSettings] = WeakKeyDictionary()
     if pairs:

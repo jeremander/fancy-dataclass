@@ -19,8 +19,8 @@ from typing import (
 
 from typing_extensions import Self, override
 
-from fancy_dataclass.mixin import DataclassMixin, MixinSettings
-from fancy_dataclass.settings import DocFieldSettings
+from fancy_dataclass.mixin import DataclassMixin
+from fancy_dataclass.settings import DocFieldSettings, MixinSettings
 from fancy_dataclass.utils import (
     MissingRequiredFieldError,
     check_dataclass,
@@ -114,7 +114,6 @@ class DictDataclass(ValidatedDataclass):
 
     __settings_type__ = DictDataclassSettings
     __settings__: ClassVar[DictDataclassSettings] = DictDataclassSettings(validate=False)
-    __default_validate__: ClassVar[Optional[bool]] = False
     __field_settings_type__ = DictDataclassFieldSettings
 
     @classmethod
@@ -126,9 +125,10 @@ class DictDataclass(ValidatedDataclass):
             # if store_type mode is 'auto', use base class to resolve it
             if settings.store_type == 'auto':
                 for base_cls in cls.mro():
-                    base_settings = base_cls._class_settings(base=DictDataclass)
-                    if issubclass(base_cls, DictDataclass) and (base_settings.store_type != 'auto'):
-                        return replace(settings, store_type=base_settings.store_type)
+                    if issubclass(base_cls, DictDataclass):
+                        base_settings = cast(DictDataclassSettings, base_cls._class_settings(base=DictDataclass))
+                        if base_settings.store_type != 'auto':
+                            return replace(settings, store_type=base_settings.store_type)
                 # by default, do not store
                 # TODO: don't set private attribute directly
                 settings._store_type = 'off'

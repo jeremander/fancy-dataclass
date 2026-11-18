@@ -7,7 +7,12 @@ from typing import Any, ClassVar, Optional, Protocol
 
 import pytest
 
-from fancy_dataclass.validate import FieldTypeValidationError, ValidatedDataclass
+from fancy_dataclass.validate import (
+    FieldTypeValidationError,
+    ValidatedDataclass,
+    _FieldValidationFlags,
+    _first_non_null,
+)
 
 from . import raises_field_type_err
 
@@ -209,6 +214,8 @@ def test_validate_init_and_assign(frozen: bool, init: bool, assign: bool) -> Non
     class DCFieldFlags(ValidatedDataclass):
         x: int = field(metadata={'validate_init': init, 'validate_assign': assign})
     for cls in [DCClassFlags, DCFieldFlags]:
+        flags = _FieldValidationFlags(_validate_init=init, _validate_assign=assign)
+        assert cls._field_validation_flags(cls.__dataclass_fields__['x']) == flags
         # valid type is always OK
         obj = cls(1)
         assert obj.x == 1
@@ -397,13 +404,10 @@ def test_validate_class_setting(
     @dataclass
     class DC(ValidatedDataclass, **kwargs):
         ...
-    settings = DC.__settings__
-    if validate_init is None:
-        validate_init = True if (validate is None) else validate
+    settings = DC._class_settings(base=ValidatedDataclass)
     assert settings.validate_init == validate_init
-    if validate_assign is None:
-        validate_assign = True if (validate is None) else validate
     assert settings.validate_assign == validate_assign
+    assert settings.validate == validate
 
 @pytest.mark.parametrize('validate_init', [None, False, True])
 @pytest.mark.parametrize('validate_assign', [None, False, True])
@@ -418,39 +422,31 @@ def test_validate_field_setting(
     @dataclass
     class DC(ValidatedDataclass):
         x: int = field(metadata=kwargs)
-    settings = DC.__settings__
     fld = DC.__dataclass_fields__['x']
     fld_settings = DC._field_settings(fld)
-    if validate_init is None:
-        validate_init = validate
-    assert fld_settings.validate_init == validate_init
-    if validate_assign is None:
-        validate_assign = validate
-    assert fld_settings.validate_assign == validate_assign
+    assert fld_settings.validate_init is validate_init
+    assert fld_settings.validate_assign is validate_assign
+    assert fld_settings.validate is validate
     flags = DC._field_validation_flags(fld)
-    if validate_init is None:
-        validate_init = settings.validate_init
-    assert isinstance(validate_init, bool)
-    assert flags.validate_init == validate_init
-    if validate_assign is None:
-        validate_assign = settings.validate_assign
-    assert isinstance(validate_assign, bool)
-    assert flags.validate_assign == validate_assign
+    assert flags._validate_init is _first_non_null([validate_init, validate], default=True)
+    assert flags._validate_assign is _first_non_null([validate_assign, validate], default=True)
 
 @pytest.mark.parametrize('validate_parent', [None, False, True])
 @pytest.mark.parametrize('validate_child', [None, False, True])
-def test_validate_setting_inheritance(validate_parent: bool, validate_child: bool) -> None:
+def test_validate_setting_inheritance(validate_parent: Optional[bool], validate_child: Optional[bool]) -> None:
     """Tests that inheritance works when the `validate` flag is set on the parent and/or child class."""
     @dataclass
     class DCParent(ValidatedDataclass, validate=validate_parent):
         x: int
+    child_kwargs = {} if (validate_child is None) else {'validate': validate_child}
     @dataclass
-    class DCChild(DCParent, validate=validate_child):
+    class DCChild(DCParent, **child_kwargs):
         ...
-    validate_init = DCParent.__settings__.validate_init if (validate_child is None) else validate_child
-    assert DCChild.__settings__.validate_init == validate_init
-    validate_assign = DCParent.__settings__.validate_assign if (validate_child is None) else validate_child
-    assert DCChild.__settings__.validate_assign == validate_assign
+    validate = _first_non_null([validate_child, validate_parent], default=True)
+    fld = DCChild.__dataclass_fields__['x']
+    flags = DCChild._field_validation_flags(fld)
+    assert flags.validate_init is validate
+    assert flags.validate_assign is validate
     obj = DCChild(1)
     assert obj.x == 1
 

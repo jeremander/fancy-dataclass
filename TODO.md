@@ -6,6 +6,8 @@
 
 - Don't merge settings types; instead keep a multiplicity? E.g. store a `WeakKeyDictionary[type, type]`.
   - Deal with `_store_type` flag?
+  - Make settings classes frozen?
+  - Eliminate `__settings_type__` field and just use `__settings__`?
 - Test dependent packages
 - Documentation
   - Validation
