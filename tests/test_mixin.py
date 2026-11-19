@@ -1,12 +1,10 @@
-from dataclasses import dataclass, field, fields
-from typing import Annotated, ClassVar, Optional
+from dataclasses import dataclass, field
+from typing import ClassVar, Optional
 
-import annotated_doc
 import pytest
-from typing_extensions import Doc
 
 from fancy_dataclass.mixin import DataclassMixin
-from fancy_dataclass.settings import DocFieldSettings, FieldSettings, MixinSettings
+from fancy_dataclass.settings import FieldSettings, MixinSettings
 from fancy_dataclass.utils import FieldTypeValidationError
 
 
@@ -415,72 +413,6 @@ class TestDataclassMixin:
             _ = MyDC2._field_settings('y', base=MyMixin)
         with pytest.raises(TypeError, match='could not get field settings'):
             _ = MyDC2._field_settings('x', base=MyDC2)
-
-    def test_doc_field_settings(self) -> None:
-        """Tests DocFieldSettings."""
-        @dataclass
-        class DocMixin(DataclassMixin):
-            __field_settings_type__ = DocFieldSettings
-        @dataclass
-        class DC1(DocMixin):
-            a: int = 1  # no doc
-            b: int = field(default=2, metadata={'doc': 'b'})  # metadata doc field
-            c: Annotated[int, Doc('c')] = 3  # Annotated Doc field
-            d: Annotated[int, 'd'] = 4  # string not wrapped in a Doc
-            e: Annotated[int, Doc('bad'), Doc('e')] = 5  # multiple Docs (per PEP 727, use the last one)
-            f: Annotated[int, Doc(None)] = 6  # None-valued Doc (currently permitted)
-            g: Annotated[int, Doc('g1')] = field(
-                default=7,
-                metadata={'doc': 'g2'},
-            )  # both Doc and metadata (latter takes precedence)
-            # stringized annotations:
-            # avoid evaluating them since that would occur at import time
-            h: "Annotated[int, Doc('h')]" = 8
-            # stringized annotation, fully qualified
-            i: "typing_extensions.Annotated[int, typing_extensions.Doc('i')]" = 9  # type: ignore[name-defined]  # noqa: F821
-            # this is OK since the Annotated part is not stringized
-            j: Annotated['int', Doc('j')] = 10
-            k: Annotated[int, annotated_doc.Doc('k')] = 11
-            l: Annotated[int, Doc('bad'), annotated_doc.Doc('l')] = 12  # noqa: E741
-        docs = {}
-        for fld in fields(DC1):
-            fld_settings = DC1._field_settings(fld.name, base=DocMixin)
-            assert isinstance(fld_settings, DocFieldSettings)
-            docs[fld.name] = fld_settings.doc
-        assert docs == {
-            'a': None,
-            'b': 'b',
-            'c': 'c',
-            'd': None,
-            'e': 'e',
-            'f': None,
-            'g': 'g2',
-            'h': None,
-            'i': None,
-            'j': 'j',
-            'k': 'k',
-            'l': 'l',
-        }
-        # try to convert a field with unknown type to DocFieldSettings
-        @dataclass
-        class DC2:
-            x: 'fake-type'  # type: ignore  # noqa: F821
-        fld = fields(DC2)[0]
-        settings = DocFieldSettings.from_field(fld)
-        assert settings == DocFieldSettings(doc=None)
-        @dataclass
-        class DC3(DocMixin):
-            x: 'fake-type'  # type: ignore  # noqa: F821
-        assert DC3._field_settings('x', base=DocMixin) == DocFieldSettings(doc=None)
-        # Doc with non-string field is not allowed
-        with pytest.raises(FieldTypeValidationError, match="field 'doc' .*: value 1 does not match"):
-            @dataclass
-            class DC4(DocMixin):
-                x: Annotated[int, Doc(1)] = 1
-        with pytest.raises(FieldTypeValidationError, match="field 'doc' .*: value 1 does not match"):
-            @dataclass
-            class DC5(DocMixin):
-                x: int = field(metadata={'doc': 1})
 
     def test_wrap_dataclass(self) -> None:
         """Tests the wrap_dataclass function."""

@@ -83,7 +83,7 @@ height = 30
 
 !!! note
 
-    You can also use the `Annotated`/`Doc` syntax ([PEP 727](https://peps.python.org/pep-0727/)) to specify field comments. See [`DocFieldSettings`][fancy_dataclass.settings.DocFieldSettings].
+    You can also use the `Annotated`/`Doc` syntax ([PEP 727](https://peps.python.org/pep-0727/)) to specify field comments. See [`DocFieldSettings`][fancy_dataclass.doc.DocFieldSettings].
 
 #### Top-level Comments
 

@@ -19,8 +19,9 @@ from typing import (
 
 from typing_extensions import Self, override
 
+from fancy_dataclass.doc import DocFieldSettings
 from fancy_dataclass.mixin import DataclassMixin
-from fancy_dataclass.settings import DocFieldSettings, MixinSettings
+from fancy_dataclass.settings import MixinSettings
 from fancy_dataclass.utils import (
     MissingRequiredFieldError,
     check_dataclass,

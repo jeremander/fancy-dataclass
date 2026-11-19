@@ -17,8 +17,9 @@ REF_DIR = Path('reference')
 REF_MODULES = [
     'cli',
     'config',
-    'func',
+    'doc',
     'dict',
+    'func',
     'json',
     'mixin',
     'serialize',
