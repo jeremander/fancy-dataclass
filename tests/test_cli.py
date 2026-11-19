@@ -735,7 +735,7 @@ def test_subcommand(capsys: pytest.CaptureFixture[str]) -> None:
     assert isinstance(settings, CLIDataclassSettings)
     assert settings.command_name == 'sub1'
     assert Sub1.subcommand_field_name is None
-    assert Sub1(1, 2)._subcommand_name is None
+    assert Sub1(1, 2).subcommand_name is None
     @dataclass
     class Sub2(CLIDataclass, command_name='my-subcommand'):
         """Second subcommand"""
@@ -745,7 +745,7 @@ def test_subcommand(capsys: pytest.CaptureFixture[str]) -> None:
     assert isinstance(settings, CLIDataclassSettings)
     assert settings.command_name == 'my-subcommand'
     assert Sub2.subcommand_field_name is None
-    assert Sub2(1, 2)._subcommand_name is None  # pyrefly: ignore[bad-argument-type]
+    assert Sub2(1, 2).subcommand_name is None  # pyrefly: ignore[bad-argument-type]
     # multiple subcommands not allowed
     with pytest.raises(TypeError, match='multiple fields .* registered as subcommands'):
         @dataclass
@@ -774,7 +774,7 @@ def test_subcommand(capsys: pytest.CaptureFixture[str]) -> None:
     assert settings.command_name == 'dc-sub4'
     assert DCSub4.subcommand_field_name == 'sub1'
     assert DCSub4.subcommand_dest_name == '_subcommand_DCSub4'
-    assert DCSub4(Sub1(1, 2), 1)._subcommand_name == 'sub1'
+    assert DCSub4(Sub1(1, 2), 1).subcommand_name == 'sub1'
     help_str = DCSub4.make_parser().format_help()
     assert re.search(
         r'positional arguments:.+x\s+x value\s+subcommand\s+sub1\s+first subcommand\s+option.+-y Y',
@@ -798,8 +798,8 @@ def test_subcommand(capsys: pytest.CaptureFixture[str]) -> None:
     assert isinstance(settings, CLIDataclassSettings)
     assert settings.command_name == 'dc-sub5'
     assert DCSub5.subcommand_field_name == 'sub'
-    assert DCSub5(Sub1(1, 2))._subcommand_name == 'sub1'
-    assert DCSub5(Sub2(1, 2))._subcommand_name == 'my-subcommand'  # pyrefly: ignore[bad-argument-type]
+    assert DCSub5(Sub1(1, 2)).subcommand_name == 'sub1'
+    assert DCSub5(Sub2(1, 2)).subcommand_name == 'my-subcommand'  # pyrefly: ignore[bad-argument-type]
     help_str = DCSub5.make_parser().format_help()
     assert re.search(
         (
