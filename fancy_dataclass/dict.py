@@ -32,7 +32,7 @@ from fancy_dataclass.utils import (
     type_is_classvar,
     type_is_union,
 )
-from fancy_dataclass.validate import ValidatedDataclass, ValidatedDataclassFieldSettings
+from fancy_dataclass.validate import ValidatedDataclass
 
 
 T = TypeVar('T', bound=DataclassMixin)
@@ -76,7 +76,7 @@ class DictDataclassSettings(MixinSettings):
 
 
 @dataclass(frozen=True, kw_only=True)
-class DictDataclassFieldSettings(ValidatedDataclassFieldSettings, DocFieldSettings):
+class DictDataclassFieldSettings(DocFieldSettings):
     """Settings for [`DictDataclass`][fancy_dataclass.dict.DictDataclass] fields.
 
     Each field may define a `metadata` dict containing any of the following entries:
@@ -108,10 +108,12 @@ class DictDataclass(ValidatedDataclass, validate=False):
     """Mixin class for dataclasses that can be converted to and from a Python dict.
 
     A subclass may configure settings by using [`DictDataclassSettings`][fancy_dataclass.dict.DictDataclassSettings]
-    fields as keyword arguments when inheriting from `DictDataclass`.
+    or [`ValidatedDataclassSettings`][fancy_dataclass.validate.ValidatedDataclassSettings] fields as keyword arguments
+    when inheriting from `DictDataclass`.
 
     Per-field settings can be passed into the `metadata` argument of each `dataclasses.field`.
-    See [`DictDataclassFieldSettings`][fancy_dataclass.dict.DictDataclassFieldSettings] for the
+    See [`DictDataclassFieldSettings`][fancy_dataclass.dict.DictDataclassFieldSettings] and
+    [`ValidatedDataclassFieldSettings`][fancy_dataclass.validate.ValidatedDataclassFieldSettings] for the
     full list of settings."""
 
     __settings_type__: ClassVar[Optional[type[MixinSettings]]] = DictDataclassSettings
@@ -373,7 +375,13 @@ class DictDataclass(ValidatedDataclass, validate=False):
     @classmethod
     def dataclass_args_from_dict(cls, data: AnyDict) -> AnyDict:
         """Given a dict of arguments, performs type conversion and/or validity checking, then returns a new dict that
-        can be passed to the class's constructor."""
+        can be passed to the class's constructor.
+
+        Args:
+            data: Dict to convert into keyword args
+
+        Returns:
+            Keyword args for the class constructor"""
         check_dataclass(cls)
         kwargs = {}
         bases = cls.mro()
