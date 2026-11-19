@@ -17,7 +17,7 @@ from typing import (
     get_origin,
 )
 
-from typing_extensions import Self
+from typing_extensions import Self, override
 
 from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.settings import DocFieldSettings, MixinSettings
@@ -115,6 +115,11 @@ class DictDataclass(ValidatedDataclass, validate=False):
         return cast(DictDataclassSettings, cls._class_settings(base=DictDataclass))
 
     @classmethod
+    def _dict_dataclass_field_settings(cls, name: str) -> DictDataclassFieldSettings:
+        return cast(DictDataclassFieldSettings, cls._field_settings(name, base=DictDataclass))
+
+    @classmethod
+    @override
     def __post_dataclass_wrap__(cls, wrapped_cls: type[Self]) -> None:
         # disallow 'type' field when the type needs to be stored in the output dict
         if wrapped_cls._dict_dataclass_settings().should_store_type():
@@ -123,11 +128,13 @@ class DictDataclass(ValidatedDataclass, validate=False):
                     raise TypeError(
                         f"'type' is a reserved dict field for {cls.__name__}, cannot be used as dataclass field"
                     )
+        super().__post_dataclass_wrap__(wrapped_cls)
         # prevent field name collisions when using 'alias' setting
         field_names = set()
-        for fld in dataclasses.fields(wrapped_cls):  # type: ignore[arg-type]
-            settings = cls._field_settings(fld).adapt_to(DictDataclassFieldSettings)
-            name = fld.name if (settings.alias is None) else settings.alias
+        settings_map = cast(dict[str, DictDataclassFieldSettings], wrapped_cls.__field_settings_map__[DictDataclass])
+        for (name, settings) in settings_map.items():
+            if settings.alias is not None:
+                name = settings.alias
             if name in field_names:
                 raise TypeError(f'duplicate field name or alias {name!r}')
             field_names.add(name)
@@ -139,7 +146,7 @@ class DictDataclass(ValidatedDataclass, validate=False):
         fields = dataclasses.fields(cls)  # type: ignore[arg-type]
         flattened_field_names = set()
         for fld in fields:
-            settings = cls._field_settings(fld).adapt_to(DictDataclassFieldSettings)
+            settings = cls._dict_dataclass_field_settings(fld.name)
             if issubclass_safe(fld.type, DictDataclass):
                 if class_flatten:
                     flatten_field = settings.flatten is not False
@@ -193,7 +200,7 @@ class DictDataclass(ValidatedDataclass, validate=False):
         flattened_field_names = self._get_flattened_field_names()
         for fld in get_dataclass_fields(self, include_all=True):
             name = fld.name
-            fld_settings = self._field_settings(fld).adapt_to(DictDataclassFieldSettings)
+            fld_settings = self._dict_dataclass_field_settings(fld.name)
             if (should_suppress := fld_settings.suppress) is None:
                 # suppress field by default if it is a ClassVar or InitVar or init=False
                 should_suppress = type_is_classvar(fld.type) or isinstance(fld.type, InitVar) or (not fld.init)
@@ -331,7 +338,7 @@ class DictDataclass(ValidatedDataclass, validate=False):
 
     @classmethod
     def _get_missing_value(cls, fld: Field[Any]) -> Any:
-        settings = cls._field_settings(fld).adapt_to(DictDataclassFieldSettings)
+        settings = cls._dict_dataclass_field_settings(fld.name)
         if settings.alias is None:
             raise MissingRequiredFieldError(fld.name)
         raise MissingRequiredFieldError(fld.name, alias=settings.alias)
@@ -343,7 +350,7 @@ class DictDataclass(ValidatedDataclass, validate=False):
         flattened_field_names = cls._get_flattened_field_names()
         field_key_map: dict[str, list[str]] = defaultdict(list)
         for fld in get_dataclass_fields(cls, include_all=True):
-            settings = cls._field_settings(fld).adapt_to(DictDataclassFieldSettings)
+            settings = cls._dict_dataclass_field_settings(fld.name)
             if fld.name in flattened_field_names:
                 tp = dataclass_field_type(cls, fld.name)  # type: ignore[arg-type]
                 assert issubclass(tp, DictDataclass)

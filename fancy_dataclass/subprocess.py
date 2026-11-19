@@ -72,12 +72,16 @@ class SubprocessDataclass(DataclassMixin):
         return cast(SubprocessDataclassSettings, cls._class_settings(base=SubprocessDataclass))
 
     @classmethod
+    def _subprocess_dataclass_field_settings(cls, name: str) -> SubprocessDataclassFieldSettings:
+        return cast(SubprocessDataclassFieldSettings, cls._field_settings(name, base=SubprocessDataclass))
+
+    @classmethod
     def __post_dataclass_wrap__(cls, wrapped_cls: type[Self]) -> None:
         cls_exec_name = wrapped_cls._subprocess_dataclass_settings().subproc_exec_name
         # make sure there is at most one exec field
         exec_field = None
         for fld in get_dataclass_fields(wrapped_cls, include_all=True):
-            fld_settings = cls._field_settings(fld).adapt_to(SubprocessDataclassFieldSettings)
+            fld_settings = cls._subprocess_dataclass_field_settings(fld.name)
             if fld_settings.subproc_is_exec:
                 if cls_exec_name is not None:
                     raise TypeError(
@@ -109,7 +113,7 @@ class SubprocessDataclass(DataclassMixin):
         Returns:
             List of command-line args corresponding to the field"""
         fld = self.__dataclass_fields__[name]  # type: ignore[attr-defined]
-        settings = self._field_settings(fld).adapt_to(SubprocessDataclassFieldSettings)
+        settings = self._subprocess_dataclass_field_settings(name)
         if settings.subproc_is_exec:  # this field is the executable, so return no arguments
             return []
         if get_origin(fld.type) is ClassVar:
@@ -189,7 +193,7 @@ class SubprocessDataclass(DataclassMixin):
         if cls_settings.subproc_exec_name:
             return _check_type(cls_settings.subproc_exec_name)
         for fld in get_dataclass_fields(self, include_all=True):
-            fld_settings = self._field_settings(fld).adapt_to(SubprocessDataclassFieldSettings)
+            fld_settings = self._subprocess_dataclass_field_settings(fld.name)
             if fld_settings.subproc_is_exec:
                 return _check_type(getattr(self, fld.name, None))
         return None

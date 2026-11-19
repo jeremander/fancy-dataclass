@@ -21,7 +21,6 @@ from fancy_dataclass.cli import CLIDataclassSettings
 from fancy_dataclass.dict import DictDataclassSettings
 from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.settings import MixinSettings
-from fancy_dataclass.utils import coerce_to_dataclass
 
 from .test_cli import DC1
 

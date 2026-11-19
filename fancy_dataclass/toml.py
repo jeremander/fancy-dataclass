@@ -152,7 +152,7 @@ class TOMLDataclass(
         for (key, val) in d.items():
             if not (fld := cls.__dataclass_fields__.get(key)):  # type: ignore[attr-defined]
                 continue
-            settings = cls._field_settings(fld).adapt_to(DictDataclassFieldSettings)
+            settings = cls._dict_dataclass_field_settings(fld.name)
             comment_elts = [tk.comment(line) for line in (settings.doc.splitlines() if settings.doc else [])]
             if val is None:
                 _add_comments_to_doc(comment_elts, doc)

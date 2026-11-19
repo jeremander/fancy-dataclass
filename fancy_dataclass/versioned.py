@@ -1,12 +1,13 @@
 from collections.abc import Callable, Sequence
 import dataclasses
-from dataclasses import Field, dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, ClassVar, Optional, TypeVar, cast
 from weakref import WeakKeyDictionary, WeakValueDictionary
 
 from typing_extensions import Self, override
 
 from fancy_dataclass.dict import AnyDict, DictDataclass, DictDataclassFieldSettings, DictDataclassSettings
+from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.settings import FieldSettings
 from fancy_dataclass.utils import (
     AnyVersion,
@@ -200,13 +201,13 @@ class VersionedDataclass(DictDataclass):
 
     @classmethod
     @override
-    def _field_settings(cls, fld: Field[Any]) -> FieldSettings:
+    def _field_settings(cls, name: str, *, base: Optional[type[DataclassMixin]] = None) -> FieldSettings:
         """Gets the class-specific FieldSettings extracted from the metadata stored on a Field object."""
         cls_settings = cls._versioned_dataclass_settings()
-        fld_settings = cast(DictDataclassFieldSettings, super()._field_settings(fld))
-        if (fld.name == 'version') and (cls_settings.suppress_version is False):
+        fld_settings = super()._field_settings(name, base=base)
+        if (base is DictDataclass) and (name == 'version') and (cls_settings.suppress_version is False):
             # do not suppress version field if class-level suppress_version=False
-            fld_settings.suppress = False
+            return replace(cast(DictDataclassFieldSettings, fld_settings), suppress=False)
         return fld_settings
 
     def __setattr__(self, name: str, value: Any) -> None:

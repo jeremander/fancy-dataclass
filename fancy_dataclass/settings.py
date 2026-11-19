@@ -1,5 +1,5 @@
 from dataclasses import Field, dataclass, fields, is_dataclass
-from typing import Any, Optional, TypeVar
+from typing import Any, Optional
 
 import annotated_doc
 import typing_extensions
@@ -8,32 +8,11 @@ from typing_extensions import Self, override
 from fancy_dataclass.utils import (
     _validate_dataclass_field,
     check_dataclass,
-    coerce_to_dataclass,
     get_annotated_elements,
 )
 
 
-DA = TypeVar('DA', bound='DataclassAdaptable')
-
 _DOC_TYPES = (typing_extensions.Doc, annotated_doc.Doc)
-
-
-class DataclassAdaptable:
-    """Mixin class providing the ability to convert (adapt) one dataclass type to another."""
-
-    @classmethod
-    def coerce(cls, obj: object) -> Self:
-        """Constructs a `DataclassAdaptable` object from the attributes of an arbitrary object.
-
-        Any missing attributes will be set to their default values."""
-        return coerce_to_dataclass(cls, obj)
-
-    def adapt_to(self, dest_type: type[DA]) -> DA:
-        """Converts a `DataclassAdaptable` object to another type, `dest_type`.
-
-        By default this will attempt to coerce the fields from the original type to the new type, but subclasses may
-        override the behavior, e.g. to allow field renaming."""
-        return dest_type.coerce(self)
 
 
 class _DataclassFieldValidate:
@@ -45,7 +24,7 @@ class _DataclassFieldValidate:
             _validate_dataclass_field(type(self), fld, getattr(self, fld.name))
 
 
-class MixinSettings(DataclassAdaptable, _DataclassFieldValidate):
+class MixinSettings(_DataclassFieldValidate):
     """Base class for settings to be associated with `fancy_dataclass` mixins.
 
     Each [`DataclassMixin`][fancy_dataclass.mixin.DataclassMixin] class may store a `__settings_type__` attribute
@@ -53,7 +32,7 @@ class MixinSettings(DataclassAdaptable, _DataclassFieldValidate):
     The settings object will be instantiated as a `__settings__` attribute on a mixin subclass when it is defined."""
 
 
-class FieldSettings(DataclassAdaptable, _DataclassFieldValidate):
+class FieldSettings(_DataclassFieldValidate):
     """Class storing a bundle of parameters that will be extracted from dataclass field metadata.
 
     Each [`DataclassMixin`][fancy_dataclass.mixin.DataclassMixin] class may store a `__field_settings_type__` attribute

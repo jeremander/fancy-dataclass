@@ -98,6 +98,10 @@ class ValidatedDataclass(DataclassMixin):
         return cast(ValidatedDataclassSettings, cls._class_settings(base=ValidatedDataclass))
 
     @classmethod
+    def _validated_dataclass_field_settings(cls, name: str) -> ValidatedDataclassFieldSettings:
+        return cast(ValidatedDataclassFieldSettings, cls._field_settings(name, base=ValidatedDataclass))
+
+    @classmethod
     def __post_dataclass_wrap__(cls, wrapped_cls: type[Self]) -> None:
         settings = cast(ValidatedDataclassSettings, wrapped_cls._class_settings(base=ValidatedDataclass))
         if settings.flags.validate_init:
@@ -139,8 +143,8 @@ class ValidatedDataclass(DataclassMixin):
     def _field_validation_flags(cls, fld: Field[Any]) -> _FieldValidationFlags:
         """Returns a _FieldValidationFlags object indicating if the value the given field should be validated for
         initialization and assignment."""
-        cls_settings = cast(ValidatedDataclassSettings, cls._class_settings(base=ValidatedDataclass))
-        fld_settings = cls._field_settings(fld).adapt_to(ValidatedDataclassFieldSettings)
+        cls_settings = cls._validated_dataclass_settings()
+        fld_settings = cls._validated_dataclass_field_settings(fld.name)
         validate_init = _first_non_null(
             [fld_settings.flags._validate_init, cls_settings.flags._validate_init],
             default=True,

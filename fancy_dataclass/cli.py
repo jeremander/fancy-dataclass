@@ -301,6 +301,10 @@ class CLIDataclass(DataclassMixin):
         return cast(CLIDataclassSettings, cls._class_settings(base=CLIDataclass))
 
     @classmethod
+    def _cli_dataclass_field_settings(cls, name: str) -> CLIDataclassFieldSettings:
+        return cast(CLIDataclassFieldSettings, cls._field_settings(name, base=CLIDataclass))
+
+    @classmethod
     @override
     def __post_dataclass_wrap__(cls, wrapped_cls: type[Self]) -> None:
         subcommand = None
@@ -409,7 +413,7 @@ class CLIDataclass(DataclassMixin):
         kwargs: dict[str, Any] = {}
         fld = cls.__dataclass_fields__[name]  # type: ignore[attr-defined]
         meta = fld.metadata
-        settings = cls._field_settings(fld).adapt_to(CLIDataclassFieldSettings)
+        settings = cls._cli_dataclass_field_settings(name)
         if settings.parse_exclude:  # exclude the argument from the parser
             return
         # determine the type of the parser argument for the field

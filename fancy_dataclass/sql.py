@@ -107,7 +107,7 @@ class SQLDataclass(DataclassMixin):
             Dict from column names to `Column` objects"""
         cols = {}
         for fld in fields(cls):  # type: ignore[arg-type]
-            settings = cls._field_settings(fld).adapt_to(SQLDataclassFieldSettings)
+            settings = cast(SQLDataclassFieldSettings, cls._field_settings(fld.name, base=SQLDataclass))
             # nullable = False
             if settings.sql_exclude:  # skip fields whose 'sql_exclude' setting is True
                 continue

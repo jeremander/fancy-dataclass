@@ -23,7 +23,6 @@ from fancy_dataclass.serialize import FileSerializable
 from fancy_dataclass.toml import TOMLDataclass
 from fancy_dataclass.utils import (
     DataclassType,
-    coerce_to_dataclass,
     fully_qualified_class_name,
     get_dataclass_fields,
     issubclass_safe,

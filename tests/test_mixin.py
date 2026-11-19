@@ -10,36 +10,6 @@ from fancy_dataclass.settings import DocFieldSettings, FieldSettings, MixinSetti
 from fancy_dataclass.utils import FieldTypeValidationError
 
 
-def test_field_settings() -> None:
-    """Tests the FieldSettings class."""
-    fld_empty = field()
-    fld_pos = field(metadata={'positive': True})
-    fld_wrong_type = field(metadata={'positive': 1})
-    class MyFieldSettings1(FieldSettings):
-        pass
-    with pytest.raises(TypeError, match='MyFieldSettings1 is not a dataclass'):
-        _ = MyFieldSettings1.from_field(fld_pos)
-    MyFieldSettings1 = dataclass(MyFieldSettings1)  # type: ignore[misc]
-    # extra metadata is ignored
-    assert MyFieldSettings1.from_field(fld_pos) == MyFieldSettings1()
-    @dataclass
-    class MyFieldSettings2(FieldSettings):
-        positive: bool
-    assert MyFieldSettings2.from_field(fld_pos) == MyFieldSettings2(True)
-    with pytest.raises(TypeError, match="missing 1 required positional argument: 'positive'"):
-        _ = MyFieldSettings2.from_field(fld_empty)
-    with pytest.raises(
-        TypeError,
-        match="field 'positive' of .*MyFieldSettings2: value 1 does not match expected type bool",
-    ):
-        _ = MyFieldSettings2.from_field(fld_wrong_type)
-    @dataclass
-    class MyFieldSettings3(FieldSettings):
-        positive: bool = False
-    assert MyFieldSettings3.from_field(fld_pos) == MyFieldSettings3(True)
-    assert MyFieldSettings3.from_field(fld_empty) == MyFieldSettings3(False)
-
-
 @dataclass
 class MySettingsOpt(MixinSettings):
     enhanced: bool = False
@@ -47,6 +17,58 @@ class MySettingsOpt(MixinSettings):
 @dataclass
 class MySettingsReq(MixinSettings):
     enhanced: bool
+
+@dataclass
+class MyFieldSettings(FieldSettings):
+    flag: bool = False
+
+
+class TestSettings:
+    """Tests MixinSettings and FieldSettings."""
+
+    def test_field_settings(self) -> None:
+        """Tests the FieldSettings class."""
+        fld_empty = field()
+        fld_pos = field(metadata={'positive': True})
+        fld_wrong_type = field(metadata={'positive': 1})
+        class MyFieldSettings1(FieldSettings):
+            pass
+        with pytest.raises(TypeError, match='MyFieldSettings1 is not a dataclass'):
+            _ = MyFieldSettings1.from_field(fld_pos)
+        MyFieldSettings1 = dataclass(MyFieldSettings1)  # type: ignore[misc]
+        # extra metadata is ignored
+        assert MyFieldSettings1.from_field(fld_pos) == MyFieldSettings1()
+        @dataclass
+        class MyFieldSettings2(FieldSettings):
+            positive: bool
+        assert MyFieldSettings2.from_field(fld_pos) == MyFieldSettings2(True)
+        with pytest.raises(TypeError, match="missing 1 required positional argument: 'positive'"):
+            _ = MyFieldSettings2.from_field(fld_empty)
+        with pytest.raises(
+            TypeError,
+            match="field 'positive' of .*MyFieldSettings2: value 1 does not match expected type bool",
+        ):
+            _ = MyFieldSettings2.from_field(fld_wrong_type)
+        @dataclass
+        class MyFieldSettings3(FieldSettings):
+            positive: bool = False
+        assert MyFieldSettings3.from_field(fld_pos) == MyFieldSettings3(True)
+        assert MyFieldSettings3.from_field(fld_empty) == MyFieldSettings3(False)
+
+    def test_invalid_settings_fields(self) -> None:
+        """Tests field validation of MixinSettings and FieldSettings."""
+        @dataclass
+        class MyMixinSettings(MixinSettings):
+            x: int
+        @dataclass
+        class MyFieldSettings(FieldSettings):
+            x: int
+        for cls in [MyMixinSettings, MyFieldSettings]:
+            with pytest.raises(
+                FieldTypeValidationError,
+                match=f"field 'x' of .*{cls.__name__}: value '1' does not match expected type int",
+            ):
+                _ = cls('1')  # type: ignore[arg-type]
 
 
 class TestDataclassMixin:
@@ -360,7 +382,40 @@ class TestDataclassMixin:
         with pytest.raises(TypeError, match="'a' is not a valid field for DC12"):
             _ = obj._replace(a=3)
 
-    def test_doc_settings(self) -> None:
+    def test_field_settings_inheritance(self) -> None:
+        """Tests the inheritance of field settings."""
+        class MyMixin(DataclassMixin):
+            __field_settings_type__ = MyFieldSettings
+        assert MyMixin.__field_settings_type__ is MyFieldSettings
+        assert not hasattr(MyMixin, '__field_settings_map__')
+        with pytest.raises(TypeError, match='could not get field settings'):
+            _ = MyMixin._field_settings('x', base=MyMixin)
+        class NonDC(MyMixin):
+            x: int
+        assert NonDC.__field_settings_type__ is None
+        assert not hasattr(NonDC, '__field_settings_map__')
+        with pytest.raises(TypeError, match='could not get field settings'):
+            _ = NonDC._field_settings('x', base=MyMixin)
+        @dataclass
+        class MyDC(MyMixin):
+            x: int
+        assert MyDC.__field_settings_type__ is None
+        assert list(MyDC.__field_settings_map__) == [MyMixin]
+        assert MyDC._field_settings('x', base=MyMixin) == MyFieldSettings(flag=False)
+        with pytest.raises(TypeError, match='could not get field settings'):
+            _ = MyDC._field_settings('x', base=MyDC)
+        @dataclass
+        class MyDC2(MyMixin):
+            x: int = field(metadata={'flag': True})
+        assert MyDC2.__field_settings_type__ is None
+        assert list(MyDC.__field_settings_map__) == [MyMixin]
+        assert MyDC2._field_settings('x', base=MyMixin) == MyFieldSettings(flag=True)
+        with pytest.raises(ValueError, match="field 'y' does not exist for MyDC2"):
+            _ = MyDC2._field_settings('y', base=MyMixin)
+        with pytest.raises(TypeError, match='could not get field settings'):
+            _ = MyDC2._field_settings('x', base=MyDC2)
+
+    def test_doc_field_settings(self) -> None:
         """Tests DocFieldSettings."""
         @dataclass
         class DocMixin(DataclassMixin):
@@ -388,7 +443,7 @@ class TestDataclassMixin:
             l: Annotated[int, Doc('bad'), annotated_doc.Doc('l')] = 12  # noqa: E741
         docs = {}
         for fld in fields(DC1):
-            fld_settings = DC1._field_settings(fld)
+            fld_settings = DC1._field_settings(fld.name, base=DocMixin)
             assert isinstance(fld_settings, DocFieldSettings)
             docs[fld.name] = fld_settings.doc
         assert docs == {
@@ -415,19 +470,31 @@ class TestDataclassMixin:
         @dataclass
         class DC3(DocMixin):
             x: 'fake-type'  # type: ignore  # noqa: F821
-        assert DC3._field_settings(fields(DC3)[0]) == DocFieldSettings(doc=None)
+        assert DC3._field_settings('x', base=DocMixin) == DocFieldSettings(doc=None)
 
-    def test_invalid_settings_fields(self) -> None:
-        """Tests field validation of MixinSettings and FieldSettings."""
+    def test_wrap_dataclass(self) -> None:
+        """Tests the wrap_dataclass function."""
+        class NonDC:
+            ...
         @dataclass
-        class MyMixinSettings(MixinSettings):
+        class DC:
             x: int
-        @dataclass
-        class MyFieldSettings(FieldSettings):
-            x: int
-        for cls in [MyMixinSettings, MyFieldSettings]:
-            with pytest.raises(
-                FieldTypeValidationError,
-                match=f"field 'x' of .*{cls.__name__}: value '1' does not match expected type int",
-            ):
-                _ = cls('1')  # type: ignore[arg-type]
+        class MyMixin(DataclassMixin):
+            __settings_type__ = MySettingsOpt
+            __settings__ = MySettingsOpt()
+            __field_settings_type__ = MyFieldSettings
+        with pytest.raises(TypeError, match='NonDC is not a dataclass'):
+            _ = MyMixin.wrap_dataclass(NonDC)
+        DCWrapped = MyMixin.wrap_dataclass(DC)
+        assert DCWrapped.__settings_type__ is None
+        assert DCWrapped.__settings__ is None
+        assert DCWrapped.__field_settings_type__ is None
+        assert list(DCWrapped.__field_settings_map__) == [MyMixin]
+        assert DCWrapped._class_settings(base=MyMixin) == MySettingsOpt()
+        with pytest.raises(TypeError, match='could not get class settings for DC, base DC'):
+            _ = DCWrapped._class_settings(base=DCWrapped)
+        assert DCWrapped._field_settings('x', base=MyMixin) == MyFieldSettings()
+        with pytest.raises(ValueError, match="field 'y' does not exist for DC"):
+            _ = DCWrapped._field_settings('y', base=MyMixin)
+        with pytest.raises(TypeError, match='could not get field settings for DC, base DC'):
+            _ = DCWrapped._field_settings('x', base=DCWrapped)
