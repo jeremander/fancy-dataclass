@@ -488,6 +488,13 @@ def _validate_dataclass_field(cls: type, fld: Field[Any], value: Any, *, is_defa
     """Given a dataclass type, Field object, and field value, checks if the value matches the expected type.
     If not, raises a [`FieldTypeValidationError`][fancy_dataclass.utils.FieldTypeValidationError]."""
     tp = get_args(fld.type)[0] if type_is_classvar(fld.type) else fld.type
+    if is_default and (type(value).__name__ == 'FieldInfo'):
+        # Guard against the convention of using `Field(...)` as the default value for a `pydantic` field.
+        # In this case the default value is a `FieldInfo` instead of an actual default value, so we return here,
+        # leaving the validation to `pydantic` itself.
+        # TODO: eventually drop support for this, requiring users to switch to the `Annotated` convention for field
+        # metadata, see: https://pydantic.dev/docs/validation/2.7/concepts/fields/#using-annotated
+        return
     try:
         _check_type(value, tp)
     except TypeValidationError as e:
