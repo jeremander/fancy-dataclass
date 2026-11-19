@@ -215,7 +215,7 @@ def test_validate_init_and_assign(frozen: bool, init: bool, assign: bool) -> Non
         x: int = field(metadata={'validate_init': init, 'validate_assign': assign})
     for cls in [DCClassFlags, DCFieldFlags]:
         flags = _FieldValidationFlags(_validate_init=init, _validate_assign=assign)
-        assert cls._field_validation_flags(cls.__dataclass_fields__['x']) == flags
+        assert cls._field_validation_flags('x') == flags
         # valid type is always OK
         obj = cls(1)
         assert obj.x == 1
@@ -422,12 +422,11 @@ def test_validate_field_setting(
     @dataclass
     class DC(ValidatedDataclass):
         x: int = field(metadata=kwargs)
-    fld = DC.__dataclass_fields__['x']
-    fld_settings = DC._field_settings(fld)
+    fld_settings = DC._validated_dataclass_field_settings('x')
     assert fld_settings.validate_init is validate_init
     assert fld_settings.validate_assign is validate_assign
     assert fld_settings.validate is validate
-    flags = DC._field_validation_flags(fld)
+    flags = DC._field_validation_flags('x')
     assert flags._validate_init is _first_non_null([validate_init, validate], default=True)
     assert flags._validate_assign is _first_non_null([validate_assign, validate], default=True)
 
@@ -443,8 +442,7 @@ def test_validate_setting_inheritance(validate_parent: Optional[bool], validate_
     class DCChild(DCParent, **child_kwargs):
         ...
     validate = _first_non_null([validate_child, validate_parent], default=True)
-    fld = DCChild.__dataclass_fields__['x']
-    flags = DCChild._field_validation_flags(fld)
+    flags = DCChild._field_validation_flags('x')
     assert flags.validate_init is validate
     assert flags.validate_assign is validate
     obj = DCChild(1)

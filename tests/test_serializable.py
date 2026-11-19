@@ -25,6 +25,7 @@ from fancy_dataclass.utils import (
     DataclassType,
     fully_qualified_class_name,
     get_dataclass_fields,
+    is_dataclass_type,
     issubclass_safe,
 )
 
@@ -32,12 +33,17 @@ from . import raises_field_type_err
 from .test_dict import DCSuppress, DCSuppress2
 
 
-T = TypeVar('T', bound=DictDataclass)
+D = TypeVar('D', bound=DictDataclass)
+T = TypeVar('T')
 
 ErrInfo = tuple[bool, type[Exception], str]
 
 NOW = datetime.now()
 
+
+# TODO: the helper functions below aim to rewrap classes into new classes, recursively across dataclass fields.
+# This is rather hacky, so we should try to rewrite the tests in a simpler way, e.g. by exporting the classes from a
+# function which takes a base class as a parameter.
 
 def to_json_dataclass(cls: type) -> type[JSONDataclass]:
     """Converts a class to a JSONDataclass."""
@@ -46,7 +52,6 @@ def to_json_dataclass(cls: type) -> type[JSONDataclass]:
 
 def _dataclass_type_map(cls: DataclassType, func: Callable[[type], type]) -> DataclassType:
     """Applies a type function to all dataclass field types, recursively through container types."""
-    # TODO: eliminate this function?
     def _map_func(tp: type) -> type:
         return func(_dataclass_type_map(tp, func)) if is_dataclass(tp) else func(tp)
     field_data = []
@@ -69,10 +74,10 @@ def _dataclass_type_map(cls: DataclassType, func: Callable[[type], type]) -> Dat
         field_data.append((fld.name, tp, new_fld))
     return make_dataclass(cls.__name__, field_data, bases=cls.__bases__, namespace=dict(cls.__dict__))
 
-def _convert_json_dataclass(cls: type[T], new_cls: type[DictDataclass]) -> type[T]:
+def _convert_json_dataclass(cls: type[D], new_cls: type[DictDataclass]) -> type[D]:
     """Converts JSONDataclass base classes with the given class, recursively within the input class's fields."""
     # TODO: this is very hacky; can we clean it up?
-    def _convert(tp: type[T]) -> type[T]:
+    def _convert(tp: type[D]) -> type[D]:
         if issubclass_safe(tp, JSONDataclass):
             bases = []
             for base in tp.__bases__:
@@ -88,6 +93,34 @@ def _convert_json_dataclass(cls: type[T], new_cls: type[DictDataclass]) -> type[
     tp.__eq__ = cls.__eq__  # type: ignore[method-assign]
     tp.__settings__ = cls.__settings__
     return tp
+
+def _coerce_to_dataclass(cls: type[T], obj: object) -> T:
+    """Coerces the fields from an arbitrary object to an instance of a dataclass type.
+    Any missing attributes will be set to the dataclass's default values."""
+    kwargs = {}
+    for fld in fields(cls):  # type: ignore[arg-type]
+        if hasattr(obj, fld.name):
+            val = getattr(obj, fld.name)
+            if is_dataclass_type(fld.type):  # type: ignore[arg-type]
+                val = _coerce_to_dataclass(fld.type, val)
+            else:
+                origin_type = get_origin(fld.type)
+                if origin_type and issubclass_safe(origin_type, Iterable):
+                    if issubclass(origin_type, dict):
+                        (_, val_type) = get_args(fld.type)
+                        if is_dataclass_type(val_type):
+                            val = type(val)({key: _coerce_to_dataclass(val_type, elt) for (key, elt) in val.items()})
+                    elif issubclass(origin_type, tuple):
+                        val = type(val)(
+                            _coerce_to_dataclass(tp, elt) if is_dataclass_type(tp) else elt
+                            for (tp, elt) in zip(get_args(fld.type), val)
+                        )
+                    else:
+                        (elt_type,) = get_args(fld.type)
+                        if is_dataclass_type(elt_type):
+                            val = type(val)(_coerce_to_dataclass(elt_type, elt) for elt in val)
+            kwargs[fld.name] = val
+    return cls(**kwargs)
 
 
 ################
@@ -327,16 +360,16 @@ class TestDict:
         """Converts a dataclass type to have the desired base class."""
         return _convert_json_dataclass(tp, self.base_cls)
 
-    def _coerce_object(self, obj: object) -> tuple[type[DictDataclass], object]:
+    def _coerce_object(self, obj: DictDataclass) -> tuple[type[DictDataclass], DictDataclass]:
         """Creates a new version of the object with the desired base class.
         Returns the class and the coerced object."""
         tp = self._convert_dataclass(type(obj))
         assert issubclass(tp, self.base_cls)
-        obj = coerce_to_dataclass(tp, obj)
+        obj = _coerce_to_dataclass(tp, obj)
         assert isinstance(obj, self.base_cls)
         return (tp, obj)
 
-    def _test_dict_round_trip(self, obj: object) -> None:
+    def _test_dict_round_trip(self, obj: DictDataclass) -> None:
         """Tests round-trip conversion to/from a dict."""
         (tp, obj) = self._coerce_object(obj)
         assert isinstance(obj, DictDataclass)
@@ -365,7 +398,7 @@ class TestDict:
             with bwd_ctx:
                 assert type(obj).from_dict(d) == obj
 
-    def _test_serialize_round_trip(self, obj: object, tmp_path: Path) -> None:
+    def _test_serialize_round_trip(self, obj: DictDataclass, tmp_path: Path) -> None:
         """Tests round-trip conversion to/from the serialized format."""
         (tp, obj) = self._coerce_object(obj)
         assert issubclass(tp, FileSerializable)
@@ -394,7 +427,7 @@ class TestDict:
         obj3 = getattr(tp, f'from_{ext}_string')(s)
         assert obj3 == obj
 
-    def _test_serialize_convert(self, obj: object, s: str, err: Optional[ErrInfo]) -> None:
+    def _test_serialize_convert(self, obj: DictDataclass, s: str, err: Optional[ErrInfo]) -> None:
         """Tests that an object gets serialized to the expected string and back."""
         (_, obj) = self._coerce_object(obj)
         ext = self.ext
@@ -406,7 +439,7 @@ class TestDict:
                 assert getattr(type(obj), f'from_{ext}_string')(s) == obj
 
     @pytest.mark.parametrize('obj', TEST_JSON)
-    def test_dict_round_trip(self, obj: object) -> None:
+    def test_dict_round_trip(self, obj: DictDataclass) -> None:
         """Tests round-trip to dict and back."""
         self._test_dict_round_trip(obj)
 
@@ -418,12 +451,12 @@ class TestJSON(TestDict):
     ext = 'json'
 
     @pytest.mark.parametrize('obj', TEST_JSON)
-    def test_dict_round_trip(self, obj: object) -> None:
+    def test_dict_round_trip(self, obj: DictDataclass) -> None:
         """Tests round-trip to dict and back."""
         self._test_dict_round_trip(obj)
 
     @pytest.mark.parametrize('obj', TEST_JSON)
-    def test_json_round_trip(self, obj: object, tmp_path: Path) -> None:
+    def test_json_round_trip(self, obj: DictDataclass, tmp_path: Path) -> None:
         """Tests round-trip to JSON and back."""
         self._test_serialize_round_trip(obj, tmp_path)
 
@@ -745,12 +778,12 @@ class TestTOML(TestDict):
     ext = 'toml'
 
     @pytest.mark.parametrize('obj', TEST_JSON)
-    def test_dict_round_trip(self, obj: object) -> None:
+    def test_dict_round_trip(self, obj: DictDataclass) -> None:
         """Tests round-trip to dict and back."""
         self._test_dict_round_trip(obj)
 
     @pytest.mark.parametrize('obj', TEST_JSON)
-    def test_toml_round_trip(self, obj: object, tmp_path: Path) -> None:
+    def test_toml_round_trip(self, obj: DictDataclass, tmp_path: Path) -> None:
         """Tests round-trip to TOML and back."""
         self._test_serialize_round_trip(obj, tmp_path)
 
@@ -761,7 +794,7 @@ class TestTOML(TestDict):
         (DCFloat(math.inf), 'x = inf\n'),
         (DCFloat(math.nan), 'x = nan\n'),
     ])
-    def test_float(self, obj: object, s: str) -> None:
+    def test_float(self, obj: DictDataclass, s: str) -> None:
         """Tests floating-point support."""
         self._test_serialize_convert(obj, s, None)
 
@@ -772,7 +805,7 @@ class TestTOML(TestDict):
         (DCAny({}), '[val]\n'),
         (DCAny({'x': 5}), '[val]\nx = 5\n'),
     ])
-    def test_any(self, obj: object, s: str) -> None:
+    def test_any(self, obj: DictDataclass, s: str) -> None:
         """Tests Any type."""
         self._test_serialize_convert(obj, s, None)
 
@@ -784,14 +817,14 @@ class TestTOML(TestDict):
         # NOTE: round-trip is violated because null value is omitted and default is non-null
         (DCOptionalDefault(None), '# x = \n', (True, AssertionError, '==')),
     ])
-    def test_optional(self, obj: object, s: str, err: Optional[ErrInfo]) -> None:
+    def test_optional(self, obj: DictDataclass, s: str, err: Optional[ErrInfo]) -> None:
         """Tests behavior of Optional types with TOML conversion."""
         self._test_serialize_convert(obj, s, err)
 
     @pytest.mark.parametrize(['obj', 's'], [
         (DCDatetime(datetime.strptime('2024-01-01', '%Y-%m-%d')), 'dt = 2024-01-01T00:00:00\n'),
     ])
-    def test_datetime(self, obj: object, s: str) -> None:
+    def test_datetime(self, obj: DictDataclass, s: str) -> None:
         """Tests support for the datetime type."""
         self._test_serialize_convert(obj, s, None)
 
@@ -805,7 +838,7 @@ class TestTOML(TestDict):
         (DCListOptional([1, 2, 3]), 'vals = [1, 2, 3]\n', None),
         (DCListOptional([1, None, 3]), 'vals = [1, None, 3]\n', (False, ValueError, "<class 'NoneType'>")),
     ])
-    def test_list(self, obj: object, s: str, err: Optional[ErrInfo]) -> None:
+    def test_list(self, obj: DictDataclass, s: str, err: Optional[ErrInfo]) -> None:
         """Tests behavior of list types."""
         self._test_serialize_convert(obj, s, err)
 

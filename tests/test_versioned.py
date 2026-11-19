@@ -481,7 +481,7 @@ def test_from_dict() -> None:
         assert A1.from_dict(d2, migrate=True) == A1(x=2, y='b')  # pyrefly: ignore[unexpected-keyword]
         # NOTE: type of y is wrong after migration
         # TODO: error if this happens during migration? Or just do general validation.
-        assert A1.from_dict(d3, migrate=True) == A1(x=3, y=123)  # pyrefly: ignore[unexpected-keyword]
+        assert A1.from_dict(d3, migrate=True) == A1(x=3, y=123)  # pyrefly: ignore[no-matching-overload]
     _set_allow_extra_fields(A1, True)
     assert A1.from_dict({'version': 1, 'x': 1, 'z': 7.0}, migrate=True) == A1(x=1, y='a')  # pyrefly: ignore[unexpected-keyword]
     _set_allow_extra_fields(A1, False)
@@ -491,12 +491,12 @@ def test_from_dict() -> None:
         _set_allow_extra_fields(A2, allow_extra)
         assert A2.from_dict(d2, migrate=True) == a2
         assert A2.from_dict(d1, migrate=True) == A2(x=1, y='a', z=3.14)  # pyrefly: ignore[unexpected-keyword]
-        assert A2.from_dict(d3, migrate=True) == A2(x=3, y=123)  # pyrefly: ignore[unexpected-keyword]
+        assert A2.from_dict(d3, migrate=True) == A2(x=3, y=123)  # pyrefly: ignore[no-matching-overload]
     for allow_extra in [False, True]:
         _set_allow_extra_fields(A3, allow_extra)
         assert A3.from_dict(d3, migrate=True) == a3
-        assert A3.from_dict(d1, migrate=True) == A3(x=1, y='a')  # pyrefly: ignore[unexpected-keyword]
-        assert A3.from_dict(d2, migrate=True) == A3(x=2, y='b')  # pyrefly: ignore[unexpected-keyword]
+        assert A3.from_dict(d1, migrate=True) == A3(x=1, y='a')  # pyrefly: ignore[no-matching-overload]
+        assert A3.from_dict(d2, migrate=True) == A3(x=2, y='b')  # pyrefly: ignore[no-matching-overload]
 
 def test_json() -> None:
     """Tests behavior of JSON conversion."""

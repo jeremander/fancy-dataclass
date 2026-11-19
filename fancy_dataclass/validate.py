@@ -113,7 +113,7 @@ class ValidatedDataclass(DataclassMixin):
 
                 if type_is_classvar(fld.type) and hasattr(wrapped_cls, fld.name):
                     _validate_dataclass_field(wrapped_cls, fld, getattr(wrapped_cls, fld.name))
-                elif (wrapped_cls._field_validation_flags(fld).validate_init) and (fld.default is not MISSING):
+                elif (wrapped_cls._field_validation_flags(fld.name).validate_init) and (fld.default is not MISSING):
                     _validate_dataclass_field(wrapped_cls, fld, fld.default, is_default=True)
         # determine whether any fields should validate upon assignment
         if wrapped_cls.__dataclass_params__.frozen:  # type: ignore[attr-defined]
@@ -121,7 +121,7 @@ class ValidatedDataclass(DataclassMixin):
         else:
             validate_assign = False
             for fld in get_dataclass_fields(wrapped_cls):
-                flags = wrapped_cls._field_validation_flags(fld)
+                flags = wrapped_cls._field_validation_flags(fld.name)
                 if flags.validate_assign:
                     validate_assign = True
                     break
@@ -137,18 +137,18 @@ class ValidatedDataclass(DataclassMixin):
                 tp = cast(DataclassType, type(self))
                 if (
                     (fld := tp.__dataclass_fields__.get(name, None))
-                    and tp._field_validation_flags(fld).validate_assign  # type: ignore[attr-defined]
+                    and tp._field_validation_flags(fld.name).validate_assign  # type: ignore[attr-defined]
                 ):
                     _validate_dataclass_field(tp, fld, value)
                 orig_setattr(self, name, value)  # pyrefly: ignore[bad-argument-type]
             wrapped_cls.__setattr__ = _validated_setattr  # type: ignore[method-assign]
 
     @classmethod
-    def _field_validation_flags(cls, fld: Field[Any]) -> _FieldValidationFlags:
-        """Returns a _FieldValidationFlags object indicating if the value the given field should be validated for
-        initialization and assignment."""
+    def _field_validation_flags(cls, name: str) -> _FieldValidationFlags:
+        """Returns a _FieldValidationFlags object indicating if the value of the field with the given name should be
+        validated for initialization and assignment."""
         cls_settings = cls._validated_dataclass_settings()
-        fld_settings = cls._validated_dataclass_field_settings(fld.name)
+        fld_settings = cls._validated_dataclass_field_settings(name)
         validate_init = _first_non_null(
             [fld_settings.flags._validate_init, cls_settings.flags._validate_init],
             default=True,
@@ -168,6 +168,6 @@ class ValidatedDataclass(DataclassMixin):
 
     def __post_init__(self, *args: Any, **kwargs: Any) -> None:
         for fld in get_dataclass_fields(self):
-            flags = self._field_validation_flags(fld)
+            flags = self._field_validation_flags(fld.name)
             if flags.validate_init:
                 self._validate_field(fld)
