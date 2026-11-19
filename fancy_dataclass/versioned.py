@@ -237,18 +237,18 @@ class VersionedDataclass(DictDataclass):
 
     @classmethod
     @override
-    def dataclass_args_from_dict(cls, d: AnyDict) -> AnyDict:
+    def dataclass_args_from_dict(cls, data: AnyDict) -> AnyDict:
         """Given a dict of arguments, performs type conversion and/or validity checking, then returns a new dict
         that can be passed to the class's constructor."""
-        if 'version' in d:
-            d = {key: val for (key, val) in d.items() if (key != 'version')}
-        return super().dataclass_args_from_dict(d)
+        if 'version' in data:
+            data = {key: val for (key, val) in data.items() if (key != 'version')}
+        return super().dataclass_args_from_dict(data)
 
     @classmethod
     @override
-    def _get_type_from_dict(cls, d: AnyDict) -> type[Self]:
-        tp = super()._get_type_from_dict(d)
-        if (version := d.get('version')) is not None:
+    def _get_type_from_dict(cls, data: AnyDict) -> type[Self]:
+        tp = super()._get_type_from_dict(data)
+        if (version := data.get('version')) is not None:
             # use the dict-specified version
             return tp.get_class_with_version(version=version)  # type: ignore[return-value]
         return tp
@@ -274,19 +274,19 @@ class VersionedDataclass(DictDataclass):
 
     @classmethod
     @override
-    def from_dict(cls, d: AnyDict, *, migrate: bool = False, **kwargs: Any) -> Self:
+    def from_dict(cls, data: AnyDict, *, migrate: bool = False, **kwargs: Any) -> Self:
         """Constructs an object from a dictionary of fields.
 
         This may also perform some basic type/validity checking.
 
         Args:
-            d: Dict to convert into an object
+            data: Dict to convert into an object
             migrate: If `True`, migrate to the calling class's version
             kwargs: Keyword arguments
 
         Returns:
             Converted object of this class"""
-        obj = super().from_dict(d, **kwargs)
+        obj = super().from_dict(data, **kwargs)
         if migrate:
             return cast(Self, obj.migrate(cls.version))
         return obj

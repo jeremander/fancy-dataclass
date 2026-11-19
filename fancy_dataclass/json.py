@@ -135,8 +135,8 @@ class JSONDataclass(DictFileSerializableDataclass, JSONSerializable, validate=Tr
 
     @classmethod
     @override
-    def _dict_to_text_file(cls, d: AnyDict, fp: IO[str], **kwargs: Any) -> None:
-        return _dump_value_to_json(d, fp, cls.json_encoder(), **kwargs)
+    def _dict_to_text_file(cls, data: AnyDict, fp: IO[str], **kwargs: Any) -> None:
+        return _dump_value_to_json(data, fp, cls.json_encoder(), **kwargs)
 
     @classmethod
     @override

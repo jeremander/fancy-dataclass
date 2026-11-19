@@ -329,11 +329,11 @@ class DictFileSerializableDataclass(DictDataclass, TextFileSerializable):
 
     @classmethod
     @abstractmethod
-    def _dict_to_text_file(cls, d: AnyDict, fp: IO[str], **kwargs: Any) -> None:
+    def _dict_to_text_file(cls, data: AnyDict, fp: IO[str], **kwargs: Any) -> None:
         """Serializes a dict to a text file.
 
         Args:
-            d: A Python dict
+            data: A Python dict
             fp: A writable file-like object
             kwargs: Keyword arguments"""
 

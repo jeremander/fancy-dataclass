@@ -371,7 +371,7 @@ class DictDataclass(ValidatedDataclass, validate=False):
         return field_key_map
 
     @classmethod
-    def dataclass_args_from_dict(cls, d: AnyDict) -> AnyDict:
+    def dataclass_args_from_dict(cls, data: AnyDict) -> AnyDict:
         """Given a dict of arguments, performs type conversion and/or validity checking, then returns a new dict that
         can be passed to the class's constructor."""
         check_dataclass(cls)
@@ -389,17 +389,17 @@ class DictDataclass(ValidatedDataclass, validate=False):
             tp = dataclass_field_type(cls, fld.name)  # type: ignore[arg-type]
             if fld.name in flattened_field_names:
                 assert issubclass(tp, DictDataclass)
-                d2 = {key: d[key] for key in field_key_map.get(fld.name, []) if (key in d)}
+                d2 = {key: data[key] for key in field_key_map.get(fld.name, []) if (key in data)}
                 kwargs[fld.name] = tp.from_dict(d2)
                 consumed_keys.update(d2)
             else:
                 key = field_key_map[fld.name][0]
-                if key in d:
+                if key in data:
                     # field may be defined in the dataclass itself or one of its ancestor dataclasses
                     for base in bases:
                         with suppress(AttributeError, KeyError):
                             field_type = dataclass_field_type(base, fld.name)
-                            kwargs[fld.name] = cls._from_dict_value(field_type, d[key])
+                            kwargs[fld.name] = cls._from_dict_value(field_type, data[key])
                             consumed_keys.add(key)
                             break
                     else:
@@ -411,15 +411,15 @@ class DictDataclass(ValidatedDataclass, validate=False):
                         val = fld.default_factory()
                         # raise ValueError(f'{fld.name!r} field is required')
                     kwargs[fld.name] = val
-        if (not cls._dict_dataclass_settings().allow_extra_fields) and (len(consumed_keys) < len(d)):
+        if (not cls._dict_dataclass_settings().allow_extra_fields) and (len(consumed_keys) < len(data)):
             # error if there are unknown fields when they are not allowed
-            unknown_fields = [key for key in d if (key not in consumed_keys)]
+            unknown_fields = [key for key in data if (key not in consumed_keys)]
             raise ValueError(f'unknown dict fields for {cls.__name__}: {unknown_fields!r}')
         return kwargs
 
     @classmethod
-    def _get_type_from_dict(cls, d: AnyDict) -> type[Self]:
-        typename = d.get('type')
+    def _get_type_from_dict(cls, data: AnyDict) -> type[Self]:
+        typename = data.get('type')
         if (typename is None) or ('type' in cls.__dataclass_fields__):  # type: ignore[attr-defined]
             # type field is unspecified *or* 'type' is an expected dataclass field: use the calling class
             return cls
@@ -433,22 +433,22 @@ class DictDataclass(ValidatedDataclass, validate=False):
         return cls.get_subclass_with_name(typename)
 
     @classmethod
-    def from_dict(cls, d: AnyDict, **kwargs: Any) -> Self:
+    def from_dict(cls, data: AnyDict, **kwargs: Any) -> Self:
         """Constructs an object from a dictionary of fields.
 
         This may also perform some basic type/validity checking.
 
         Args:
-            d: Dict to convert into an object
+            data: Dict to convert into an object
             kwargs: Keyword arguments
 
         Returns:
             Converted object of this class"""
         # first establish the type, which may be present in the 'type' field of the dict
-        tp = cls._get_type_from_dict(d)
+        tp = cls._get_type_from_dict(data)
         if tp is not cls:
             # call from_dict on the subclass in case it has its own custom implementation
             # (remove the type name before passing to the constructor)
-            d2 = {key: val for (key, val) in d.items() if (key != 'type')}
+            d2 = {key: val for (key, val) in data.items() if (key != 'type')}
             return tp.from_dict(d2, **kwargs)
-        return tp(**tp.dataclass_args_from_dict(d))
+        return tp(**tp.dataclass_args_from_dict(data))

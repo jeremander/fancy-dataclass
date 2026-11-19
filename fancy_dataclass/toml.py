@@ -156,17 +156,17 @@ class TOMLDataclass(
     __settings_type__ = TOMLDataclassSettings
 
     @classmethod
-    def _dict_to_document(cls, d: AnyDict) -> tk.TOMLDocument:
+    def _dict_to_document(cls, data: AnyDict) -> tk.TOMLDocument:
         def _is_nested(val: Any) -> bool:
             return isinstance(val, (dict, list, tuple))
         # sort so that nested sections come last
-        d = dict(sorted(d.items(), key=lambda pair: _is_nested(pair[1])))
+        data = dict(sorted(data.items(), key=lambda pair: _is_nested(pair[1])))
         doc = tk.document()
         if (comments := cls._top_level_comments()) is not None:
             for comment in comments:
                 doc.add(tk.comment(comment) if comment.strip() else tk.nl())
             doc.add(tk.nl())
-        for (key, val) in d.items():
+        for (key, val) in data.items():
             if not (fld := cls.__dataclass_fields__.get(key)):  # type: ignore[attr-defined]
                 continue
             settings = cls._dict_dataclass_field_settings(fld.name)
@@ -187,13 +187,13 @@ class TOMLDataclass(
         return doc
 
     @classmethod
-    def _dict_to_toml_file(cls, d: AnyDict, fp: IO[str], **kwargs: Any) -> None:
-        return tk.dump(cls._dict_to_document(d), fp, **kwargs)
+    def _dict_to_toml_file(cls, data: AnyDict, fp: IO[str], **kwargs: Any) -> None:
+        return tk.dump(cls._dict_to_document(data), fp, **kwargs)
 
     @classmethod
     @override
-    def _dict_to_text_file(cls, d: AnyDict, fp: IO[str], **kwargs: Any) -> None:
-        return cls._dict_to_toml_file(d, fp, **kwargs)
+    def _dict_to_text_file(cls, data: AnyDict, fp: IO[str], **kwargs: Any) -> None:
+        return cls._dict_to_toml_file(data, fp, **kwargs)
 
     @classmethod
     @override
