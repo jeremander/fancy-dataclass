@@ -9,7 +9,7 @@ import tomlkit.items
 import tomlkit.toml_document
 from typing_extensions import Self, override
 
-from fancy_dataclass.dict import AnyDict, DictDataclassFieldSettings
+from fancy_dataclass.dict import AnyDict
 from fancy_dataclass.serialize import (
     DictFileSerializableDataclass,
     TextFileSerializable,
