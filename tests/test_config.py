@@ -13,6 +13,7 @@ from fancy_dataclass.config import ConfigDataclass, DictConfig
 from fancy_dataclass.json import JSONDataclass
 from fancy_dataclass.toml import TOMLDataclass
 from fancy_dataclass.utils import FieldTypeValidationError
+from fancy_dataclass.validate import ValidatedDataclassSettings
 
 from . import raises_field_type_err
 
@@ -68,11 +69,11 @@ def test_config_dataclass() -> None:
 
 def test_validate() -> None:
     """Tests validation behavior of ConfigDataclass."""
-    assert ConfigDataclass.__settings__.validate_init is True
+    assert ConfigDataclass._validated_dataclass_settings() == ValidatedDataclassSettings(validate=True)
     @dataclass
     class ConfigValidate(ConfigDataclass):
         x: int
-    assert ConfigValidate.__settings__.validate_init is True
+    assert ConfigValidate._validated_dataclass_settings() == ValidatedDataclassSettings(validate=True)
     cfg = ConfigValidate(1)
     assert ConfigValidate.from_dict(cfg.to_dict()) == cfg
     with raises_field_type_err(ConfigValidate, 'x', int, '1'):
@@ -82,7 +83,7 @@ def test_validate() -> None:
     @dataclass
     class ConfigNoValidate(ConfigDataclass, validate=False):
         x: int
-    assert ConfigNoValidate.__settings__.validate_init is False
+    assert ConfigNoValidate._validated_dataclass_settings() == ValidatedDataclassSettings(validate=False)
     cfg = ConfigNoValidate(1)
     assert ConfigNoValidate.from_dict(cfg.to_dict()) == cfg
     cfg = ConfigNoValidate('1')  # type: ignore[arg-type]

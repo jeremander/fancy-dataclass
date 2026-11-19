@@ -2,14 +2,14 @@ from abc import abstractmethod
 from collections.abc import Iterable
 from dataclasses import Field, dataclass
 from io import IOBase, StringIO, TextIOBase, TextIOWrapper
-from typing import IO, Any, Optional
+from typing import IO, Any, Optional, cast
 
 import tomlkit as tk
 import tomlkit.items
 import tomlkit.toml_document
 from typing_extensions import Self, override
 
-from fancy_dataclass.dict import AnyDict, DictDataclassFieldSettings, DictDataclassSettings
+from fancy_dataclass.dict import AnyDict, DictDataclassFieldSettings
 from fancy_dataclass.serialize import (
     DictFileSerializableDataclass,
     TextFileSerializable,
@@ -58,11 +58,10 @@ def _add_comments_to_doc(comments: Iterable[tomlkit.items.Comment], doc: tk.TOML
 ##########
 
 @dataclass(kw_only=True)
-class TOMLDataclassSettings(DictDataclassSettings):
+class TOMLDataclassSettings(MixinSettings):
     """Class-level settings for the [`TOMLDataclass`][fancy_dataclass.toml.TOMLDataclass] mixin.
 
-    In addition to the settings inherited from [`DictDataclassSettings`][fancy_dataclass.dict.DictDataclassSettings],
-    the following options may be set:
+    The following options may be set:
 
     - `comment`: string that will be displayed as a top-level comment in the serialized TOML
     - `doc_as_comment`: if `True`, use the class's docstring as a top-level comment (this is overridden if `comment`
@@ -72,8 +71,7 @@ class TOMLDataclassSettings(DictDataclassSettings):
     doc_as_comment: bool = False
 
     @override
-    def __post_init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__post_init__(*args, **kwargs)
+    def __post_init__(self) -> None:
         # can use comment or doc_as_comment to specify top-level comment, but not both
         if (self.comment is not None) and self.doc_as_comment:
             raise ValueError('can set comment to a string or doc_as_comment=True, but not both')
@@ -199,8 +197,7 @@ class TOMLDataclass(
     @classmethod
     def _top_level_comments(cls) -> Optional[list[str]]:
         """Returns a list of top-level comments to place before all of the fields in the TOML output."""
-        assert isinstance(cls.__settings__, MixinSettings)
-        settings = cls.__settings__.adapt_to(TOMLDataclassSettings)
+        settings = cast(TOMLDataclassSettings, cls._class_settings(base=TOMLDataclass))
         comment = None
         if settings.comment is not None:
             comment = settings.comment

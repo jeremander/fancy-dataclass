@@ -93,6 +93,10 @@ class ValidatedDataclass(DataclassMixin):
     __field_settings_type__ = ValidatedDataclassFieldSettings
 
     @classmethod
+    def _validated_dataclass_settings(cls) -> ValidatedDataclassSettings:
+        return cast(ValidatedDataclassSettings, cls._class_settings(base=ValidatedDataclass))
+
+    @classmethod
     def __post_dataclass_wrap__(cls, wrapped_cls: type[Self]) -> None:
         settings = cast(ValidatedDataclassSettings, wrapped_cls._class_settings(base=ValidatedDataclass))
         if settings.flags.validate_init:

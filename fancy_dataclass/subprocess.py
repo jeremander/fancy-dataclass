@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
 import subprocess
-from typing import Any, ClassVar, Optional, get_origin
+from typing import Any, ClassVar, Optional, cast, get_origin
 
 from typing_extensions import Self
 
@@ -68,8 +68,12 @@ class SubprocessDataclass(DataclassMixin):
     __field_settings_type__ = SubprocessDataclassFieldSettings
 
     @classmethod
+    def _subprocess_dataclass_settings(cls) -> SubprocessDataclassSettings:
+        return cast(SubprocessDataclassSettings, cls._class_settings(base=SubprocessDataclass))
+
+    @classmethod
     def __post_dataclass_wrap__(cls, wrapped_cls: type[Self]) -> None:
-        cls_exec_name = wrapped_cls.__settings__.subproc_exec_name
+        cls_exec_name = wrapped_cls._subprocess_dataclass_settings().subproc_exec_name
         # make sure there is at most one exec field
         exec_field = None
         for fld in get_dataclass_fields(wrapped_cls, include_all=True):
@@ -181,11 +185,12 @@ class SubprocessDataclass(DataclassMixin):
             if isinstance(val, str):
                 return val
             raise ValueError(f'executable is {val} (must be a string)')
-        if self.__settings__.subproc_exec_name:
-            return _check_type(self.__settings__.subproc_exec_name)
+        cls_settings = self._subprocess_dataclass_settings()
+        if cls_settings.subproc_exec_name:
+            return _check_type(cls_settings.subproc_exec_name)
         for fld in get_dataclass_fields(self, include_all=True):
-            settings = self._field_settings(fld).adapt_to(SubprocessDataclassFieldSettings)
-            if settings.subproc_is_exec:
+            fld_settings = self._field_settings(fld).adapt_to(SubprocessDataclassFieldSettings)
+            if fld_settings.subproc_is_exec:
                 return _check_type(getattr(self, fld.name, None))
         return None
 
@@ -196,7 +201,7 @@ class SubprocessDataclass(DataclassMixin):
         args = []
         for fld in get_dataclass_fields(self, include_all=True):
             args += [arg for arg in self.get_arg(fld.name) if arg]
-        args += list(self.__settings__.subproc_extra_args or [])
+        args += list(self._subprocess_dataclass_settings().subproc_extra_args or [])
         return args
 
     def get_args(self) -> list[str]:

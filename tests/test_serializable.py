@@ -17,7 +17,7 @@ import numpy as np
 import pytest
 from typing_extensions import Doc, Self
 
-from fancy_dataclass.dict import DictDataclass, DictDataclassSettings
+from fancy_dataclass.dict import DictDataclass
 from fancy_dataclass.json import JSONBaseDataclass, JSONDataclass, JSONSerializable
 from fancy_dataclass.serialize import FileSerializable
 from fancy_dataclass.toml import TOMLDataclass
@@ -341,8 +341,8 @@ class TestDict:
         """Tests round-trip conversion to/from a dict."""
         (tp, obj) = self._coerce_object(obj)
         assert isinstance(obj, DictDataclass)
-        assert isinstance(obj.__settings__, DictDataclassSettings)
-        if obj.__settings__.should_store_type():
+        settings = obj._dict_dataclass_settings()
+        if settings.should_store_type():
             assert 'type' in obj.to_dict()
         else:
             assert 'type' not in obj.to_dict()
@@ -615,18 +615,13 @@ class TestJSON(TestDict):
         @dataclass
         class MyDC(JSONDataclass):
             pass
-        assert isinstance(MyDC.__settings__, DictDataclassSettings)
-        assert MyDC.__settings__._store_type == 'off'
+        settings = MyDC._dict_dataclass_settings()
+        assert settings.store_type == 'off'
         assert MyDC().to_dict() == {}
-        with pytest.raises(TypeError, match='must set store_type'):
-            @dataclass
-            class MyDC1(MyDC):
-                pass
         @dataclass
         class MyDC2(MyDC, store_type='qualname'):
             pass
-        assert isinstance(MyDC2.__settings__, DictDataclassSettings)
-        assert MyDC2.__settings__._store_type == 'qualname'
+        assert MyDC2._dict_dataclass_settings().store_type == 'qualname'
         # TODO: forbid local types?
         assert MyDC2().to_dict() == {
             'type': 'tests.test_serializable.TestJSON.test_subclass_json_dataclass.<locals>.MyDC2',
@@ -637,35 +632,29 @@ class TestJSON(TestDict):
         @dataclass
         class MyDC3(MyBaseDC):
             pass
-        assert isinstance(MyDC3.__settings__, DictDataclassSettings)
-        assert MyDC3.__settings__._store_type == 'qualname'
+        assert MyDC3._dict_dataclass_settings().store_type == 'qualname'
         # inherits from JSONBaseDataclass indirectly (OK)
         @dataclass
-        class MyDC4(MyBaseDC, store_type='auto'):
+        class MyDC4(MyBaseDC):
             pass
-        assert isinstance(MyDC4.__settings__, DictDataclassSettings)
-        assert MyDC4.__settings__._store_type == 'qualname'
-        # inherits from JSONBaseDataclass, so gets 'qualname' as its store_type
+        assert MyDC4._dict_dataclass_settings().store_type == 'qualname'
+        # inherits from JSONBaseDataclass directly
         @dataclass
         class MyDC5(MyDC, JSONBaseDataclass):
             pass
-        assert isinstance(MyDC5.__settings__, DictDataclassSettings)
-        assert MyDC5.__settings__._store_type == 'qualname'
+        assert MyDC5._dict_dataclass_settings().store_type == 'off'
         @dataclass
         class MyDC6(JSONBaseDataclass, MyDC):
             pass
-        assert isinstance(MyDC6.__settings__, DictDataclassSettings)
-        assert MyDC6.__settings__._store_type == 'qualname'
+        assert MyDC6._dict_dataclass_settings().store_type == 'qualname'
         @dataclass
         class MyDC7(MyDC, JSONBaseDataclass, store_type='qualname'):
             pass
-        assert isinstance(MyDC7.__settings__, DictDataclassSettings)
-        assert MyDC7.__settings__._store_type == 'qualname'
+        assert MyDC7._dict_dataclass_settings().store_type == 'qualname'
         @dataclass
         class MyDC8(MyDC, store_type='off'):
             pass
-        assert isinstance(MyDC8.__settings__, DictDataclassSettings)
-        assert MyDC8.__settings__._store_type == 'off'
+        assert MyDC8._dict_dataclass_settings().store_type == 'off'
         assert MyDC8().to_dict() == {}
         assert MyDC8.from_dict({}) == MyDC8()
 
@@ -755,14 +744,6 @@ class TestTOML(TestDict):
 
     base_cls = TOMLDataclass
     ext = 'toml'
-
-    def _convert_dataclass(self, tp: type) -> type:
-        tp = _convert_json_dataclass(tp, self.base_cls)
-        settings = tp.__settings__  # type: ignore[attr-defined]
-        assert isinstance(settings, DictDataclassSettings)
-        settings.suppress_defaults = False
-        settings.store_type = settings._store_type = 'off'
-        return tp
 
     @pytest.mark.parametrize('obj', TEST_JSON)
     def test_dict_round_trip(self, obj: object) -> None:

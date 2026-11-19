@@ -8,6 +8,7 @@ import weakref
 
 import pytest
 
+from fancy_dataclass.dict import DictDataclass
 from fancy_dataclass.json import JSONDataclass
 from fancy_dataclass.utils import MissingRequiredFieldError, fully_qualified_class_name
 from fancy_dataclass.versioned import (
@@ -24,6 +25,10 @@ from fancy_dataclass.versioned import (
 def _clear_registry() -> None:
     """Clears the global VersionedDataclass registry (does this when invoking every test function in this module)."""
     _VERSIONED_DATACLASS_REGISTRY.clear()
+
+
+def _set_allow_extra_fields(cls: type[DictDataclass], allow_extra_fields: bool) -> None:
+    cls._dict_dataclass_settings().allow_extra_fields = allow_extra_fields
 
 
 def test_versioned_dataclass() -> None:
@@ -460,34 +465,37 @@ def test_from_dict() -> None:
     a3 = A3(3)
     d3 = {'version': 3, 'x': 3}
     assert a1.to_dict() == d1
+    assert issubclass(A1, DictDataclass)
+    assert issubclass(A2, DictDataclass)
+    assert issubclass(A3, DictDataclass)
     for cls in [A1, A2, A3]:
         for allow_extra in [False, True]:
-            cls.__settings__.allow_extra_fields = allow_extra
+            _set_allow_extra_fields(cls, allow_extra)
             assert cls.from_dict(d1) == a1
             assert cls.from_dict(d2) == a2
             assert cls.from_dict(d3) == a3
     for allow_extra in [False, True]:
-        A1.__settings__.allow_extra_fields = allow_extra
+        _set_allow_extra_fields(A1, allow_extra)
         assert A1.from_dict(d1, migrate=True) == a1
-        assert A1.from_dict(d2, migrate=True) == A1(x=2, y='b')
+        assert A1.from_dict(d2, migrate=True) == A1(x=2, y='b')  # pyrefly: ignore[unexpected-keyword]
         # NOTE: type of y is wrong after migration
         # TODO: error if this happens during migration? Or just do general validation.
-        assert A1.from_dict(d3, migrate=True) == A1(x=3, y=123)  # pyrefly: ignore[bad-argument-type]
-    A1.__settings__.allow_extra_fields = True
-    assert A1.from_dict({'version': 1, 'x': 1, 'z': 7.0}, migrate=True) == A1(x=1, y='a')
-    A1.__settings__.allow_extra_fields = False
+        assert A1.from_dict(d3, migrate=True) == A1(x=3, y=123)  # pyrefly: ignore[unexpected-keyword]
+    _set_allow_extra_fields(A1, True)
+    assert A1.from_dict({'version': 1, 'x': 1, 'z': 7.0}, migrate=True) == A1(x=1, y='a')  # pyrefly: ignore[unexpected-keyword]
+    _set_allow_extra_fields(A1, False)
     with pytest.raises(ValueError, match=re.escape("unknown dict fields for A: ['z']")):
         _ = A1.from_dict({'version': 1, 'x': 1, 'z': 7.0}, migrate=True)
     for allow_extra in [False, True]:
-        A2.__settings__.allow_extra_fields = allow_extra
+        _set_allow_extra_fields(A2, allow_extra)
         assert A2.from_dict(d2, migrate=True) == a2
-        assert A2.from_dict(d1, migrate=True) == A2(x=1, y='a', z=3.14)  # pyrefly: ignore[bad-argument-type]
-        assert A2.from_dict(d3, migrate=True) == A2(x=3, y=123)  # pyrefly: ignore[bad-argument-type]
+        assert A2.from_dict(d1, migrate=True) == A2(x=1, y='a', z=3.14)  # pyrefly: ignore[unexpected-keyword]
+        assert A2.from_dict(d3, migrate=True) == A2(x=3, y=123)  # pyrefly: ignore[unexpected-keyword]
     for allow_extra in [False, True]:
-        A3.__settings__.allow_extra_fields = allow_extra
+        _set_allow_extra_fields(A3, allow_extra)
         assert A3.from_dict(d3, migrate=True) == a3
-        assert A3.from_dict(d1, migrate=True) == A3(x=1, y='a')  # pyrefly: ignore[bad-argument-type]
-        assert A3.from_dict(d2, migrate=True) == A3(x=2, y='b')  # pyrefly: ignore[bad-argument-type]
+        assert A3.from_dict(d1, migrate=True) == A3(x=1, y='a')  # pyrefly: ignore[unexpected-keyword]
+        assert A3.from_dict(d2, migrate=True) == A3(x=2, y='b')  # pyrefly: ignore[unexpected-keyword]
 
 def test_json() -> None:
     """Tests behavior of JSON conversion."""

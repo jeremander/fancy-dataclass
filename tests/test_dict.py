@@ -771,7 +771,7 @@ def test_validate_nested() -> None:
 def test_validate_inherit(parent_validate: Any, child_validate: Any) -> None:
     """Tests passing the validate kwarg for subclass construction."""
     settings = DictDataclass._class_settings(base=ValidatedDataclass)
-    assert settings == ValidatedDataclassSettings(validate_init=None, validate_assign=None, validate=False)
+    assert settings == ValidatedDataclassSettings(validate=False)
     parent_kwargs = {} if (parent_validate is MISSING) else {'validate': parent_validate}
     child_kwargs = {} if (child_validate is MISSING) else {'validate': child_validate}
     @dataclass
@@ -783,8 +783,8 @@ def test_validate_inherit(parent_validate: Any, child_validate: Any) -> None:
     if parent_validate is MISSING:
         parent_validate = False
     settings1 = DC1._class_settings(base=ValidatedDataclass)
-    assert settings1 == ValidatedDataclassSettings(validate_init=None, validate_assign=None, validate=parent_validate)
+    assert settings1 == ValidatedDataclassSettings(validate=parent_validate)
     if child_validate is MISSING:
         child_validate = parent_validate
     settings2 = DC2._class_settings(base=ValidatedDataclass)
-    assert settings2 == ValidatedDataclassSettings(validate_init=None, validate_assign=None, validate=child_validate)
+    assert settings2 == ValidatedDataclassSettings(validate=child_validate)

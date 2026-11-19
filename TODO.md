@@ -4,10 +4,12 @@
 
 ## v0.13.0
 
-- Don't merge settings types; instead keep a multiplicity? E.g. store a `WeakKeyDictionary[type, type]`.
-  - Deal with `_store_type` flag?
+- Don't merge settings types; instead keep multiple ones
+  - Tests run slower than before?
   - Make settings classes frozen?
   - Eliminate `__settings_type__` field and just use `__settings__`?
+  - Field types?
+    - Eliminate `adapt_to`?
 - Test dependent packages
 - Documentation
   - Validation

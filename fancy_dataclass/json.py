@@ -7,7 +7,7 @@ from typing import IO, Any, cast, get_args, get_origin
 
 from typing_extensions import Self, override
 
-from fancy_dataclass.dict import AnyDict, DictDataclass, DictDataclassSettings
+from fancy_dataclass.dict import AnyDict
 from fancy_dataclass.serialize import (
     DictFileSerializableDataclass,
     TextFileSerializable,
@@ -127,24 +127,6 @@ class JSONSerializable(TextFileSerializable):
 
 class JSONDataclass(DictFileSerializableDataclass, JSONSerializable, validate=True):
     """Dataclass mixin enabling default serialization of dataclass objects to and from JSON."""
-
-    @classmethod
-    def __init_subclass__(cls, **kwargs: Any) -> None:
-        super().__init_subclass__(**kwargs)
-        # if the class already inherits from JSONDataclass, raise an error if store_type="auto"
-        # this is because resolving the type from a dict may be ambiguous
-        settings = cast(DictDataclassSettings, cls._class_settings(base=DictDataclass))
-        if settings.store_type == 'auto':
-            for base in cls.mro():
-                if (
-                    (base not in [cls, JSONDataclass])
-                    and issubclass(base, JSONDataclass)
-                    and (not issubclass(base, JSONBaseDataclass))
-                ):
-                    raise TypeError(
-                        "when subclassing a JSONDataclass, you must set store_type to a value other than 'auto', or "
-                        "subclass JSONBaseDataclass instead"
-                    )
 
     @classmethod
     @override

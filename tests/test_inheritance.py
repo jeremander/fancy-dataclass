@@ -8,7 +8,6 @@ import pytest
 from typing_extensions import Self
 
 from fancy_dataclass import (
-    ArgparseDataclass,
     CLIDataclass,
     ConfigDataclass,
     DictDataclass,
@@ -18,17 +17,16 @@ from fancy_dataclass import (
     SubprocessDataclass,
     TOMLDataclass,
 )
-from fancy_dataclass.cli import ArgparseDataclassSettings
+from fancy_dataclass.cli import CLIDataclassSettings
 from fancy_dataclass.dict import DictDataclassSettings
 from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.settings import MixinSettings
-from fancy_dataclass.subprocess import SubprocessDataclassSettings
 from fancy_dataclass.utils import coerce_to_dataclass
 
 from .test_cli import DC1
 
 
-DEFAULT_MIXINS = [JSONBaseDataclass, ArgparseDataclass, ConfigDataclass, SQLDataclass, TOMLDataclass]
+DEFAULT_MIXINS = [JSONBaseDataclass, CLIDataclass, ConfigDataclass, SQLDataclass, TOMLDataclass]
 
 TEST_DIR = Path(__file__).parent
 PKG_DIR = TEST_DIR.parent
@@ -37,22 +35,22 @@ PKG_DIR = TEST_DIR.parent
 def test_multiple_inheritance() -> None:
     """Tests inheritance from multiple DataclassMixins."""
     @dataclass
-    class DC1(ArgparseDataclass, JSONDataclass):
+    class DC1(CLIDataclass, JSONDataclass):
         x: int
-    assert JSONDataclass.__settings_type__ is DictDataclassSettings
-    assert DC1.__settings_type__ is not None
-    assert issubclass(DC1.__settings_type__, DictDataclassSettings)
-    assert issubclass(DC1.__settings_type__, ArgparseDataclassSettings)
+    assert JSONDataclass.__settings_type__ is None
+    assert DC1.__settings_type__ is None
+    assert isinstance(DC1._class_settings(base=DictDataclass), DictDataclassSettings)
+    assert isinstance(DC1._class_settings(base=CLIDataclass), CLIDataclassSettings)
     # alternatively, add in mixins dynamically with wrap_dataclass
     @dataclass
     class DC2:
         x: int
-    DC2 = JSONDataclass.wrap_dataclass(ArgparseDataclass.wrap_dataclass(DC2))  # type: ignore[assignment]
+    DC2 = JSONDataclass.wrap_dataclass(CLIDataclass.wrap_dataclass(DC2))  # type: ignore[assignment]
     for cls in [DC1, DC2]:
         mro = cls.mro()
-        assert mro.index(ArgparseDataclass) < mro.index(JSONDataclass)
+        assert mro.index(CLIDataclass) < mro.index(JSONDataclass)
         obj = cls(5)
-        assert isinstance(obj, ArgparseDataclass)
+        assert isinstance(obj, CLIDataclass)
         assert isinstance(obj, JSONDataclass)
         assert obj.to_json_string() == '{"x": 5}'
         _ = obj.make_parser().format_help()
@@ -145,11 +143,13 @@ def test_settings_field_collision() -> None:
         __settings_type__ = Settings1
     class DC2(DataclassMixin):
         __settings_type__ = Settings2
-    with pytest.raises(TypeError, match="error merging base class settings for DC3: duplicate field name 'a'"):
+    err = "error reconciling base class settings for .*: duplicate field name 'a'"
+    with pytest.raises(TypeError, match=err):
         class DC3(DC1, DC2):
             ...
-    class DC4(DC1, DC2):
-        __settings_type__ = Settings2  # type: ignore[assignment]
+    with pytest.raises(TypeError, match=err):
+        class DC4(DC1, DC2):
+            __settings_type__ = Settings2  # type: ignore[assignment]
 
 def test_json_toml() -> None:
     """Tests inheritance from both JSONDataclass and TOMLDataclass."""
@@ -265,81 +265,64 @@ def test_toml_json_dataclass() -> None:
     assert obj.to_toml_string() == 'x = 1\n# y = \n'
     assert obj.to_json_string() == '{"x": 1, "y": null}'
 
-def test_json_argparse_dataclass() -> None:
-    """Tests subclassing both JSONDataclass and ArgparseDataclass."""
+def test_json_cli_dataclass() -> None:
+    """Tests subclassing both JSONDataclass and CLIDataclass."""
     @dataclass
-    class DC1(JSONDataclass, ArgparseDataclass, prog='prog'):
+    class DC1(JSONDataclass, CLIDataclass, prog='prog'):
         pass
-    assert isinstance(DC1.__settings__, ArgparseDataclassSettings)
-    assert DC1.__settings__.prog == 'prog'
+    assert DC1._cli_dataclass_settings().prog == 'prog'
     @dataclass
-    class DC2(ArgparseDataclass, prog='prog'):
+    class DC2(CLIDataclass, prog='prog'):
         pass
-    assert isinstance(DC2.__settings__, ArgparseDataclassSettings)
-    assert DC2.__settings__.prog == 'prog'
+    assert DC2._cli_dataclass_settings().prog == 'prog'
     @dataclass
     class DC3(JSONDataclass, DC2):
         pass
-    assert isinstance(DC3.__settings__, ArgparseDataclassSettings)
-    assert DC3.__settings__.prog == 'prog'
+    assert DC3._cli_dataclass_settings().prog == 'prog'
     @dataclass
     class DC4(JSONDataclass, DC2, prog='new-prog'):
         pass
-    assert isinstance(DC4.__settings__, ArgparseDataclassSettings)
-    assert DC4.__settings__.prog == 'new-prog'
+    assert DC4._cli_dataclass_settings().prog == 'new-prog'
     @dataclass
-    class DC5(ArgparseDataclass, JSONDataclass, prog='prog'):
+    class DC5(CLIDataclass, JSONDataclass, prog='prog'):
         pass
-    assert isinstance(DC5.__settings__, ArgparseDataclassSettings)
-    assert DC5.__settings__.prog == 'prog'
+    assert DC5._cli_dataclass_settings().prog == 'prog'
     @dataclass
-    class DC6(JSONBaseDataclass, ArgparseDataclass, prog='prog'):
+    class DC6(JSONBaseDataclass, CLIDataclass, prog='prog'):
         pass
-    assert isinstance(DC6.__settings__, ArgparseDataclassSettings)
-    assert DC6.__settings__.prog == 'prog'
+    assert DC6._cli_dataclass_settings().prog == 'prog'
     @dataclass
-    class DC7(ArgparseDataclass, JSONBaseDataclass, prog='prog'):
+    class DC7(CLIDataclass, JSONBaseDataclass, prog='prog'):
         pass
-    assert isinstance(DC7.__settings__, ArgparseDataclassSettings)
-    assert DC7.__settings__.prog == 'prog'
+    assert DC7._cli_dataclass_settings().prog == 'prog'
 
 def test_json_subprocess_dataclass() -> None:
     """Tests subclassing both JSONDataclass and SubprocessDataclass."""
     @dataclass
     class DC1(JSONDataclass, SubprocessDataclass):
         pass
-    assert isinstance(DC1.__settings__, DictDataclassSettings)
-    assert DC1.__settings__._store_type == 'off'
-    assert isinstance(DC1.__settings__, SubprocessDataclassSettings)
-    assert DC1.__settings__.subproc_exec_name is None
+    assert DC1._dict_dataclass_settings().store_type == 'off'
+    assert DC1._subprocess_dataclass_settings().subproc_exec_name is None
     @dataclass
     class DC2(SubprocessDataclass, JSONDataclass):
         pass
-    assert isinstance(DC2.__settings__, DictDataclassSettings)
-    assert DC2.__settings__._store_type == 'off'
-    assert isinstance(DC2.__settings__, SubprocessDataclassSettings)
-    assert DC2.__settings__.subproc_exec_name is None
+    assert DC2._dict_dataclass_settings().store_type == 'off'
+    assert DC2._subprocess_dataclass_settings().subproc_exec_name is None
     @dataclass
     class DC(JSONBaseDataclass):
         pass
     @dataclass
     class DC3(DC, SubprocessDataclass):
         pass
-    assert isinstance(DC3.__settings__, DictDataclassSettings)
-    assert DC3.__settings__._store_type == 'qualname'
-    assert isinstance(DC3.__settings__, SubprocessDataclassSettings)
-    assert DC3.__settings__.subproc_exec_name is None
+    assert DC3._dict_dataclass_settings().store_type == 'qualname'
+    assert DC3._subprocess_dataclass_settings().subproc_exec_name is None
     @dataclass
     class DC4(SubprocessDataclass, DC):
         pass
-    assert isinstance(DC4.__settings__, DictDataclassSettings)
-    assert DC4.__settings__._store_type == 'qualname'
-    assert isinstance(DC4.__settings__, SubprocessDataclassSettings)
-    assert DC4.__settings__.subproc_exec_name is None
+    assert DC4._dict_dataclass_settings().store_type == 'qualname'
+    assert DC4._subprocess_dataclass_settings().subproc_exec_name is None
     @dataclass
     class DC5(SubprocessDataclass, DC, store_type='off', subproc_exec_name='prog'):
         pass
-    assert isinstance(DC5.__settings__, DictDataclassSettings)
-    assert DC5.__settings__._store_type == 'off'
-    assert isinstance(DC5.__settings__, SubprocessDataclassSettings)
-    assert DC5.__settings__.subproc_exec_name == 'prog'
+    assert DC5._dict_dataclass_settings().store_type == 'off'
+    assert DC5._subprocess_dataclass_settings().subproc_exec_name == 'prog'

@@ -182,9 +182,9 @@ class VersionedDataclass(DictDataclass):
     def __init_subclass__(cls, **kwargs: Any) -> None:
         if (version := kwargs.get('version', None)) is not None:
             _ = _validate_version_for_class(version, cls)
-        super().__init_subclass__(allow_duplicates=True, **kwargs)
-        assert hasattr(cls.__settings__, 'version')
-        version = getattr(cls, 'version', cls.__settings__.version)
+        super().__init_subclass__(**kwargs)
+        settings = cls._versioned_dataclass_settings()
+        version = getattr(cls, 'version', settings.version)
         if version is None:
             raise TypeError(f'must supply a valid version for class {cls.__name__!r}')
         version_tup = _validate_version_for_class(version, cls)
@@ -195,15 +195,19 @@ class VersionedDataclass(DictDataclass):
         _VERSIONED_DATACLASS_REGISTRY.register_class(cls, version_tup)
 
     @classmethod
+    def _versioned_dataclass_settings(cls) -> VersionedDataclassSettings:
+        return cast(VersionedDataclassSettings, cls._class_settings(base=VersionedDataclass))
+
+    @classmethod
     @override
     def _field_settings(cls, fld: Field[Any]) -> FieldSettings:
         """Gets the class-specific FieldSettings extracted from the metadata stored on a Field object."""
-        settings = cast(DictDataclassFieldSettings, super()._field_settings(fld))
-        assert hasattr(cls.__settings__, 'suppress_version')
-        if (fld.name == 'version') and (cls.__settings__.suppress_version is False):
+        cls_settings = cls._versioned_dataclass_settings()
+        fld_settings = cast(DictDataclassFieldSettings, super()._field_settings(fld))
+        if (fld.name == 'version') and (cls_settings.suppress_version is False):
             # do not suppress version field if class-level suppress_version=False
-            settings.suppress = False
-        return settings
+            fld_settings.suppress = False
+        return fld_settings
 
     def __setattr__(self, name: str, value: Any) -> None:
         # make 'version' field read-only
