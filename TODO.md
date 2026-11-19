@@ -8,9 +8,11 @@
   - Tests run slower than before?
   - Make field settings classes frozen?
   - Field types?
-    - Eliminate `adapt_to`, `DataclassAdaptable`, `coerce_to_dataclass` etc.
+    - Eliminate `coerce_to_dataclass`
 - Test dependent packages
 - Documentation
+  - Rewrite discussion of how settings work.
+  - Make sure all associated settings types are linked from each mixin class.
   - Validation
     - Fix discussion of validation in `DictDataclass` (including error type)
     - Document that validation settings & field settings are inherited for `DictDataclass` (default no validation)
@@ -41,6 +43,9 @@
     - Flag to toggle respecting PEP 484 tower (default `True` for now, since `typeguard` does so)
     - Flag to decorate all methods with arg & return type-checking (default `False`)
       - Should have helper decorator to handle specific methods & functions, which will take priority
+        - E.g. `validate` and `no_validate` (variants of the same decorator with options)
+          - Decorator-level option to validate all args, and the return type.
+        - Handle per-argument `Annotated` metadata to have specific arguments opt in/out of validation
       - Can use `typeguard` for simplicity, or try to emulate its inspection logic.
   - Allow all (or at least most) configs to be overridable at field level
   - Custom validation functions per field

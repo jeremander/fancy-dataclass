@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from io import StringIO
 from pathlib import Path
@@ -229,7 +229,6 @@ def test_cli_subprocess_dataclass(tmp_path: Path) -> None:
         'default', '--flag', '-x', '7', '-y', '3.14', '--pair', '0', '0',
     ]
     # create a script to run the CLIDataclass
-    dc1 = coerce_to_dataclass(DC1, dc3)
     with open(prog, 'w') as f:
         print(f"""#!/usr/bin/env python3
 import sys
@@ -240,6 +239,8 @@ DC1.main()""", file=f)
     Path(prog).chmod(0o770)
     # call the script with subprocess
     res = dc3.run_subprocess(capture_output=True, text=True)
+    d = {key: val for (key, val) in asdict(dc3).items() if (key in DC1.__dataclass_fields__)}
+    dc1 = DC1(**d)  # pyrefly: ignore[bad-argument-type]
     assert res.stdout.rstrip() == str(dc1)
 
 def test_config_json_dataclass() -> None:

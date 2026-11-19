@@ -44,6 +44,7 @@ class _FieldValidationFlags:
 
 @dataclass(kw_only=True)
 class _ValidationSettings:
+    """Base class for a bundle of flags indicating whether to validate fields on initialization, assignment, or both."""
 
     validate_init: Optional[bool] = None
     validate_assign: Optional[bool] = None
@@ -51,6 +52,7 @@ class _ValidationSettings:
 
     @property
     def flags(self) -> _FieldValidationFlags:
+        """Gets a `FieldValidationFlags` object indicating precisely when to validate fields."""
         return _FieldValidationFlags(
             _validate_init=self.validate if (self.validate_init is None) else self.validate_init,
             _validate_assign=self.validate if (self.validate_assign is None) else self.validate_assign,
@@ -103,10 +105,12 @@ class ValidatedDataclass(DataclassMixin):
 
     @classmethod
     def __post_dataclass_wrap__(cls, wrapped_cls: type[Self]) -> None:
+        super().__post_dataclass_wrap__(wrapped_cls)
         settings = cast(ValidatedDataclassSettings, wrapped_cls._class_settings(base=ValidatedDataclass))
         if settings.flags.validate_init:
             # validate ClassVar values and field default values at dataclass wrap time
             for fld in get_dataclass_fields(wrapped_cls, include_all=True):
+
                 if type_is_classvar(fld.type) and hasattr(wrapped_cls, fld.name):
                     _validate_dataclass_field(wrapped_cls, fld, getattr(wrapped_cls, fld.name))
                 elif (wrapped_cls._field_validation_flags(fld).validate_init) and (fld.default is not MISSING):

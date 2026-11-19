@@ -307,6 +307,7 @@ class CLIDataclass(DataclassMixin):
     @classmethod
     @override
     def __post_dataclass_wrap__(cls, wrapped_cls: type[Self]) -> None:
+        super().__post_dataclass_wrap__(wrapped_cls)
         subcommand = None
         names = set()
         for fld in fields(wrapped_cls):  # type: ignore[arg-type]

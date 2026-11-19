@@ -77,11 +77,12 @@ class SubprocessDataclass(DataclassMixin):
 
     @classmethod
     def __post_dataclass_wrap__(cls, wrapped_cls: type[Self]) -> None:
+        super().__post_dataclass_wrap__(wrapped_cls)
         cls_exec_name = wrapped_cls._subprocess_dataclass_settings().subproc_exec_name
         # make sure there is at most one exec field
         exec_field = None
         for fld in get_dataclass_fields(wrapped_cls, include_all=True):
-            fld_settings = cls._subprocess_dataclass_field_settings(fld.name)
+            fld_settings = wrapped_cls._subprocess_dataclass_field_settings(fld.name)
             if fld_settings.subproc_is_exec:
                 if cls_exec_name is not None:
                     raise TypeError(
