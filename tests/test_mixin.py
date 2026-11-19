@@ -134,26 +134,19 @@ class TestDataclassMixin:
         # valid settings
         @dataclass
         class MyDC(MyMixin):
-            __settings__ = MySettingsOpt(enhanced=True)
-        assert MyDC.__settings__ == MySettingsOpt(enhanced=True)
-        assert MyDC._class_settings(base=MyMixin) == MySettingsOpt(enhanced=False)
-        with pytest.raises(TypeError, match='could not get class settings'):
-            _ = MyDC._class_settings(base=MyDC)
-        @dataclass
-        class MyDC(MyMixin):
             __settings_type__ = MySettingsOpt
             __settings__ = MySettingsOpt(enhanced=True)
-        assert MyDC._class_settings(base=MyMixin) == MySettingsOpt(enhanced=False)
-        # enhanced=False kwarg from parent class takes priority over __settings__
-        assert MyDC._class_settings(base=MyDC) == MySettingsOpt(enhanced=False)
+        # __settings__ overrides the parent's kwarg
+        assert MyDC._class_settings(base=MyMixin) == MySettingsOpt(enhanced=True)
+        assert MyDC._class_settings(base=MyDC) == MySettingsOpt(enhanced=True)
         # subclasses do *not* inherit __settings__ from their parent
         class MySub(MyDC):
             pass
         assert MySub.__settings__ is None
-        assert MySub._class_settings(base=MyMixin) == MySettingsOpt(enhanced=False)
+        assert MySub._class_settings(base=MyMixin) == MySettingsOpt(enhanced=True)
         MyDCSub: type = dataclass(MySub)
         assert MyDCSub.__settings__ is None
-        assert MyDCSub._class_settings(base=MyMixin) == MySettingsOpt(enhanced=False)
+        assert MyDCSub._class_settings(base=MyMixin) == MySettingsOpt(enhanced=True)
         # can set required keyword arg on the base class
         @dataclass
         class MyMixinReq(DataclassMixin, enhanced=False):
@@ -182,6 +175,10 @@ class TestDataclassMixin:
         """Tests error conditions for DataclassMixin settings."""
         class MyMixin(DataclassMixin):
             pass
+        with pytest.raises(TypeError, match=r'MyDC.__settings__ requires __settings_type__ to also be defined'):
+            @dataclass
+            class MyDC(MyMixin):
+                __settings__ = MySettingsOpt()
         # pass unrecognized kwarg
         with pytest.raises(TypeError, match="unknown settings field 'enhanced' for MyDC1"):
             @dataclass
@@ -203,14 +200,15 @@ class TestDataclassMixin:
             __settings_type__ = MySettingsReq
             __settings__ = MySettingsReq(enhanced=False)
         # set __settings__ attribute to invalid type
-        with pytest.raises(TypeError, match='invalid __settings__ type int for MyDC3'):
+        with pytest.raises(TypeError, match=r'MyDC3\.__settings__ should be an instance of MySettingsReq'):
             @dataclass
             class MyDC3(MyMixin):
+                __settings_type__ = MySettingsReq
                 __settings__ = 1  # type: ignore[assignment]
         # set settings to a regular class
         class NonDCSettings:
             pass
-        with pytest.raises(TypeError, match='NonDCSettings is not a dataclass'):
+        with pytest.raises(TypeError, match=r'MyDC4\.__settings_type__ should be a subclass of MixinSettings'):
             @dataclass
             class MyDC4(MyMixin):
                 __settings_type__ = NonDCSettings  # type: ignore[assignment]
@@ -225,6 +223,7 @@ class TestDataclassMixin:
         with pytest.raises(TypeError, match="redundant specification of field 'enhanced' for MyDC6"):
             @dataclass
             class MyDC6(MyMixinReq, enhanced=False):
+                __settings_type__ = MySettingsReq
                 __settings__ = MySettingsReq(enhanced=True)
 
     def test_settings_kwargs_override(self) -> None:

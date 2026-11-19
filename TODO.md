@@ -6,8 +6,7 @@
 
 - Don't merge settings types; instead keep multiple ones
   - Tests run slower than before?
-  - Make settings classes frozen?
-  - Eliminate `__settings_type__` field and just use `__settings__`?
+  - Make field settings classes frozen?
   - Field types?
     - Eliminate `adapt_to`, `DataclassAdaptable`, `coerce_to_dataclass` etc.
 - Test dependent packages

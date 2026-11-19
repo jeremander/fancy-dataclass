@@ -74,8 +74,27 @@ def _reconcile_base_dataclasses(bases: Iterable[type]) -> None:
 def _get_settings_type(cls: type) -> Optional[type[MixinSettings]]:
     """Gets the value of the __settings_type__ field of a class, if it is defined specifically on that class
     (not inherited from a base class)."""
-    # TODO: check this is a subclass of MixinSettings?
-    return cls.__dict__.get('__settings_type__')
+    if (tp := cls.__dict__.get('__settings_type__')) and (not issubclass_safe(tp, MixinSettings)):
+        raise TypeError(f'{cls.__name__}.__settings_type__ should be a subclass of MixinSettings')
+    return tp
+
+def _update_settings_kwargs(
+    cls: type['DataclassMixin'],
+    settings_kwargs: dict[str, Any],
+    settings_type: Optional[type[MixinSettings]],
+    settings: MixinSettings,
+) -> None:
+    if settings_type is None:
+        raise TypeError(f'{cls.__name__}.__settings__ requires __settings_type__ to also be defined')
+    if not isinstance(settings, settings_type):
+        raise TypeError(f'{cls.__name__}.__settings__ should be an instance of {settings_type.__name__}')
+    if not dataclasses.is_dataclass(settings):
+        raise TypeError(f'{cls.__name__}.__settings__ should be a dataclass')
+    d = dataclasses.asdict(settings)  # pyrefly: ignore[bad-argument-type]
+    for name in d:
+        if name in settings_kwargs:
+            raise TypeError(f'redundant specification of field {name!r} for {cls.__name__}')
+    settings_kwargs.update(d)
 
 def _configure_mixin_settings(cls: type['DataclassMixin'], **kwargs: Any) -> None:
     """Sets up a `DataclassMixin`'s settings (at definition time), given inheritance kwargs."""
@@ -94,13 +113,7 @@ def _configure_mixin_settings(cls: type['DataclassMixin'], **kwargs: Any) -> Non
         cls.__settings__ = None
     else:
         # explicit __settings__ will get overridden by kwargs
-        if not dataclasses.is_dataclass(settings):
-            raise TypeError(f'invalid __settings__ type {type(settings).__name__} for {cls.__name__}')
-        d = dataclasses.asdict(settings)  # type: ignore[arg-type]
-        for name in d:
-            if name in kwargs:
-                raise TypeError(f'redundant specification of field {name!r} for {cls.__name__}')
-        settings_kwargs.update(d)
+        _update_settings_kwargs(cls, kwargs, stype, settings)
     # inherit kwargs from the parent classes, with nearer ones in the inheritance chain taking priority
     for base in cls.mro()[::-1]:
         if (stype := _get_settings_type(base)) and issubclass_safe(stype, MixinSettings):
