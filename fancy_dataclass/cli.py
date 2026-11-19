@@ -16,7 +16,7 @@ from typing import Any, ClassVar, Literal, Optional, TypeGuard, TypeVar, cast, g
 
 from typing_extensions import Self, override
 
-from fancy_dataclass.doc import DocFieldSettings
+from fancy_dataclass.doc import DocDataclassFieldSettings
 from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.settings import MixinSettings
 from fancy_dataclass.utils import (
@@ -192,7 +192,7 @@ class CLIDataclassSettings(MixinSettings):
 
 
 @dataclass(frozen=True, kw_only=True)
-class CLIDataclassFieldSettings(DocFieldSettings):
+class CLIDataclassFieldSettings(DocDataclassFieldSettings):
     """Settings for [`CLIDataclass`][fancy_dataclass.cli.CLIDataclass] fields.
 
     Each field may define a `metadata` dict containing any of the following entries:

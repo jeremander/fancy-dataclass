@@ -12,15 +12,32 @@ from fancy_dataclass.utils import get_annotated_elements
 _DOC_TYPES = (typing_extensions.Doc, annotated_doc.Doc)
 
 
+############
+# SETTINGS #
+############
+
 @dataclass(frozen=True, kw_only=True)
-class DocFieldSettings(FieldSettings):
-    """Settings to expose a "doc" attribute of a field.
+class DocDataclassSettings(FieldSettings):
+    """Class-level settings for the [`DocDataclass`][fancy_dataclass.doc.DocDataclass] mixin.
 
-    By default the "doc" field will be extracted from the field metadata, but as a fallback it will look for a
-    [PEP 727](https://peps.python.org/pep-0727/) `Doc`-annotated field type. `Doc` can come from either the
-    `typing_extensions` or `annotated_doc` library.
+    Subclasses of `DictDataclass` may set the `doc` option as keyword arguments during inheritance, providing a
+    class-level documentation string."""
 
-    If multiple `Doc` elements occur within an `Annotated` type, chooses the last one.
+    doc: Optional[str] = None
+
+
+@dataclass(frozen=True, kw_only=True)
+class DocDataclassFieldSettings(FieldSettings):
+    """Settings for [`DocDataclass`][fancy_dataclass.doc.DocDataclass] fields.
+
+    Each field may define a `metadata` dict containing an optional `"doc"` entry providing a field-level documentation
+    string.
+
+    If a `"doc"` entry is not present in the field metadata, a [PEP 727](https://peps.python.org/pep-0727/)
+    `Doc`-annotated field type will be searched for. `Doc` can come from either the `typing_extensions` or
+    `annotated_doc` library.
+
+    If multiple `Doc` elements occur within an `Annotated` type, the last one is selected.
 
     For example, the following are equivalent ways to specify documentation for a field:
 

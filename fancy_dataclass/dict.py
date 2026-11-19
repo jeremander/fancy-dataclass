@@ -19,7 +19,7 @@ from typing import (
 
 from typing_extensions import Self, override
 
-from fancy_dataclass.doc import DocFieldSettings
+from fancy_dataclass.doc import DocDataclassFieldSettings
 from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.settings import MixinSettings
 from fancy_dataclass.utils import (
@@ -77,7 +77,7 @@ class DictDataclassSettings(MixinSettings):
 
 
 @dataclass(frozen=True, kw_only=True)
-class DictDataclassFieldSettings(DocFieldSettings):
+class DictDataclassFieldSettings(DocDataclassFieldSettings):
     """Settings for [`DictDataclass`][fancy_dataclass.dict.DictDataclass] fields.
 
     Each field may define a `metadata` dict containing any of the following entries:
