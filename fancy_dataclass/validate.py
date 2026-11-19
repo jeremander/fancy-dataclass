@@ -78,7 +78,7 @@ class _FieldValidationFlags:
         return True if (self._validate_assign is None) else self._validate_assign
 
 
-@dataclass(kw_only=True)
+@dataclass(frozen=True, kw_only=True)
 class _ValidationSettings:
     """Base class for a bundle of flags indicating whether to validate fields on initialization, assignment, or both."""
 
@@ -95,7 +95,7 @@ class _ValidationSettings:
         )
 
 
-@dataclass(kw_only=True)
+@dataclass(frozen=True, kw_only=True)
 class ValidatedDataclassSettings(MixinSettings, _ValidationSettings):
     """Class-level settings for the [`ValidatedDataclass`][fancy_dataclass.validate.ValidatedDataclass] mixin.
 
@@ -106,7 +106,7 @@ class ValidatedDataclassSettings(MixinSettings, _ValidationSettings):
     - `validate`: convenience flag to set both `validate_init` and `validate_assign` simultaneously"""
 
 
-@dataclass(kw_only=True)
+@dataclass(frozen=True, kw_only=True)
 class ValidatedDataclassFieldSettings(FieldSettings, _ValidationSettings):
     """Settings for [`ValidatedDataclass`][fancy_dataclass.validate.ValidatedDataclass] fields.
 

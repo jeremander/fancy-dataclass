@@ -190,7 +190,7 @@ class CLIDataclassSettings(MixinSettings):
     default_help: bool = False
 
 
-@dataclass(kw_only=True)
+@dataclass(frozen=True, kw_only=True)
 class CLIDataclassFieldSettings(DocFieldSettings):
     """Settings for [`CLIDataclass`][fancy_dataclass.cli.CLIDataclass] fields.
 

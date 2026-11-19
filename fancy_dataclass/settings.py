@@ -1,4 +1,4 @@
-from dataclasses import Field, dataclass, fields, is_dataclass
+from dataclasses import Field, dataclass, fields, is_dataclass, replace
 from typing import Any, Optional
 
 import annotated_doc
@@ -52,7 +52,7 @@ class FieldSettings(_DataclassFieldValidate):
         return cls(**kwargs)  # type: ignore[return-value]
 
 
-@dataclass(kw_only=True)
+@dataclass(frozen=True, kw_only=True)
 class DocFieldSettings(FieldSettings):
     """Settings to expose a "doc" attribute of a field.
 
@@ -79,7 +79,7 @@ class DocFieldSettings(FieldSettings):
             match get_annotated_elements(tp):
                 case (_, elements):
                     if (doc := next((arg for arg in elements[::-1] if isinstance(arg, _DOC_TYPES)), None)):
-                        settings.doc = doc.documentation
+                        settings = replace(settings, doc=doc.documentation)
                 case _:
                     pass
         return settings

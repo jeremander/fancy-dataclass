@@ -75,7 +75,7 @@ class DictDataclassSettings(MixinSettings):
         return self.store_type in ['name', 'qualname']
 
 
-@dataclass(kw_only=True)
+@dataclass(frozen=True, kw_only=True)
 class DictDataclassFieldSettings(ValidatedDataclassFieldSettings, DocFieldSettings):
     """Settings for [`DictDataclass`][fancy_dataclass.dict.DictDataclass] fields.
 

@@ -6,10 +6,7 @@
 
 - Don't merge settings types; instead keep multiple ones
   - Tests run slower than before?
-  - Make field settings classes frozen?
-  - Field types?
-    - Eliminate `coerce_to_dataclass`
-- Test dependent packages
+- Test dependent packages (preserve backward compatibility)
 - Documentation
   - Rewrite discussion of how settings work.
   - Make sure all associated settings types are linked from each mixin class.
@@ -19,6 +16,7 @@
     - Document that `ConfigDataclass` *does* do validation
     - Differences vs. `pydantic`?
       - Assignment validation by default
+      - Performance?
   - CLI
   - SQL
     - Primary key (default `_id`)

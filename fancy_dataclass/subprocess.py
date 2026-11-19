@@ -27,7 +27,7 @@ class SubprocessDataclassSettings(MixinSettings):
     subproc_extra_args: Optional[Sequence[str]] = None
 
 
-@dataclass(kw_only=True)
+@dataclass(frozen=True, kw_only=True)
 class SubprocessDataclassFieldSettings(FieldSettings):
     """Settings for [`SubprocessDataclass`][fancy_dataclass.subprocess.SubprocessDataclass] fields.
 

@@ -427,7 +427,7 @@ class TestDataclassMixin:
             c: Annotated[int, Doc('c')] = 3  # Annotated Doc field
             d: Annotated[int, 'd'] = 4  # string not wrapped in a Doc
             e: Annotated[int, Doc('bad'), Doc('e')] = 5  # multiple Docs (per PEP 727, use the last one)
-            f: Annotated[int, Doc(6)] = 6  # non-string Doc (currently permitted)
+            f: Annotated[int, Doc(None)] = 6  # None-valued Doc (currently permitted)
             g: Annotated[int, Doc('g1')] = field(
                 default=7,
                 metadata={'doc': 'g2'},
@@ -452,7 +452,7 @@ class TestDataclassMixin:
             'c': 'c',
             'd': None,
             'e': 'e',
-            'f': 6,
+            'f': None,
             'g': 'g2',
             'h': None,
             'i': None,
@@ -471,6 +471,15 @@ class TestDataclassMixin:
         class DC3(DocMixin):
             x: 'fake-type'  # type: ignore  # noqa: F821
         assert DC3._field_settings('x', base=DocMixin) == DocFieldSettings(doc=None)
+        # Doc with non-string field is not allowed
+        with pytest.raises(FieldTypeValidationError, match="field 'doc' .*: value 1 does not match"):
+            @dataclass
+            class DC4(DocMixin):
+                x: Annotated[int, Doc(1)] = 1
+        with pytest.raises(FieldTypeValidationError, match="field 'doc' .*: value 1 does not match"):
+            @dataclass
+            class DC5(DocMixin):
+                x: int = field(metadata={'doc': 1})
 
     def test_wrap_dataclass(self) -> None:
         """Tests the wrap_dataclass function."""

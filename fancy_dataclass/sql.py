@@ -69,7 +69,7 @@ def _get_base_type_for_field_type(field_type: Any) -> type:
 # SETTINGS #
 ############
 
-@dataclass(kw_only=True)
+@dataclass(frozen=True, kw_only=True)
 class SQLDataclassFieldSettings(FieldSettings):
     """Settings for [`SQLDataclass`][fancy_dataclass.sql.SQLDataclass] fields.
 
