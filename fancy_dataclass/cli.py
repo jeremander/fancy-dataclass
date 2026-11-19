@@ -154,7 +154,7 @@ def _deconflict_duplicate_dests(parser: ArgParser, dest: str) -> None:
 # MIXINS #
 ##########
 
-@dataclass(kw_only=True)
+@dataclass(frozen=True, kw_only=True)
 class CLIDataclassSettings(MixinSettings):
     """Class-level settings for the [`CLIDataclass`][fancy_dataclass.cli.CLIDataclass] mixin.
 

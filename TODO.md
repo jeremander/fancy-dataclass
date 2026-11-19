@@ -9,7 +9,7 @@
   - Make settings classes frozen?
   - Eliminate `__settings_type__` field and just use `__settings__`?
   - Field types?
-    - Eliminate `adapt_to`?
+    - Eliminate `adapt_to`, `DataclassAdaptable`, `coerce_to_dataclass` etc.
 - Test dependent packages
 - Documentation
   - Validation

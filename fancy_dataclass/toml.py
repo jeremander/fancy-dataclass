@@ -57,7 +57,7 @@ def _add_comments_to_doc(comments: Iterable[tomlkit.items.Comment], doc: tk.TOML
 # MIXINS #
 ##########
 
-@dataclass(kw_only=True)
+@dataclass(frozen=True, kw_only=True)
 class TOMLDataclassSettings(MixinSettings):
     """Class-level settings for the [`TOMLDataclass`][fancy_dataclass.toml.TOMLDataclass] mixin.
 

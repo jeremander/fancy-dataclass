@@ -150,7 +150,7 @@ _VERSIONED_DATACLASS_REGISTRY = _VersionedDataclassRegistry()
 # VERSIONED DATACLASS #
 #######################
 
-@dataclass(kw_only=True)
+@dataclass(frozen=True, kw_only=True)
 class VersionedDataclassSettings(DictDataclassSettings):
     """Class-level settings for the [`VersionedDataclass`][fancy_dataclass.versioned.VersionedDataclass] mixin.
 

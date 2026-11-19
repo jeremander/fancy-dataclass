@@ -19,6 +19,7 @@ T = TypeVar('T')
 
 
 def _first_non_null(vals: Iterable[Optional[T]], *, default: T) -> T:
+    """Gets the first non-None value from the given iterable, defaulting to a given value if all are None."""
     for val in vals:
         if val is not None:
             return val

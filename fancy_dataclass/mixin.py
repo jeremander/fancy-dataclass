@@ -74,6 +74,7 @@ def _reconcile_base_dataclasses(bases: Iterable[type]) -> None:
 def _get_settings_type(cls: type) -> Optional[type[MixinSettings]]:
     """Gets the value of the __settings_type__ field of a class, if it is defined specifically on that class
     (not inherited from a base class)."""
+    # TODO: check this is a subclass of MixinSettings?
     return cls.__dict__.get('__settings_type__')
 
 def _configure_mixin_settings(cls: type['DataclassMixin'], **kwargs: Any) -> None:

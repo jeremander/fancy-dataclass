@@ -44,7 +44,7 @@ StoreTypeMode: TypeAlias = Literal['off', 'name', 'qualname']
 _TYPE_ALIAS_TYPE = getattr(typing, 'TypeAliasType', None)
 
 
-@dataclass(kw_only=True)
+@dataclass(frozen=True, kw_only=True)
 class DictDataclassSettings(MixinSettings):
     """Class-level settings for the [`DictDataclass`][fancy_dataclass.dict.DictDataclass] mixin.
 

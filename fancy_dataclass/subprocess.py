@@ -10,7 +10,7 @@ from fancy_dataclass.settings import FieldSettings, MixinSettings
 from fancy_dataclass.utils import get_dataclass_fields, obj_class_name
 
 
-@dataclass(kw_only=True)
+@dataclass(frozen=True, kw_only=True)
 class SubprocessDataclassSettings(MixinSettings):
     """Class-level settings for the [`SubprocessDataclass`][fancy_dataclass.subprocess.SubprocessDataclass] mixin.
 

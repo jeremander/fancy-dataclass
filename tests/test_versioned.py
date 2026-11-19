@@ -1,4 +1,4 @@
-from dataclasses import dataclass, is_dataclass
+from dataclasses import dataclass, is_dataclass, replace
 import gc
 import json
 import re
@@ -28,7 +28,8 @@ def _clear_registry() -> None:
 
 
 def _set_allow_extra_fields(cls: type[DictDataclass], allow_extra_fields: bool) -> None:
-    cls._dict_dataclass_settings().allow_extra_fields = allow_extra_fields
+    settings = cls._dict_dataclass_settings()
+    cls.__settings_map__[DictDataclass] = replace(settings, allow_extra_fields=allow_extra_fields)
 
 
 def test_versioned_dataclass() -> None:
