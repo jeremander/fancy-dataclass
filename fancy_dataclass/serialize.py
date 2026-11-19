@@ -53,7 +53,8 @@ def from_dict_value_basic(tp: type, val: Any) -> Any:
     Returns:
         Converted value"""
     if issubclass(tp, float):
-        return tp(val)
+        # NOTE: we do not coerce int to float
+        return val if isinstance(val, Integral) else tp(val)
     if issubclass(tp, Integral) and isinstance(val, Integral):
         # also handles numpy integer types
         return tp(val)  # type: ignore[call-arg]

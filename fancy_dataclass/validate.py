@@ -181,7 +181,8 @@ class ValidatedDataclass(DataclassMixin):
         if not hasattr(self, fld.name):
             # first check that the instance has an attribute for the field
             raise FieldTypeValidationError(cls, fld.name, fld.type, MISSING)
-        _validate_dataclass_field(cls, fld, getattr(self, fld.name))
+        val = getattr(self, fld.name)
+        _validate_dataclass_field(cls, fld, val)
 
     def __post_init__(self, *args: Any, **kwargs: Any) -> None:
         for fld in get_dataclass_fields(self):

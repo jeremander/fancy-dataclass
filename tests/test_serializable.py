@@ -443,6 +443,16 @@ class TestDict:
         """Tests round-trip to dict and back."""
         self._test_dict_round_trip(obj)
 
+    def test_float_type_int_value(self) -> None:
+        """Tests that from_dict does not convert an int value to a float if the field is annotated as a float."""
+        DC = make_dataclass('DC', [('x', float)], bases=(self.base_cls,))
+        d = {'x': 1}
+        assert type(d['x']) is int
+        obj = DC.from_dict({'x': 1})  # type: ignore[attr-defined]
+        assert obj.x == 1
+        assert type(obj.x) is int
+        self._test_dict_round_trip(obj)
+
 
 class TestJSON(TestDict):
     """Unit tests for JSONDataclass."""
