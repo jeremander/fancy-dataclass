@@ -212,7 +212,8 @@ class DataclassMixin:
         [`dataclasses.dataclass`](https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass) decorator
         is applied to the mixin subclass.
 
-        This can be used, for instance, to validate the dataclass fields at definition time."""
+        This can be used, for instance, to validate the dataclass fields at definition time, as in
+        [`ValidatedDataclass`][fancy_dataclass.validate.ValidatedDataclass]."""
         _configure_field_settings(cls)
 
     @classmethod

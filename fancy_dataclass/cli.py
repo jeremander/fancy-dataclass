@@ -596,8 +596,7 @@ class CLIDataclass(DataclassMixin):
     def configure_parser(cls, parser: ArgParser) -> None:
         """Configures an argument parser by adding the appropriate arguments.
 
-        By default, this will simply call
-        [`_configure_argument`][fancy_dataclass.cli.CLIDataclass._configure_argument] for each dataclass field.
+        By default, this will simply call the `_configure_argument` method for each dataclass field.
 
         Args:
             parser: `ArgumentParser` to configure"""

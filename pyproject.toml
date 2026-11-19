@@ -39,7 +39,8 @@ path = "fancy_dataclass/__init__.py"
 [tool.hatch.envs.doc]
 dependencies = [
   "mkdocs-autorefs",
-  "mkdocs-material",
+  "mkdocs-macros-plugin",
+  "mkdocs-materialx",
   "mkdocstrings[python] >= 1.0",
   "mkdocs-gen-files",
   "mkdocs-literate-nav",

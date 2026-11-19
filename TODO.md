@@ -4,7 +4,6 @@
 
 ## v0.13.0
 
-- Test dependent packages (preserve backward compatibility)
 - Documentation
   - Rewrite discussion of how settings work.
   - Make sure all associated settings types are linked from each mixin class.

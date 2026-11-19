@@ -471,7 +471,7 @@ def dataclass_field_type(cls: DataclassType, name: str) -> type:
         Fully evaluated type
 
     Raises:
-        AttributeError if there is no dataclass field with the given name"""
+        AttributeError: if there is no dataclass field with the given name"""
     try:
         try:
             return cast(type, get_type_hints(cls)[name])

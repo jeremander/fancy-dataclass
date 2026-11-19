@@ -1,8 +1,3 @@
-:root {
-  --md-primary-fg-color: black;
-  --md-accent-fg-color: red;
-}
-
 .md-header__topic {
   font-size: 17pt;
   font-style: italic;
@@ -10,14 +5,12 @@
 }
 
 .md-nav__title {
-  /* color: #303030;
-  font-size: 12pt;
-  font-style: italic; */
   visibility: hidden;
 }
 
-.md-nav__source {
-  background-color: var(--md-primary-fg-color);
+.md-header {
+  background-color: black;
+  color: white;
 }
 
 .md-search__input {

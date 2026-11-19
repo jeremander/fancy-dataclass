@@ -27,6 +27,7 @@ REF_MODULES = [
     'subprocess',
     'toml',
     'utils',
+    'validate',
     'versioned',
 ]
 

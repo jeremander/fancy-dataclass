@@ -9,7 +9,7 @@ Mixin classes inherit from a base class called [`DataclassMixin`][fancy_dataclas
 - [Configurations](config.md)
     - `ConfigDataclass`
 - Serialization
-    - `DictDataclass`
+    - [`DictDataclass`](dict.md)
     - [`JSONDataclass`](json.md)
     - [`TOMLDataclass`](toml.md)
 - [SQL Persistence](sql.md)
@@ -21,7 +21,7 @@ Mixin classes inherit from a base class called [`DataclassMixin`][fancy_dataclas
 
 !!! note
 
-    When inheriting from dataclass mixins, it is still required to use the `@dataclass` [decorator](https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass) on the class itself:
+    When inheriting from dataclass mixins, it is required to use the `@dataclass` [decorator](https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass) on the class itself:
 
     ```python
     from dataclasses import dataclass
@@ -39,34 +39,36 @@ Mixin classes have two kinds of settings: *class settings* and *field settings*.
 
 ## Class Settings
 
-Each mixin class has an associated class settings type, which can be accessed via the `__settings_type__` attribute on the class. It also has a default setting, accessed via the `__settings__` attribute.
+Each mixin class has an associated class settings type, which can be accessed via the `__settings_type__` attribute on any base mixin class which defines its own settings. `DictDataclass` is one such base class. It also has a default setting, accessed via the `__settings__` attribute.
 
 For example:
 
 ```python
-from fancy_dataclass import JSONDataclass
+from fancy_dataclass import DictDataclass
 
-JSONDataclass.__settings__
-# DictDataclassSettings(suppress_defaults=True, suppress_none=False, store_type='auto', flatten=False, allow_extra_fields=True, validate=True)
+DictDataclass.__settings__
+# DictDataclassSettings(suppress_defaults=True, suppress_none=False, store_type='off', flatten=False, allow_extra_fields=True)
 ```
 
-To override the default settings on a custom subclass, you can either set the `__settings__` attribute explicitly, or (more easily) pass extra keywords when inheriting from the mixin, e.g.
+To override the default settings on a custom subclass, pass extra keyword arguments when inheriting from the mixin, e.g.
 
 ```python
-class MyDataclass(JSONDataclass, suppress_defaults=False):
+@dataclass
+class MyDataclass(DictDataclass, suppress_defaults=False):
     ...
 
-MyDataclass.__settings__
-# DictDataclassSettings(suppress_defaults=False, suppress_none=False, store_type='auto', flatten=False, allow_extra_fields=True, validate=True)
+MyDataclass._dict_dataclass_settings()
+# DictDataclassSettings(suppress_defaults=False, suppress_none=False, store_type='off', flatten=False, allow_extra_fields=True)
 ```
 
-Things are a little more awkward when inheriting from *multiple* mixin classes. In that case, the settings type is a sort of "fusion" of the parent classes' settings types, but you can still set attributes for any of the parent settings in the same way as above.
+You can pass such keyword arguments even when inheriting from *multiple* mixin classes, provided there are no field name collisions among the different settings types.
 
 ## Field Settings
 
-Whereas class settings affect the behavior of the whole class, field settings are attached to each individual dataclass field. The field settings type associated with a mixin class can be found in the `__field_settings__` attribute. To override the default settings for a field, simply specify them as part of the `metadata` of the `field` constructor for that field. For example:
+Whereas class settings affect the behavior of the whole class, field settings are attached to each individual dataclass field. The field settings type associated with a base mixin class can be found in its `__field_settings__` attribute. To override the default settings for a field, simply specify them as part of the `metadata` of the `field` constructor for that field. For example:
 
 ```python
+@dataclass
 class Circle(JSONDataclass):
     radius: float = field(
         default=1.0,

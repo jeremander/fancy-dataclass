@@ -11,7 +11,7 @@
 
 ## Introduction
 
-Python 3.7 introduced the `dataclasses` module which lets you write "statically typed" classes using the type hinting mechanism.
+Python's `dataclasses` module lets you write "statically typed" classes using the type hinting mechanism.
 
 By inspecting dataclasses' type annotations, it is possible to endow them with special powers that help cut down on boilerplate code in a wide variety of domains, such as:
 
@@ -28,7 +28,7 @@ By inspecting dataclasses' type annotations, it is possible to endow them with s
 
 ```pip install fancy-dataclass```
 
-Requires Python 3.9 or higher.
+Requires Python {{extra.min_python_version}} or higher.
 
 ## Example
 
@@ -84,7 +84,7 @@ Usage:
 
 Read the official documentation [here](https://fancy-dataclass.readthedocs.io).
 
-The documentation is made with [Material for MkDocs](https://squidfunk.github.io/mkdocs-material) and is hosted by [Read the Docs](https://readthedocs.com).
+The documentation is made with [ProperDocs](https://properdocs.org/) and is hosted by [Read the Docs](https://readthedocs.com).
 
 View the Changelog [here](CHANGELOG.md).
 
