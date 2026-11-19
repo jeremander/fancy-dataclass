@@ -150,9 +150,9 @@ def _deconflict_duplicate_dests(parser: ArgParser, dest: str) -> None:
     parser._dests.add(dest)  # type: ignore[union-attr]
 
 
-##########
-# MIXINS #
-##########
+############
+# SETTINGS #
+############
 
 @dataclass(frozen=True, kw_only=True)
 class CLIDataclassSettings(MixinSettings):
@@ -254,6 +254,10 @@ class CLIDataclassFieldSettings(DocFieldSettings):
     default_help: Optional[bool] = None
     switch: bool = False
 
+
+##########
+# MIXINS #
+##########
 
 class CLIDataclass(DataclassMixin):
     """Mixin class providing a means of setting up an [`argparse`](https://docs.python.org/3/library/argparse.html)
@@ -398,7 +402,7 @@ class CLIDataclass(DataclassMixin):
         return parser
 
     @classmethod
-    def _configure_argument(cls, parser: ArgParser, name: str) -> None:
+    def _configure_argument(cls, parser: ArgParser, name: str) -> None:  # noqa: C901
         """Given an argument parser and a field name, configures the parser with an argument of that name.
 
         Attempts to provide reasonable default behavior based on the dataclass field name, type, default, and metadata.
@@ -673,7 +677,7 @@ class CLIDataclass(DataclassMixin):
         return d
 
     @classmethod
-    def from_args(cls, args: Namespace) -> Self:
+    def from_args(cls, args: Namespace) -> Self:  # noqa: C901
         """Constructs an [`CLIDataclass`][fancy_dataclass.cli.CLIDataclass] from a `Namespace` object.
 
         Args:

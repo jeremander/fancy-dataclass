@@ -147,9 +147,9 @@ class _VersionedDataclassRegistry:
 _VERSIONED_DATACLASS_REGISTRY = _VersionedDataclassRegistry()
 
 
-#######################
-# VERSIONED DATACLASS #
-#######################
+############
+# SETTINGS #
+############
 
 @dataclass(frozen=True, kw_only=True)
 class VersionedDataclassSettings(DictDataclassSettings):
@@ -165,6 +165,10 @@ class VersionedDataclassSettings(DictDataclassSettings):
     version: Optional[AnyVersion] = None
     suppress_version: bool = False
 
+
+##########
+# MIXINS #
+##########
 
 @dataclass
 class VersionedDataclass(DictDataclass):

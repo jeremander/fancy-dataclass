@@ -18,6 +18,10 @@ from fancy_dataclass.utils import (
 T = TypeVar('T')
 
 
+####################
+# HELPER FUNCTIONS #
+####################
+
 def _first_non_null(vals: Iterable[Optional[T]], *, default: T) -> T:
     """Gets the first non-None value from the given iterable, defaulting to a given value if all are None."""
     for val in vals:
@@ -25,6 +29,38 @@ def _first_non_null(vals: Iterable[Optional[T]], *, default: T) -> T:
             return val
     return default
 
+def _validate_dataclass_fields(cls: type['ValidatedDataclass']) -> None:
+    """Validates all dataclass fields (including ClassVars) for a ValidatedDataclass subclass."""
+    for fld in get_dataclass_fields(cls, include_all=True):
+        if type_is_classvar(fld.type) and hasattr(cls, fld.name):
+            _validate_dataclass_field(cls, fld, getattr(cls, fld.name))
+        elif (cls._field_validation_flags(fld.name).validate_init) and (fld.default is not MISSING):
+            _validate_dataclass_field(cls, fld, fld.default, is_default=True)
+
+def _hook_setattr_for_assignment_validation(cls: type[DataclassMixin]) -> None:
+    """Given a DataclassMixin subclass, hooks its __setattr__ to validate instance attributes at assignment time.
+
+    NOTE: this will redundantly check attributes set during __post_init__ if validate_init=True as well.
+    This is somewhat difficult to avoid since there is no simple way to distinguish assignments occurring
+    during initialization.
+
+    NOTE: if the dataclass is frozen, `setattr` will *not* be called when initializing fields, so if
+    validation is desired, be sure to set validate_init=True."""
+    orig_setattr = cls.__setattr__
+    def _validated_setattr(self: object, name: str, value: Any, /) -> None:
+        tp = cast(DataclassType, type(self))
+        if (
+            (fld := tp.__dataclass_fields__.get(name, None))
+            and tp._field_validation_flags(fld.name).validate_assign  # type: ignore[attr-defined]
+        ):
+            _validate_dataclass_field(tp, fld, value)
+        orig_setattr(self, name, value)  # pyrefly: ignore[bad-argument-type]
+    cls.__setattr__ = _validated_setattr  # type: ignore[method-assign]
+
+
+############
+# SETTINGS #
+############
 
 @dataclass(frozen=True, kw_only=True)
 class _FieldValidationFlags:
@@ -59,10 +95,6 @@ class _ValidationSettings:
         )
 
 
-##########
-# MIXINS #
-##########
-
 @dataclass(kw_only=True)
 class ValidatedDataclassSettings(MixinSettings, _ValidationSettings):
     """Class-level settings for the [`ValidatedDataclass`][fancy_dataclass.validate.ValidatedDataclass] mixin.
@@ -88,6 +120,10 @@ class ValidatedDataclassFieldSettings(FieldSettings, _ValidationSettings):
     """
 
 
+##########
+# MIXINS #
+##########
+
 class ValidatedDataclass(DataclassMixin):
     """Mixin class for dataclasses which can validate their fields upon initialization or assignment."""
 
@@ -109,12 +145,7 @@ class ValidatedDataclass(DataclassMixin):
         settings = cast(ValidatedDataclassSettings, wrapped_cls._class_settings(base=ValidatedDataclass))
         if settings.flags.validate_init:
             # validate ClassVar values and field default values at dataclass wrap time
-            for fld in get_dataclass_fields(wrapped_cls, include_all=True):
-
-                if type_is_classvar(fld.type) and hasattr(wrapped_cls, fld.name):
-                    _validate_dataclass_field(wrapped_cls, fld, getattr(wrapped_cls, fld.name))
-                elif (wrapped_cls._field_validation_flags(fld.name).validate_init) and (fld.default is not MISSING):
-                    _validate_dataclass_field(wrapped_cls, fld, fld.default, is_default=True)
+            _validate_dataclass_fields(wrapped_cls)
         # determine whether any fields should validate upon assignment
         if wrapped_cls.__dataclass_params__.frozen:  # type: ignore[attr-defined]
             validate_assign = False
@@ -126,22 +157,7 @@ class ValidatedDataclass(DataclassMixin):
                     validate_assign = True
                     break
         if validate_assign:
-            # hook __setattr__ to validate instance attributes at assignment time
-            # NOTE: this will redundantly check attributes set during __post_init__ if validate_init=True as well.
-            # This is somewhat difficult to avoid since there is no simple way to distinguish assignments occurring
-            # during initialization.
-            # NOTE: if the dataclass is frozen, `setattr` will *not* be called when initializing fields, so if
-            # validation is desired, be sure to set validate_init=True.
-            orig_setattr = wrapped_cls.__setattr__
-            def _validated_setattr(self: object, name: str, value: Any, /) -> None:
-                tp = cast(DataclassType, type(self))
-                if (
-                    (fld := tp.__dataclass_fields__.get(name, None))
-                    and tp._field_validation_flags(fld.name).validate_assign  # type: ignore[attr-defined]
-                ):
-                    _validate_dataclass_field(tp, fld, value)
-                orig_setattr(self, name, value)  # pyrefly: ignore[bad-argument-type]
-            wrapped_cls.__setattr__ = _validated_setattr  # type: ignore[method-assign]
+            _hook_setattr_for_assignment_validation(wrapped_cls)
 
     @classmethod
     def _field_validation_flags(cls, name: str) -> _FieldValidationFlags:

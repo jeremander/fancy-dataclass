@@ -48,7 +48,8 @@ class FieldSettings(_DataclassFieldValidate):
         Raises:
             TypeError: If any field has the wrong type"""
         assert check_dataclass(cls)
-        return cls(**{key: val for (key, val) in fld.metadata.items() if key in cls.__dataclass_fields__})  # type: ignore[return-value]
+        kwargs = {key: val for (key, val) in fld.metadata.items() if key in cls.__dataclass_fields__}
+        return cls(**kwargs)  # type: ignore[return-value]
 
 
 @dataclass(kw_only=True)

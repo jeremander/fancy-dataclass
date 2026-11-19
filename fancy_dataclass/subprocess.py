@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import Field, dataclass
 import subprocess
 from typing import Any, ClassVar, Optional, cast, get_origin
 
@@ -9,6 +9,10 @@ from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.settings import FieldSettings, MixinSettings
 from fancy_dataclass.utils import get_dataclass_fields, obj_class_name
 
+
+############
+# SETTINGS #
+############
 
 @dataclass(frozen=True, kw_only=True)
 class SubprocessDataclassSettings(MixinSettings):
@@ -54,6 +58,56 @@ class SubprocessDataclassFieldSettings(FieldSettings):
     subproc_flag: Optional[bool] = None
     subproc_repeat: Optional[bool] = None
 
+    def _should_exclude_field(self, fld: Field[Any]) -> bool:
+        if get_origin(fld.type) is ClassVar:
+            # by default, exclude fields associated with the class rather than the instance
+            return self.subproc_exclude is not False
+        return self.subproc_exclude is True
+
+    def _get_option_name(self, name: str) -> Optional[str]:
+        """Given the name of a field, gets the name of the corresponding option for a subprocess command."""
+        # determine the option name (if any)
+        if self.subproc_positional:
+            if self.subproc_option_name is not None:
+                raise ValueError('cannot have both subproc_positional and subproc_option_name set')
+            return None
+        if self.subproc_option_name is None:
+            # by default use the field name with underscore replaced by dash
+            option_name = name.replace('_', '-')
+        else:
+            option_name = self.subproc_option_name
+        if not option_name.startswith('-'):
+            # assume a single dash if the name is a single letter, otherwise a double dash
+            prefix = '-' if (len(option_name) == 1) else '--'
+            option_name = prefix + option_name
+        return option_name
+
+    def _get_args_for_bool(self, val: bool) -> Optional[list[str]]:
+        if self.subproc_flag is False:  # a literal boolean-valued option
+            return [str(val)]
+        if val:  # a boolean flag (no arguments)
+            return []
+        # otherwise, a flag will be absent (signal this by returning None)
+        return None
+
+    def _get_args_for_sequence(
+        self,
+        option_name: Optional[str],
+        val: Sequence[Any],
+    ) -> tuple[Optional[str], list[str]]:
+        if self.subproc_repeat:  # repeat the argument for each value in the list
+            assert not self.subproc_positional
+            assert option_name
+            args = [y for x in val for y in [option_name, str(x)]]
+            return (None, args)
+        # put the arguments in a sequence after the option
+        args = [str(x) for x in val]
+        return (option_name, args)
+
+
+##########
+# MIXINS #
+##########
 
 class SubprocessDataclass(DataclassMixin):
     """Mixin class providing a means of converting dataclass fields to command-line arguments that can be used to make a
@@ -117,11 +171,7 @@ class SubprocessDataclass(DataclassMixin):
         settings = self._subprocess_dataclass_field_settings(name)
         if settings.subproc_is_exec:  # this field is the executable, so return no arguments
             return []
-        if get_origin(fld.type) is ClassVar:
-            # by default, exclude fields associated with the class rather than the instance
-            exclude = settings.subproc_exclude is not False
-        else:
-            exclude = settings.subproc_exclude is True
+        exclude = settings._should_exclude_field(fld)
         if exclude:  # exclude the argument
             return []
         val = getattr(self, name, None)
@@ -133,37 +183,15 @@ class SubprocessDataclass(DataclassMixin):
             # otherwise, only include the arguments
             return val._get_args()
         # determine the option name (if any)
-        if settings.subproc_positional:
-            assert not settings.subproc_option_name
-            option_name = None
-        else:
-            # if option_name is unspecified, use the field name with underscore replaced by dash
-            if settings.subproc_option_name is None:
-                option_name = name.replace('_', '-')
-            else:
-                option_name = settings.subproc_option_name
-            if not option_name.startswith('-'):
-                # assume a single dash if the name is a single letter, otherwise a double dash
-                prefix = '-' if (len(option_name) == 1) else '--'
-                option_name = prefix + option_name
+        option_name = settings._get_option_name(name)
         # determine the value
         if isinstance(val, bool):
-            if settings.subproc_flag is False:  # use a literal boolean-valued option
-                val = [str(val)]
-            else:  # make it a boolean flag if value True, otherwise omit it
-                if not val:
-                    return []
-                val = []
+            if (val := settings._get_args_for_bool(val)) is None:
+                # value is false, so omit the flag
+                return []
         elif isinstance(val, (list, tuple)):
-            if val:
-                if settings.subproc_repeat:  # repeat the argument for each value in the list
-                    assert not settings.subproc_positional
-                    assert option_name
-                    val = [y for x in val for y in [option_name, str(x)]]
-                    option_name = None
-                else:
-                    val = [str(x) for x in val]
-            else:
+            (option_name, val) = settings._get_args_for_sequence(option_name, val)
+            if not val:  # empty sequence
                 return []
         else:
             assert val is not None

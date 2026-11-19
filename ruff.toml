@@ -24,9 +24,7 @@ lint.extend-select = [
 # rules to ignore
 lint.ignore = [
     "ANN401",  # use of the 'Any' type
-    "B027",  # empty method not marked with abstractmethod
     "B905",  # zip without explicit 'strict' parameter
-    "C901",  # function is too complex
     "D100",  # module-level docstring
     "D105",  # magic method docstring
     "D203",  # blank line before class docstring
@@ -42,11 +40,7 @@ lint.ignore = [
     "D413",  # blank line after last section
     "D415",  # first line ending with punctuation
     "E731",  # assign lambda expression
-    "FA100",  # future annotation possible
-    "PT001",  # use of pytest.fixture (with no parens)
-    "PT013",  # use simple import of pytest
     "PTH123",  # Path.open instead of regular open
-    "RET501",  # return None
     "UP045",  # | None instead of Optional
 ]
 

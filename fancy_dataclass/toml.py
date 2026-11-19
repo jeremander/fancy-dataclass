@@ -52,10 +52,23 @@ def _add_comments_to_doc(comments: Iterable[tomlkit.items.Comment], doc: tk.TOML
     for comment in comments:
         doc.add(comment)
 
+def _update_comment_elts_for_table(
+    comment_elts: list[tomlkit.items.Comment],
+    doc: tk.TOMLDocument,
+    table: tomlkit.items.Table,
+) -> None:
+    if doc:
+        # move newline above comment preceding a table
+        comment_elts[0].trivia.comment = '\n' + comment_elts[0].trivia.comment
+    num_subdicts = sum(isinstance(val, dict) for val in table.values())
+    if num_subdicts <= 1:
+        # remove blank line between comment and one-section table
+        comment_elts[-1].trivia.trail = ''
 
-##########
-# MIXINS #
-##########
+
+############
+# SETTINGS #
+############
 
 @dataclass(frozen=True, kw_only=True)
 class TOMLDataclassSettings(MixinSettings):
@@ -76,6 +89,10 @@ class TOMLDataclassSettings(MixinSettings):
         if (self.comment is not None) and self.doc_as_comment:
             raise ValueError('can set comment to a string or doc_as_comment=True, but not both')
 
+
+##########
+# MIXINS #
+##########
 
 class TOMLSerializable(TextFileSerializable):
     """Mixin class enabling conversion of an object to/from TOML."""
@@ -164,13 +181,7 @@ class TOMLDataclass(
             else:
                 val = _make_toml_element(val)
             if isinstance(val, tomlkit.items.Table) and val and comment_elts:
-                if doc:
-                    # move newline above comment preceding a table
-                    comment_elts[0].trivia.comment = '\n' + comment_elts[0].trivia.comment
-                num_subdicts = sum(isinstance(subval, dict) for subval in val.values())
-                if num_subdicts <= 1:
-                    # remove blank line between comment and one-section table
-                    comment_elts[-1].trivia.trail = ''
+                _update_comment_elts_for_table(comment_elts, doc, val)
             _add_comments_to_doc(comment_elts, doc)
             doc.add(key, val)
         return doc

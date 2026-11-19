@@ -44,6 +44,10 @@ StoreTypeMode: TypeAlias = Literal['off', 'name', 'qualname']
 _TYPE_ALIAS_TYPE = getattr(typing, 'TypeAliasType', None)
 
 
+############
+# SETTINGS #
+############
+
 @dataclass(frozen=True, kw_only=True)
 class DictDataclassSettings(MixinSettings):
     """Class-level settings for the [`DictDataclass`][fancy_dataclass.dict.DictDataclass] mixin.
@@ -95,6 +99,10 @@ class DictDataclassFieldSettings(ValidatedDataclassFieldSettings, DocFieldSettin
     alias: Optional[str] = None
     flatten: Optional[bool] = None
 
+
+##########
+# MIXINS #
+##########
 
 class DictDataclass(ValidatedDataclass, validate=False):
     """Mixin class for dataclasses that can be converted to and from a Python dict.
@@ -192,7 +200,7 @@ class DictDataclass(ValidatedDataclass, validate=False):
             case _:
                 return cls._to_dict_value_basic(val)
 
-    def _to_dict(self, full: bool) -> AnyDict:
+    def _to_dict(self, full: bool) -> AnyDict:  # noqa: C901
         d = self._dict_init()
         cls_settings = self._dict_dataclass_settings()
         class_suppress_none = cls_settings.suppress_none
@@ -269,7 +277,7 @@ class DictDataclass(ValidatedDataclass, validate=False):
         return val
 
     @classmethod
-    def _from_dict_value(cls, tp: type, val: Any) -> Any:
+    def _from_dict_value(cls, tp: type, val: Any) -> Any:  # noqa: C901
         """Given a type and a value, attempts to convert the value to the given type."""
         convert_val = cls._from_dict_value
         if tp in [NoneType, Any, 'typing.Any']:  # assume basic data type

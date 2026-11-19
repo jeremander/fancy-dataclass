@@ -65,6 +65,10 @@ def _get_base_type_for_field_type(field_type: Any) -> type:
     return cast(type, field_type)
 
 
+############
+# SETTINGS #
+############
+
 @dataclass(kw_only=True)
 class SQLDataclassFieldSettings(FieldSettings):
     """Settings for [`SQLDataclass`][fancy_dataclass.sql.SQLDataclass] fields.
@@ -81,6 +85,10 @@ class SQLDataclassFieldSettings(FieldSettings):
     sql_column_kwargs: Optional[dict[str, Any]] = None
     sql_type: Optional[type] = None
 
+
+##########
+# MIXINS #
+##########
 
 class SQLDataclass(DataclassMixin):
     """A dataclass backed by a SQL table using the [sqlalchemy](https://www.sqlalchemy.org) ORM.

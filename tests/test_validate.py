@@ -205,7 +205,7 @@ def test_nested() -> None:
 @pytest.mark.parametrize('frozen', [False, True])
 @pytest.mark.parametrize('init', [False, True])
 @pytest.mark.parametrize('assign', [False, True])
-def test_validate_init_and_assign(frozen: bool, init: bool, assign: bool) -> None:
+def test_validate_init_and_assign(frozen: bool, init: bool, assign: bool) -> None:  # noqa: C901
     """Tests validation of a field with varying flags for validate_init and validate_assign."""
     @dataclass(frozen=frozen)
     class DCClassFlags(ValidatedDataclass, validate_init=init, validate_assign=assign):

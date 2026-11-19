@@ -95,6 +95,21 @@ def _update_settings_kwargs(
             raise TypeError(f'redundant specification of field {name!r} for {cls.__name__}')
     settings_kwargs.update(d)
 
+def _make_settings_map(
+    pairs: Iterable[tuple[type, type[MixinSettings]]],
+    settings_kwargs: dict[str, Any],
+) -> tuple[WeakKeyDictionary[type, MixinSettings], set[str]]:
+    settings_map: WeakKeyDictionary[type, MixinSettings] = WeakKeyDictionary()
+    field_names = set()
+    for (base, stype) in pairs:
+        d = {}
+        for fld in get_dataclass_fields(stype, include_all=True):
+            if (name := fld.name) in settings_kwargs:
+                d[name] = settings_kwargs[name]
+                field_names.add(name)
+        settings_map[base] = stype(**d)
+    return (settings_map, field_names)
+
 def _configure_mixin_settings(cls: type['DataclassMixin'], **kwargs: Any) -> None:
     """Sets up a `DataclassMixin`'s settings (at definition time), given inheritance kwargs."""
     # get user-specified settings (need to use __dict__ here rather than direct access,
@@ -118,24 +133,15 @@ def _configure_mixin_settings(cls: type['DataclassMixin'], **kwargs: Any) -> Non
         if (stype := _get_settings_type(base)) and issubclass_safe(stype, MixinSettings):
             pairs.append((base, stype))
         settings_kwargs.update(getattr(base, '__settings_kwargs__', None) or {})
-    settings_map: WeakKeyDictionary[type, MixinSettings] = WeakKeyDictionary()
+    # this class's kwargs take priority over the parent classes'
+    settings_kwargs.update(kwargs)
     if pairs:
         stypes = [stype for (_, stype) in pairs]
         try:
             _reconcile_base_dataclasses(stypes)
         except TypeError as e:
             raise TypeError(f'error reconciling base class settings for {cls.__name__}: {e}') from e
-    # this class's kwargs take priority over the parent classes'
-    settings_kwargs.update(kwargs)
-    settings_map = WeakKeyDictionary()
-    field_names = set()
-    for (base, stype) in pairs:
-        d = {}
-        for fld in get_dataclass_fields(stype, include_all=True):
-            if (name := fld.name) in settings_kwargs:
-                d[name] = settings_kwargs[name]
-                field_names.add(name)
-        settings_map[base] = stype(**d)
+    (settings_map, field_names) = _make_settings_map(pairs, settings_kwargs)
     for name in kwargs:
         if name not in field_names:
             raise TypeError(f'unknown settings field {name!r} for {cls.__name__}')
