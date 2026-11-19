@@ -4,7 +4,10 @@
 
 ## v0.13.0
 
+- Move mutual exclusivity of `subproc_positional` and `subproc_option_name` into settings `__post_init__`?
+- Use `DocDataclass` rather than subclassing the settings.
 - Documentation
+  - Doc
   - Rewrite discussion of how settings work.
   - Make sure all associated settings types are linked from each mixin class.
   - Validation
@@ -44,7 +47,6 @@
       - Can use `typeguard` for simplicity, or try to emulate its inspection logic.
   - Allow all (or at least most) configs to be overridable at field level
   - Custom validation functions per field
-
 - Field converters
   - https://github.com/jeremander/fancy-dataclass/issues/2
   - PEP 712 (`converter` argument for dataclass fields), was rejected
