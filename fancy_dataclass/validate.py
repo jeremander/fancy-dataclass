@@ -2,7 +2,7 @@ from collections.abc import Iterable
 from dataclasses import MISSING, Field, dataclass
 from typing import Any, ClassVar, Optional, TypeVar, cast
 
-from typing_extensions import Self
+from typing_extensions import override
 
 from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.settings import FieldSettings, MixinSettings
@@ -140,24 +140,25 @@ class ValidatedDataclass(DataclassMixin):
         return cast(ValidatedDataclassFieldSettings, cls._field_settings(name, base=ValidatedDataclass))
 
     @classmethod
-    def __post_dataclass_wrap__(cls, wrapped_cls: type[Self]) -> None:
-        super().__post_dataclass_wrap__(wrapped_cls)
-        settings = cast(ValidatedDataclassSettings, wrapped_cls._class_settings(base=ValidatedDataclass))
+    @override
+    def __post_dataclass_wrap__(cls) -> None:
+        super().__post_dataclass_wrap__()
+        settings = cast(ValidatedDataclassSettings, cls._class_settings(base=ValidatedDataclass))
         if settings.flags.validate_init:
             # validate ClassVar values and field default values at dataclass wrap time
-            _validate_dataclass_fields(wrapped_cls)
+            _validate_dataclass_fields(cls)
         # determine whether any fields should validate upon assignment
-        if wrapped_cls.__dataclass_params__.frozen:  # type: ignore[attr-defined]
+        if cls.__dataclass_params__.frozen:  # type: ignore[attr-defined]
             validate_assign = False
         else:
             validate_assign = False
-            for fld in get_dataclass_fields(wrapped_cls):
-                flags = wrapped_cls._field_validation_flags(fld.name)
+            for fld in get_dataclass_fields(cls):
+                flags = cls._field_validation_flags(fld.name)
                 if flags.validate_assign:
                     validate_assign = True
                     break
         if validate_assign:
-            _hook_setattr_for_assignment_validation(wrapped_cls)
+            _hook_setattr_for_assignment_validation(cls)
 
     @classmethod
     def _field_validation_flags(cls, name: str) -> _FieldValidationFlags:

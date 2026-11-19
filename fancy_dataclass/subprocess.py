@@ -3,7 +3,7 @@ from dataclasses import Field, dataclass
 import subprocess
 from typing import Any, ClassVar, Optional, cast, get_origin
 
-from typing_extensions import Self
+from typing_extensions import override
 
 from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.settings import FieldSettings, MixinSettings
@@ -130,13 +130,14 @@ class SubprocessDataclass(DataclassMixin):
         return cast(SubprocessDataclassFieldSettings, cls._field_settings(name, base=SubprocessDataclass))
 
     @classmethod
-    def __post_dataclass_wrap__(cls, wrapped_cls: type[Self]) -> None:
-        super().__post_dataclass_wrap__(wrapped_cls)
-        cls_exec_name = wrapped_cls._subprocess_dataclass_settings().subproc_exec_name
+    @override
+    def __post_dataclass_wrap__(cls) -> None:
+        super().__post_dataclass_wrap__()
+        cls_exec_name = cls._subprocess_dataclass_settings().subproc_exec_name
         # make sure there is at most one exec field
         exec_field = None
-        for fld in get_dataclass_fields(wrapped_cls, include_all=True):
-            fld_settings = wrapped_cls._subprocess_dataclass_field_settings(fld.name)
+        for fld in get_dataclass_fields(cls, include_all=True):
+            fld_settings = cls._subprocess_dataclass_field_settings(fld.name)
             if fld_settings.subproc_is_exec:
                 if cls_exec_name is not None:
                     raise TypeError(

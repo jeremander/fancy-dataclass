@@ -4,8 +4,6 @@
 
 ## v0.13.0
 
-- Don't merge settings types; instead keep multiple ones
-  - Tests run slower than before?
 - Test dependent packages (preserve backward compatibility)
 - Documentation
   - Rewrite discussion of how settings work.

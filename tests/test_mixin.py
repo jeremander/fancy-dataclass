@@ -3,7 +3,7 @@ from typing import Annotated, ClassVar, Optional
 
 import annotated_doc
 import pytest
-from typing_extensions import Doc, Self
+from typing_extensions import Doc
 
 from fancy_dataclass.mixin import DataclassMixin
 from fancy_dataclass.settings import DocFieldSettings, FieldSettings, MixinSettings
@@ -79,8 +79,9 @@ class TestDataclassMixin:
         class MyMixin(DataclassMixin):
             _my_value: int
             @classmethod
-            def __post_dataclass_wrap__(cls, wrapped_cls: type[Self]) -> None:
-                wrapped_cls._my_value = 123
+            def __post_dataclass_wrap__(cls) -> None:
+                super().__post_dataclass_wrap__()
+                cls._my_value = 123
         assert not hasattr(MyMixin, '_my_value')
         # method triggers when wrapped into a dataclass
         MyMixin2 = dataclass(MyMixin)

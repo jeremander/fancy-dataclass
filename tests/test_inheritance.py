@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import ClassVar, Optional
 
 import pytest
-from typing_extensions import Self
 
 from fancy_dataclass import (
     CLIDataclass,
@@ -103,16 +102,18 @@ def test_post_dataclass_wrap() -> None:
         val: ClassVar[int]
         val1: ClassVar[int]
         @classmethod
-        def __post_dataclass_wrap__(cls, wrapped_cls: type[Self]) -> None:
-            wrapped_cls.val = 1
-            wrapped_cls.val1 = 1
+        def __post_dataclass_wrap__(cls) -> None:
+            super().__post_dataclass_wrap__()
+            cls.val = 1
+            cls.val1 = 1
     class Mixin2(DataclassMixin):
         val: ClassVar[int]
         val2: ClassVar[int]
         @classmethod
-        def __post_dataclass_wrap__(cls, wrapped_cls: type[Self]) -> None:
-            wrapped_cls.val = 2
-            wrapped_cls.val2 = 2
+        def __post_dataclass_wrap__(cls) -> None:
+            super().__post_dataclass_wrap__()
+            cls.val = 2
+            cls.val2 = 2
     @dataclass
     class DC1(Mixin1):
         ...

@@ -128,18 +128,18 @@ class DictDataclass(ValidatedDataclass, validate=False):
 
     @classmethod
     @override
-    def __post_dataclass_wrap__(cls, wrapped_cls: type[Self]) -> None:
+    def __post_dataclass_wrap__(cls) -> None:
         # disallow 'type' field when the type needs to be stored in the output dict
-        if wrapped_cls._dict_dataclass_settings().should_store_type():
-            for fld in dataclasses.fields(wrapped_cls):  # type: ignore[arg-type]
+        if cls._dict_dataclass_settings().should_store_type():
+            for fld in dataclasses.fields(cls):  # type: ignore[arg-type]
                 if fld.name == 'type':
                     raise TypeError(
                         f"'type' is a reserved dict field for {cls.__name__}, cannot be used as dataclass field"
                     )
-        super().__post_dataclass_wrap__(wrapped_cls)
+        super().__post_dataclass_wrap__()
         # prevent field name collisions when using 'alias' setting
         field_names = set()
-        settings_map = cast(dict[str, DictDataclassFieldSettings], wrapped_cls.__field_settings_map__[DictDataclass])
+        settings_map = cast(dict[str, DictDataclassFieldSettings], cls.__field_settings_map__[DictDataclass])
         for (name, settings) in settings_map.items():
             if settings.alias is not None:
                 name = settings.alias

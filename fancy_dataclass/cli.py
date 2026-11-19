@@ -238,7 +238,7 @@ class CLIDataclassFieldSettings(DocFieldSettings):
         - Otherwise, a positional argument
     - If `required` is specified in the metadata, this will take precedence over the default behavior above."""
 
-    type: Optional[type | Callable[[Any], Any]] = None  # can be used to define custom constructor
+    type: Optional[builtins.type | Callable[[Any], Any]] = None  # can be used to define custom constructor
     args: Optional[str | Sequence[str]] = None
     action: Optional[str | builtins.type[Action]] = None
     nargs: Optional[str | int] = None
@@ -310,11 +310,11 @@ class CLIDataclass(DataclassMixin):
 
     @classmethod
     @override
-    def __post_dataclass_wrap__(cls, wrapped_cls: type[Self]) -> None:
-        super().__post_dataclass_wrap__(wrapped_cls)
+    def __post_dataclass_wrap__(cls) -> None:
+        super().__post_dataclass_wrap__()
         subcommand = None
         names = set()
-        for fld in fields(wrapped_cls):  # type: ignore[arg-type]
+        for fld in fields(cls):  # type: ignore[arg-type]
             if not fld.metadata.get('subcommand', False):
                 continue
             if subcommand is None:
