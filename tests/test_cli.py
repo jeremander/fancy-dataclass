@@ -745,7 +745,7 @@ def test_subcommand(capsys: pytest.CaptureFixture[str]) -> None:
     assert isinstance(settings, CLIDataclassSettings)
     assert settings.command_name == 'my-subcommand'
     assert Sub2.subcommand_field_name is None
-    assert Sub2(1, 2).subcommand_name is None  # pyrefly: ignore[bad-argument-type]
+    assert Sub2(1, 2).subcommand_name is None  # type: ignore[arg-type]
     # multiple subcommands not allowed
     with pytest.raises(TypeError, match='multiple fields .* registered as subcommands'):
         @dataclass
@@ -799,7 +799,7 @@ def test_subcommand(capsys: pytest.CaptureFixture[str]) -> None:
     assert settings.command_name == 'dc-sub5'
     assert DCSub5.subcommand_field_name == 'sub'
     assert DCSub5(Sub1(1, 2)).subcommand_name == 'sub1'
-    assert DCSub5(Sub2(1, 2)).subcommand_name == 'my-subcommand'  # pyrefly: ignore[bad-argument-type]
+    assert DCSub5(Sub2(1, 2)).subcommand_name == 'my-subcommand'  # type: ignore[arg-type]
     help_str = DCSub5.make_parser().format_help()
     assert re.search(
         (

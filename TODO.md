@@ -4,8 +4,7 @@
 
 ## v0.13.0
 
-- Move mutual exclusivity of `subproc_positional` and `subproc_option_name` into settings `__post_init__`?
-- Use `DocDataclass` rather than subclassing the settings.
+- Refactor `test_serialize.py`
 - Documentation
   - Doc
   - Rewrite discussion of how settings work.

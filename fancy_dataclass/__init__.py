@@ -2,6 +2,7 @@
 from .cli import ArgparseDataclass, CLIDataclass
 from .config import Config, ConfigDataclass, DictConfig
 from .dict import DictDataclass
+from .doc import DocDataclass
 from .func import func_dataclass
 from .json import JSONBaseDataclass, JSONDataclass, JSONSerializable
 from .mixin import DataclassMixin
@@ -22,6 +23,7 @@ __all__ = [
     'DataclassMixin',
     'DictConfig',
     'DictDataclass',
+    'DocDataclass',
     'JSONBaseDataclass',
     'JSONDataclass',
     'JSONSerializable',
@@ -30,5 +32,6 @@ __all__ = [
     'TOMLDataclass',
     'ValidatedDataclass',
     'VersionedDataclass',
+    'func_dataclass',
     'version',
 ]

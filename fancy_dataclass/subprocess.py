@@ -78,8 +78,7 @@ class SubprocessDataclassFieldSettings(FieldSettings):
         """Given the name of a field, gets the name of the corresponding option for a subprocess command."""
         # determine the option name (if any)
         if self.subproc_positional:
-            if self.subproc_option_name is not None:
-                raise ValueError('cannot have both subproc_positional and subproc_option_name set')
+            assert self.subproc_option_name is None  # guaranteed by earlier validation
             return None
         if self.subproc_option_name is None:
             # by default use the field name with underscore replaced by dash

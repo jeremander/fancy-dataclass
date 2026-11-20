@@ -1,5 +1,5 @@
 from dataclasses import Field, dataclass, replace
-from typing import Any, Optional, cast
+from typing import Any, ClassVar, Optional, cast
 
 import annotated_doc
 import typing_extensions
@@ -74,9 +74,9 @@ class DocDataclass(DataclassMixin):
 
     Each individual field may provide a `"doc"` entry in its `metadata` dict."""
 
-    __settings_type__ = DocDataclassSettings
-    __settings__ = DocDataclassSettings()
-    __field_settings_type__ = DocDataclassFieldSettings
+    __settings_type__: ClassVar[Optional[type[MixinSettings]]] = DocDataclassSettings
+    __settings__: ClassVar[Optional[MixinSettings]] = DocDataclassSettings()
+    __field_settings_type__: ClassVar[Optional[type[FieldSettings]]] = DocDataclassFieldSettings
 
     @classmethod
     def _doc_dataclass_settings(cls) -> DocDataclassSettings:

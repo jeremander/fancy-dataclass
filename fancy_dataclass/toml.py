@@ -10,6 +10,7 @@ import tomlkit.toml_document
 from typing_extensions import Self, override
 
 from fancy_dataclass.dict import AnyDict
+from fancy_dataclass.doc import DocDataclass
 from fancy_dataclass.serialize import (
     DictFileSerializableDataclass,
     TextFileSerializable,
@@ -146,6 +147,7 @@ class TOMLSerializable(TextFileSerializable):
 
 class TOMLDataclass(
     DictFileSerializableDataclass,
+    DocDataclass,
     TOMLSerializable,
     validate=True,
     suppress_defaults=False,
@@ -169,8 +171,8 @@ class TOMLDataclass(
         for (key, val) in data.items():
             if not (fld := cls.__dataclass_fields__.get(key)):  # type: ignore[attr-defined]
                 continue
-            settings = cls._dict_dataclass_field_settings(fld.name)
-            comment_elts = [tk.comment(line) for line in (settings.doc.splitlines() if settings.doc else [])]
+            field_doc = cls.get_field_doc(fld.name)
+            comment_elts = [tk.comment(line) for line in (field_doc.splitlines() if field_doc else [])]
             if val is None:
                 _add_comments_to_doc(comment_elts, doc)
                 doc.add(_none_value_to_comment(key))

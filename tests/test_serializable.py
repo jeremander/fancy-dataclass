@@ -15,9 +15,10 @@ from typing import IO, Annotated, Any, Literal, NamedTuple, Optional, TypedDict,
 
 import numpy as np
 import pytest
+import tomlkit as tk
 from typing_extensions import Doc, Self
 
-from fancy_dataclass.dict import DictDataclass
+from fancy_dataclass.dict import AnyDict, DictDataclass
 from fancy_dataclass.json import JSONBaseDataclass, JSONDataclass, JSONSerializable
 from fancy_dataclass.serialize import FileSerializable
 from fancy_dataclass.toml import TOMLDataclass
@@ -78,16 +79,16 @@ def _convert_json_dataclass(cls: type[D], new_cls: type[DictDataclass]) -> type[
     """Converts JSONDataclass base classes with the given class, recursively within the input class's fields."""
     # TODO: this is very hacky; can we clean it up?
     def _convert(tp: type[D]) -> type[D]:
-        if issubclass_safe(tp, JSONDataclass):
-            bases = []
-            for base in tp.__bases__:
-                if base in (JSONDataclass, JSONBaseDataclass):
-                    base = new_cls
-                elif issubclass_safe(base, JSONDataclass):
-                    base = _convert_json_dataclass(base, new_cls)
-                bases.append(base)
-            return type(tp.__name__, tuple(bases), dict(tp.__dict__))
-        return tp
+        if not issubclass_safe(tp, JSONDataclass):
+            return tp
+        bases = []
+        for base in tp.__bases__:
+            if base in (JSONDataclass, JSONBaseDataclass):
+                base = new_cls
+            elif issubclass_safe(base, JSONDataclass):
+                base = _convert_json_dataclass(base, new_cls)
+            bases.append(base)
+        return dataclass(kw_only=True)(type(tp.__name__, tuple(bases), dict(tp.__dict__)))
     tp = _convert(_dataclass_type_map(cls, _convert))  # type: ignore[arg-type]
     assert issubclass(tp, DictDataclass)
     tp.__eq__ = cls.__eq__  # type: ignore[method-assign]
@@ -781,6 +782,11 @@ class TestJSON(TestDict):
             assert sio.getvalue() == '{"xs": [1, 2, 3]}'
 
 
+@dataclass
+class TOMLDC(TOMLDataclass):
+    x: int
+
+
 class TestTOML(TestDict):
     """Unit tests for TOMLDataclass."""
 
@@ -971,3 +977,27 @@ Subtitle"""
         obj = DC5(4, DC1(5), 6)
         self._test_serialize_round_trip(obj, tmp_path)
         assert obj.to_toml_string() == '# DC5\n\nx = 4\ny = 6\n\n[nested]\n# DC1\n\nx = 5\n'
+
+    @pytest.mark.parametrize(['data', 'document'], [
+        (
+            {},
+            tk.document(),
+        ),
+        (
+            {'x': 1},
+            tk.document().add('x', 1),
+        ),
+        (
+            {'y': 2},
+            tk.document(),
+        ),
+        (
+            {'x': 1, 'y': 2},
+            tk.document().add('x', 1),
+        ),
+    ])
+    def test_dict_to_document(self, data: AnyDict, document: tk.TOMLDocument) -> None:
+        """Tests the _dict_to_document helper method."""
+        result = TOMLDC._dict_to_document(data)
+        assert type(result) is tk.TOMLDocument
+        assert result == document

@@ -16,9 +16,9 @@ from typing import Any, ClassVar, Literal, Optional, TypeGuard, TypeVar, cast, g
 
 from typing_extensions import Self, override
 
-from fancy_dataclass.doc import DocDataclassFieldSettings
+from fancy_dataclass.doc import DocDataclass
 from fancy_dataclass.mixin import DataclassMixin
-from fancy_dataclass.settings import MixinSettings
+from fancy_dataclass.settings import FieldSettings, MixinSettings
 from fancy_dataclass.utils import (
     _UNION_TYPES,
     AnyVersion,
@@ -192,7 +192,7 @@ class CLIDataclassSettings(MixinSettings):
 
 
 @dataclass(frozen=True, kw_only=True)
-class CLIDataclassFieldSettings(DocDataclassFieldSettings):
+class CLIDataclassFieldSettings(FieldSettings):
     """Settings for [`CLIDataclass`][fancy_dataclass.cli.CLIDataclass] fields.
 
     Each field may define a `metadata` dict containing any of the following entries:
@@ -260,7 +260,7 @@ class CLIDataclassFieldSettings(DocDataclassFieldSettings):
 # MIXINS #
 ##########
 
-class CLIDataclass(DataclassMixin):
+class CLIDataclass(DocDataclass):
     """Mixin class providing a means of setting up an [`argparse`](https://docs.python.org/3/library/argparse.html)
     parser with the dataclass fields, and then converting the namespace of parsed arguments into an instance of
     the class.
@@ -274,9 +274,9 @@ class CLIDataclass(DataclassMixin):
     See [`CLIDataclassFieldSettings`][fancy_dataclass.cli.CLIDataclassFieldSettings] for the full list
     of settings."""
 
-    __settings_type__ = CLIDataclassSettings
-    __settings__ = CLIDataclassSettings()
-    __field_settings_type__ = CLIDataclassFieldSettings
+    __settings_type__: ClassVar[Optional[type[MixinSettings]]] = CLIDataclassSettings
+    __settings__: ClassVar[Optional[MixinSettings]] = CLIDataclassSettings()
+    __field_settings_type__: ClassVar[Optional[type[FieldSettings]]] = CLIDataclassFieldSettings
 
     # name of subcommand field, if present
     subcommand_field_name: ClassVar[Optional[str]] = None
@@ -529,8 +529,9 @@ class CLIDataclass(DataclassMixin):
                 kwargs[key] = meta[key]
         if kwargs.get('action') in ['count', 'store_const']:
             del kwargs['type']
-        if ('help' not in kwargs) and settings.doc:
-            kwargs['help'] = settings.doc
+        field_doc = cls.get_field_doc(name)
+        if field_doc and ('help' not in kwargs):
+            kwargs['help'] = field_doc
         # determine if the field show its default in the help string
         if cls._cli_dataclass_settings().default_help:
             # include default if there is one, and the flag is not overridden to False at the field level
