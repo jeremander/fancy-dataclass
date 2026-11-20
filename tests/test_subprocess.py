@@ -104,28 +104,23 @@ def test_option() -> None:
         bb: int = field(metadata={'subproc_option_name': 'bb'})
         c_value: int = field(metadata={'subproc_option_name': 'c-value'})
     assert DC2(1, 2, 3).get_args() == ['prog', '-a', '1', '--bb', '2', '--c-value', '3']
-    # empty option_name
-    with pytest.raises(ValueError, match='empty string not allowed for option_name'):
-        @dataclass
-        class DC3(SubprocessDataclass, subproc_exec_name='prog'):
-            a: int = field(metadata={'subproc_option_name': ''})
     # underscore gets converted to dash
     @dataclass
-    class DC4(SubprocessDataclass, subproc_exec_name='prog'):
+    class DC3(SubprocessDataclass, subproc_exec_name='prog'):
         my_arg_with_underscores_: int
-    assert DC4(1).get_args() == ['prog', '--my-arg-with-underscores-', '1']
+    assert DC3(1).get_args() == ['prog', '--my-arg-with-underscores-', '1']
     # duplicate option names are allowed
     @dataclass
-    class DC5(SubprocessDataclass, subproc_exec_name='prog'):
+    class DC4(SubprocessDataclass, subproc_exec_name='prog'):
         a: int = field(metadata={'subproc_option_name': '--option'})
         b: int = field(metadata={'subproc_option_name': 'option'})
         option: int
-    assert DC5(1, 2, 3).get_args() == ['prog', '--option', '1', '--option', '2', '--option', '3']
+    assert DC4(1, 2, 3).get_args() == ['prog', '--option', '1', '--option', '2', '--option', '3']
     # optional value is omitted
     @dataclass
-    class DC6(SubprocessDataclass, subproc_exec_name='prog'):
+    class DC5(SubprocessDataclass, subproc_exec_name='prog'):
         a: Optional[int] = None
-    assert DC6().get_args() == ['prog']
+    assert DC5().get_args() == ['prog']
 
 def test_positional() -> None:
     """Tests behavior of subprocess positional arguments."""
@@ -150,10 +145,6 @@ def test_positional() -> None:
         c: int = field(metadata={'subproc_positional': True})
         d: int = field(metadata={'subproc_option_name': '--option'})
     assert DC4(1, 2, 3, 4).get_args() == ['prog', '1', '-b', '2', '3', '--option', '4']
-    with pytest.raises(ValueError, match='cannot specify a field option_name when subproc_positional=True'):
-        @dataclass
-        class DC5(SubprocessDataclass, subproc_exec_name='prog'):
-            a: int = field(metadata={'subproc_option_name': '-a', 'subproc_positional': True})
 
 def test_exclusion() -> None:
     """Tests the subproc_exclude flag."""
@@ -196,7 +187,7 @@ def test_boolean_flag() -> None:
             val: int = field(metadata={'subproc_flag': True})
 
 def test_subproc_repeat() -> None:
-    """Tests behavior of the `subproc_repeat` field setting."""
+    """Tests behavior of the subproc_repeat field setting."""
     # ordinary list value, so list multiple values directly
     @dataclass
     class DC1(SubprocessDataclass, subproc_exec_name='prog'):
@@ -211,13 +202,23 @@ def test_subproc_repeat() -> None:
     assert DC2([]).get_args() == ['prog']
     assert DC2([1]).get_args() == ['prog', '--my-arg', '1']
     assert DC2([1, 2]).get_args() == ['prog', '--my-arg', '1', '--my-arg', '2']
-    # not allowed with positional arg
-    with pytest.raises(
-        ValueError,
-        match=r'cannot repeat option name for positional field \(subproc_positional=True\)',
-    ):
+
+def test_invalid_field_settings() -> None:
+    """Tests that subproc_positional is incompatible with subproc_option_name."""
+    # empty option_name
+    with pytest.raises(ValueError, match='empty string not allowed for subproc_option_name'):
         @dataclass
-        class DC3(SubprocessDataclass, subproc_exec_name='prog'):
+        class DC(SubprocessDataclass, subproc_exec_name='prog'):
+            a: int = field(metadata={'subproc_option_name': ''})
+    # set both subproc_positional and subproc_option_name
+    with pytest.raises(ValueError, match='cannot specify subproc_option_name when subproc_positional=True'):
+        @dataclass
+        class DC(SubprocessDataclass, subproc_exec_name='prog'):
+            a: int = field(metadata={'subproc_option_name': '-a', 'subproc_positional': True})
+    # set both subproc_positional and subproc_repeat
+    with pytest.raises(ValueError, match='cannot set both subproc_repeat=True and subproc_positional=True'):
+        @dataclass
+        class DC(SubprocessDataclass, subproc_exec_name='prog'):
             my_arg: list[int] = field(metadata={'subproc_positional': True, 'subproc_repeat': True})
 
 def test_class_var() -> None:

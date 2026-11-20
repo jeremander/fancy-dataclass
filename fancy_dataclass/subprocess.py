@@ -58,6 +58,16 @@ class SubprocessDataclassFieldSettings(FieldSettings):
     subproc_flag: Optional[bool] = None
     subproc_repeat: Optional[bool] = None
 
+    def __post_init__(self) -> None:
+        # do some consistency checking of the settings
+        if self.subproc_option_name == '':
+            raise ValueError('empty string not allowed for subproc_option_name')
+        if self.subproc_positional:
+            if self.subproc_option_name:
+                raise ValueError('cannot specify subproc_option_name when subproc_positional=True')
+            if self.subproc_repeat:
+                raise ValueError('cannot set both subproc_repeat=True and subproc_positional=True')
+
     def _should_exclude_field(self, fld: Field[Any]) -> bool:
         if get_origin(fld.type) is ClassVar:
             # by default, exclude fields associated with the class rather than the instance
@@ -150,13 +160,6 @@ class SubprocessDataclass(DataclassMixin):
                         f"(already set executable to {exec_field})"
                     )
                 exec_field = fld.name
-            if fld_settings.subproc_option_name == '':
-                raise ValueError('empty string not allowed for option_name')
-            if fld_settings.subproc_positional:
-                if fld_settings.subproc_option_name:
-                    raise ValueError('cannot specify a field option_name when subproc_positional=True')
-                if fld_settings.subproc_repeat:
-                    raise ValueError('cannot repeat option name for positional field (subproc_positional=True)')
             if fld_settings.subproc_flag and (fld.type is not bool):
                 raise ValueError('cannot use subproc_flag=True when the field type is not bool')
 

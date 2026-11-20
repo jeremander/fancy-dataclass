@@ -21,7 +21,7 @@ from typing_extensions import Self, override
 
 from fancy_dataclass.doc import DocDataclassFieldSettings
 from fancy_dataclass.mixin import DataclassMixin
-from fancy_dataclass.settings import MixinSettings
+from fancy_dataclass.settings import FieldSettings, MixinSettings
 from fancy_dataclass.utils import (
     MissingRequiredFieldError,
     check_dataclass,
@@ -119,7 +119,7 @@ class DictDataclass(ValidatedDataclass, validate=False):
 
     __settings_type__: ClassVar[Optional[type[MixinSettings]]] = DictDataclassSettings
     __settings__: ClassVar[Optional[MixinSettings]] = DictDataclassSettings()
-    __field_settings_type__ = DictDataclassFieldSettings
+    __field_settings_type__: ClassVar[Optional[type[FieldSettings]]] = DictDataclassFieldSettings
 
     @classmethod
     def _dict_dataclass_settings(cls) -> DictDataclassSettings:

@@ -129,7 +129,7 @@ class ValidatedDataclass(DataclassMixin):
 
     __settings_type__: ClassVar[Optional[type[MixinSettings]]] = ValidatedDataclassSettings
     __settings__: ClassVar[Optional[MixinSettings]] = ValidatedDataclassSettings()
-    __field_settings_type__ = ValidatedDataclassFieldSettings
+    __field_settings_type__: ClassVar[Optional[type[FieldSettings]]] = ValidatedDataclassFieldSettings
 
     @classmethod
     def _validated_dataclass_settings(cls) -> ValidatedDataclassSettings:
