@@ -54,10 +54,6 @@ nav:
   # defer to gen-files + literate-nav
   - Code reference: reference/
 
-# extra variables for macros
-extra:
-  min_python_version: "3.10"
-
 watch:
   - fancy_dataclass
   - docs
