@@ -364,6 +364,35 @@ class TestDataclassMixin:
             class DC9(Mixin2):
                 __settings_type__ = Settings4
 
+    def test_bases_with_conflicting_settings(self) -> None:
+        """Tests inheritance from two mixins with the same settings type and conflicting settings."""
+        @dataclass
+        class Settings(MixinSettings):
+            flag: bool
+        @dataclass
+        class DCBase1(DataclassMixin):
+            __settings_type__ = Settings
+            __settings__ = Settings(flag=False)
+        @dataclass
+        class DCBase2(DataclassMixin):
+            __settings_type__ = Settings
+            __settings__ = Settings(flag=True)
+        @dataclass
+        class DCSub1(DCBase1, DCBase2):
+            ...
+        assert DCSub1.__settings_type__ is None
+        assert DCSub1.__settings__ is None
+        assert DCSub1._class_settings(base=DCBase1) == Settings(flag=False)
+        # NOTE: first base class's settings take priority
+        assert DCSub1._class_settings(base=DCBase2) == Settings(flag=False)
+        @dataclass
+        class DCSub2(DCBase1, DCBase2, flag=True):
+            ...
+        assert DCSub2.__settings_type__ is None
+        assert DCSub2.__settings__ is None
+        assert DCSub2._class_settings(base=DCBase1) == Settings(flag=True)
+        assert DCSub2._class_settings(base=DCBase2) == Settings(flag=True)
+
     def test_replace(self) -> None:
         """Tests the `_replace` method."""
         @dataclass

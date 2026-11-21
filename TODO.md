@@ -4,7 +4,6 @@
 
 ## v0.13.0
 
-- Test inheriting from classes with same settings type, conflicting kwargs
 - Documentation
   - Doc
   - Rewrite discussion of how settings work.

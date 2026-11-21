@@ -24,7 +24,7 @@ from fancy_dataclass.settings import MixinSettings
 from .test_cli import DC1
 
 
-DEFAULT_MIXINS = [JSONBaseDataclass, CLIDataclass, ConfigDataclass, SQLDataclass, TOMLDataclass]
+DEFAULT_MIXINS = [JSONDataclass, CLIDataclass, ConfigDataclass, SQLDataclass, TOMLDataclass]
 
 TEST_DIR = Path(__file__).parent
 PKG_DIR = TEST_DIR.parent
@@ -64,9 +64,15 @@ def test_all_inheritance() -> None:
     assert issubclass(cls, DC)
     mro = cls.mro()
     obj = cls(5)  # type: ignore[call-arg]
+    settings = []
     for mixin_cls in DEFAULT_MIXINS:
         assert mixin_cls in mro
         assert isinstance(obj, mixin_cls)
+    assert issubclass(cls, DataclassMixin)
+    for base in mro:
+        if getattr(base, '__settings_type__', None):
+            settings.append(cls._class_settings(base=base))
+    assert len(set(settings)) == len(settings)
 
 def test_invalid_inheritance() -> None:
     """Tests invalid inheritance (e.g. parent class before its subclass)."""
