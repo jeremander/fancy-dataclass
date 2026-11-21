@@ -193,7 +193,8 @@ class JSONDataclass(DictFileSerializableDataclass, JSONSerializable, validate=Tr
 
 class JSONBaseDataclass(JSONDataclass, store_type='qualname'):
     """This class should be used in place of [`JSONDataclass`][fancy_dataclass.json.JSONDataclass] when you intend to
-    inherit from the class.
+    inherit from the class. It is in equivalent to `JSONDataclass` with its `store_type` class setting set to
+    `"qualname"`.
 
     When converting a subclass to a dict with [`to_dict`][fancy_dataclass.dict.DictDataclass.to_dict], it will store
     the subclass's fully qualified type in the `type` field. It will also resolve this type when calling

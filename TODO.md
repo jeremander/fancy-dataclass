@@ -5,9 +5,6 @@
 ## v0.13.0
 
 - Documentation
-  - Doc
-  - Rewrite discussion of how settings work.
-  - Make sure all associated settings types are linked from each mixin class.
   - Validation
     - Fix discussion of validation in `DictDataclass` (including error type)
     - Document that validation settings & field settings are inherited for `DictDataclass` (default no validation)

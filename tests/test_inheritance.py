@@ -71,7 +71,7 @@ def test_all_inheritance() -> None:
     assert issubclass(cls, DataclassMixin)
     for base in mro:
         if getattr(base, '__settings_type__', None):
-            settings.append(cls._class_settings(base=base))
+            settings.append(cls._class_settings(base=base))  # type: ignore[union-attr]
     assert len(set(settings)) == len(settings)
 
 def test_invalid_inheritance() -> None:

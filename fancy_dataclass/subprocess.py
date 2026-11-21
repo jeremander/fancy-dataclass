@@ -122,6 +122,10 @@ class SubprocessDataclass(DataclassMixin):
     """Mixin class providing a means of converting dataclass fields to command-line arguments that can be used to make a
     [subprocess](https://docs.python.org/3/library/subprocess.html) call.
 
+    A subclass may configure settings by using
+    [`SubprocessDataclassSettings`][fancy_dataclass.subprocess.SubprocessDataclassSettings] fields as keyword arguments
+    when inheriting from `SubprocessDataclass`.
+
     Per-field settings can be passed into the `metadata` argument of each `dataclasses.field`.
     See [`SubprocessDataclassFieldSettings`][fancy_dataclass.subprocess.SubprocessDataclassFieldSettings] for the
     full list of settings."""

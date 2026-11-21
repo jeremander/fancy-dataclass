@@ -27,6 +27,35 @@ plugins:
           - https://installer.readthedocs.io/en/stable/objects.inv
           options:
             filters: ["!^_[^_]", "_replace"]
+            docstring_options:
+              ignore_init_summary: true
+            docstring_style: google
+            docstring_section_style: list
+            # extensions:
+            #   - griffe_typingdoc
+            group_by_category: true
+            heading_level: 1
+            members_order: source
+            merge_init_into_class: true
+            parameter_headings: true
+            # separate function name from signature
+            # (required for formatting signature and removing Annotated)
+            separate_signature: true
+            # line length for formatting signature (black or ruff must be installed)
+            line_length: 80
+            # show item even if it has no docstring
+            show_if_no_docstring: false
+            show_root_heading: true
+            show_signature: true
+            show_signature_annotations: true
+            show_source: true
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            signature_crossrefs: true
+            # whether to render summaries of items at the beginning
+            summary: true
+            # unwrap Annotated types to show only the type without the annotations
+            unwrap_annotated: true
   - search
 
 markdown_extensions:

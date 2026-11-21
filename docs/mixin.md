@@ -5,19 +5,24 @@
 Mixin classes inherit from a base class called [`DataclassMixin`][fancy_dataclass.mixin.DataclassMixin]. A class may inherit from multiple mixin classes. Below is a list of pre-defined mixin classes which can be imported.
 
 - [CLI Parsing](cli.md)
-    - `CLIDataclass`
+    - [`CLIDataclass`][fancy_dataclass.cli.CLIDataclass]
 - [Configurations](config.md)
-    - `ConfigDataclass`
+    - [`ConfigDataclass`][fancy_dataclass.config.ConfigDataclass]
+- Documentation Strings
+    - [`DocDataclass`][fancy_dataclass.doc.DocDataclass]
 - Serialization
-    - [`DictDataclass`](dict.md)
-    - [`JSONDataclass`](json.md)
-    - [`TOMLDataclass`](toml.md)
+    - [Python dicts](dict.md)
+        - [`DictDataclass`][fancy_dataclass.dict.DictDataclass]
+    - [JSON](json.md)
+        - [`JSONDataclass`][fancy_dataclass.json.JSONDataclass]
+    - [TOML](toml.md)
+        - [`TOMLDataclass`][fancy_dataclass.toml.TOMLDataclass]
 - [SQL Persistence](sql.md)
-    - `SQLDataclass`
+    - [`SQLDataclass`][fancy_dataclass.sql.SQLDataclass]
 - [Subprocess Calls](subprocess.md)
-    - `SubprocessDataclass`
+    - [`SubprocessDataclass`][fancy_dataclass.subprocess.SubprocessDataclass]
 - [Version Management](versioned.md)
-    - `VersionedDataclass`
+    - [`VersionedDataclass`][fancy_dataclass.versioned.VersionedDataclass]
 
 !!! note
 
@@ -37,6 +42,8 @@ Mixin classes inherit from a base class called [`DataclassMixin`][fancy_dataclas
 
 Mixin classes have two kinds of settings: *class settings* and *field settings*. Class settings govern the behavior of the class itself, while field settings control individual dataclass fields.
 
+Note that both of these types of settings are associated with the classes themselves, not *instances*.
+
 ## Class Settings
 
 Each mixin class has an associated class settings type, which can be accessed via the `__settings_type__` attribute on any base mixin class which defines its own settings. `DictDataclass` is one such base class. It also has a default setting, accessed via the `__settings__` attribute.
@@ -45,6 +52,9 @@ For example:
 
 ```python
 from fancy_dataclass import DictDataclass
+
+DictDataclass.__settings_type__
+# fancy_dataclass.dict.DictDataclassSettings
 
 DictDataclass.__settings__
 # DictDataclassSettings(suppress_defaults=True, suppress_none=False, store_type='off', flatten=False, allow_extra_fields=True)
@@ -65,7 +75,7 @@ You can pass such keyword arguments even when inheriting from *multiple* mixin c
 
 ## Field Settings
 
-Whereas class settings affect the behavior of the whole class, field settings are attached to each individual dataclass field. The field settings type associated with a base mixin class can be found in its `__field_settings__` attribute. To override the default settings for a field, simply specify them as part of the `metadata` of the `field` constructor for that field. For example:
+Whereas class settings affect the behavior of the whole class, field settings are attached to each individual dataclass *field*. The field settings type associated with a base mixin class can be found in its `__field_settings__` attribute. To override the default settings for a field, simply specify them as part of the `metadata` of the `field` constructor for that field. For example:
 
 ```python
 @dataclass

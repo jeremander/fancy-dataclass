@@ -176,7 +176,7 @@ class VersionedDataclass(DictDataclass):
 
     This enables reliable migration between different versions of the "same" class.
 
-    This class also inherits from [`DictDataclass`](fancy_dataclass.dict.DictDataclass], providing support for
+    This class also inherits from [`DictDataclass`][fancy_dataclass.dict.DictDataclass], providing support for
     dict conversion, where by default the `version` field will be included in the dict representation."""
 
     __settings_type__ = VersionedDataclassSettings
