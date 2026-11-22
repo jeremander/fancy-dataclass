@@ -16,9 +16,10 @@ Python's [`dataclasses`](https://docs.python.org/3/library/dataclasses.html) mod
 By inspecting dataclasses' type annotations, it is possible to endow them with special powers that help cut down on boilerplate code in a wide variety of domains, such as:
 
 - **[JSON](json.md) / [TOML](toml.md) conversion**: convert dataclasses to JSON/TOML files and vice versa.
+- **[Field validation](validate.md)**: check that field values match their expected types.
 - **[Configuration management](config.md)**: store global configurations and use them anywhere in your program.
-- **[SQL persistence](sql.md)**: define SQL tables, save and load objects from a database.
 - **[CLI parsing](cli.md)**: parse command-line arguments and store their values in a dataclass, then use them to execute your main program logic.
+- **[SQL persistence](sql.md)**: define SQL tables, save and load objects from a database.
 - **[Subprocess calls](subprocess.md)**: generate command-line arguments to be passed to another program.
 - **[Version management](versioned.md)**: assign numbers to different versions of the same data type.
 
@@ -35,6 +36,8 @@ Requires Python 3.10 or higher.
 **Regular dataclass**
 
 ```python
+from dataclasses import dataclass
+
 @dataclass
 class Person:
     name: str
@@ -46,6 +49,7 @@ class Person:
 **Fancy dataclass**
 
 ```python
+from dataclasses import dataclass
 from fancy_dataclass import JSONDataclass
 
 @dataclass
@@ -66,6 +70,7 @@ Usage:
     hobbies=['reading', 'juggling', 'cycling']
 )
 
+# convert to JSON
 >>> print(person.to_json_string(indent=2))
 
 {
@@ -78,6 +83,10 @@ Usage:
     "cycling"
   ]
 }
+
+# automatic type validation
+>>> person.height = 'tall'
+# FieldTypeValidationError: field 'height' of Person: value 'tall' does not match expected type float
 ```
 
 ## Documentation

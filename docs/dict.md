@@ -259,43 +259,36 @@ ValueError: unknown dict fields for A: ['b']
 
 #### Field Validation
 
-Another thing `to_dict` does by default is *runtime validation* of each dataclass field. At present, this is very rudimentary (it can be thought of as something like an `isinstance` check of each field type, though a bit more general). As an example:
+When converting from untrusted data sources, it is often good practice to *validate* that the value of each field matches its specified type. `DictDataclass` does so by default by inheriting from [`ValidatedDataclass`](validate.md).
+
+To opt out of automatic validation, you can pass `validate=False` when inheriting from `DictDataclass` or one of its subclasses.
+
+Example:
 
 ```python
 @dataclass
 class A(DictDataclass):
     x: int
 
-# NOTE: validation does *not* occur during normal construction
->>> obj = A('1')
-# validation also does not occur when converting *to* a dict
->>> d = obj.to_dict()
->>> print(d)
-{'a': '1'}
-# validation does occur when converting *from* a dict
->>> obj2 = A.from_dict(d)
-TypeConversionError: could not convert '1' to type 'int'
-```
-
-To disable the runtime type-checking, set `validate=False`.
-
-```python
 @dataclass
-class A(DictDataclass, validate=False):
+class B(DictDataclass, validate=False):
     x: int
 
->>> obj = A('1')
->>> d = obj.to_dict()
-# now validation will be skipped
->>> obj2 = A.from_dict(d)
->>> print(obj2)
-A(x='1')
-```
+# validation occurs during initialization
+>>> a = A('1')
+# FieldTypeValidationError: field 'x' of A: value '1' does not match expected type int
 
-This can also be set at the field level:
+# no validation
+>>> b = B('1')
+>>> print(b)
+B(x='1')
+>>> b.to_dict()
+{'x': '1'}
 
-```python
-@dataclass
-class A(DictDataclass):
-    x: int = field(metadata={'validate': False})
+# validation occurs when calling `from_dict`
+>>> a = A.from_dict({'x': '1'})
+# FieldTypeValidationError: field 'x' of A: value '1' does not match expected type int
+
+# no validation
+>>> b = B.from_dict({'x': '1'})
 ```

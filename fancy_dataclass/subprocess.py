@@ -126,7 +126,7 @@ class SubprocessDataclass(DataclassMixin):
     [`SubprocessDataclassSettings`][fancy_dataclass.subprocess.SubprocessDataclassSettings] fields as keyword arguments
     when inheriting from `SubprocessDataclass`.
 
-    Per-field settings can be passed into the `metadata` argument of each `dataclasses.field`.
+    Per-field settings can be passed into the `metadata` argument of each dataclass field.
     See [`SubprocessDataclassFieldSettings`][fancy_dataclass.subprocess.SubprocessDataclassFieldSettings] for the
     full list of settings."""
 

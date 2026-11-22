@@ -6,9 +6,6 @@
 
 - Documentation
   - Validation
-    - Fix discussion of validation in `DictDataclass` (including error type)
-    - Document that validation settings & field settings are inherited for `DictDataclass` (default no validation)
-    - Document that `ConfigDataclass` *does* do validation
     - Differences vs. `pydantic`?
       - Assignment validation by default
       - Performance?
@@ -16,7 +13,6 @@
   - SQL
     - Primary key (default `_id`)
     - Relationships
-  - `ValidatedDataclass`
   - Changelog
 
 ## Future

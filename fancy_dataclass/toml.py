@@ -149,7 +149,6 @@ class TOMLDataclass(
     DictFileSerializableDataclass,
     DocDataclass,
     TOMLSerializable,
-    validate=True,
     suppress_defaults=False,
     store_type='off',
 ):

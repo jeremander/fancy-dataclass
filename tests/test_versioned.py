@@ -20,6 +20,8 @@ from fancy_dataclass.versioned import (
     version,
 )
 
+from . import raises_field_type_err
+
 
 @pytest.fixture(autouse=True)
 def _clear_registry() -> None:
@@ -38,7 +40,15 @@ def test_versioned_dataclass() -> None:
     class A(VersionedDataclass):
         version = 1
     assert A.version == 1
-    # NOTE: unlike most other DataclassMixins, VersionedDataclass is already a dataclass type
+    a = A()
+    assert not is_dataclass(A)
+    assert not is_dataclass(a)
+    with pytest.raises(TypeError, match='must be called with a dataclass type or instance'):
+        _ = a.to_dict()
+    @dataclass
+    class A(VersionedDataclass):
+        version = 1
+    assert A.version == 1
     a = A()
     assert is_dataclass(A)
     assert is_dataclass(a)
@@ -119,6 +129,7 @@ def test_invalid_version() -> None:
 
 def test_set_version() -> None:
     """Tests what happens when trying to set the 'version' attribute."""
+    @dataclass
     class A(VersionedDataclass, version=1):
         ...
     # NOTE: class-level setting is allowed (for now)
@@ -260,6 +271,7 @@ def test_global_versioned_dataclass_registry() -> None:
     for ver in [None, 1]:
         with pytest.raises(ValueError, match="no class registered with name 'A'"):
             reg.get_class('A', version=ver)
+    @dataclass
     class A(VersionedDataclass, version=0):
         ...
     A_v0 = A
@@ -267,6 +279,7 @@ def test_global_versioned_dataclass_registry() -> None:
     assert reg.get_class('A', version=0) is A_v0
     assert reg.get_class('A') is A_v0
     with pytest.raises(TypeError, match="class already registered with name 'A', version 0: .*A"):
+        @dataclass
         class A(VersionedDataclass, version=0):
             ...
     @version(5)
@@ -282,7 +295,9 @@ def test_global_versioned_dataclass_registry() -> None:
     assert reg.get_class('A') is A_v5
     # simulate importing from a module
     src1 = """
+from dataclasses import dataclass
 from fancy_dataclass.versioned import VersionedDataclass
+@dataclass
 class A(VersionedDataclass, version=1):
     ...
     """
@@ -311,28 +326,36 @@ class A:
 
 def test_alternate_version_types() -> None:
     """Tests duplication checking of versions with different types."""
+    @dataclass
     class A(VersionedDataclass, version=1):
         ...
     assert A().version == 1
     with pytest.raises(TypeError, match="class already registered with name 'A', version 1"):
+        @dataclass
         class A(VersionedDataclass, version=(1,)):
             ...
     with pytest.raises(TypeError, match="class already registered with name 'A', version 1"):
+        @dataclass
         class A(VersionedDataclass, version=Version(1)):
             ...
     with pytest.raises(TypeError, match="class already registered with name 'A', version 1"):
+        @dataclass
         class A(VersionedDataclass, version='1'):
             ...
+    @dataclass
     class B(VersionedDataclass, version=(1,)):
         ...
     assert B().version == (1,)
+    @dataclass
     class A(VersionedDataclass, version=(1, 0)):  # this is *not* the same as 1 or (1,)
         ...
     assert A().version == (1, 0)
     with pytest.raises(TypeError, match="class already registered with name 'A', version 1.0"):
+        @dataclass
         class A(VersionedDataclass, version=Version((1, 0))):
             ...
     with pytest.raises(TypeError, match="class already registered with name 'A', version 1.0"):
+        @dataclass
         class A(VersionedDataclass, version='1.0'):
             ...
 
@@ -465,11 +488,17 @@ def test_from_dict() -> None:
     A3 = A
     a3 = A3(3)
     d3 = {'version': 3, 'x': 3}
+    @dataclass
+    class A(VersionedDataclass, validate=False, version=4):
+        x: int
+        y: str = 'a'
+    A4 = A
     assert a1.to_dict() == d1
     assert issubclass(A1, DictDataclass)
     assert issubclass(A2, DictDataclass)
     assert issubclass(A3, DictDataclass)
-    for cls in [A1, A2, A3]:
+    assert issubclass(A4, DictDataclass)
+    for cls in [A1, A2, A3, A4]:
         for allow_extra in [False, True]:
             _set_allow_extra_fields(cls, allow_extra)
             assert cls.from_dict(d1) == a1
@@ -479,9 +508,9 @@ def test_from_dict() -> None:
         _set_allow_extra_fields(A1, allow_extra)
         assert A1.from_dict(d1, migrate=True) == a1
         assert A1.from_dict(d2, migrate=True) == A1(x=2, y='b')  # pyrefly: ignore[unexpected-keyword]
-        # NOTE: type of y is wrong after migration
-        # TODO: error if this happens during migration? Or just do general validation.
-        assert A1.from_dict(d3, migrate=True) == A1(x=3, y=123)  # pyrefly: ignore[no-matching-overload]
+        # type of y is wrong after migration
+        with raises_field_type_err(A1, 'y', str, 123):
+            _ = A1.from_dict(d3, migrate=True)
     _set_allow_extra_fields(A1, True)
     assert A1.from_dict({'version': 1, 'x': 1, 'z': 7.0}, migrate=True) == A1(x=1, y='a')  # pyrefly: ignore[unexpected-keyword]
     _set_allow_extra_fields(A1, False)
@@ -489,14 +518,23 @@ def test_from_dict() -> None:
         _ = A1.from_dict({'version': 1, 'x': 1, 'z': 7.0}, migrate=True)
     for allow_extra in [False, True]:
         _set_allow_extra_fields(A2, allow_extra)
-        assert A2.from_dict(d2, migrate=True) == a2
         assert A2.from_dict(d1, migrate=True) == A2(x=1, y='a', z=3.14)  # pyrefly: ignore[unexpected-keyword]
-        assert A2.from_dict(d3, migrate=True) == A2(x=3, y=123)  # pyrefly: ignore[no-matching-overload]
+        assert A2.from_dict(d2, migrate=True) == a2
+        with raises_field_type_err(A2, 'y', str, 123):
+            _ = A2.from_dict(d3, migrate=True)
     for allow_extra in [False, True]:
         _set_allow_extra_fields(A3, allow_extra)
+        with raises_field_type_err(A3, 'y', int, 'a'):
+            _ = A3.from_dict(d1, migrate=True)
+        with raises_field_type_err(A3, 'y', int, 'b'):
+            _ = A3.from_dict(d2, migrate=True)
         assert A3.from_dict(d3, migrate=True) == a3
-        assert A3.from_dict(d1, migrate=True) == A3(x=1, y='a')  # pyrefly: ignore[no-matching-overload]
-        assert A3.from_dict(d2, migrate=True) == A3(x=2, y='b')  # pyrefly: ignore[no-matching-overload]
+    for allow_extra in [False, True]:
+        _set_allow_extra_fields(A4, allow_extra)
+        assert A4.from_dict(d1, migrate=True) == A4(x=1, y='a')
+        assert A4.from_dict(d2, migrate=True) == A4(x=2, y='b')
+        assert A4.from_dict(d3, migrate=True) == A4(x=3, y=123)  # pyrefly: ignore[bad-argument-type]
+    # TODO: error when allow_extra=False
 
 def test_json() -> None:
     """Tests behavior of JSON conversion."""

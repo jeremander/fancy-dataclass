@@ -31,8 +31,6 @@ plugins:
               ignore_init_summary: true
             docstring_style: google
             docstring_section_style: list
-            # extensions:
-            #   - griffe_typingdoc
             group_by_category: true
             heading_level: 1
             members_order: source
@@ -53,7 +51,7 @@ plugins:
             show_symbol_type_toc: true
             signature_crossrefs: true
             # whether to render summaries of items at the beginning
-            summary: true
+            summary: false
             # unwrap Annotated types to show only the type without the annotations
             unwrap_annotated: true
   - search
@@ -74,6 +72,7 @@ nav:
   - Python dict conversion: dict.md
   - JSON conversion: json.md
   - TOML conversion: toml.md
+  - Field validation: validate.md
   - Version management: versioned.md
   - Config management: config.md
   - SQL persistence: sql.md

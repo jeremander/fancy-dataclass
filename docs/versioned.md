@@ -21,7 +21,7 @@ class Person(VersionedDataclass, version=1):
     name: str
     age: int
 
-Person_V1 = Person  # alias with explicit version in the name
+>>> Person_V1 = Person  # alias with explicit version in the name
 
 # override the class definition of `Person` with version 2
 # (this could also live in a different module from the first version)
@@ -31,7 +31,7 @@ class Person(VersionedDataclass, version=2):
     age: int
     height: Optional[float] = None
 
-Person_V2 = Person
+>> Person_V2 = Person
 ```
 
 `VersionedDataclass` inherits from [`DictDataclass`][fancy_dataclass.dict.DictDataclass], so instances can be automatically converted to/from Python dicts:
@@ -73,7 +73,7 @@ If you try to set a version of the wrong form, or a version that is a duplicate 
 class Person:
     ...
 
-TypeError: invalid version '2.13.1-alpha1' for class 'Person'
+# TypeError: invalid version '2.13.1-alpha1' for class 'Person'
 ```
 
 ```python
@@ -87,7 +87,7 @@ class Person:
 class Person:
     ...
 
-TypeError: class already registered with name 'Person', version 1: __main__.Person
+# TypeError: class already registered with name 'Person', version 1: __main__.Person
 ```
 
 ### Class and Field Settings
@@ -175,7 +175,7 @@ class Person:
     age: int
     hobbies: Optional[list[str]] = None
 
-Person_V3 = Person
+>>> Person_V3 = Person
 
 @version(4)
 @dataclass
@@ -184,7 +184,7 @@ class Person:
     age: int
     interests: Optional[list[str]] = None
 
-Person_V4 = Person
+>>> Person_V4 = Person
 
 >>> person3 = Person_V3(name='Alice', age=28, hobbies=['chess'])
 >>> person3.migrate(version=4)
@@ -209,7 +209,7 @@ class Person:
             new_person.interests = self.hobbies
         return new_person
 
-Person_V3 = Person
+>>> Person_V3 = Person
 ```
 
 Then the migration works like we want it to:
@@ -237,7 +237,7 @@ class Person(JSONDataclass, store_type='off'):
     age: int
     hobbies: Optional[list[str]] = None
 
-Person_V1 = Person
+>>> Person_V1 = Person
 
 @version(2)
 @dataclass
@@ -246,7 +246,7 @@ class Person(JSONDataclass, store_type='off'):
     age: int
     height: Optional[float] = None
 
-Person_V2 = Person
+>>> Person_V2 = Person
 
 >>> person2 = Person_V2(name='Alice', age=28, height=63.5)
 >>> json_str = person2.to_json_string()

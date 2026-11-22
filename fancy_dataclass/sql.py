@@ -93,7 +93,7 @@ class SQLDataclassFieldSettings(FieldSettings):
 class SQLDataclass(DataclassMixin):
     """A dataclass backed by a SQL table using the [sqlalchemy](https://www.sqlalchemy.org) ORM.
 
-    Per-field settings can be passed into the `metadata` argument of each `dataclasses.field`.
+    Per-field settings can be passed into the `metadata` argument of each dataclass field.
     See [`SQLDataclassFieldSettings`][fancy_dataclass.sql.SQLDataclassFieldSettings] for the full list of settings.
 
     All dataclass fields will correspond to SQL columns unless their metadata is marked with `sql=False`.

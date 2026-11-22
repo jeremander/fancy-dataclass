@@ -125,7 +125,18 @@ class ValidatedDataclassFieldSettings(FieldSettings, _ValidationSettings):
 ##########
 
 class ValidatedDataclass(DataclassMixin):
-    """Mixin class for dataclasses which can validate their fields upon initialization or assignment."""
+    """Mixin class for dataclasses which can validate their fields upon initialization or assignment.
+
+    By default, validation will occur on both initialization and assignment, but this can be overridden at both the
+    class level and the field level.
+
+    A subclass may configure settings by using
+    [`ValidatedDataclassSettings`][fancy_dataclass.validate.ValidatedDataclassSettings] fields as keyword arguments
+    when inheriting from `ValidatedDataclass`.
+
+    Per-field settings can be passed into the `metadata` argument of each dataclass field.
+    See [`ValidatedDataclassFieldSettings`][fancy_dataclass.validate.ValidatedDataclassFieldSettings] for the full list
+    of settings."""
 
     __settings_type__: ClassVar[Optional[type[MixinSettings]]] = ValidatedDataclassSettings
     __settings__: ClassVar[Optional[MixinSettings]] = ValidatedDataclassSettings()

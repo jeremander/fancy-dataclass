@@ -104,14 +104,17 @@ class DictDataclassFieldSettings(FieldSettings):
 # MIXINS #
 ##########
 
-class DictDataclass(ValidatedDataclass, validate=False):
+class DictDataclass(ValidatedDataclass, validate=True):
     """Mixin class for dataclasses that can be converted to and from a Python dict.
+
+    This inherits from [`ValidatedDataclass`][fancy_dataclass.validate.ValidatedDataclass] with automatic field
+    validation active by default.
 
     A subclass may configure settings by using [`DictDataclassSettings`][fancy_dataclass.dict.DictDataclassSettings]
     or [`ValidatedDataclassSettings`][fancy_dataclass.validate.ValidatedDataclassSettings] fields as keyword arguments
     when inheriting from `DictDataclass`.
 
-    Per-field settings can be passed into the `metadata` argument of each `dataclasses.field`.
+    Per-field settings can be passed into the `metadata` argument of each dataclass field.
     See [`DictDataclassFieldSettings`][fancy_dataclass.dict.DictDataclassFieldSettings] and
     [`ValidatedDataclassFieldSettings`][fancy_dataclass.validate.ValidatedDataclassFieldSettings] for the
     full list of settings."""
@@ -417,7 +420,6 @@ class DictDataclass(ValidatedDataclass, validate=False):
                         val = cls._get_missing_value(fld)
                     else:
                         val = fld.default_factory()
-                        # raise ValueError(f'{fld.name!r} field is required')
                     kwargs[fld.name] = val
         if (not cls._dict_dataclass_settings().allow_extra_fields) and (len(consumed_keys) < len(data)):
             # error if there are unknown fields when they are not allowed

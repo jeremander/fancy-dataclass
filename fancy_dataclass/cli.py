@@ -273,7 +273,7 @@ class CLIDataclass(DocDataclass):
     A subclass may configure settings by using [`CLIDataclassSettings`][fancy_dataclass.cli.CLIDataclassSettings]
     fields as keyword arguments when inheriting from `CLIDataclass`.
 
-    Per-field settings can be passed into the `metadata` argument of each `dataclasses.field`.
+    Per-field settings can be passed into the `metadata` argument of each dataclass field.
     See [`CLIDataclassFieldSettings`][fancy_dataclass.cli.CLIDataclassFieldSettings] for the full list
     of settings."""
 

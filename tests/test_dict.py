@@ -131,10 +131,14 @@ def test_make_dataclass(annotations: bool, a: Any, b: Any) -> None:
     dc = make_dataclass('TestDataclass', fields, bases=(DictDataclass,))
     assert issubclass(dc, DictDataclass)
     d = {'a': a, 'b': b}
-    # NOTE: DictDataclass does not validate by default, so invalid field types are OK
-    obj = dc.from_dict(d)
-    assert type(obj) is dc
-    _test_dict_round_trip(obj, d)
+    # DictDataclass validates by default
+    if annotations and (not (isinstance(a, int) and isinstance(b, str))):
+        with pytest.raises(FieldTypeValidationError, match='does not match expected type'):
+            _ = dc.from_dict(d)
+    else:
+        obj = dc.from_dict(d)
+        assert type(obj) is dc
+        _test_dict_round_trip(obj, d)
 
 def test_wrap_dataclass() -> None:
     """Tests behavior of wrap_dataclass."""
@@ -576,7 +580,7 @@ def test_suppress_none() -> None:
         _ = DC.from_dict({})
     # suppress_none is based on the value, not the type
     @dataclass
-    class DC(DictDataclass, suppress_none=True):
+    class DC(DictDataclass, validate=False, suppress_none=True):
         x: int
     assert DC(None).to_dict() == {}  # pyrefly: ignore[bad-argument-type]
 
@@ -771,7 +775,7 @@ def test_validate_nested() -> None:
 def test_validate_inherit(parent_validate: Any, child_validate: Any) -> None:
     """Tests passing the validate kwarg for subclass construction."""
     settings = DictDataclass._class_settings(base=ValidatedDataclass)
-    assert settings == ValidatedDataclassSettings(validate=False)
+    assert settings == ValidatedDataclassSettings(validate=True)
     parent_kwargs = {} if (parent_validate is MISSING) else {'validate': parent_validate}
     child_kwargs = {} if (child_validate is MISSING) else {'validate': child_validate}
     @dataclass
@@ -781,7 +785,7 @@ def test_validate_inherit(parent_validate: Any, child_validate: Any) -> None:
     class DC2(DC1, **child_kwargs):
         ...
     if parent_validate is MISSING:
-        parent_validate = False
+        parent_validate = True
     settings1 = DC1._class_settings(base=ValidatedDataclass)
     assert settings1 == ValidatedDataclassSettings(validate=parent_validate)
     if child_validate is MISSING:

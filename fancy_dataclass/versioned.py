@@ -1,17 +1,16 @@
 from collections.abc import Callable, Sequence
 import dataclasses
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, field
 from typing import Any, ClassVar, Optional, TypeVar, cast
 from weakref import WeakKeyDictionary, WeakValueDictionary
 
 from typing_extensions import Self, override
 
-from fancy_dataclass.dict import AnyDict, DictDataclass, DictDataclassFieldSettings, DictDataclassSettings
-from fancy_dataclass.mixin import DataclassMixin
-from fancy_dataclass.settings import FieldSettings
+from fancy_dataclass.dict import AnyDict, DictDataclass, DictDataclassSettings
 from fancy_dataclass.utils import (
     AnyVersion,
     MissingRequiredFieldError,
+    check_dataclass,
     fully_qualified_class_name,
     get_dataclass_fields,
     get_version_string,
@@ -170,7 +169,6 @@ class VersionedDataclassSettings(DictDataclassSettings):
 # MIXINS #
 ##########
 
-@dataclass
 class VersionedDataclass(DictDataclass):
     """Mixin class that ensures a `version` integer is associated with a given `dataclass` type.
 
@@ -192,12 +190,9 @@ class VersionedDataclass(DictDataclass):
         version = getattr(cls, 'version', settings.version)
         if version is None:
             raise TypeError(f'must supply a valid version for class {cls.__name__!r}')
-        version_tup = _validate_version_for_class(version, cls)
-        if 'version' not in cls.__dataclass_fields__:
-            # if subclass gets generated dynamically, it might not have a 'version' ClassVar field, so create it
-            cls.__dataclass_fields__['version'] = VersionedDataclass.__dataclass_fields__['version']
+        _ = _validate_version_for_class(version, cls)
+        super().__init_subclass__(**kwargs)
         cls.version = version
-        _VERSIONED_DATACLASS_REGISTRY.register_class(cls, version_tup)
 
     @classmethod
     def _versioned_dataclass_settings(cls) -> VersionedDataclassSettings:
@@ -205,14 +200,13 @@ class VersionedDataclass(DictDataclass):
 
     @classmethod
     @override
-    def _field_settings(cls, name: str, *, base: Optional[type[DataclassMixin]] = None) -> FieldSettings:
-        """Gets the class-specific FieldSettings extracted from the metadata stored on a Field object."""
-        cls_settings = cls._versioned_dataclass_settings()
-        fld_settings = super()._field_settings(name, base=base)
-        if (base is DictDataclass) and (name == 'version') and (cls_settings.suppress_version is False):
-            # do not suppress version field if class-level suppress_version=False
-            return replace(cast(DictDataclassFieldSettings, fld_settings), suppress=False)
-        return fld_settings
+    def __post_dataclass_wrap__(cls) -> None:
+        assert check_dataclass(cls)
+        version = getattr(cls, 'version', None)
+        version_tup = _validate_version_for_class(version, cls)
+        super().__post_dataclass_wrap__()
+        # version_tup = _validate_version_for_class(version, cls)
+        _VERSIONED_DATACLASS_REGISTRY.register_class(cls, version_tup)  # type: ignore[arg-type]
 
     def __setattr__(self, name: str, value: Any) -> None:
         # make 'version' field read-only
@@ -231,9 +225,11 @@ class VersionedDataclass(DictDataclass):
     @override
     def _to_dict(self, full: bool) -> AnyDict:
         d = super()._to_dict(full)
-        if 'version' in d:  # ensure the 'version' key comes first in the ordering
-            d = {'version': d.pop('version'), **d}
-        return d
+        d.pop('version', None)
+        if self._versioned_dataclass_settings().suppress_version:
+            return d
+        # put the 'version' key first in the ordering
+        return {'version': self.version, **d}
 
     @classmethod
     @override
